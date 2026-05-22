@@ -1,0 +1,36 @@
+{
+  "slug": "new-york-life",
+  "company": "New York Life Insurance",
+  "hq": "New York, NY \u00b7 \u224812,000 employees",
+  "industry": "Insurance",
+  "vertical": "Mutual Life Insurance",
+  "phone": "212-576-7000",
+  "web": "newyorklife.com",
+  "linkedin": "linkedin.com/company/new-york-life-insurance-company",
+  "zone": "End Customer",
+  "what": "Largest mutual life insurer in US. Conservative, long-tenured tech.",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "legacy-heavy",
+  "known_systems": "Proprietary policy admin (50+ years), agent compensation systems, annuity",
+  "regulatory_context": "State DOI \u00b7 NAIC \u00b7 IFRS17",
+  "default_role": "VP Enterprise Architecture \u00b7 or Policy Admin Modernization",
+  "digital": [
+    "Private (mutual), ~$50B revenue",
+    "Most conservative of major life insurers \u2014 slow tech adoption",
+    "AAA-rated; 175+ years old",
+    "Long-tenured systems = long modernization runway"
+  ],
+  "competition": "Internal IT, Accenture",
+  "abc": {
+    "a": "Your policy admin has 60+ years of COBOL business rules \u2014 anyone who tells you they can translate it without field-level verification is lying.",
+    "b": "Mathematical proof per copybook, ACORD AL3-aware, deterministic",
+    "c": "VP Enterprise Architecture \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "We have institutional patience \u2014 we don't chase modernization fads",
+    "Show us 10 years of vendor longevity before we engage",
+    "Mutual \u2260 profit-driven; we don't optimize the same way"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

@@ -1,0 +1,36 @@
+{
+  "slug": "capital-one",
+  "company": "Capital One Financial",
+  "hq": "McLean, VA \u00b7 \u224855,000 employees",
+  "industry": "Banking",
+  "vertical": "Banking \u00b7 Cloud-Native Pioneer",
+  "phone": "703-720-1000",
+  "web": "capitalone.com",
+  "linkedin": "linkedin.com/company/capital-one",
+  "zone": "End Customer",
+  "what": "Top-10 US bank. Most-modernized of the majors \u2014 went all-in on AWS 2020.",
+  "mainframe_systems": "Mostly migrated \u00b7 residual COBOL in core lending",
+  "modernization_state": "modernized \u00b7 minor legacy remaining",
+  "known_systems": "Largely AWS-native; core lending residual on mainframe",
+  "regulatory_context": "OCC \u00b7 Fed \u00b7 FFIEC \u00b7 post-2019 breach scrutiny",
+  "default_role": "VP Engineering \u00b7 or Legacy Migration Tech Lead",
+  "digital": [
+    "Public (NYSE: COF), ~$36B revenue",
+    "Famous 2020 mainframe exit (mostly) \u2014 moved to AWS",
+    "2019 breach \u2014 extensive post-breach security investments",
+    "Strong AI/ML investment, internal Capital One Software arm"
+  ],
+  "competition": "Internal teams, AWS partners",
+  "abc": {
+    "a": "Capital One mostly exited mainframe \u2014 but the residual COBOL in legacy lending is the hardest to migrate because that's where the business logic lives. Translating that without field parity verification is the kind of risk you specifically rebuilt the bank to avoid.",
+    "b": "Deterministic parity for the residual COBOL that AWS Mainframe Modernization doesn't fully address",
+    "c": "VP Engineering \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "We're mostly already on AWS \u2014 what's left?",
+    "Strong internal capability and AWS partnership",
+    "Post-breach security architecture is comprehensive"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

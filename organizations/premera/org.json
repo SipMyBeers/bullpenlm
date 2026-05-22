@@ -20,5 +20,9 @@
     "a": "Your claims processing engine carries 30+ years of COBOL. Every AI translation tool your engineers are touching is quietly dropping fields in REDEFINES sections.",
     "b": "Zero-data-leak architecture meets post-breach security posture.",
     "c": "Name + email of Enterprise Architecture or Claims Tech Lead."
-  }
+  },
+  "industry": "Insurance",
+  "vertical": "Health \u00b7 BCBS Regional",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress"
 }

@@ -1,0 +1,36 @@
+{
+  "slug": "liberty-mutual",
+  "company": "Liberty Mutual Insurance",
+  "hq": "Boston, MA \u00b7 \u224850,000 employees",
+  "industry": "Insurance",
+  "vertical": "P&C Insurance",
+  "phone": "617-357-9500",
+  "web": "libertymutualgroup.com",
+  "linkedin": "linkedin.com/company/liberty-mutual-insurance",
+  "zone": "End Customer",
+  "what": "Top-10 US P&C insurer. Private (mutual). Strong international footprint.",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress",
+  "known_systems": "Multiple legacy stacks from M&A; ACORD AL3; Safeco (acquired 2008) integration",
+  "regulatory_context": "State DOI + international regulators (Solvency II Europe)",
+  "default_role": "Director of Enterprise Architecture or Mainframe Modernization Lead",
+  "digital": [
+    "Private (mutual company), ~$50B revenue",
+    "Strong tech investments \u2014 internal Liberty IT brand",
+    "Multiple acquisitions create legacy-stack integration challenges",
+    "International footprint adds regulatory complexity"
+  ],
+  "competition": "Accenture, IBM, internal Liberty IT teams",
+  "abc": {
+    "a": "Your M&A history (Safeco, Ohio Casualty, others) left you with multiple legacy stacks that have never been fully harmonized \u2014 each one has its own COBOL idioms and silent field drops between them.",
+    "b": "Mathematical proof of field parity across integrations, not just within a single system",
+    "c": "Director of Enterprise Architecture \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Internal Liberty IT handles most of this",
+    "We're mutual \u2014 we don't move fast under pressure",
+    "Procurement is enterprise-grade"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

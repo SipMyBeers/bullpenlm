@@ -20,5 +20,9 @@
     "a": "Your modernization practice burns hundreds of hours manually reverse-engineering copybooks before billable engineering even starts.",
     "b": "Show them the field-parity gate on a real copybook. Rocket has heard 100 vendor pitches \u2014 only deterministic verification gets past their bullshit detector.",
     "c": "20-min briefing with VP App Mod or AS400 Practice Lead. Conversation: OEM partnership / co-sell into their installed base."
-  }
+  },
+  "industry": "Software",
+  "vertical": "Mainframe Modernization \u00b7 Tools",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

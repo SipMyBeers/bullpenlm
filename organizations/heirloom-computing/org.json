@@ -1,0 +1,36 @@
+{
+  "slug": "heirloom-computing",
+  "company": "Heirloom Computing",
+  "hq": "Spring, TX",
+  "industry": "Software",
+  "vertical": "Mainframe Modernization \u00b7 Tools",
+  "phone": "281-825-3500",
+  "web": "heirloomcomputing.com",
+  "linkedin": "linkedin.com/company/heirloom-computing",
+  "zone": "Tool Partner",
+  "what": "Heirloom Platform automatically converts mainframe COBOL to Java for cloud deployment.",
+  "mainframe_systems": "z/OS (their customers')",
+  "modernization_state": "vendor",
+  "known_systems": "Heirloom platform, automated COBOL-to-Java",
+  "regulatory_context": "Customer-side compliance",
+  "default_role": "VP of Sales \u00b7 or Channel Partnerships",
+  "digital": [
+    "Private, Texas-based",
+    "Automated COBOL-to-Java conversion + cloud deployment",
+    "AWS Mainframe Modernization partner (chosen tool)",
+    "Customers include several Fortune 500 carriers"
+  ],
+  "competition": "LzLabs, Asysco, AWS Mainframe Mod (which also uses them)",
+  "abc": {
+    "a": "Your Heirloom platform converts the COBOL \u2014 but verifying the conversion against the original copybook semantics is still a manual QA step. We automate that verification step deterministically.",
+    "b": "Field-parity verification as a value-add inside Heirloom engagements",
+    "c": "VP Channel Partnerships \u00b7 20-min briefing \u00b7 OEM conversation"
+  },
+  "pushbacks": [
+    "We're the conversion tool \u2014 what do you add?",
+    "AWS Mainframe Modernization partnership is exclusive",
+    "Small team \u2014 partnership only"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "tool"
+}

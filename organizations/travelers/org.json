@@ -1,0 +1,36 @@
+{
+  "slug": "travelers",
+  "company": "The Travelers Companies",
+  "hq": "Hartford, CT \u00b7 \u224830,000 employees",
+  "industry": "Insurance",
+  "vertical": "P&C Insurance",
+  "phone": "860-277-0111",
+  "web": "travelers.com",
+  "linkedin": "linkedin.com/company/travelers",
+  "zone": "End Customer",
+  "what": "Major commercial + personal P&C insurer. Strong commercial book.",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress",
+  "known_systems": "ACORD AL3, commercial policy admin (proprietary), Guidewire BillingCenter rollout",
+  "regulatory_context": "State DOI regulators, SOX",
+  "default_role": "Director of Mainframe Modernization \u00b7 or Enterprise Architecture",
+  "digital": [
+    "Public (NYSE: TRV)",
+    "Hartford-based, ~$40B revenue",
+    "Publicly committed to Guidewire migration over multiple years",
+    "AI investments in underwriting + claims"
+  ],
+  "competition": "Guidewire ecosystem partners, Accenture",
+  "abc": {
+    "a": "Your Guidewire migration only handles the policy admin layer \u2014 your commercial COBOL still has 30 years of business logic that needs translation, not just lift-and-shift.",
+    "b": "Field-level parity verification on the commercial codebase that Guidewire doesn't address",
+    "c": "20-min briefing with Director of Mainframe Modernization"
+  },
+  "pushbacks": [
+    "Guidewire is our strategic platform \u2014 where do you fit?",
+    "Vendor risk management is rigorous",
+    "We're a Hartford insurance company \u2014 we move at our own pace"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

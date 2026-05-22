@@ -20,5 +20,9 @@
     "a": "Your modernization practice wins the mainframe-to-cloud bid but burns weeks proving the migration preserved every field before customers sign off.",
     "b": "Show the 5-day deterministic field-parity guarantee.",
     "c": "20-min briefing with Mainframe Practice Lead. Embed in their delivery stack."
-  }
+  },
+  "industry": "Services",
+  "vertical": "Mainframe-to-Cloud Managed",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

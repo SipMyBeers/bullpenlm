@@ -1,0 +1,36 @@
+{
+  "slug": "elevance-health",
+  "company": "Elevance Health (Anthem)",
+  "hq": "Indianapolis, IN \u00b7 \u2248100,000 employees",
+  "industry": "Insurance",
+  "vertical": "Health Insurance \u00b7 BCBS",
+  "phone": "317-488-6000",
+  "web": "elevancehealth.com",
+  "linkedin": "linkedin.com/company/elevancehealth",
+  "zone": "End Customer",
+  "what": "Anthem rebranded as Elevance 2022. ~47M members across BCBS plans + Medicare/Medicaid.",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress",
+  "known_systems": "TriZetto Facets (multiple instances), legacy claims, mainframe enrollment",
+  "regulatory_context": "HIPAA \u00b7 HITRUST \u00b7 ACA \u00b7 BCBSA licensee",
+  "default_role": "Director Enterprise Architecture \u00b7 or Claims Tech Modernization",
+  "digital": [
+    "Public (NYSE: ELV), ~$170B revenue",
+    "Rebranded from Anthem to Elevance Health 2022",
+    "Multiple BCBS licensees (CA, NY, OH, CO, NV, others)",
+    "Recent CarelonRx + Carelon Services launches"
+  ],
+  "competition": "Cognizant (Facets vendor), Accenture, Deloitte, internal IT",
+  "abc": {
+    "a": "Your claims engine carries 30+ years of COBOL across multiple BCBS state plans \u2014 each one has its own dialect and silent field-drop risks during modernization workstreams.",
+    "b": "Code never leaves your network; HIPAA-compliant by architecture, not by policy",
+    "c": "Director Enterprise Architecture or Claims Tech \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Cognizant runs TriZetto for us already",
+    "HIPAA, HITRUST, multi-state DOI compliance is paramount",
+    "VRM intake is the only entry point"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

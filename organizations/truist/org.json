@@ -1,0 +1,36 @@
+{
+  "slug": "truist",
+  "company": "Truist Financial",
+  "hq": "Charlotte, NC \u00b7 \u224850,000 employees",
+  "industry": "Banking",
+  "vertical": "Regional Universal Banking",
+  "phone": "844-487-8478",
+  "web": "truist.com",
+  "linkedin": "linkedin.com/company/truist",
+  "zone": "End Customer",
+  "what": "BB&T + SunTrust merger (2019) \u2192 Truist. Top-10 US regional.",
+  "mainframe_systems": "IBM z/OS \u00b7 multi-stack (post-merger)",
+  "modernization_state": "in-progress \u00b7 merger integration ongoing",
+  "known_systems": "Multiple post-merger legacy stacks (BB&T + SunTrust both had different core banking)",
+  "regulatory_context": "OCC \u00b7 Fed \u00b7 FFIEC",
+  "default_role": "Director Mainframe Modernization \u00b7 or Merger Integration Tech",
+  "digital": [
+    "Public (NYSE: TFC), ~$24B revenue",
+    "BB&T + SunTrust merger 2019 \u2014 still consolidating",
+    "Multi-year tech harmonization roadmap",
+    "Heritage Foundation (advocacy) issues \u2014 different from the bank"
+  ],
+  "competition": "Accenture, IBM Consulting",
+  "abc": {
+    "a": "Five years post-merger, BB&T and SunTrust legacy systems still don't fully harmonize. Every field crossing between them is a potential drop point in modernization.",
+    "b": "Cross-stack field parity verification",
+    "c": "Director Mainframe Modernization \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Merger integration is the priority",
+    "Charlotte-area enterprise pace",
+    "Existing IBM relationship is multi-decade"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

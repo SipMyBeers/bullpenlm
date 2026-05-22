@@ -1,0 +1,36 @@
+{
+  "slug": "deloitte-mainframe",
+  "company": "Deloitte (Mainframe Modernization Practice)",
+  "hq": "London \u00b7 NYC US ops \u00b7 \u2248460,000 employees globally",
+  "industry": "Services",
+  "vertical": "Big-4 Consulting \u00b7 Mainframe Modernization",
+  "phone": "212-492-4000",
+  "web": "deloitte.com",
+  "linkedin": "linkedin.com/company/deloitte",
+  "zone": "Channel Partner",
+  "what": "Big-4 audit + consulting. Mainframe Modernization practice strong in BFSI + Gov.",
+  "mainframe_systems": "Customer-side",
+  "modernization_state": "vendor",
+  "known_systems": "Deloitte AppShield (auto-modernization), strong Federal Gov practice",
+  "regulatory_context": "Customer-side \u00b7 audit perspective (deep)",
+  "default_role": "Managing Director \u00b7 App Modernization \u00b7 Financial Services",
+  "digital": [
+    "Private partnership, ~$65B revenue",
+    "Big-4 + global reach",
+    "Strong Federal Gov practice (Defense, Intel, IRS)",
+    "Audit perspective on modernization risk is unique vs other Big-4"
+  ],
+  "competition": "Accenture, IBM Consulting, EY, KPMG",
+  "abc": {
+    "a": "Your audit perspective on mainframe modernization is unique \u2014 but the field-level verification of translation output is still manual QA in your delivery engagements. We make that audit-ready by default.",
+    "b": "Audit-friendly deterministic verification",
+    "c": "MD App Mod \u00b7 20-min \u00b7 co-sell"
+  },
+  "pushbacks": [
+    "Big-4 procurement requirements",
+    "Internal AppShield methodology",
+    "Audit + consulting independence considerations"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "channel"
+}

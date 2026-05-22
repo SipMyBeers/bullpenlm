@@ -1,0 +1,36 @@
+{
+  "slug": "allstate",
+  "company": "Allstate Corporation",
+  "hq": "Northbrook, IL \u00b7 \u224854,000 employees",
+  "industry": "Insurance",
+  "vertical": "P&C Insurance",
+  "phone": "847-402-5000",
+  "web": "allstate.com",
+  "linkedin": "linkedin.com/company/allstate",
+  "zone": "End Customer",
+  "what": "Top-5 US property & casualty insurer. Auto, home, life. NYSE: ALL.",
+  "mainframe_systems": "IBM z/OS (legacy claims + policy admin)",
+  "modernization_state": "in-progress",
+  "known_systems": "Allstate-internal proprietary stack; ACORD AL3 data exchange; policy admin on mainframe",
+  "regulatory_context": "State insurance regulators (50+ DOIs) \u00b7 NAIC reporting",
+  "default_role": "VP of Application Modernization \u00b7 or Claims Tech Lead",
+  "digital": [
+    "Public (NYSE: ALL), ~$57B revenue 2024",
+    "Multi-year IT transformation publicly disclosed in earnings calls",
+    "AI/ML investment in claims processing",
+    "Acquired National General 2021 \u2014 integration ongoing"
+  ],
+  "competition": "Accenture, IBM Consulting, Deloitte, TCS",
+  "abc": {
+    "a": "Your claims processing engine has been on COBOL for 30+ years. Every AI translation tool your engineers touch can quietly drop fields in REDEFINES sections \u2014 and you can't afford a claims-system incident.",
+    "b": "Deterministic field parity, runs on your hardware, audit-ready",
+    "c": "Name + email of Application Modernization lead or Claims Tech VP"
+  },
+  "pushbacks": [
+    "We have ongoing relationships with Accenture and IBM",
+    "Procurement process is 6+ months",
+    "Our risk tolerance is very low \u2014 show us your security architecture"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

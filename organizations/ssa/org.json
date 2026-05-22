@@ -1,0 +1,36 @@
+{
+  "slug": "ssa",
+  "company": "Social Security Administration",
+  "hq": "Baltimore, MD \u00b7 \u224860,000 federal employees",
+  "industry": "Government",
+  "vertical": "Federal \u00b7 Social Insurance",
+  "phone": "410-965-1234",
+  "web": "ssa.gov",
+  "linkedin": null,
+  "zone": "End Customer",
+  "what": "Federal agency \u00b7 administers retirement, disability, survivor benefits to ~70M Americans. Famously legacy.",
+  "mainframe_systems": "IBM z/OS \u00b7 MUMPS \u00b7 60M+ lines of COBOL",
+  "modernization_state": "legacy-heavy \u00b7 multi-decade modernization journey",
+  "known_systems": "Master Beneficiary Record, Master Earnings File, Title II/XVI claims; some MUMPS",
+  "regulatory_context": "Federal (OMB, GAO, Inspector General) \u00b7 Title 42 USC",
+  "default_role": "Office of Information Technology contact \u00b7 or Modernization Program Office",
+  "digital": [
+    "Federal agency, ~$1.5T benefits disbursed annually",
+    "60M+ lines of COBOL \u2014 one of largest COBOL deployments in US gov",
+    "GAO has documented modernization risks repeatedly (most recent 2024)",
+    "Multi-decade modernization journey continues"
+  ],
+  "competition": "Accenture Federal, IBM Federal, Lockheed Martin, internal SSA OIT",
+  "abc": {
+    "a": "GAO has documented the modernization risks at SSA for over a decade. The Master Beneficiary Record alone has business logic from the 1960s that no living engineer fully understands \u2014 and AI translation tools that hallucinate on REDEFINES create the exact failure mode GAO has warned about.",
+    "b": "Deterministic field parity, runs entirely on .gov hardware, FedRAMP-ready architecture",
+    "c": "Office of Information Technology Modernization \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Federal procurement (GSA / SEWP) is the only path",
+    "FedRAMP requirements are non-negotiable",
+    "We've had Accenture / Lockheed for decades"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

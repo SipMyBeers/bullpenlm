@@ -20,5 +20,9 @@
     "a": "You're small enough that one tool compressing discovery from weeks to days is the difference between winning and losing the next mainframe bid.",
     "b": "Show the parity verification.",
     "c": "20-min briefing with Practice Lead."
-  }
+  },
+  "industry": "Services",
+  "vertical": "Custom Software \u00b7 Midwest",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

@@ -1,0 +1,36 @@
+{
+  "slug": "centene",
+  "company": "Centene Corporation",
+  "hq": "St. Louis, MO \u00b7 \u224870,000 employees",
+  "industry": "Insurance",
+  "vertical": "Health Insurance \u00b7 Medicaid + Marketplace",
+  "phone": "314-725-4477",
+  "web": "centene.com",
+  "linkedin": "linkedin.com/company/centene",
+  "zone": "End Customer",
+  "what": "Largest US Medicaid managed-care insurer. Heavy government-program book.",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress",
+  "known_systems": "Multiple state-Medicaid claims engines (acquired Magellan, WellCare, others)",
+  "regulatory_context": "HIPAA \u00b7 CMS \u00b7 multi-state Medicaid \u00b7 ACA",
+  "default_role": "Director of Medicaid Tech \u00b7 or Mainframe Modernization",
+  "digital": [
+    "Public (NYSE: CNC), ~$140B revenue",
+    "Largest Medicaid MCO in US",
+    "Acquired WellCare 2020, Magellan Health 2022 \u2014 multiple legacy stacks",
+    "Multi-state government contracts add regulatory weight"
+  ],
+  "competition": "Accenture, Cognizant",
+  "abc": {
+    "a": "Your post-M&A reality is multiple state-Medicaid claims engines that have never been harmonized \u2014 every one has its own COBOL dialect and CMS reporting requirements.",
+    "b": "Cross-stack field parity verification with CMS-ready audit logs",
+    "c": "Director Medicaid Tech \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Multiple state contracts \u2014 extreme regulatory variability",
+    "Big consulting relationships",
+    "Procurement is multi-step"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

@@ -1,0 +1,36 @@
+{
+  "slug": "humana",
+  "company": "Humana",
+  "hq": "Louisville, KY \u00b7 \u224865,000 employees",
+  "industry": "Insurance",
+  "vertical": "Health Insurance \u00b7 Medicare-heavy",
+  "phone": "502-580-1000",
+  "web": "humana.com",
+  "linkedin": "linkedin.com/company/humana",
+  "zone": "End Customer",
+  "what": "Top-5 US health insurer. Heavy Medicare Advantage focus.",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress",
+  "known_systems": "Legacy claims platform (proprietary); CenterWell (clinical) more modern",
+  "regulatory_context": "HIPAA \u00b7 CMS \u00b7 Medicare Advantage",
+  "default_role": "Director of Claims Tech \u00b7 or Enterprise Architecture",
+  "digital": [
+    "Public (NYSE: HUM), ~$110B revenue",
+    "Medicare-Advantage-heavy \u2014 high regulatory exposure",
+    "Strong AI/ML in clinical (CenterWell)",
+    "Multi-year cloud modernization roadmap"
+  ],
+  "competition": "Accenture, Cognizant, Optum (UnitedHealth Group)",
+  "abc": {
+    "a": "Your Medicare Advantage claims volume + CMS reporting requirements mean every COBOL translation needs auditor-grade verification. Off-the-shelf AI tools don't meet that bar.",
+    "b": "Deterministic parity; auditor-friendly logs; HIPAA-compliant by architecture",
+    "c": "Director of Claims Tech \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "CMS reporting requirements are non-negotiable",
+    "We work with Accenture across multiple workstreams",
+    "Procurement requires SOC 2 + HIPAA-aware vendor onboarding"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

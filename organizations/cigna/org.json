@@ -1,0 +1,36 @@
+{
+  "slug": "cigna",
+  "company": "The Cigna Group",
+  "hq": "Bloomfield, CT \u00b7 \u224870,000 employees",
+  "industry": "Insurance",
+  "vertical": "Health Insurance",
+  "phone": "860-226-6000",
+  "web": "cigna.com",
+  "linkedin": "linkedin.com/company/cigna",
+  "zone": "End Customer",
+  "what": "Top-5 US health insurer. Acquired Express Scripts 2018.",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress",
+  "known_systems": "TriZetto Facets (claims); Express Scripts pharmacy systems",
+  "regulatory_context": "HIPAA \u00b7 HITRUST \u00b7 ACA \u00b7 state DOI",
+  "default_role": "Director of Claims Tech \u00b7 or Mainframe Modernization Lead",
+  "digital": [
+    "Public (NYSE: CI), ~$200B revenue",
+    "Major Express Scripts integration ongoing since 2018",
+    "Strong AI/automation investments in claims",
+    "Evernorth (health services arm) more cloud-native"
+  ],
+  "competition": "Cognizant (Facets), Accenture, Deloitte",
+  "abc": {
+    "a": "Your claims processing system runs on COBOL beneath the Facets layer. Every field drop in a translation can become a HIPAA reporting incident.",
+    "b": "Zero-data-leak architecture meets Cigna's post-Anthem-breach security posture; deterministic field parity for claims",
+    "c": "Director of Claims Tech \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "We have Cognizant (TriZetto Facets) relationships",
+    "HIPAA + security review is non-negotiable",
+    "Express Scripts integration is the bigger priority"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

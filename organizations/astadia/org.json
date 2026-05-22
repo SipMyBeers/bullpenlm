@@ -1,0 +1,36 @@
+{
+  "slug": "astadia",
+  "company": "Astadia",
+  "hq": "Jacksonville, FL",
+  "industry": "Services",
+  "vertical": "Mainframe-to-Cloud Migration",
+  "phone": "904-280-5210",
+  "web": "astadia.com",
+  "linkedin": "linkedin.com/company/astadia",
+  "zone": "Channel Partner",
+  "what": "Mainframe-to-cloud migration specialist. Strong AWS + Azure partnerships.",
+  "mainframe_systems": "Customer z/OS",
+  "modernization_state": "vendor",
+  "known_systems": "Astadia FastTrack Factory, AWS Mainframe Mod partner, Azure partner",
+  "regulatory_context": "Customer-side",
+  "default_role": "VP Sales \u00b7 or Modernization Practice Lead",
+  "digital": [
+    "Private",
+    "Mainframe-to-cloud refactor specialist",
+    "AWS + Microsoft Mainframe Mod partner",
+    "Public references in BFSI + government"
+  ],
+  "competition": "Modern Systems, Heirloom, internal Big-4 practices",
+  "abc": {
+    "a": "Your FastTrack Factory delivers the conversion \u2014 but customers want field-level audit before accepting the refactor. We give you the audit layer to deliver alongside.",
+    "b": "Deterministic verification for FastTrack output",
+    "c": "VP Sales / Modernization Lead \u00b7 20-min briefing \u00b7 partnership"
+  },
+  "pushbacks": [
+    "We have AWS + Azure factory partnerships",
+    "Internal QA processes",
+    "Boutique scale"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "channel"
+}

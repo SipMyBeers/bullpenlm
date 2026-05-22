@@ -669,7 +669,7 @@ HTML_PAGE = r"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>KillSesh Sales Training · v1</title>
+<title>Cheers Beers · Trainer</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -760,7 +760,7 @@ HTML_PAGE = r"""<!doctype html>
 
 <header>
   <div>
-    <div class="brand">KillSesh <span class="accent">·</span> Sales Training</div>
+    <div class="brand">Cheers Beers <span class="accent">·</span> Trainer</div>
     <div class="meta" id="model-tag">loading model…</div>
   </div>
   <div class="controls">
@@ -1476,7 +1476,7 @@ class ReusableServer(socketserver.ThreadingTCPServer):
 def main():
     model = get_model()
     print("─" * 60)
-    print("  KillSesh Sales Training · v1")
+    print("  Cheers Beers · trainer + org graph + post-call debrief")
     print(f"  Model:   {model}")
     print(f"  Server:  http://localhost:{PORT}")
     print(f"  Logs:    {TRAINING_DIR}")

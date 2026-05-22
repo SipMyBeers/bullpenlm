@@ -1,0 +1,36 @@
+{
+  "slug": "bcbs-massachusetts",
+  "company": "Blue Cross Blue Shield of Massachusetts",
+  "hq": "Boston, MA \u00b7 \u22483,800 employees",
+  "industry": "Insurance",
+  "vertical": "Health Insurance \u00b7 BCBS",
+  "phone": "617-246-5000",
+  "web": "bluecrossma.org",
+  "linkedin": "linkedin.com/company/blue-cross-blue-shield-of-massachusetts",
+  "zone": "End Customer",
+  "what": "Not-for-profit BCBS licensee for Massachusetts. ~3M members.",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress",
+  "known_systems": "Facets-based claims; HEDIS; Mass-specific regulatory reporting (CHIA)",
+  "regulatory_context": "HIPAA \u00b7 HITRUST \u00b7 Mass DOI \u00b7 CHIA reporting",
+  "default_role": "Director Enterprise Architecture \u00b7 or Claims Tech Lead",
+  "digital": [
+    "Not-for-profit, ~$10B revenue",
+    "Massachusetts has unique CHIA reporting requirements",
+    "Strong member experience focus",
+    "Recent AI/ML investments in claims processing"
+  ],
+  "competition": "Cognizant, Accenture",
+  "abc": {
+    "a": "Massachusetts CHIA reporting requires field-perfect transformations \u2014 one drop on a member-record migration is a regulatory finding.",
+    "b": "Deterministic parity that meets CHIA + HIPAA",
+    "c": "Director Enterprise Architecture \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Existing Cognizant/Facets relationship",
+    "CHIA + HIPAA regulatory environment",
+    "Boston-area enterprise IT pace"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

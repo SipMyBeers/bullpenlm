@@ -1,0 +1,36 @@
+{
+  "slug": "us-bank",
+  "company": "U.S. Bancorp (US Bank)",
+  "hq": "Minneapolis, MN \u00b7 \u224870,000 employees",
+  "industry": "Banking",
+  "vertical": "Regional Universal Banking",
+  "phone": "612-303-0799",
+  "web": "usbank.com",
+  "linkedin": "linkedin.com/company/us-bank",
+  "zone": "End Customer",
+  "what": "Top-5 US regional bank. Consumer + corporate + payment processing.",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress",
+  "known_systems": "Core banking on mainframe; Union Bank (acquired 2022) legacy systems",
+  "regulatory_context": "OCC \u00b7 Fed \u00b7 FFIEC \u00b7 CFPB",
+  "default_role": "VP Mainframe Modernization \u00b7 or Enterprise Architecture",
+  "digital": [
+    "Public (NYSE: USB), ~$30B revenue",
+    "Acquired Union Bank from MUFG 2022 \u2014 integration ongoing",
+    "Strong payments business (Elavon)",
+    "Multi-year cloud modernization journey publicly disclosed"
+  ],
+  "competition": "Accenture, Cognizant, internal teams",
+  "abc": {
+    "a": "Your Union Bank integration created another legacy stack to harmonize with your existing core banking \u2014 every translation across them has field-drop risk.",
+    "b": "Cross-system field parity at integration boundaries",
+    "c": "VP Mainframe Modernization \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Union Bank integration is the priority right now",
+    "Regulatory environment is strict",
+    "Existing enterprise IT capability"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

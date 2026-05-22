@@ -1,0 +1,36 @@
+{
+  "slug": "unitedhealth-group",
+  "company": "UnitedHealth Group",
+  "hq": "Minnetonka, MN \u00b7 \u2248400,000 employees",
+  "industry": "Insurance",
+  "vertical": "Health Insurance \u00b7 Largest US",
+  "phone": "952-936-1300",
+  "web": "unitedhealthgroup.com",
+  "linkedin": "linkedin.com/company/unitedhealth-group",
+  "zone": "End Customer",
+  "what": "Largest US health insurer. Optum (health services) + UnitedHealthcare (insurance).",
+  "mainframe_systems": "IBM z/OS + significant cloud",
+  "modernization_state": "in-progress",
+  "known_systems": "Optum-owned proprietary stack; multiple BCBS-era systems acquired",
+  "regulatory_context": "HIPAA \u00b7 CMS \u00b7 multi-state DOI \u00b7 global ops",
+  "default_role": "VP Mainframe Modernization \u00b7 or Optum Tech Lead",
+  "digital": [
+    "Public (NYSE: UNH), ~$370B revenue 2024",
+    "Largest US healthcare company by revenue",
+    "Optum (health services) more cloud-native than UHC (insurance)",
+    "Recent Change Healthcare integration; security breach 2024 raised modernization urgency"
+  ],
+  "competition": "Optum-internal teams, Accenture, internal builds",
+  "abc": {
+    "a": "Post-Change-Healthcare-breach, your security posture for legacy-system modernization is under regulator scrutiny. Off-the-shelf AI translation tools that send code to OpenAI fail your VRM review before they start.",
+    "b": "Code never leaves your network \u2014 provably; deterministic parity meets auditor scrutiny",
+    "c": "VP Mainframe Modernization \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Optum runs most of our IT \u2014 start there",
+    "Post-Change-Healthcare-breach security posture is extremely strict",
+    "Enterprise procurement runs 9+ months"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

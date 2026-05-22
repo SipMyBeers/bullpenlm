@@ -20,5 +20,9 @@
     "a": "You're a boutique competing against giants for mainframe modernization work \u2014 your differentiator is either price or proof.",
     "b": "Show the proof.",
     "c": "20-min briefing with Director of IT Modernization."
-  }
+  },
+  "industry": "Services",
+  "vertical": "Boutique IT Consultancy",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

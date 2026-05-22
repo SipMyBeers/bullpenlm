@@ -1,0 +1,36 @@
+{
+  "slug": "lzlabs",
+  "company": "LzLabs",
+  "hq": "Zurich, Switzerland \u00b7 US ops",
+  "industry": "Software",
+  "vertical": "Mainframe Modernization \u00b7 Software-Defined Mainframe",
+  "phone": "+41 44 386 38 80",
+  "web": "lzlabs.com",
+  "linkedin": "linkedin.com/company/lzlabs",
+  "zone": "Tool Partner",
+  "what": "Software-Defined Mainframe (SDM) \u2014 runs IBM mainframe workloads on x86 cloud without recompilation.",
+  "mainframe_systems": "z/OS workloads (customer-side)",
+  "modernization_state": "vendor",
+  "known_systems": "LzLabs SDM, recompile-free mainframe migration",
+  "regulatory_context": "Customer-side",
+  "default_role": "VP Sales \u00b7 or US Channel Lead",
+  "digital": [
+    "Private, Zurich HQ",
+    "Pioneered software-defined mainframe approach",
+    "Famously sued by IBM 2022 over copyright \u2014 settled",
+    "Several public references in BFSI"
+  ],
+  "competition": "IBM (legal adversary), Heirloom, Asysco",
+  "abc": {
+    "a": "Your SDM lifts the mainframe workload to cloud without recompilation \u2014 but customers still need to validate that the workload behaves identically. Deterministic field parity verification fits that gap.",
+    "b": "Complementary verification layer; runs on customer hardware",
+    "c": "VP Sales / Channel \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Our SDM means no code translation needed \u2014 what's your fit?",
+    "Small team \u2014 partnership only",
+    "European HQ \u2014 time zone considerations"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "tool"
+}

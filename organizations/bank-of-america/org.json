@@ -1,0 +1,36 @@
+{
+  "slug": "bank-of-america",
+  "company": "Bank of America",
+  "hq": "Charlotte, NC \u00b7 \u2248220,000 employees",
+  "industry": "Banking",
+  "vertical": "Universal Banking",
+  "phone": "704-386-5681",
+  "web": "bankofamerica.com",
+  "linkedin": "linkedin.com/company/bank-of-america",
+  "zone": "End Customer",
+  "what": "Top-3 US bank. Consumer, corporate, wealth management (Merrill).",
+  "mainframe_systems": "IBM z/OS \u00b7 multi-region",
+  "modernization_state": "in-progress",
+  "known_systems": "Core banking on mainframe; Merrill Lynch legacy systems (acquired 2008)",
+  "regulatory_context": "OCC \u00b7 Fed \u00b7 FFIEC \u00b7 FDIC \u00b7 NC + global",
+  "default_role": "SVP Mainframe Modernization \u00b7 or Enterprise Architecture",
+  "digital": [
+    "Public (NYSE: BAC), ~$100B revenue",
+    "$11B+/year tech spend",
+    "Erica (AI banking assistant) is internal-built",
+    "Multi-decade Merrill Lynch integration left legacy debt"
+  ],
+  "competition": "Accenture, IBM Consulting, Cognizant, internal teams",
+  "abc": {
+    "a": "Your Merrill Lynch integration left you with multiple legacy stacks that have never been fully harmonized. Each one has its own COBOL idioms and field-drop risk during modernization.",
+    "b": "Cross-system parity verification, not just within a single platform",
+    "c": "SVP Mainframe Modernization \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "We have multiple enterprise vendor relationships",
+    "Regulatory + security review is rigorous",
+    "Charlotte HQ pace \u2014 methodical"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

@@ -1,0 +1,36 @@
+{
+  "slug": "accenture-mainframe",
+  "company": "Accenture (Mainframe Modernization Practice)",
+  "hq": "Dublin, Ireland \u00b7 NYC ops \u00b7 \u2248770,000 employees globally",
+  "industry": "Services",
+  "vertical": "Big-4 Consulting \u00b7 Mainframe Modernization",
+  "phone": "917-452-4400",
+  "web": "accenture.com",
+  "linkedin": "linkedin.com/company/accenture",
+  "zone": "Channel Partner",
+  "what": "Largest IT services firm globally. Mainframe Modernization practice serves Fortune 500 BFSI + Gov.",
+  "mainframe_systems": "Customer-side z/OS, IBM i",
+  "modernization_state": "vendor",
+  "known_systems": "Accenture myWizard, mainframe transformation methodologies",
+  "regulatory_context": "Customer-side (Fed/HIPAA/PCI/SOX)",
+  "default_role": "Managing Director \u00b7 Mainframe Modernization \u00b7 Financial Services or Insurance",
+  "digital": [
+    "Public (NYSE: ACN), ~$65B revenue",
+    "Largest consulting firm globally",
+    "myWizard automation platform widely deployed",
+    "BFSI + Gov verticals are largest mainframe customers"
+  ],
+  "competition": "IBM Consulting, Deloitte, TCS, Capgemini, internal customer teams",
+  "abc": {
+    "a": "Your mainframe modernization engagements at top banks + carriers run 12-24 months, and a meaningful chunk is manual field-mapping QA. We compress that to days deterministically \u2014 your consultants ship faster, your margin per engagement goes up.",
+    "b": "Force-multiplier for Accenture delivery teams, not a replacement",
+    "c": "MD Mainframe Modernization \u00b7 20-min briefing \u00b7 co-sell"
+  },
+  "pushbacks": [
+    "We are the consultancy in this category \u2014 what's the fit?",
+    "myWizard already handles automation",
+    "Enterprise procurement at our scale is months"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "channel"
+}

@@ -155,6 +155,19 @@ def load_all(root: Path = PERSONAS_ROOT) -> dict[str, Persona]:
 # Prompt builders (consume the Persona object)
 # ─────────────────────────────────────────────────────────────────────────
 
+# Default playbook — KillSesh-specific because that's how the repo was born.
+# Override by loading the markdown file at personas/_playbook/seller.md +
+# personas/_playbook/scoring.md, if they exist. Lets non-KillSesh users
+# replace the playbook without touching code.
+def _read_playbook_seller() -> str:
+    p = PERSONAS_ROOT / "_playbook" / "seller.md"
+    if p.exists():
+        return p.read_text().strip()
+    return ("KillSesh: an on-prem AI pipeline that translates COBOL copybooks to "
+            "TypeScript with verified field parity. Dylan wants a 15-minute "
+            "technical briefing with you (or the name of the right tech lead).")
+
+
 def build_persona_prompt(p: Persona) -> str:
     """The system prompt the LLM gets when playing this persona."""
     pushbacks_block = "\n".join(f"  - \"{q}\"" for q in p.pushbacks)
@@ -162,6 +175,7 @@ def build_persona_prompt(p: Persona) -> str:
         f"\nHOW YOU TALK (speech profile — match exactly)\n────────────────────────────────────────────\n{p.speech_profile}\n"
         if p.speech_profile else ""
     )
+    seller_pitch = _read_playbook_seller()
 
     # Tier 2: verbatim quotes + transcript excerpts
     tier2_block = ""
@@ -192,8 +206,8 @@ What the company does: {p.what}
 YOUR INTERNAL STATE (this is YOU — feel it, don't perform it)
 {p.personality}
 {speech_block}{tier2_block}
-WHAT DYLAN IS SELLING (you don't know this yet — you just answered the phone)
-KillSesh: an on-prem AI pipeline that translates COBOL copybooks to TypeScript with verified field parity. Dylan wants a 15-minute technical briefing with you (or the name of the right tech lead).
+WHAT THE CALLER IS SELLING (you don't know this yet — you just answered the phone)
+{seller_pitch}
 
 ═════════════════════════════════════════════════════════════════
 HOW REAL PHONE CALLS WORK — READ CAREFULLY

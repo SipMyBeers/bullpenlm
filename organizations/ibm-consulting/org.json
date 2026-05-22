@@ -1,0 +1,36 @@
+{
+  "slug": "ibm-consulting",
+  "company": "IBM Consulting (Application Modernization)",
+  "hq": "Armonk, NY \u00b7 \u2248160,000 (IBM Consulting subset) \u00b7 \u2248280,000 IBM total",
+  "industry": "Services",
+  "vertical": "Big-4 Consulting \u00b7 Mainframe Native",
+  "phone": "914-499-1900",
+  "web": "ibm.com/consulting",
+  "linkedin": "linkedin.com/company/ibm",
+  "zone": "Channel Partner",
+  "what": "IBM Consulting includes the Application Modernization practice + Mainframe Application Modernization Acceleration tool.",
+  "mainframe_systems": "Customer-side z/OS, IBM i (often also customer of IBM hardware)",
+  "modernization_state": "vendor",
+  "known_systems": "IBM Watsonx Code Assistant for Z, IBM CloudPak for Applications, Garage methodology",
+  "regulatory_context": "Customer-side",
+  "default_role": "Managing Partner \u00b7 Application Modernization \u00b7 BFSI",
+  "digital": [
+    "Public (NYSE: IBM), ~$60B revenue (IBM total)",
+    "Watsonx Code Assistant for Z (AI-driven COBOL transformation) recently announced",
+    "Most-tenured mainframe consulting practice (40+ years)",
+    "Strong incumbent at top US banks, carriers, gov"
+  ],
+  "competition": "Accenture, Deloitte, TCS, AWS partners",
+  "abc": {
+    "a": "Watsonx Code Assistant for Z handles the AI translation \u2014 but customers want verifiable proof of correctness alongside, not just confidence. We're the deterministic verification layer that complements Watsonx output.",
+    "b": "Verification adapter for Watsonx Code Assistant for Z",
+    "c": "Managing Partner App Mod \u00b7 20-min \u00b7 OEM / co-sell"
+  },
+  "pushbacks": [
+    "IBM has its own AI modernization story (Watsonx)",
+    "Enterprise scale + customer trust",
+    "Internal IBM Consulting methodology"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "channel"
+}

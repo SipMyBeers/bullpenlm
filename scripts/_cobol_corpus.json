@@ -1,0 +1,1124 @@
+[
+  {
+    "slug": "allstate",
+    "company": "Allstate Corporation",
+    "hq": "Northbrook, IL · ≈54,000 employees",
+    "industry": "Insurance",
+    "vertical": "P&C Insurance",
+    "phone": "847-402-5000",
+    "web": "allstate.com",
+    "linkedin": "linkedin.com/company/allstate",
+    "zone": "End Customer",
+    "what": "Top-5 US property & casualty insurer. Auto, home, life. NYSE: ALL.",
+    "mainframe_systems": "IBM z/OS (legacy claims + policy admin)",
+    "modernization_state": "in-progress",
+    "known_systems": "Allstate-internal proprietary stack; ACORD AL3 data exchange; policy admin on mainframe",
+    "regulatory_context": "State insurance regulators (50+ DOIs) · NAIC reporting",
+    "default_role": "VP of Application Modernization · or Claims Tech Lead",
+    "digital": [
+      "Public (NYSE: ALL), ~$57B revenue 2024",
+      "Multi-year IT transformation publicly disclosed in earnings calls",
+      "AI/ML investment in claims processing",
+      "Acquired National General 2021 — integration ongoing"
+    ],
+    "competition": "Accenture, IBM Consulting, Deloitte, TCS",
+    "abc": {
+      "a": "Your claims processing engine has been on COBOL for 30+ years. Every AI translation tool your engineers touch can quietly drop fields in REDEFINES sections — and you can't afford a claims-system incident.",
+      "b": "Deterministic field parity, runs on your hardware, audit-ready",
+      "c": "Name + email of Application Modernization lead or Claims Tech VP"
+    },
+    "pushbacks": [
+      "We have ongoing relationships with Accenture and IBM",
+      "Procurement process is 6+ months",
+      "Our risk tolerance is very low — show us your security architecture"
+    ]
+  },
+  {
+    "slug": "travelers",
+    "company": "The Travelers Companies",
+    "hq": "Hartford, CT · ≈30,000 employees",
+    "industry": "Insurance",
+    "vertical": "P&C Insurance",
+    "phone": "860-277-0111",
+    "web": "travelers.com",
+    "linkedin": "linkedin.com/company/travelers",
+    "zone": "End Customer",
+    "what": "Major commercial + personal P&C insurer. Strong commercial book.",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "in-progress",
+    "known_systems": "ACORD AL3, commercial policy admin (proprietary), Guidewire BillingCenter rollout",
+    "regulatory_context": "State DOI regulators, SOX",
+    "default_role": "Director of Mainframe Modernization · or Enterprise Architecture",
+    "digital": [
+      "Public (NYSE: TRV)",
+      "Hartford-based, ~$40B revenue",
+      "Publicly committed to Guidewire migration over multiple years",
+      "AI investments in underwriting + claims"
+    ],
+    "competition": "Guidewire ecosystem partners, Accenture",
+    "abc": {
+      "a": "Your Guidewire migration only handles the policy admin layer — your commercial COBOL still has 30 years of business logic that needs translation, not just lift-and-shift.",
+      "b": "Field-level parity verification on the commercial codebase that Guidewire doesn't address",
+      "c": "20-min briefing with Director of Mainframe Modernization"
+    },
+    "pushbacks": [
+      "Guidewire is our strategic platform — where do you fit?",
+      "Vendor risk management is rigorous",
+      "We're a Hartford insurance company — we move at our own pace"
+    ]
+  },
+  {
+    "slug": "liberty-mutual",
+    "company": "Liberty Mutual Insurance",
+    "hq": "Boston, MA · ≈50,000 employees",
+    "industry": "Insurance",
+    "vertical": "P&C Insurance",
+    "phone": "617-357-9500",
+    "web": "libertymutualgroup.com",
+    "linkedin": "linkedin.com/company/liberty-mutual-insurance",
+    "zone": "End Customer",
+    "what": "Top-10 US P&C insurer. Private (mutual). Strong international footprint.",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "in-progress",
+    "known_systems": "Multiple legacy stacks from M&A; ACORD AL3; Safeco (acquired 2008) integration",
+    "regulatory_context": "State DOI + international regulators (Solvency II Europe)",
+    "default_role": "Director of Enterprise Architecture or Mainframe Modernization Lead",
+    "digital": [
+      "Private (mutual company), ~$50B revenue",
+      "Strong tech investments — internal Liberty IT brand",
+      "Multiple acquisitions create legacy-stack integration challenges",
+      "International footprint adds regulatory complexity"
+    ],
+    "competition": "Accenture, IBM, internal Liberty IT teams",
+    "abc": {
+      "a": "Your M&A history (Safeco, Ohio Casualty, others) left you with multiple legacy stacks that have never been fully harmonized — each one has its own COBOL idioms and silent field drops between them.",
+      "b": "Mathematical proof of field parity across integrations, not just within a single system",
+      "c": "Director of Enterprise Architecture · 20-min briefing"
+    },
+    "pushbacks": [
+      "Internal Liberty IT handles most of this",
+      "We're mutual — we don't move fast under pressure",
+      "Procurement is enterprise-grade"
+    ]
+  },
+  {
+    "slug": "progressive",
+    "company": "Progressive Corporation",
+    "hq": "Mayfield Village, OH · ≈55,000 employees",
+    "industry": "Insurance",
+    "vertical": "P&C Insurance · Auto-heavy",
+    "phone": "440-461-5000",
+    "web": "progressive.com",
+    "linkedin": "linkedin.com/company/progressive-insurance",
+    "zone": "End Customer",
+    "what": "Top-3 US auto insurer. Heavy tech investment, direct-to-consumer model.",
+    "mainframe_systems": "IBM z/OS (legacy claims) + significant modern cloud",
+    "modernization_state": "in-progress",
+    "known_systems": "Proprietary policy admin; advanced telematics (Snapshot); cloud-native customer-facing layer",
+    "regulatory_context": "State DOI · 50+",
+    "default_role": "Director of Mainframe Modernization · BFSI",
+    "digital": [
+      "Public (NYSE: PGR), ~$70B revenue",
+      "Strong reputation for tech-forward operations",
+      "Telematics (Snapshot) is industry-leading",
+      "Less legacy-burdened than Allstate/Travelers but still significant COBOL"
+    ],
+    "competition": "Internal Progressive teams, AWS partners",
+    "abc": {
+      "a": "Progressive's reputation is tech-forward — but your claims back-end still has 25+ years of COBOL underneath the modern front-end. Every translation tool you trust has the same hallucination problem on REDEFINES.",
+      "b": "Deterministic field parity that meets Progressive's actuarial precision",
+      "c": "Director of Mainframe Modernization · 20-min briefing"
+    },
+    "pushbacks": [
+      "We run a strong internal tech team",
+      "Show us the SOC 2 / VRM story before we engage",
+      "We move fast — but procurement is still procurement"
+    ]
+  },
+  {
+    "slug": "metlife",
+    "company": "MetLife",
+    "hq": "New York, NY · ≈45,000 employees",
+    "industry": "Insurance",
+    "vertical": "Life Insurance + Annuities",
+    "phone": "212-578-2211",
+    "web": "metlife.com",
+    "linkedin": "linkedin.com/company/metlife",
+    "zone": "End Customer",
+    "what": "Top US life insurer. Strong international (Japan, LATAM, Asia).",
+    "mainframe_systems": "IBM z/OS · multi-region",
+    "modernization_state": "in-progress",
+    "known_systems": "Multiple policy admin systems (PolicyLink, internal); annuity engines; ACORD",
+    "regulatory_context": "State DOI · international regulators · IFRS17",
+    "default_role": "VP Mainframe Modernization · or Policy Admin Tech Lead",
+    "digital": [
+      "Public (NYSE: MET), ~$70B revenue",
+      "Long-tail policies (30+ year contracts) on legacy systems",
+      "Recently announced cloud-modernization initiative",
+      "Strong Japanese subsidiary (MetLife Japan) adds regulatory complexity"
+    ],
+    "competition": "Accenture, Cognizant, TCS, Capgemini",
+    "abc": {
+      "a": "Your policy admin systems carry life policies that will outlive every engineer who ever touched them. One field drop on a $2M annuity translation is a regulatory event.",
+      "b": "Deterministic parity verification — actuarial-grade precision",
+      "c": "VP Mainframe Modernization · 20-min briefing"
+    },
+    "pushbacks": [
+      "We have Accenture relationships across multiple workstreams",
+      "International regulatory complexity is non-trivial",
+      "Procurement requires SOC 2 Type II + vendor onboarding"
+    ]
+  },
+  {
+    "slug": "prudential",
+    "company": "Prudential Financial",
+    "hq": "Newark, NJ · ≈40,000 employees",
+    "industry": "Insurance",
+    "vertical": "Life Insurance + Retirement",
+    "phone": "973-802-6000",
+    "web": "prudential.com",
+    "linkedin": "linkedin.com/company/prudential-financial",
+    "zone": "End Customer",
+    "what": "Top US life + retirement carrier. Strong asset management arm (PGIM).",
+    "mainframe_systems": "IBM z/OS + IBM i",
+    "modernization_state": "in-progress",
+    "known_systems": "Policy admin (multiple), annuity engines, group benefits platform",
+    "regulatory_context": "State DOI · SEC (PGIM) · ERISA",
+    "default_role": "Director of Mainframe Modernization",
+    "digital": [
+      "Public (NYSE: PRU), ~$60B revenue",
+      "Newark NJ HQ, ~150 years old",
+      "PGIM (asset management arm) more cloud-native than core insurance",
+      "Multi-year modernization roadmap publicly mentioned"
+    ],
+    "competition": "Accenture, Cognizant, Deloitte",
+    "abc": {
+      "a": "Your group benefits platform and policy admin systems carry decades of COBOL business logic the modern Java/cloud front-end doesn't touch — every modernization workstream needs deterministic parity proof.",
+      "b": "Field-level audit in 5 days vs Big-4's 8-12 weeks",
+      "c": "Director of Mainframe Modernization · 20-min briefing"
+    },
+    "pushbacks": [
+      "We work with several large consultancies already",
+      "Show us procurement-ready documentation",
+      "Newark/insurance-industry pace"
+    ]
+  },
+  {
+    "slug": "new-york-life",
+    "company": "New York Life Insurance",
+    "hq": "New York, NY · ≈12,000 employees",
+    "industry": "Insurance",
+    "vertical": "Mutual Life Insurance",
+    "phone": "212-576-7000",
+    "web": "newyorklife.com",
+    "linkedin": "linkedin.com/company/new-york-life-insurance-company",
+    "zone": "End Customer",
+    "what": "Largest mutual life insurer in US. Conservative, long-tenured tech.",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "legacy-heavy",
+    "known_systems": "Proprietary policy admin (50+ years), agent compensation systems, annuity",
+    "regulatory_context": "State DOI · NAIC · IFRS17",
+    "default_role": "VP Enterprise Architecture · or Policy Admin Modernization",
+    "digital": [
+      "Private (mutual), ~$50B revenue",
+      "Most conservative of major life insurers — slow tech adoption",
+      "AAA-rated; 175+ years old",
+      "Long-tenured systems = long modernization runway"
+    ],
+    "competition": "Internal IT, Accenture",
+    "abc": {
+      "a": "Your policy admin has 60+ years of COBOL business rules — anyone who tells you they can translate it without field-level verification is lying.",
+      "b": "Mathematical proof per copybook, ACORD AL3-aware, deterministic",
+      "c": "VP Enterprise Architecture · 20-min briefing"
+    },
+    "pushbacks": [
+      "We have institutional patience — we don't chase modernization fads",
+      "Show us 10 years of vendor longevity before we engage",
+      "Mutual ≠ profit-driven; we don't optimize the same way"
+    ]
+  },
+  {
+    "slug": "cigna",
+    "company": "The Cigna Group",
+    "hq": "Bloomfield, CT · ≈70,000 employees",
+    "industry": "Insurance",
+    "vertical": "Health Insurance",
+    "phone": "860-226-6000",
+    "web": "cigna.com",
+    "linkedin": "linkedin.com/company/cigna",
+    "zone": "End Customer",
+    "what": "Top-5 US health insurer. Acquired Express Scripts 2018.",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "in-progress",
+    "known_systems": "TriZetto Facets (claims); Express Scripts pharmacy systems",
+    "regulatory_context": "HIPAA · HITRUST · ACA · state DOI",
+    "default_role": "Director of Claims Tech · or Mainframe Modernization Lead",
+    "digital": [
+      "Public (NYSE: CI), ~$200B revenue",
+      "Major Express Scripts integration ongoing since 2018",
+      "Strong AI/automation investments in claims",
+      "Evernorth (health services arm) more cloud-native"
+    ],
+    "competition": "Cognizant (Facets), Accenture, Deloitte",
+    "abc": {
+      "a": "Your claims processing system runs on COBOL beneath the Facets layer. Every field drop in a translation can become a HIPAA reporting incident.",
+      "b": "Zero-data-leak architecture meets Cigna's post-Anthem-breach security posture; deterministic field parity for claims",
+      "c": "Director of Claims Tech · 20-min briefing"
+    },
+    "pushbacks": [
+      "We have Cognizant (TriZetto Facets) relationships",
+      "HIPAA + security review is non-negotiable",
+      "Express Scripts integration is the bigger priority"
+    ]
+  },
+  {
+    "slug": "elevance-health",
+    "company": "Elevance Health (Anthem)",
+    "hq": "Indianapolis, IN · ≈100,000 employees",
+    "industry": "Insurance",
+    "vertical": "Health Insurance · BCBS",
+    "phone": "317-488-6000",
+    "web": "elevancehealth.com",
+    "linkedin": "linkedin.com/company/elevancehealth",
+    "zone": "End Customer",
+    "what": "Anthem rebranded as Elevance 2022. ~47M members across BCBS plans + Medicare/Medicaid.",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "in-progress",
+    "known_systems": "TriZetto Facets (multiple instances), legacy claims, mainframe enrollment",
+    "regulatory_context": "HIPAA · HITRUST · ACA · BCBSA licensee",
+    "default_role": "Director Enterprise Architecture · or Claims Tech Modernization",
+    "digital": [
+      "Public (NYSE: ELV), ~$170B revenue",
+      "Rebranded from Anthem to Elevance Health 2022",
+      "Multiple BCBS licensees (CA, NY, OH, CO, NV, others)",
+      "Recent CarelonRx + Carelon Services launches"
+    ],
+    "competition": "Cognizant (Facets vendor), Accenture, Deloitte, internal IT",
+    "abc": {
+      "a": "Your claims engine carries 30+ years of COBOL across multiple BCBS state plans — each one has its own dialect and silent field-drop risks during modernization workstreams.",
+      "b": "Code never leaves your network; HIPAA-compliant by architecture, not by policy",
+      "c": "Director Enterprise Architecture or Claims Tech · 20-min briefing"
+    },
+    "pushbacks": [
+      "Cognizant runs TriZetto for us already",
+      "HIPAA, HITRUST, multi-state DOI compliance is paramount",
+      "VRM intake is the only entry point"
+    ]
+  },
+  {
+    "slug": "humana",
+    "company": "Humana",
+    "hq": "Louisville, KY · ≈65,000 employees",
+    "industry": "Insurance",
+    "vertical": "Health Insurance · Medicare-heavy",
+    "phone": "502-580-1000",
+    "web": "humana.com",
+    "linkedin": "linkedin.com/company/humana",
+    "zone": "End Customer",
+    "what": "Top-5 US health insurer. Heavy Medicare Advantage focus.",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "in-progress",
+    "known_systems": "Legacy claims platform (proprietary); CenterWell (clinical) more modern",
+    "regulatory_context": "HIPAA · CMS · Medicare Advantage",
+    "default_role": "Director of Claims Tech · or Enterprise Architecture",
+    "digital": [
+      "Public (NYSE: HUM), ~$110B revenue",
+      "Medicare-Advantage-heavy — high regulatory exposure",
+      "Strong AI/ML in clinical (CenterWell)",
+      "Multi-year cloud modernization roadmap"
+    ],
+    "competition": "Accenture, Cognizant, Optum (UnitedHealth Group)",
+    "abc": {
+      "a": "Your Medicare Advantage claims volume + CMS reporting requirements mean every COBOL translation needs auditor-grade verification. Off-the-shelf AI tools don't meet that bar.",
+      "b": "Deterministic parity; auditor-friendly logs; HIPAA-compliant by architecture",
+      "c": "Director of Claims Tech · 20-min briefing"
+    },
+    "pushbacks": [
+      "CMS reporting requirements are non-negotiable",
+      "We work with Accenture across multiple workstreams",
+      "Procurement requires SOC 2 + HIPAA-aware vendor onboarding"
+    ]
+  },
+  {
+    "slug": "unitedhealth-group",
+    "company": "UnitedHealth Group",
+    "hq": "Minnetonka, MN · ≈400,000 employees",
+    "industry": "Insurance",
+    "vertical": "Health Insurance · Largest US",
+    "phone": "952-936-1300",
+    "web": "unitedhealthgroup.com",
+    "linkedin": "linkedin.com/company/unitedhealth-group",
+    "zone": "End Customer",
+    "what": "Largest US health insurer. Optum (health services) + UnitedHealthcare (insurance).",
+    "mainframe_systems": "IBM z/OS + significant cloud",
+    "modernization_state": "in-progress",
+    "known_systems": "Optum-owned proprietary stack; multiple BCBS-era systems acquired",
+    "regulatory_context": "HIPAA · CMS · multi-state DOI · global ops",
+    "default_role": "VP Mainframe Modernization · or Optum Tech Lead",
+    "digital": [
+      "Public (NYSE: UNH), ~$370B revenue 2024",
+      "Largest US healthcare company by revenue",
+      "Optum (health services) more cloud-native than UHC (insurance)",
+      "Recent Change Healthcare integration; security breach 2024 raised modernization urgency"
+    ],
+    "competition": "Optum-internal teams, Accenture, internal builds",
+    "abc": {
+      "a": "Post-Change-Healthcare-breach, your security posture for legacy-system modernization is under regulator scrutiny. Off-the-shelf AI translation tools that send code to OpenAI fail your VRM review before they start.",
+      "b": "Code never leaves your network — provably; deterministic parity meets auditor scrutiny",
+      "c": "VP Mainframe Modernization · 20-min briefing"
+    },
+    "pushbacks": [
+      "Optum runs most of our IT — start there",
+      "Post-Change-Healthcare-breach security posture is extremely strict",
+      "Enterprise procurement runs 9+ months"
+    ]
+  },
+  {
+    "slug": "jpmorgan-chase",
+    "company": "JPMorgan Chase",
+    "hq": "New York, NY · ≈280,000 employees",
+    "industry": "Banking",
+    "vertical": "Universal Banking",
+    "phone": "212-270-6000",
+    "web": "jpmorganchase.com",
+    "linkedin": "linkedin.com/company/jpmorganchase",
+    "zone": "End Customer",
+    "what": "Largest US bank by assets. Consumer, corporate, investment banking, asset management.",
+    "mainframe_systems": "IBM z/OS · multiple data centers",
+    "modernization_state": "in-progress",
+    "known_systems": "Multi-decade COBOL/Java/Python mix; core banking on mainframe; trading on FPGAs/cloud",
+    "regulatory_context": "OCC · Fed · FFIEC · FDIC · NY State DFS",
+    "default_role": "Managing Director · Mainframe Modernization · or Architecture",
+    "digital": [
+      "Public (NYSE: JPM), ~$160B revenue",
+      "$15B+/year tech spend — largest IT budget in banking",
+      "Public cloud-modernization roadmap; AWS + Azure partnerships",
+      "Strong internal AI/ML investment (LLM Suite, IndexGPT)"
+    ],
+    "competition": "Internal JPMC IT, Accenture, Tata Consultancy Services, Cognizant",
+    "abc": {
+      "a": "Your core banking, trading, and operations still run on tens of millions of lines of COBOL. Every modernization workstream needs proof — not promise — that translations preserve every field. JPM's auditors don't accept vibes.",
+      "b": "Deterministic mathematical verification; runs entirely on your hardware; meets OCC + Fed + FFIEC scrutiny",
+      "c": "Managing Director · Mainframe Modernization · 20-min briefing"
+    },
+    "pushbacks": [
+      "We have Accenture, IBM, Cognizant relationships across many workstreams",
+      "Regulatory scrutiny is extreme",
+      "Internal IT capability is enormous — what do you do that we can't?"
+    ]
+  },
+  {
+    "slug": "bank-of-america",
+    "company": "Bank of America",
+    "hq": "Charlotte, NC · ≈220,000 employees",
+    "industry": "Banking",
+    "vertical": "Universal Banking",
+    "phone": "704-386-5681",
+    "web": "bankofamerica.com",
+    "linkedin": "linkedin.com/company/bank-of-america",
+    "zone": "End Customer",
+    "what": "Top-3 US bank. Consumer, corporate, wealth management (Merrill).",
+    "mainframe_systems": "IBM z/OS · multi-region",
+    "modernization_state": "in-progress",
+    "known_systems": "Core banking on mainframe; Merrill Lynch legacy systems (acquired 2008)",
+    "regulatory_context": "OCC · Fed · FFIEC · FDIC · NC + global",
+    "default_role": "SVP Mainframe Modernization · or Enterprise Architecture",
+    "digital": [
+      "Public (NYSE: BAC), ~$100B revenue",
+      "$11B+/year tech spend",
+      "Erica (AI banking assistant) is internal-built",
+      "Multi-decade Merrill Lynch integration left legacy debt"
+    ],
+    "competition": "Accenture, IBM Consulting, Cognizant, internal teams",
+    "abc": {
+      "a": "Your Merrill Lynch integration left you with multiple legacy stacks that have never been fully harmonized. Each one has its own COBOL idioms and field-drop risk during modernization.",
+      "b": "Cross-system parity verification, not just within a single platform",
+      "c": "SVP Mainframe Modernization · 20-min briefing"
+    },
+    "pushbacks": [
+      "We have multiple enterprise vendor relationships",
+      "Regulatory + security review is rigorous",
+      "Charlotte HQ pace — methodical"
+    ]
+  },
+  {
+    "slug": "wells-fargo",
+    "company": "Wells Fargo",
+    "hq": "San Francisco, CA · ≈250,000 employees",
+    "industry": "Banking",
+    "vertical": "Universal Banking",
+    "phone": "415-396-3060",
+    "web": "wellsfargo.com",
+    "linkedin": "linkedin.com/company/wellsfargo",
+    "zone": "End Customer",
+    "what": "Top-4 US bank. Consumer, corporate, mortgage, wealth.",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "in-progress",
+    "known_systems": "Mortgage origination + servicing (proprietary); core banking on mainframe; Wachovia legacy",
+    "regulatory_context": "OCC · Fed · FFIEC · CFPB (under heightened scrutiny)",
+    "default_role": "Managing Director · Application Modernization",
+    "digital": [
+      "Public (NYSE: WFC), ~$80B revenue",
+      "Under regulatory consent orders since 2018 fake-accounts scandal",
+      "Aggressive tech transformation under CEO Charlie Scharf",
+      "Wachovia (acquired 2008) legacy stacks still in flight"
+    ],
+    "competition": "Accenture, Tata, IBM, Cognizant",
+    "abc": {
+      "a": "Wells has been under consent orders since 2018 — every modernization workstream is auditor-watched. AI translation tools that hallucinate on REDEFINES become a regulatory event.",
+      "b": "Auditor-friendly deterministic parity; on-prem only; full transformation logs",
+      "c": "Managing Director · App Modernization · 20-min briefing"
+    },
+    "pushbacks": [
+      "We're under CFPB + OCC scrutiny — extreme caution",
+      "Multiple existing enterprise relationships",
+      "Public-perception risk on tech vendor selection"
+    ]
+  },
+  {
+    "slug": "citigroup",
+    "company": "Citigroup",
+    "hq": "New York, NY · ≈240,000 employees",
+    "industry": "Banking",
+    "vertical": "Universal Banking · Global",
+    "phone": "212-559-1000",
+    "web": "citigroup.com",
+    "linkedin": "linkedin.com/company/citi",
+    "zone": "End Customer",
+    "what": "Global universal bank. Major institutional/corporate presence in ~95 countries.",
+    "mainframe_systems": "IBM z/OS · global",
+    "modernization_state": "in-progress",
+    "known_systems": "Global TTS (Treasury & Trade Solutions); multi-country core banking",
+    "regulatory_context": "OCC · Fed · Global (UK FCA, EU ECB, Asia)",
+    "default_role": "Managing Director · Mainframe Transformation",
+    "digital": [
+      "Public (NYSE: C), ~$80B revenue",
+      "Under Jane Fraser's multi-year simplification + transformation",
+      "Famous 2020 $900M Revlon wire-transfer error — modernization urgency",
+      "Recent FRB consent orders on data + risk management"
+    ],
+    "competition": "Accenture, IBM, TCS, Capgemini",
+    "abc": {
+      "a": "Citi's 2020 $900M wire-transfer accident was a UI + workflow issue rooted in legacy systems. Modernization isn't optional — and AI translation that drops fields creates the next $900M accident.",
+      "b": "Deterministic verification eliminates the field-drop category of accidents",
+      "c": "Managing Director · Mainframe Transformation · 20-min briefing"
+    },
+    "pushbacks": [
+      "Global regulators (UK, EU, Asia) each have different requirements",
+      "Under FRB consent order — extreme caution",
+      "Major existing enterprise vendor relationships"
+    ]
+  },
+  {
+    "slug": "us-bank",
+    "company": "U.S. Bancorp (US Bank)",
+    "hq": "Minneapolis, MN · ≈70,000 employees",
+    "industry": "Banking",
+    "vertical": "Regional Universal Banking",
+    "phone": "612-303-0799",
+    "web": "usbank.com",
+    "linkedin": "linkedin.com/company/us-bank",
+    "zone": "End Customer",
+    "what": "Top-5 US regional bank. Consumer + corporate + payment processing.",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "in-progress",
+    "known_systems": "Core banking on mainframe; Union Bank (acquired 2022) legacy systems",
+    "regulatory_context": "OCC · Fed · FFIEC · CFPB",
+    "default_role": "VP Mainframe Modernization · or Enterprise Architecture",
+    "digital": [
+      "Public (NYSE: USB), ~$30B revenue",
+      "Acquired Union Bank from MUFG 2022 — integration ongoing",
+      "Strong payments business (Elavon)",
+      "Multi-year cloud modernization journey publicly disclosed"
+    ],
+    "competition": "Accenture, Cognizant, internal teams",
+    "abc": {
+      "a": "Your Union Bank integration created another legacy stack to harmonize with your existing core banking — every translation across them has field-drop risk.",
+      "b": "Cross-system field parity at integration boundaries",
+      "c": "VP Mainframe Modernization · 20-min briefing"
+    },
+    "pushbacks": [
+      "Union Bank integration is the priority right now",
+      "Regulatory environment is strict",
+      "Existing enterprise IT capability"
+    ]
+  },
+  {
+    "slug": "capital-one",
+    "company": "Capital One Financial",
+    "hq": "McLean, VA · ≈55,000 employees",
+    "industry": "Banking",
+    "vertical": "Banking · Cloud-Native Pioneer",
+    "phone": "703-720-1000",
+    "web": "capitalone.com",
+    "linkedin": "linkedin.com/company/capital-one",
+    "zone": "End Customer",
+    "what": "Top-10 US bank. Most-modernized of the majors — went all-in on AWS 2020.",
+    "mainframe_systems": "Mostly migrated · residual COBOL in core lending",
+    "modernization_state": "modernized · minor legacy remaining",
+    "known_systems": "Largely AWS-native; core lending residual on mainframe",
+    "regulatory_context": "OCC · Fed · FFIEC · post-2019 breach scrutiny",
+    "default_role": "VP Engineering · or Legacy Migration Tech Lead",
+    "digital": [
+      "Public (NYSE: COF), ~$36B revenue",
+      "Famous 2020 mainframe exit (mostly) — moved to AWS",
+      "2019 breach — extensive post-breach security investments",
+      "Strong AI/ML investment, internal Capital One Software arm"
+    ],
+    "competition": "Internal teams, AWS partners",
+    "abc": {
+      "a": "Capital One mostly exited mainframe — but the residual COBOL in legacy lending is the hardest to migrate because that's where the business logic lives. Translating that without field parity verification is the kind of risk you specifically rebuilt the bank to avoid.",
+      "b": "Deterministic parity for the residual COBOL that AWS Mainframe Modernization doesn't fully address",
+      "c": "VP Engineering · 20-min briefing"
+    },
+    "pushbacks": [
+      "We're mostly already on AWS — what's left?",
+      "Strong internal capability and AWS partnership",
+      "Post-breach security architecture is comprehensive"
+    ]
+  },
+  {
+    "slug": "truist",
+    "company": "Truist Financial",
+    "hq": "Charlotte, NC · ≈50,000 employees",
+    "industry": "Banking",
+    "vertical": "Regional Universal Banking",
+    "phone": "844-487-8478",
+    "web": "truist.com",
+    "linkedin": "linkedin.com/company/truist",
+    "zone": "End Customer",
+    "what": "BB&T + SunTrust merger (2019) → Truist. Top-10 US regional.",
+    "mainframe_systems": "IBM z/OS · multi-stack (post-merger)",
+    "modernization_state": "in-progress · merger integration ongoing",
+    "known_systems": "Multiple post-merger legacy stacks (BB&T + SunTrust both had different core banking)",
+    "regulatory_context": "OCC · Fed · FFIEC",
+    "default_role": "Director Mainframe Modernization · or Merger Integration Tech",
+    "digital": [
+      "Public (NYSE: TFC), ~$24B revenue",
+      "BB&T + SunTrust merger 2019 — still consolidating",
+      "Multi-year tech harmonization roadmap",
+      "Heritage Foundation (advocacy) issues — different from the bank"
+    ],
+    "competition": "Accenture, IBM Consulting",
+    "abc": {
+      "a": "Five years post-merger, BB&T and SunTrust legacy systems still don't fully harmonize. Every field crossing between them is a potential drop point in modernization.",
+      "b": "Cross-stack field parity verification",
+      "c": "Director Mainframe Modernization · 20-min briefing"
+    },
+    "pushbacks": [
+      "Merger integration is the priority",
+      "Charlotte-area enterprise pace",
+      "Existing IBM relationship is multi-decade"
+    ]
+  },
+  {
+    "slug": "highmark",
+    "company": "Highmark Health",
+    "hq": "Pittsburgh, PA · ≈40,000 employees",
+    "industry": "Insurance",
+    "vertical": "Health Insurance · BCBS",
+    "phone": "412-544-7000",
+    "web": "highmark.com",
+    "linkedin": "linkedin.com/company/highmark-inc",
+    "zone": "End Customer",
+    "what": "BCBS licensee for PA + WV + DE + NY. ~7M members. Includes Allegheny Health Network (provider).",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "in-progress",
+    "known_systems": "TriZetto Facets; mainframe claims; HEDIS reporting",
+    "regulatory_context": "HIPAA · HITRUST · BCBSA · multi-state DOI",
+    "default_role": "Director Enterprise Architecture · or Claims Tech",
+    "digital": [
+      "Not-for-profit BCBS licensee, ~$24B revenue",
+      "Pittsburgh HQ, founded 1996 (Blue Cross + Blue Shield of WPA merger)",
+      "Allegheny Health Network adds provider-side complexity",
+      "Recent partnership announcements with Google Cloud"
+    ],
+    "competition": "Cognizant (TriZetto), Accenture",
+    "abc": {
+      "a": "Your claims processing engine carries 30+ years of COBOL under Facets. Every modernization workstream touches REDEFINES sections where AI translators silently drop fields — and BCBSA shared infrastructure makes the blast radius large.",
+      "b": "Zero-egress architecture meets BCBSA security requirements",
+      "c": "Director Enterprise Architecture · 20-min briefing"
+    },
+    "pushbacks": [
+      "Cognizant runs TriZetto for us",
+      "BCBSA shared infrastructure has strict requirements",
+      "VRM intake is non-negotiable"
+    ]
+  },
+  {
+    "slug": "bcbs-massachusetts",
+    "company": "Blue Cross Blue Shield of Massachusetts",
+    "hq": "Boston, MA · ≈3,800 employees",
+    "industry": "Insurance",
+    "vertical": "Health Insurance · BCBS",
+    "phone": "617-246-5000",
+    "web": "bluecrossma.org",
+    "linkedin": "linkedin.com/company/blue-cross-blue-shield-of-massachusetts",
+    "zone": "End Customer",
+    "what": "Not-for-profit BCBS licensee for Massachusetts. ~3M members.",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "in-progress",
+    "known_systems": "Facets-based claims; HEDIS; Mass-specific regulatory reporting (CHIA)",
+    "regulatory_context": "HIPAA · HITRUST · Mass DOI · CHIA reporting",
+    "default_role": "Director Enterprise Architecture · or Claims Tech Lead",
+    "digital": [
+      "Not-for-profit, ~$10B revenue",
+      "Massachusetts has unique CHIA reporting requirements",
+      "Strong member experience focus",
+      "Recent AI/ML investments in claims processing"
+    ],
+    "competition": "Cognizant, Accenture",
+    "abc": {
+      "a": "Massachusetts CHIA reporting requires field-perfect transformations — one drop on a member-record migration is a regulatory finding.",
+      "b": "Deterministic parity that meets CHIA + HIPAA",
+      "c": "Director Enterprise Architecture · 20-min briefing"
+    },
+    "pushbacks": [
+      "Existing Cognizant/Facets relationship",
+      "CHIA + HIPAA regulatory environment",
+      "Boston-area enterprise IT pace"
+    ]
+  },
+  {
+    "slug": "cognizant-trizetto",
+    "company": "Cognizant (TriZetto Healthcare)",
+    "hq": "Teaneck, NJ · ≈340,000 employees (Cognizant total)",
+    "industry": "Services",
+    "vertical": "Healthcare IT Services · Facets vendor",
+    "phone": "201-801-0233",
+    "web": "cognizant.com",
+    "linkedin": "linkedin.com/company/cognizant",
+    "zone": "Channel Partner",
+    "what": "Acquired TriZetto 2014. Now THE Facets vendor for US health insurers. Massive services arm.",
+    "mainframe_systems": "Customer-side (z/OS, IBM i)",
+    "modernization_state": "vendor",
+    "known_systems": "TriZetto Facets, QNXT, NetworX, ProviderConnect",
+    "regulatory_context": "HIPAA · CMS",
+    "default_role": "Director Healthcare Modernization Services",
+    "digital": [
+      "Public (NASDAQ: CTSH), ~$20B revenue",
+      "TriZetto acquired 2014 — Facets is industry-standard",
+      "30+ US health insurers run Facets via Cognizant",
+      "Recent AI investments in claims automation"
+    ],
+    "competition": "Accenture Health, Deloitte Health, internal customer IT",
+    "abc": {
+      "a": "Your TriZetto Facets customers all have legacy COBOL underneath Facets that you provide services for. Field-parity verification on those legacy translations is something your delivery team currently does by hand — we automate it.",
+      "b": "5-day deterministic field-parity audit that your consultants can resell as a value-add",
+      "c": "Director Healthcare Modernization · 20-min briefing · co-sell"
+    },
+    "pushbacks": [
+      "We are the TriZetto vendor — how do you fit?",
+      "Massive existing customer relationships",
+      "Internal modernization methodology"
+    ]
+  },
+  {
+    "slug": "centene",
+    "company": "Centene Corporation",
+    "hq": "St. Louis, MO · ≈70,000 employees",
+    "industry": "Insurance",
+    "vertical": "Health Insurance · Medicaid + Marketplace",
+    "phone": "314-725-4477",
+    "web": "centene.com",
+    "linkedin": "linkedin.com/company/centene",
+    "zone": "End Customer",
+    "what": "Largest US Medicaid managed-care insurer. Heavy government-program book.",
+    "mainframe_systems": "IBM z/OS",
+    "modernization_state": "in-progress",
+    "known_systems": "Multiple state-Medicaid claims engines (acquired Magellan, WellCare, others)",
+    "regulatory_context": "HIPAA · CMS · multi-state Medicaid · ACA",
+    "default_role": "Director of Medicaid Tech · or Mainframe Modernization",
+    "digital": [
+      "Public (NYSE: CNC), ~$140B revenue",
+      "Largest Medicaid MCO in US",
+      "Acquired WellCare 2020, Magellan Health 2022 — multiple legacy stacks",
+      "Multi-state government contracts add regulatory weight"
+    ],
+    "competition": "Accenture, Cognizant",
+    "abc": {
+      "a": "Your post-M&A reality is multiple state-Medicaid claims engines that have never been harmonized — every one has its own COBOL dialect and CMS reporting requirements.",
+      "b": "Cross-stack field parity verification with CMS-ready audit logs",
+      "c": "Director Medicaid Tech · 20-min briefing"
+    },
+    "pushbacks": [
+      "Multiple state contracts — extreme regulatory variability",
+      "Big consulting relationships",
+      "Procurement is multi-step"
+    ]
+  },
+  {
+    "slug": "ssa",
+    "company": "Social Security Administration",
+    "hq": "Baltimore, MD · ≈60,000 federal employees",
+    "industry": "Government",
+    "vertical": "Federal · Social Insurance",
+    "phone": "410-965-1234",
+    "web": "ssa.gov",
+    "linkedin": null,
+    "zone": "End Customer",
+    "what": "Federal agency · administers retirement, disability, survivor benefits to ~70M Americans. Famously legacy.",
+    "mainframe_systems": "IBM z/OS · MUMPS · 60M+ lines of COBOL",
+    "modernization_state": "legacy-heavy · multi-decade modernization journey",
+    "known_systems": "Master Beneficiary Record, Master Earnings File, Title II/XVI claims; some MUMPS",
+    "regulatory_context": "Federal (OMB, GAO, Inspector General) · Title 42 USC",
+    "default_role": "Office of Information Technology contact · or Modernization Program Office",
+    "digital": [
+      "Federal agency, ~$1.5T benefits disbursed annually",
+      "60M+ lines of COBOL — one of largest COBOL deployments in US gov",
+      "GAO has documented modernization risks repeatedly (most recent 2024)",
+      "Multi-decade modernization journey continues"
+    ],
+    "competition": "Accenture Federal, IBM Federal, Lockheed Martin, internal SSA OIT",
+    "abc": {
+      "a": "GAO has documented the modernization risks at SSA for over a decade. The Master Beneficiary Record alone has business logic from the 1960s that no living engineer fully understands — and AI translation tools that hallucinate on REDEFINES create the exact failure mode GAO has warned about.",
+      "b": "Deterministic field parity, runs entirely on .gov hardware, FedRAMP-ready architecture",
+      "c": "Office of Information Technology Modernization · 20-min briefing"
+    },
+    "pushbacks": [
+      "Federal procurement (GSA / SEWP) is the only path",
+      "FedRAMP requirements are non-negotiable",
+      "We've had Accenture / Lockheed for decades"
+    ]
+  },
+  {
+    "slug": "irs",
+    "company": "Internal Revenue Service",
+    "hq": "Washington, DC · ≈90,000 federal employees",
+    "industry": "Government",
+    "vertical": "Federal · Tax Administration",
+    "phone": "202-622-5000",
+    "web": "irs.gov",
+    "linkedin": null,
+    "zone": "End Customer",
+    "what": "Federal tax authority. Famously legacy IT — IRS Master File runs since 1960s.",
+    "mainframe_systems": "IBM z/OS · IBM z14/z15 · CADE (Customer Account Data Engine)",
+    "modernization_state": "legacy-heavy · long-overdue · CADE 2 partially modernized",
+    "known_systems": "Individual Master File (IMF), Business Master File (BMF), CADE 2 partial modernization",
+    "regulatory_context": "Federal (Treasury, OMB) · IRC Title 26",
+    "default_role": "IRS Information Technology Office · Enterprise Architecture",
+    "digital": [
+      "Federal agency, processes ~250M returns/year",
+      "Individual Master File written in IBM Assembler + COBOL · 1962",
+      "CADE 2 modernization project running since 2009 — partial progress",
+      "Multiple GAO reports flagging modernization risk; Inflation Reduction Act funding ($80B over 10yr)"
+    ],
+    "competition": "Booz Allen, MITRE, Accenture Federal, Lockheed Martin",
+    "abc": {
+      "a": "The IRS Individual Master File is the most-cited legacy modernization risk in US government. Inflation Reduction Act money is funding the work — and AI translation tools that drop fields silently are the exact category of risk the IG has warned about.",
+      "b": "Deterministic field parity, .gov hardware only, FedRAMP-ready",
+      "c": "IRS IT Modernization Office · 20-min briefing"
+    },
+    "pushbacks": [
+      "Federal procurement (GSA SEWP) is required",
+      "FedRAMP, ATO process, takes years",
+      "Major existing contracts with Booz/MITRE/Accenture"
+    ]
+  },
+  {
+    "slug": "heirloom-computing",
+    "company": "Heirloom Computing",
+    "hq": "Spring, TX",
+    "industry": "Software",
+    "vertical": "Mainframe Modernization · Tools",
+    "phone": "281-825-3500",
+    "web": "heirloomcomputing.com",
+    "linkedin": "linkedin.com/company/heirloom-computing",
+    "zone": "Tool Partner",
+    "what": "Heirloom Platform automatically converts mainframe COBOL to Java for cloud deployment.",
+    "mainframe_systems": "z/OS (their customers')",
+    "modernization_state": "vendor",
+    "known_systems": "Heirloom platform, automated COBOL-to-Java",
+    "regulatory_context": "Customer-side compliance",
+    "default_role": "VP of Sales · or Channel Partnerships",
+    "digital": [
+      "Private, Texas-based",
+      "Automated COBOL-to-Java conversion + cloud deployment",
+      "AWS Mainframe Modernization partner (chosen tool)",
+      "Customers include several Fortune 500 carriers"
+    ],
+    "competition": "LzLabs, Asysco, AWS Mainframe Mod (which also uses them)",
+    "abc": {
+      "a": "Your Heirloom platform converts the COBOL — but verifying the conversion against the original copybook semantics is still a manual QA step. We automate that verification step deterministically.",
+      "b": "Field-parity verification as a value-add inside Heirloom engagements",
+      "c": "VP Channel Partnerships · 20-min briefing · OEM conversation"
+    },
+    "pushbacks": [
+      "We're the conversion tool — what do you add?",
+      "AWS Mainframe Modernization partnership is exclusive",
+      "Small team — partnership only"
+    ]
+  },
+  {
+    "slug": "lzlabs",
+    "company": "LzLabs",
+    "hq": "Zurich, Switzerland · US ops",
+    "industry": "Software",
+    "vertical": "Mainframe Modernization · Software-Defined Mainframe",
+    "phone": "+41 44 386 38 80",
+    "web": "lzlabs.com",
+    "linkedin": "linkedin.com/company/lzlabs",
+    "zone": "Tool Partner",
+    "what": "Software-Defined Mainframe (SDM) — runs IBM mainframe workloads on x86 cloud without recompilation.",
+    "mainframe_systems": "z/OS workloads (customer-side)",
+    "modernization_state": "vendor",
+    "known_systems": "LzLabs SDM, recompile-free mainframe migration",
+    "regulatory_context": "Customer-side",
+    "default_role": "VP Sales · or US Channel Lead",
+    "digital": [
+      "Private, Zurich HQ",
+      "Pioneered software-defined mainframe approach",
+      "Famously sued by IBM 2022 over copyright — settled",
+      "Several public references in BFSI"
+    ],
+    "competition": "IBM (legal adversary), Heirloom, Asysco",
+    "abc": {
+      "a": "Your SDM lifts the mainframe workload to cloud without recompilation — but customers still need to validate that the workload behaves identically. Deterministic field parity verification fits that gap.",
+      "b": "Complementary verification layer; runs on customer hardware",
+      "c": "VP Sales / Channel · 20-min briefing"
+    },
+    "pushbacks": [
+      "Our SDM means no code translation needed — what's your fit?",
+      "Small team — partnership only",
+      "European HQ — time zone considerations"
+    ]
+  },
+  {
+    "slug": "opentext-micro-focus",
+    "company": "OpenText (Micro Focus)",
+    "hq": "Waterloo, ON · ≈25,000 employees",
+    "industry": "Software",
+    "vertical": "Application Modernization · COBOL Tools",
+    "phone": "519-888-7111",
+    "web": "opentext.com",
+    "linkedin": "linkedin.com/company/opentext",
+    "zone": "Tool Partner",
+    "what": "Acquired Micro Focus 2023. Owns RM-COBOL, Visual COBOL, AcuCOBOL, Enterprise Server.",
+    "mainframe_systems": "Customer-side (z/OS, AS400)",
+    "modernization_state": "vendor",
+    "known_systems": "Visual COBOL, RM/COBOL, AcuCOBOL, Enterprise Server, ChangeMan, Net Express",
+    "regulatory_context": "Customer-side",
+    "default_role": "VP of Application Modernization Practice",
+    "digital": [
+      "Public (NASDAQ: OTEX), ~$5B revenue",
+      "Acquired Micro Focus for $6B 2023",
+      "Owns the dominant COBOL development tooling",
+      "Large installed base across BFSI + Government"
+    ],
+    "competition": "Rocket Software, AWS Mainframe Mod, IBM, internal customer teams",
+    "abc": {
+      "a": "Your OpenText/Micro Focus customers run their COBOL on your tools — but the modernization conversations they're having today are about translating that COBOL to modern stacks. We're the verification layer for the translations they're already paying you for delivery on.",
+      "b": "Deterministic parity verification, sits beneath your tooling stack",
+      "c": "VP App Modernization · 20-min briefing · OEM partnership"
+    },
+    "pushbacks": [
+      "Massive existing customer relationships",
+      "Internal Micro Focus modernization methodology",
+      "Procurement is enterprise-scale"
+    ]
+  },
+  {
+    "slug": "aws-mainframe-modernization",
+    "company": "AWS Mainframe Modernization (Amazon Web Services)",
+    "hq": "Seattle, WA",
+    "industry": "Software",
+    "vertical": "Cloud · Mainframe Modernization Service",
+    "phone": "206-266-1000",
+    "web": "aws.amazon.com/mainframe-modernization",
+    "linkedin": "linkedin.com/company/amazon-web-services",
+    "zone": "Tool Partner",
+    "what": "AWS-managed mainframe modernization service. Replatform via partners (Heirloom, BluAge); refactor via others.",
+    "mainframe_systems": "Customer z/OS to AWS",
+    "modernization_state": "vendor",
+    "known_systems": "AWS Mainframe Modernization, AWS Migration Hub, Amazon Q Code Transformer",
+    "regulatory_context": "FedRAMP, HIPAA, PCI",
+    "default_role": "Worldwide Modernization Practice Lead · or partner ecosystem",
+    "digital": [
+      "Subsidiary of public Amazon (NASDAQ: AMZN)",
+      "Mainframe Modernization service launched 2022",
+      "Partner network includes Heirloom, BluAge, Astadia, Modern Systems",
+      "Amazon Q Code Transformer (AI-driven) recently launched"
+    ],
+    "competition": "Microsoft Azure (similar service), Google Cloud, IBM (direct competitor)",
+    "abc": {
+      "a": "Amazon Q Code Transformer does the translation — but customers still need deterministic verification that field semantics are preserved. We're the proof layer that turns Q's output into something a customer's auditor will accept.",
+      "b": "Verification adapter for AWS Mainframe Modernization output",
+      "c": "WW Modernization Practice Lead · 20-min · partner conversation"
+    },
+    "pushbacks": [
+      "Amazon Q already does AI-driven translation",
+      "Partner network is large + curated",
+      "AWS-internal sales process is rigorous"
+    ]
+  },
+  {
+    "slug": "astadia",
+    "company": "Astadia",
+    "hq": "Jacksonville, FL",
+    "industry": "Services",
+    "vertical": "Mainframe-to-Cloud Migration",
+    "phone": "904-280-5210",
+    "web": "astadia.com",
+    "linkedin": "linkedin.com/company/astadia",
+    "zone": "Channel Partner",
+    "what": "Mainframe-to-cloud migration specialist. Strong AWS + Azure partnerships.",
+    "mainframe_systems": "Customer z/OS",
+    "modernization_state": "vendor",
+    "known_systems": "Astadia FastTrack Factory, AWS Mainframe Mod partner, Azure partner",
+    "regulatory_context": "Customer-side",
+    "default_role": "VP Sales · or Modernization Practice Lead",
+    "digital": [
+      "Private",
+      "Mainframe-to-cloud refactor specialist",
+      "AWS + Microsoft Mainframe Mod partner",
+      "Public references in BFSI + government"
+    ],
+    "competition": "Modern Systems, Heirloom, internal Big-4 practices",
+    "abc": {
+      "a": "Your FastTrack Factory delivers the conversion — but customers want field-level audit before accepting the refactor. We give you the audit layer to deliver alongside.",
+      "b": "Deterministic verification for FastTrack output",
+      "c": "VP Sales / Modernization Lead · 20-min briefing · partnership"
+    },
+    "pushbacks": [
+      "We have AWS + Azure factory partnerships",
+      "Internal QA processes",
+      "Boutique scale"
+    ]
+  },
+  {
+    "slug": "fresche-solutions",
+    "company": "Fresche Solutions",
+    "hq": "Montreal, QC · ≈200 employees",
+    "industry": "Software",
+    "vertical": "IBM i / AS400 Modernization",
+    "phone": "514-744-4321",
+    "web": "freschesolutions.com",
+    "linkedin": "linkedin.com/company/fresche-solutions",
+    "zone": "Tool Partner",
+    "what": "IBM i / AS400 modernization tools + services. Strong RPG-to-Java/.NET conversion.",
+    "mainframe_systems": "Customer-side IBM i",
+    "modernization_state": "vendor",
+    "known_systems": "Fresche Pi, Adam, Aldon, X-Analysis (deprecated), Newlook",
+    "regulatory_context": "Customer-side",
+    "default_role": "VP Sales · or Modernization Services Lead",
+    "digital": [
+      "Private, Montreal-based",
+      "20+ years IBM i specialization",
+      "Strong RPG-to-Java/.NET conversion products",
+      "Public references in mid-market BFSI + manufacturing"
+    ],
+    "competition": "Rocket (TeamStudio), Profound Logic, ARCAD",
+    "abc": {
+      "a": "Your IBM i modernization customers care about field-perfect verification of every RPG-to-Java conversion. We're the deterministic verification adapter that lives beneath Fresche Pi.",
+      "b": "Verification on top of Fresche's conversion output",
+      "c": "VP Sales · 20-min · tool-stack partnership"
+    },
+    "pushbacks": [
+      "We have our own QA methodology",
+      "IBM i community is tight-knit",
+      "Boutique scale"
+    ]
+  },
+  {
+    "slug": "accenture-mainframe",
+    "company": "Accenture (Mainframe Modernization Practice)",
+    "hq": "Dublin, Ireland · NYC ops · ≈770,000 employees globally",
+    "industry": "Services",
+    "vertical": "Big-4 Consulting · Mainframe Modernization",
+    "phone": "917-452-4400",
+    "web": "accenture.com",
+    "linkedin": "linkedin.com/company/accenture",
+    "zone": "Channel Partner",
+    "what": "Largest IT services firm globally. Mainframe Modernization practice serves Fortune 500 BFSI + Gov.",
+    "mainframe_systems": "Customer-side z/OS, IBM i",
+    "modernization_state": "vendor",
+    "known_systems": "Accenture myWizard, mainframe transformation methodologies",
+    "regulatory_context": "Customer-side (Fed/HIPAA/PCI/SOX)",
+    "default_role": "Managing Director · Mainframe Modernization · Financial Services or Insurance",
+    "digital": [
+      "Public (NYSE: ACN), ~$65B revenue",
+      "Largest consulting firm globally",
+      "myWizard automation platform widely deployed",
+      "BFSI + Gov verticals are largest mainframe customers"
+    ],
+    "competition": "IBM Consulting, Deloitte, TCS, Capgemini, internal customer teams",
+    "abc": {
+      "a": "Your mainframe modernization engagements at top banks + carriers run 12-24 months, and a meaningful chunk is manual field-mapping QA. We compress that to days deterministically — your consultants ship faster, your margin per engagement goes up.",
+      "b": "Force-multiplier for Accenture delivery teams, not a replacement",
+      "c": "MD Mainframe Modernization · 20-min briefing · co-sell"
+    },
+    "pushbacks": [
+      "We are the consultancy in this category — what's the fit?",
+      "myWizard already handles automation",
+      "Enterprise procurement at our scale is months"
+    ]
+  },
+  {
+    "slug": "ibm-consulting",
+    "company": "IBM Consulting (Application Modernization)",
+    "hq": "Armonk, NY · ≈160,000 (IBM Consulting subset) · ≈280,000 IBM total",
+    "industry": "Services",
+    "vertical": "Big-4 Consulting · Mainframe Native",
+    "phone": "914-499-1900",
+    "web": "ibm.com/consulting",
+    "linkedin": "linkedin.com/company/ibm",
+    "zone": "Channel Partner",
+    "what": "IBM Consulting includes the Application Modernization practice + Mainframe Application Modernization Acceleration tool.",
+    "mainframe_systems": "Customer-side z/OS, IBM i (often also customer of IBM hardware)",
+    "modernization_state": "vendor",
+    "known_systems": "IBM Watsonx Code Assistant for Z, IBM CloudPak for Applications, Garage methodology",
+    "regulatory_context": "Customer-side",
+    "default_role": "Managing Partner · Application Modernization · BFSI",
+    "digital": [
+      "Public (NYSE: IBM), ~$60B revenue (IBM total)",
+      "Watsonx Code Assistant for Z (AI-driven COBOL transformation) recently announced",
+      "Most-tenured mainframe consulting practice (40+ years)",
+      "Strong incumbent at top US banks, carriers, gov"
+    ],
+    "competition": "Accenture, Deloitte, TCS, AWS partners",
+    "abc": {
+      "a": "Watsonx Code Assistant for Z handles the AI translation — but customers want verifiable proof of correctness alongside, not just confidence. We're the deterministic verification layer that complements Watsonx output.",
+      "b": "Verification adapter for Watsonx Code Assistant for Z",
+      "c": "Managing Partner App Mod · 20-min · OEM / co-sell"
+    },
+    "pushbacks": [
+      "IBM has its own AI modernization story (Watsonx)",
+      "Enterprise scale + customer trust",
+      "Internal IBM Consulting methodology"
+    ]
+  },
+  {
+    "slug": "deloitte-mainframe",
+    "company": "Deloitte (Mainframe Modernization Practice)",
+    "hq": "London · NYC US ops · ≈460,000 employees globally",
+    "industry": "Services",
+    "vertical": "Big-4 Consulting · Mainframe Modernization",
+    "phone": "212-492-4000",
+    "web": "deloitte.com",
+    "linkedin": "linkedin.com/company/deloitte",
+    "zone": "Channel Partner",
+    "what": "Big-4 audit + consulting. Mainframe Modernization practice strong in BFSI + Gov.",
+    "mainframe_systems": "Customer-side",
+    "modernization_state": "vendor",
+    "known_systems": "Deloitte AppShield (auto-modernization), strong Federal Gov practice",
+    "regulatory_context": "Customer-side · audit perspective (deep)",
+    "default_role": "Managing Director · App Modernization · Financial Services",
+    "digital": [
+      "Private partnership, ~$65B revenue",
+      "Big-4 + global reach",
+      "Strong Federal Gov practice (Defense, Intel, IRS)",
+      "Audit perspective on modernization risk is unique vs other Big-4"
+    ],
+    "competition": "Accenture, IBM Consulting, EY, KPMG",
+    "abc": {
+      "a": "Your audit perspective on mainframe modernization is unique — but the field-level verification of translation output is still manual QA in your delivery engagements. We make that audit-ready by default.",
+      "b": "Audit-friendly deterministic verification",
+      "c": "MD App Mod · 20-min · co-sell"
+    },
+    "pushbacks": [
+      "Big-4 procurement requirements",
+      "Internal AppShield methodology",
+      "Audit + consulting independence considerations"
+    ]
+  }
+]

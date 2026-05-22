@@ -20,5 +20,9 @@
     "a": "Verify identity first.",
     "b": "Pitch as bench enablement.",
     "c": "20-min briefing with Sales Director."
-  }
+  },
+  "industry": "Services",
+  "vertical": "IT Staffing \u00b7 TBD",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

@@ -20,5 +20,9 @@
     "a": "Your US modernization practice is growing fast \u2014 winning enterprise deals means showing differentiated tooling against Accenture and IBM.",
     "b": "Differentiated tool with mathematical proof, runs on customer hardware.",
     "c": "20-min briefing with Head of Legacy Mod (US)."
-  }
+  },
+  "industry": "Services",
+  "vertical": "IT Services \u00b7 US-growth",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

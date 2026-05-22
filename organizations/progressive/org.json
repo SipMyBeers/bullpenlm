@@ -1,0 +1,36 @@
+{
+  "slug": "progressive",
+  "company": "Progressive Corporation",
+  "hq": "Mayfield Village, OH \u00b7 \u224855,000 employees",
+  "industry": "Insurance",
+  "vertical": "P&C Insurance \u00b7 Auto-heavy",
+  "phone": "440-461-5000",
+  "web": "progressive.com",
+  "linkedin": "linkedin.com/company/progressive-insurance",
+  "zone": "End Customer",
+  "what": "Top-3 US auto insurer. Heavy tech investment, direct-to-consumer model.",
+  "mainframe_systems": "IBM z/OS (legacy claims) + significant modern cloud",
+  "modernization_state": "in-progress",
+  "known_systems": "Proprietary policy admin; advanced telematics (Snapshot); cloud-native customer-facing layer",
+  "regulatory_context": "State DOI \u00b7 50+",
+  "default_role": "Director of Mainframe Modernization \u00b7 BFSI",
+  "digital": [
+    "Public (NYSE: PGR), ~$70B revenue",
+    "Strong reputation for tech-forward operations",
+    "Telematics (Snapshot) is industry-leading",
+    "Less legacy-burdened than Allstate/Travelers but still significant COBOL"
+  ],
+  "competition": "Internal Progressive teams, AWS partners",
+  "abc": {
+    "a": "Progressive's reputation is tech-forward \u2014 but your claims back-end still has 25+ years of COBOL underneath the modern front-end. Every translation tool you trust has the same hallucination problem on REDEFINES.",
+    "b": "Deterministic field parity that meets Progressive's actuarial precision",
+    "c": "Director of Mainframe Modernization \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "We run a strong internal tech team",
+    "Show us the SOC 2 / VRM story before we engage",
+    "We move fast \u2014 but procurement is still procurement"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

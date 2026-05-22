@@ -20,5 +20,9 @@
     "a": "Confirm identity. If wrong \u2192 ask for referral, end clean.",
     "b": "If correct, run the channel-partner pitch.",
     "c": "20-min briefing with Practice Lead \u2014 if correctly identified."
-  }
+  },
+  "industry": "Services",
+  "vertical": "Boutique \u00b7 TBD",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

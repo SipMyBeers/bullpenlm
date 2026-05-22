@@ -1,0 +1,36 @@
+{
+  "slug": "irs",
+  "company": "Internal Revenue Service",
+  "hq": "Washington, DC \u00b7 \u224890,000 federal employees",
+  "industry": "Government",
+  "vertical": "Federal \u00b7 Tax Administration",
+  "phone": "202-622-5000",
+  "web": "irs.gov",
+  "linkedin": null,
+  "zone": "End Customer",
+  "what": "Federal tax authority. Famously legacy IT \u2014 IRS Master File runs since 1960s.",
+  "mainframe_systems": "IBM z/OS \u00b7 IBM z14/z15 \u00b7 CADE (Customer Account Data Engine)",
+  "modernization_state": "legacy-heavy \u00b7 long-overdue \u00b7 CADE 2 partially modernized",
+  "known_systems": "Individual Master File (IMF), Business Master File (BMF), CADE 2 partial modernization",
+  "regulatory_context": "Federal (Treasury, OMB) \u00b7 IRC Title 26",
+  "default_role": "IRS Information Technology Office \u00b7 Enterprise Architecture",
+  "digital": [
+    "Federal agency, processes ~250M returns/year",
+    "Individual Master File written in IBM Assembler + COBOL \u00b7 1962",
+    "CADE 2 modernization project running since 2009 \u2014 partial progress",
+    "Multiple GAO reports flagging modernization risk; Inflation Reduction Act funding ($80B over 10yr)"
+  ],
+  "competition": "Booz Allen, MITRE, Accenture Federal, Lockheed Martin",
+  "abc": {
+    "a": "The IRS Individual Master File is the most-cited legacy modernization risk in US government. Inflation Reduction Act money is funding the work \u2014 and AI translation tools that drop fields silently are the exact category of risk the IG has warned about.",
+    "b": "Deterministic field parity, .gov hardware only, FedRAMP-ready",
+    "c": "IRS IT Modernization Office \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Federal procurement (GSA SEWP) is required",
+    "FedRAMP, ATO process, takes years",
+    "Major existing contracts with Booz/MITRE/Accenture"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

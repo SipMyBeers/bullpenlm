@@ -1,0 +1,36 @@
+{
+  "slug": "metlife",
+  "company": "MetLife",
+  "hq": "New York, NY \u00b7 \u224845,000 employees",
+  "industry": "Insurance",
+  "vertical": "Life Insurance + Annuities",
+  "phone": "212-578-2211",
+  "web": "metlife.com",
+  "linkedin": "linkedin.com/company/metlife",
+  "zone": "End Customer",
+  "what": "Top US life insurer. Strong international (Japan, LATAM, Asia).",
+  "mainframe_systems": "IBM z/OS \u00b7 multi-region",
+  "modernization_state": "in-progress",
+  "known_systems": "Multiple policy admin systems (PolicyLink, internal); annuity engines; ACORD",
+  "regulatory_context": "State DOI \u00b7 international regulators \u00b7 IFRS17",
+  "default_role": "VP Mainframe Modernization \u00b7 or Policy Admin Tech Lead",
+  "digital": [
+    "Public (NYSE: MET), ~$70B revenue",
+    "Long-tail policies (30+ year contracts) on legacy systems",
+    "Recently announced cloud-modernization initiative",
+    "Strong Japanese subsidiary (MetLife Japan) adds regulatory complexity"
+  ],
+  "competition": "Accenture, Cognizant, TCS, Capgemini",
+  "abc": {
+    "a": "Your policy admin systems carry life policies that will outlive every engineer who ever touched them. One field drop on a $2M annuity translation is a regulatory event.",
+    "b": "Deterministic parity verification \u2014 actuarial-grade precision",
+    "c": "VP Mainframe Modernization \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "We have Accenture relationships across multiple workstreams",
+    "International regulatory complexity is non-trivial",
+    "Procurement requires SOC 2 Type II + vendor onboarding"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

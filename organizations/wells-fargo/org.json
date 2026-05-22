@@ -1,0 +1,36 @@
+{
+  "slug": "wells-fargo",
+  "company": "Wells Fargo",
+  "hq": "San Francisco, CA \u00b7 \u2248250,000 employees",
+  "industry": "Banking",
+  "vertical": "Universal Banking",
+  "phone": "415-396-3060",
+  "web": "wellsfargo.com",
+  "linkedin": "linkedin.com/company/wellsfargo",
+  "zone": "End Customer",
+  "what": "Top-4 US bank. Consumer, corporate, mortgage, wealth.",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress",
+  "known_systems": "Mortgage origination + servicing (proprietary); core banking on mainframe; Wachovia legacy",
+  "regulatory_context": "OCC \u00b7 Fed \u00b7 FFIEC \u00b7 CFPB (under heightened scrutiny)",
+  "default_role": "Managing Director \u00b7 Application Modernization",
+  "digital": [
+    "Public (NYSE: WFC), ~$80B revenue",
+    "Under regulatory consent orders since 2018 fake-accounts scandal",
+    "Aggressive tech transformation under CEO Charlie Scharf",
+    "Wachovia (acquired 2008) legacy stacks still in flight"
+  ],
+  "competition": "Accenture, Tata, IBM, Cognizant",
+  "abc": {
+    "a": "Wells has been under consent orders since 2018 \u2014 every modernization workstream is auditor-watched. AI translation tools that hallucinate on REDEFINES become a regulatory event.",
+    "b": "Auditor-friendly deterministic parity; on-prem only; full transformation logs",
+    "c": "Managing Director \u00b7 App Modernization \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "We're under CFPB + OCC scrutiny \u2014 extreme caution",
+    "Multiple existing enterprise relationships",
+    "Public-perception risk on tech vendor selection"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

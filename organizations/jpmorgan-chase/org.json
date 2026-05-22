@@ -1,0 +1,36 @@
+{
+  "slug": "jpmorgan-chase",
+  "company": "JPMorgan Chase",
+  "hq": "New York, NY \u00b7 \u2248280,000 employees",
+  "industry": "Banking",
+  "vertical": "Universal Banking",
+  "phone": "212-270-6000",
+  "web": "jpmorganchase.com",
+  "linkedin": "linkedin.com/company/jpmorganchase",
+  "zone": "End Customer",
+  "what": "Largest US bank by assets. Consumer, corporate, investment banking, asset management.",
+  "mainframe_systems": "IBM z/OS \u00b7 multiple data centers",
+  "modernization_state": "in-progress",
+  "known_systems": "Multi-decade COBOL/Java/Python mix; core banking on mainframe; trading on FPGAs/cloud",
+  "regulatory_context": "OCC \u00b7 Fed \u00b7 FFIEC \u00b7 FDIC \u00b7 NY State DFS",
+  "default_role": "Managing Director \u00b7 Mainframe Modernization \u00b7 or Architecture",
+  "digital": [
+    "Public (NYSE: JPM), ~$160B revenue",
+    "$15B+/year tech spend \u2014 largest IT budget in banking",
+    "Public cloud-modernization roadmap; AWS + Azure partnerships",
+    "Strong internal AI/ML investment (LLM Suite, IndexGPT)"
+  ],
+  "competition": "Internal JPMC IT, Accenture, Tata Consultancy Services, Cognizant",
+  "abc": {
+    "a": "Your core banking, trading, and operations still run on tens of millions of lines of COBOL. Every modernization workstream needs proof \u2014 not promise \u2014 that translations preserve every field. JPM's auditors don't accept vibes.",
+    "b": "Deterministic mathematical verification; runs entirely on your hardware; meets OCC + Fed + FFIEC scrutiny",
+    "c": "Managing Director \u00b7 Mainframe Modernization \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "We have Accenture, IBM, Cognizant relationships across many workstreams",
+    "Regulatory scrutiny is extreme",
+    "Internal IT capability is enormous \u2014 what do you do that we can't?"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

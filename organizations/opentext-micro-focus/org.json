@@ -1,0 +1,36 @@
+{
+  "slug": "opentext-micro-focus",
+  "company": "OpenText (Micro Focus)",
+  "hq": "Waterloo, ON \u00b7 \u224825,000 employees",
+  "industry": "Software",
+  "vertical": "Application Modernization \u00b7 COBOL Tools",
+  "phone": "519-888-7111",
+  "web": "opentext.com",
+  "linkedin": "linkedin.com/company/opentext",
+  "zone": "Tool Partner",
+  "what": "Acquired Micro Focus 2023. Owns RM-COBOL, Visual COBOL, AcuCOBOL, Enterprise Server.",
+  "mainframe_systems": "Customer-side (z/OS, AS400)",
+  "modernization_state": "vendor",
+  "known_systems": "Visual COBOL, RM/COBOL, AcuCOBOL, Enterprise Server, ChangeMan, Net Express",
+  "regulatory_context": "Customer-side",
+  "default_role": "VP of Application Modernization Practice",
+  "digital": [
+    "Public (NASDAQ: OTEX), ~$5B revenue",
+    "Acquired Micro Focus for $6B 2023",
+    "Owns the dominant COBOL development tooling",
+    "Large installed base across BFSI + Government"
+  ],
+  "competition": "Rocket Software, AWS Mainframe Mod, IBM, internal customer teams",
+  "abc": {
+    "a": "Your OpenText/Micro Focus customers run their COBOL on your tools \u2014 but the modernization conversations they're having today are about translating that COBOL to modern stacks. We're the verification layer for the translations they're already paying you for delivery on.",
+    "b": "Deterministic parity verification, sits beneath your tooling stack",
+    "c": "VP App Modernization \u00b7 20-min briefing \u00b7 OEM partnership"
+  },
+  "pushbacks": [
+    "Massive existing customer relationships",
+    "Internal Micro Focus modernization methodology",
+    "Procurement is enterprise-scale"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "tool"
+}

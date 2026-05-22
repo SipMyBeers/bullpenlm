@@ -20,5 +20,9 @@
     "a": "Your legacy app services line ships modernization projects every week \u2014 every one needs field-parity verification done by hand.",
     "b": "Position as the verification layer that automates the most error-prone step.",
     "c": "20-min briefing with Lead for Legacy App Services."
-  }
+  },
+  "industry": "Services",
+  "vertical": "IT Services \u00b7 Legacy App Mod",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

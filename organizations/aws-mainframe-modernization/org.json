@@ -1,0 +1,36 @@
+{
+  "slug": "aws-mainframe-modernization",
+  "company": "AWS Mainframe Modernization (Amazon Web Services)",
+  "hq": "Seattle, WA",
+  "industry": "Software",
+  "vertical": "Cloud \u00b7 Mainframe Modernization Service",
+  "phone": "206-266-1000",
+  "web": "aws.amazon.com/mainframe-modernization",
+  "linkedin": "linkedin.com/company/amazon-web-services",
+  "zone": "Tool Partner",
+  "what": "AWS-managed mainframe modernization service. Replatform via partners (Heirloom, BluAge); refactor via others.",
+  "mainframe_systems": "Customer z/OS to AWS",
+  "modernization_state": "vendor",
+  "known_systems": "AWS Mainframe Modernization, AWS Migration Hub, Amazon Q Code Transformer",
+  "regulatory_context": "FedRAMP, HIPAA, PCI",
+  "default_role": "Worldwide Modernization Practice Lead \u00b7 or partner ecosystem",
+  "digital": [
+    "Subsidiary of public Amazon (NASDAQ: AMZN)",
+    "Mainframe Modernization service launched 2022",
+    "Partner network includes Heirloom, BluAge, Astadia, Modern Systems",
+    "Amazon Q Code Transformer (AI-driven) recently launched"
+  ],
+  "competition": "Microsoft Azure (similar service), Google Cloud, IBM (direct competitor)",
+  "abc": {
+    "a": "Amazon Q Code Transformer does the translation \u2014 but customers still need deterministic verification that field semantics are preserved. We're the proof layer that turns Q's output into something a customer's auditor will accept.",
+    "b": "Verification adapter for AWS Mainframe Modernization output",
+    "c": "WW Modernization Practice Lead \u00b7 20-min \u00b7 partner conversation"
+  },
+  "pushbacks": [
+    "Amazon Q already does AI-driven translation",
+    "Partner network is large + curated",
+    "AWS-internal sales process is rigorous"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "tool"
+}

@@ -20,5 +20,9 @@
     "a": "Your mainframe consultants are billing hourly for schema discovery work a tool could do in minutes.",
     "b": "Pitch as bench enablement.",
     "c": "20-min briefing with Lead for Mainframe Services."
-  }
+  },
+  "industry": "Services",
+  "vertical": "IT Staffing \u00b7 Mainframe",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

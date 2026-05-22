@@ -1,0 +1,36 @@
+{
+  "slug": "fresche-solutions",
+  "company": "Fresche Solutions",
+  "hq": "Montreal, QC \u00b7 \u2248200 employees",
+  "industry": "Software",
+  "vertical": "IBM i / AS400 Modernization",
+  "phone": "514-744-4321",
+  "web": "freschesolutions.com",
+  "linkedin": "linkedin.com/company/fresche-solutions",
+  "zone": "Tool Partner",
+  "what": "IBM i / AS400 modernization tools + services. Strong RPG-to-Java/.NET conversion.",
+  "mainframe_systems": "Customer-side IBM i",
+  "modernization_state": "vendor",
+  "known_systems": "Fresche Pi, Adam, Aldon, X-Analysis (deprecated), Newlook",
+  "regulatory_context": "Customer-side",
+  "default_role": "VP Sales \u00b7 or Modernization Services Lead",
+  "digital": [
+    "Private, Montreal-based",
+    "20+ years IBM i specialization",
+    "Strong RPG-to-Java/.NET conversion products",
+    "Public references in mid-market BFSI + manufacturing"
+  ],
+  "competition": "Rocket (TeamStudio), Profound Logic, ARCAD",
+  "abc": {
+    "a": "Your IBM i modernization customers care about field-perfect verification of every RPG-to-Java conversion. We're the deterministic verification adapter that lives beneath Fresche Pi.",
+    "b": "Verification on top of Fresche's conversion output",
+    "c": "VP Sales \u00b7 20-min \u00b7 tool-stack partnership"
+  },
+  "pushbacks": [
+    "We have our own QA methodology",
+    "IBM i community is tight-knit",
+    "Boutique scale"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "tool"
+}

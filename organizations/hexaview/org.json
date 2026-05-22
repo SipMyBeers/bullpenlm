@@ -20,5 +20,9 @@
     "a": "Your modernization practice is growing \u2014 winning enterprise BFSI deals means showing differentiated tooling.",
     "b": "Mathematical proof nothing got lost.",
     "c": "20-min briefing with Head of Mod Services or CTO."
-  }
+  },
+  "industry": "Services",
+  "vertical": "Custom Dev \u00b7 Modernization",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

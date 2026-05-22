@@ -1,0 +1,36 @@
+{
+  "slug": "prudential",
+  "company": "Prudential Financial",
+  "hq": "Newark, NJ \u00b7 \u224840,000 employees",
+  "industry": "Insurance",
+  "vertical": "Life Insurance + Retirement",
+  "phone": "973-802-6000",
+  "web": "prudential.com",
+  "linkedin": "linkedin.com/company/prudential-financial",
+  "zone": "End Customer",
+  "what": "Top US life + retirement carrier. Strong asset management arm (PGIM).",
+  "mainframe_systems": "IBM z/OS + IBM i",
+  "modernization_state": "in-progress",
+  "known_systems": "Policy admin (multiple), annuity engines, group benefits platform",
+  "regulatory_context": "State DOI \u00b7 SEC (PGIM) \u00b7 ERISA",
+  "default_role": "Director of Mainframe Modernization",
+  "digital": [
+    "Public (NYSE: PRU), ~$60B revenue",
+    "Newark NJ HQ, ~150 years old",
+    "PGIM (asset management arm) more cloud-native than core insurance",
+    "Multi-year modernization roadmap publicly mentioned"
+  ],
+  "competition": "Accenture, Cognizant, Deloitte",
+  "abc": {
+    "a": "Your group benefits platform and policy admin systems carry decades of COBOL business logic the modern Java/cloud front-end doesn't touch \u2014 every modernization workstream needs deterministic parity proof.",
+    "b": "Field-level audit in 5 days vs Big-4's 8-12 weeks",
+    "c": "Director of Mainframe Modernization \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "We work with several large consultancies already",
+    "Show us procurement-ready documentation",
+    "Newark/insurance-industry pace"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

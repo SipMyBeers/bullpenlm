@@ -20,5 +20,9 @@
     "a": "Your cowboys do schema discovery by hand on every engagement.",
     "b": "Tool hands your guys the field-level map in 13 seconds. Instrument they wield, NOT replacement.",
     "c": "20-min call with Bill or Eileen."
-  }
+  },
+  "industry": "Services",
+  "vertical": "COBOL Specialists \u00b7 Famous",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

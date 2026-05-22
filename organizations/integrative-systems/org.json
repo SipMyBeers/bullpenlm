@@ -20,5 +20,9 @@
     "a": "20 years of AS400 means you've seen every COBOL copybook nightmare.",
     "b": "Tool hands your team field-level maps in 13 seconds.",
     "c": "20-min briefing with AS400 / COBOL Services Lead."
-  }
+  },
+  "industry": "Services",
+  "vertical": "AS400 / IBM i Specialists",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

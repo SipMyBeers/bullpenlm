@@ -20,5 +20,9 @@
     "a": "Your modernization bids are losing to incumbents on parity-risk concerns.",
     "b": "Show a verifiable proof-of-correctness story competitors can't match.",
     "c": "20-min briefing with Practice Lead. Bid-differentiator conversation."
-  }
+  },
+  "industry": "Services",
+  "vertical": "Global IT Services \u00b7 Modernization",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

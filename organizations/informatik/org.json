@@ -20,5 +20,9 @@
     "a": "Your data migration projects stall when downstream schemas can't be verified field-by-field.",
     "b": "Show how parity verification complements their data movement layer.",
     "c": "20-min briefing \u2014 integration / OEM conversation."
-  }
+  },
+  "industry": "Software",
+  "vertical": "Data Migration Tools",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

@@ -20,5 +20,9 @@
     "a": "The engineers who wrote your group disability system are retiring, and the people replacing them use AI to translate it \u2014 multi-million dollar ticking time bomb.",
     "b": "5-day risk assessment pilot on 5 worst copybooks.",
     "c": "Name + email of IT Sourcing / Office of CIO."
-  }
+  },
+  "industry": "Insurance",
+  "vertical": "Group Disability + Life",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress"
 }

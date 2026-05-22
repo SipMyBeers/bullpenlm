@@ -20,5 +20,9 @@
     "a": "Your consultants do schema discovery by hand before they touch the actual UI conversion.",
     "b": "Reveal the 13-second AST map on a customer's RPG copybook.",
     "c": "20-min briefing with Director of AS400 Integration. Tool-stack partnership."
-  }
+  },
+  "industry": "Software",
+  "vertical": "IBM i / AS400 Modernization",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

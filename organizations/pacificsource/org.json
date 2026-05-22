@@ -20,5 +20,9 @@
     "a": "The engineers who wrote your claims processing are retiring, and the people replacing them use ChatGPT.",
     "b": "Code never leaves your network \u2014 meets HIPAA requirements.",
     "c": "Name + email of IT Enterprise Architecture or Claims Tech Lead."
-  }
+  },
+  "industry": "Insurance",
+  "vertical": "Health \u00b7 Regional",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress"
 }

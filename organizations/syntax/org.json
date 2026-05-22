@@ -20,5 +20,9 @@
     "a": "Your insurance carrier clients are sitting on COBOL copybook risk that becomes your operational problem when they call you to modernize.",
     "b": "Field-level audit in 5 days, deterministic \u2014 beats anything they can hand-roll.",
     "c": "20-min briefing with Director of Legacy Modernization. Co-sell into one of their insurance accounts as a pilot beachhead."
-  }
+  },
+  "industry": "Services",
+  "vertical": "Managed IT \u00b7 BFSI Outsourcing",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

@@ -20,5 +20,9 @@
     "a": "The engineers who wrote your customer billing system are retiring. AI tools translating that code can quietly drop fields \u2014 refunds, regulator letters, audit findings.",
     "b": "Show how field-parity verification protects PUC regulatory reporting.",
     "c": "Name + email of CIO office or Enterprise IT modernization lead."
-  }
+  },
+  "industry": "Utility",
+  "vertical": "Natural Gas \u00b7 PUC-regulated",
+  "mainframe_systems": "IBM z/OS / mainframe billing",
+  "modernization_state": "in-progress"
 }

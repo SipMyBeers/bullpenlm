@@ -194,6 +194,26 @@
   .hud-legend .li[data-s="signed"]{color:#fde047}
   .hud-legend .li[data-s="disqualified"]{color:#f87171}
   .hud-legend .li .d{background:currentColor}
+  /* Industry filter strip — top edge of the floor */
+  .industry-strip{position:fixed; top:48px; left:0; right:0; z-index:5;
+    background:rgba(26,18,8,0.85); backdrop-filter:blur(8px);
+    border-bottom:1px solid rgba(245,232,216,0.08);
+    padding:6px 20px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;
+    font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase}
+  .industry-strip .label{color:var(--muted); margin-right:8px}
+  .industry-strip .ind{padding:4px 10px; border:1px solid rgba(245,232,216,0.10); border-radius:2px;
+    background:transparent; color:var(--muted); cursor:pointer; transition:all .12s}
+  .industry-strip .ind:hover{color:var(--text); border-color:rgba(245,232,216,0.30)}
+  .industry-strip .ind.active{color:#fff; border-color:currentColor; background:rgba(255,255,255,0.04)}
+  .industry-strip .ind[data-ind="Insurance"]{--c:#fbbf24}
+  .industry-strip .ind[data-ind="Banking"]{--c:#22d3ee}
+  .industry-strip .ind[data-ind="Government"]{--c:#a78bfa}
+  .industry-strip .ind[data-ind="Healthcare"]{--c:#f472b6}
+  .industry-strip .ind[data-ind="Services"]{--c:#34d399}
+  .industry-strip .ind[data-ind="Software"]{--c:#67e8f9}
+  .industry-strip .ind.active{color:var(--c); border-color:var(--c); background:color-mix(in srgb, var(--c) 12%, transparent)}
+  .industry-strip .key{display:inline-block; padding:1px 5px; background:rgba(245,232,216,0.08); border-radius:2px; margin-right:5px; font-size:8.5px; color:var(--muted)}
+  .stage{top:80px !important}   /* push the canvas down to make room for the strip */
   .ident-pills{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px}
   .pill{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; padding:3px 8px; border-radius:2px; border:1px solid currentColor; background:rgba(255,255,255,0.03)}
   .pill.end{color:var(--end)} .pill.channel{color:var(--channel)} .pill.tool{color:var(--tool)} .pill.boutique{color:var(--boutique)}
@@ -235,6 +255,17 @@
     <span class="legend boutique"><span class="dot"></span>Boutique</span>
   </div>
 </header>
+
+<div class="industry-strip" id="industry-strip">
+  <span class="label">Filter by industry · keys</span>
+  <button type="button" class="ind" data-ind="Insurance" data-key="Q"><span class="key">Q</span>Insurance</button>
+  <button type="button" class="ind" data-ind="Banking" data-key="W"><span class="key">W</span>Banking</button>
+  <button type="button" class="ind" data-ind="Government" data-key="E"><span class="key">E</span>Government</button>
+  <button type="button" class="ind" data-ind="Healthcare" data-key="R"><span class="key">R</span>Healthcare</button>
+  <button type="button" class="ind" data-ind="Services" data-key="T"><span class="key">T</span>Services</button>
+  <button type="button" class="ind" data-ind="Software" data-key="Y"><span class="key">Y</span>Software</button>
+  <button type="button" class="ind" data-ind="" style="margin-left:auto; color:var(--muted)"><span class="key">Esc</span>Clear</button>
+</div>
 
 <div class="stage">
   <canvas id="floor"></canvas>
@@ -384,6 +415,7 @@ const tt = document.getElementById("tt");
 
 let plazaTile = null;          // offscreen canvas with the procedural plaza texture
 let zoneFilter = null;
+let industryFilter = null;
 let hover = null;
 let lastT = performance.now();
 
@@ -823,7 +855,9 @@ function draw(t) {
   agents.forEach(a => stepAgent(a, dt));
   const sorted = [...agents].sort((x, y) => x.y - y.y);
   for (const a of sorted) {
-    const dim = zoneFilter && zoneFilter !== a.zone;
+    const orgIndustry = (ORG_GRAPH[a.slug] || {}).industry || "";
+    const dim = (zoneFilter && zoneFilter !== a.zone)
+             || (industryFilter && industryFilter !== orgIndustry);
     ctx.globalAlpha = dim ? 0.3 : 1;
     drawAgent(a, t);
   }
@@ -880,11 +914,41 @@ canvas.addEventListener("click", e => {
 document.addEventListener("keydown", e => {
   const zMap = { "1": "end", "2": "channel", "3": "tool", "4": "boutique" };
   if (zMap[e.key]) zoneFilter = zoneFilter === zMap[e.key] ? null : zMap[e.key];
-  if (e.key === "0") zoneFilter = null;
+
+  // Industry filter — Q W E R T Y for the 6 main verticals
+  const iMap = {
+    "q": "Insurance",
+    "w": "Banking",
+    "e": "Government",
+    "r": "Healthcare",
+    "t": "Services",
+    "y": "Software",
+  };
+  if (iMap[e.key.toLowerCase()]) {
+    industryFilter = industryFilter === iMap[e.key.toLowerCase()] ? null : iMap[e.key.toLowerCase()];
+    updateIndustryStripActive();
+  }
+
+  if (e.key === "0") { zoneFilter = null; industryFilter = null; updateIndustryStripActive(); }
   if (e.key === "Escape") {
     if (document.getElementById("focus").classList.contains("open")) closeDossier();
-    else zoneFilter = null;
+    else { zoneFilter = null; industryFilter = null; updateIndustryStripActive(); }
   }
+});
+
+function updateIndustryStripActive() {
+  document.querySelectorAll("#industry-strip .ind").forEach(el => {
+    el.classList.toggle("active", el.dataset.ind === industryFilter);
+  });
+}
+
+// Click handlers for the strip — same toggle behavior as the keys
+document.querySelectorAll("#industry-strip .ind").forEach(el => {
+  el.addEventListener("click", () => {
+    const wanted = el.dataset.ind || null;
+    industryFilter = (industryFilter === wanted || !wanted) ? null : wanted;
+    updateIndustryStripActive();
+  });
 });
 
 /* ────────────────────────────────────────────────────────────────────────

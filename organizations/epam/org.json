@@ -20,5 +20,9 @@
     "a": "Your BFSI modernization SOWs burn weeks on manual field-mapping customers don't see as billable value.",
     "b": "Compress that work to 5 business days with mathematical proof.",
     "c": "20-min briefing with Director of Mainframe Mod or BFSI vertical lead."
-  }
+  },
+  "industry": "Services",
+  "vertical": "Engineering Services \u00b7 BFSI",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

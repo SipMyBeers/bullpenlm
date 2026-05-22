@@ -20,5 +20,9 @@
     "a": "Your policy admin system carries life policies spanning 30+ years. Every COBOL touch by an AI tool risks a quiet field drop on a $2M annuity.",
     "b": "Translate the code AND mathematically prove nothing got lost.",
     "c": "Name + email of Enterprise IT / Modernization PMO lead."
-  }
+  },
+  "industry": "Insurance",
+  "vertical": "Life + Retirement",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress"
 }

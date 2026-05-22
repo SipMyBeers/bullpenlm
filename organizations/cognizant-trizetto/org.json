@@ -1,0 +1,36 @@
+{
+  "slug": "cognizant-trizetto",
+  "company": "Cognizant (TriZetto Healthcare)",
+  "hq": "Teaneck, NJ \u00b7 \u2248340,000 employees (Cognizant total)",
+  "industry": "Services",
+  "vertical": "Healthcare IT Services \u00b7 Facets vendor",
+  "phone": "201-801-0233",
+  "web": "cognizant.com",
+  "linkedin": "linkedin.com/company/cognizant",
+  "zone": "Channel Partner",
+  "what": "Acquired TriZetto 2014. Now THE Facets vendor for US health insurers. Massive services arm.",
+  "mainframe_systems": "Customer-side (z/OS, IBM i)",
+  "modernization_state": "vendor",
+  "known_systems": "TriZetto Facets, QNXT, NetworX, ProviderConnect",
+  "regulatory_context": "HIPAA \u00b7 CMS",
+  "default_role": "Director Healthcare Modernization Services",
+  "digital": [
+    "Public (NASDAQ: CTSH), ~$20B revenue",
+    "TriZetto acquired 2014 \u2014 Facets is industry-standard",
+    "30+ US health insurers run Facets via Cognizant",
+    "Recent AI investments in claims automation"
+  ],
+  "competition": "Accenture Health, Deloitte Health, internal customer IT",
+  "abc": {
+    "a": "Your TriZetto Facets customers all have legacy COBOL underneath Facets that you provide services for. Field-parity verification on those legacy translations is something your delivery team currently does by hand \u2014 we automate it.",
+    "b": "5-day deterministic field-parity audit that your consultants can resell as a value-add",
+    "c": "Director Healthcare Modernization \u00b7 20-min briefing \u00b7 co-sell"
+  },
+  "pushbacks": [
+    "We are the TriZetto vendor \u2014 how do you fit?",
+    "Massive existing customer relationships",
+    "Internal modernization methodology"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "channel"
+}

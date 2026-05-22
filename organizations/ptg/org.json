@@ -20,5 +20,9 @@
     "a": "Your mainframe consultants are doing schema discovery by hand on every engagement.",
     "b": "13-second field-level map.",
     "c": "20-min briefing with Mainframe Consulting Lead."
-  }
+  },
+  "industry": "Services",
+  "vertical": "Mainframe Consulting \u00b7 Boutique",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

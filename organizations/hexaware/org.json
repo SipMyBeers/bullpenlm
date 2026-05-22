@@ -20,5 +20,9 @@
     "a": "Your BFSI deals carry parity-risk you mitigate today with senior consultant review hours.",
     "b": "Replace those hours with deterministic math.",
     "c": "20-min briefing with Head of Legacy Modernization."
-  }
+  },
+  "industry": "Services",
+  "vertical": "IT Services \u00b7 BFSI",
+  "mainframe_systems": "Customer-side z/OS / IBM i",
+  "modernization_state": "in-progress"
 }

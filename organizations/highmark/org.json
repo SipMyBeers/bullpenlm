@@ -1,0 +1,36 @@
+{
+  "slug": "highmark",
+  "company": "Highmark Health",
+  "hq": "Pittsburgh, PA \u00b7 \u224840,000 employees",
+  "industry": "Insurance",
+  "vertical": "Health Insurance \u00b7 BCBS",
+  "phone": "412-544-7000",
+  "web": "highmark.com",
+  "linkedin": "linkedin.com/company/highmark-inc",
+  "zone": "End Customer",
+  "what": "BCBS licensee for PA + WV + DE + NY. ~7M members. Includes Allegheny Health Network (provider).",
+  "mainframe_systems": "IBM z/OS",
+  "modernization_state": "in-progress",
+  "known_systems": "TriZetto Facets; mainframe claims; HEDIS reporting",
+  "regulatory_context": "HIPAA \u00b7 HITRUST \u00b7 BCBSA \u00b7 multi-state DOI",
+  "default_role": "Director Enterprise Architecture \u00b7 or Claims Tech",
+  "digital": [
+    "Not-for-profit BCBS licensee, ~$24B revenue",
+    "Pittsburgh HQ, founded 1996 (Blue Cross + Blue Shield of WPA merger)",
+    "Allegheny Health Network adds provider-side complexity",
+    "Recent partnership announcements with Google Cloud"
+  ],
+  "competition": "Cognizant (TriZetto), Accenture",
+  "abc": {
+    "a": "Your claims processing engine carries 30+ years of COBOL under Facets. Every modernization workstream touches REDEFINES sections where AI translators silently drop fields \u2014 and BCBSA shared infrastructure makes the blast radius large.",
+    "b": "Zero-egress architecture meets BCBSA security requirements",
+    "c": "Director Enterprise Architecture \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Cognizant runs TriZetto for us",
+    "BCBSA shared infrastructure has strict requirements",
+    "VRM intake is non-negotiable"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}

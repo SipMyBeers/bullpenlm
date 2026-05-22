@@ -1,0 +1,36 @@
+{
+  "slug": "citigroup",
+  "company": "Citigroup",
+  "hq": "New York, NY \u00b7 \u2248240,000 employees",
+  "industry": "Banking",
+  "vertical": "Universal Banking \u00b7 Global",
+  "phone": "212-559-1000",
+  "web": "citigroup.com",
+  "linkedin": "linkedin.com/company/citi",
+  "zone": "End Customer",
+  "what": "Global universal bank. Major institutional/corporate presence in ~95 countries.",
+  "mainframe_systems": "IBM z/OS \u00b7 global",
+  "modernization_state": "in-progress",
+  "known_systems": "Global TTS (Treasury & Trade Solutions); multi-country core banking",
+  "regulatory_context": "OCC \u00b7 Fed \u00b7 Global (UK FCA, EU ECB, Asia)",
+  "default_role": "Managing Director \u00b7 Mainframe Transformation",
+  "digital": [
+    "Public (NYSE: C), ~$80B revenue",
+    "Under Jane Fraser's multi-year simplification + transformation",
+    "Famous 2020 $900M Revlon wire-transfer error \u2014 modernization urgency",
+    "Recent FRB consent orders on data + risk management"
+  ],
+  "competition": "Accenture, IBM, TCS, Capgemini",
+  "abc": {
+    "a": "Citi's 2020 $900M wire-transfer accident was a UI + workflow issue rooted in legacy systems. Modernization isn't optional \u2014 and AI translation that drops fields creates the next $900M accident.",
+    "b": "Deterministic verification eliminates the field-drop category of accidents",
+    "c": "Managing Director \u00b7 Mainframe Transformation \u00b7 20-min briefing"
+  },
+  "pushbacks": [
+    "Global regulators (UK, EU, Asia) each have different requirements",
+    "Under FRB consent order \u2014 extreme caution",
+    "Major existing enterprise vendor relationships"
+  ],
+  "source": "cobol-corpus-v1",
+  "zoneCode": "end"
+}
