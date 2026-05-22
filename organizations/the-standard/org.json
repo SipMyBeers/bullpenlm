@@ -1,0 +1,24 @@
+{
+  "slug": "the-standard",
+  "company": "The Standard (StanCorp Financial)",
+  "hq": "Portland, OR \u00b7 group disability + life",
+  "zone": "End Customer",
+  "zoneCode": "end",
+  "what": "Group disability + life insurance carrier. Owned by Meiji Yasuda. Long-tenured COBOL claims systems.",
+  "techStack": "Mainframe claims + policy admin; Java/.NET digital layer; ServiceNow",
+  "phone": "971-321-7000",
+  "web": "standard.com",
+  "linkedin": "linkedin.com/company/the-standard",
+  "dealsInFlight": "Group disability claims modernization; multi-year mainframe-to-cloud workstreams",
+  "decisionMakers": "IT Sourcing; Office of the CIO; Director of Enterprise Architecture",
+  "alreadyUsing": "Mainframe + Accenture engagement (publicly known)",
+  "competition": "Accenture, Cognizant, Capgemini, Deloitte insurance practice",
+  "source": "killsesh-seed",
+  "default_role": "IT Sourcing / Office of the CIO contact",
+  "bio": "Portland-based insurance carrier IT sourcing exec. Polite, Pacific Northwest professional, manages you toward the right channel rather than saying no. Cares about existing Accenture relationships, vendor financial stability, proven case studies. Won't engage with a one-person company on price \u2014 needs to see the trust architecture first.",
+  "abc": {
+    "a": "The engineers who wrote your group disability system are retiring, and the people replacing them use AI to translate it \u2014 multi-million dollar ticking time bomb.",
+    "b": "5-day risk assessment pilot on 5 worst copybooks.",
+    "c": "Name + email of IT Sourcing / Office of CIO."
+  }
+}

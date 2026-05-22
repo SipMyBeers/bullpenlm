@@ -136,6 +136,52 @@
   .save-btn{font-family:var(--mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; padding:7px 14px; background:rgba(52,211,153,0.15); color:var(--accent); border:1px solid var(--accent-dim); border-radius:3px; cursor:pointer}
   .save-btn:hover{background:rgba(52,211,153,0.25)}
   .save-btn.saved{background:var(--accent); color:#0d0d0d}
+  /* ─── Dossier tabs ─── */
+  .tab-bar{display:flex; gap:4px; margin:0 0 14px; border-bottom:1px solid rgba(245,232,216,0.10)}
+  .tab{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; padding:9px 14px 11px; background:transparent; color:var(--muted); border:0; border-bottom:2px solid transparent; cursor:pointer; transition:all .12s}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--accent); border-bottom-color:var(--accent)}
+  .tab .count{display:inline-block; margin-left:6px; padding:0 6px; background:rgba(245,232,216,0.08); border-radius:8px; font-size:9px}
+  .tab.active .count{background:rgba(52,211,153,0.20); color:var(--accent-2)}
+  /* People grid */
+  .people-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:10px; margin-top:6px}
+  .person-card{background:rgba(26,18,8,0.55); border:1px solid rgba(245,232,216,0.10); border-radius:6px; padding:10px 12px}
+  .person-card .pn{font-family:var(--serif); font-size:14.5px; font-weight:600; color:#fff}
+  .person-card .pr{font-family:var(--mono); font-size:9.5px; letter-spacing:.10em; color:var(--muted); text-transform:uppercase; margin:2px 0 6px}
+  .person-card .meta{font-size:11.5px; color:var(--muted)}
+  .person-card .meta .rel{display:inline-block; padding:1px 6px; border-radius:2px; background:rgba(255,255,255,0.05); margin-right:5px; font-family:var(--mono); font-size:9.5px; letter-spacing:.10em; text-transform:uppercase}
+  .person-card .rel.champion,.person-card .rel.primary_contact{color:var(--accent)}
+  .person-card .rel.decision_maker{color:var(--cyan)}
+  .person-card .rel.blocker{color:var(--danger)}
+  .person-card .rel.gatekeeper,.person-card .rel.informational{color:var(--warn)}
+  /* Calls timeline */
+  .call-row{background:rgba(26,18,8,0.5); border-left:3px solid var(--cyan); border-radius:0 4px 4px 0; padding:10px 12px; margin-bottom:6px}
+  .call-row .h{display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap}
+  .call-row .id{font-family:var(--mono); font-size:10.5px; color:var(--muted); letter-spacing:.04em}
+  .call-row .sig{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; padding:2px 6px; border-radius:2px; background:rgba(52,211,153,0.10); color:var(--accent)}
+  .call-row .sum{font-family:var(--serif); font-size:13.5px; color:#dcdcdc; margin:6px 0 0; line-height:1.55}
+  /* Deals */
+  .deal-row{background:rgba(26,18,8,0.5); border:1px solid rgba(245,232,216,0.10); border-radius:6px; padding:12px 14px; margin-bottom:8px}
+  .deal-row .nm{font-family:var(--serif); font-size:15px; font-weight:600; color:#fff}
+  .deal-row .meta{font-family:var(--mono); font-size:10.5px; color:var(--muted); letter-spacing:.04em; margin-top:4px}
+  .deal-row .stage{display:inline-block; padding:2px 8px; border-radius:3px; font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase}
+  /* Brief */
+  .brief-md{font-family:var(--serif); font-size:14.5px; line-height:1.7; color:#dcdcdc; white-space:pre-wrap; padding:14px 16px; background:rgba(26,18,8,0.50); border-left:3px solid var(--accent); border-radius:0 4px 4px 0}
+  .brief-md h1,.brief-md h2,.brief-md h3{font-family:var(--sans); font-weight:600; color:#fff; line-height:1.25; margin:18px 0 6px}
+  .brief-md h1{font-size:20px}
+  .brief-md h2{font-size:15px; font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin:18px 0 6px}
+  .brief-md strong{color:#fff}
+  .brief-md em{color:var(--warn); font-style:normal}
+  /* Action buttons row */
+  .action-row{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px}
+  .action-btn{display:flex; align-items:center; justify-content:center; gap:8px; padding:11px 14px; font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; background:rgba(34,211,238,0.10); border:1px solid var(--channel); color:var(--channel); border-radius:5px; cursor:pointer; text-decoration:none}
+  .action-btn:hover{background:rgba(34,211,238,0.20); color:#fff}
+  .action-btn.record{background:rgba(248,113,113,0.10); border-color:var(--danger); color:var(--danger)}
+  .action-btn.record.live{background:var(--danger); color:#fff; animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+  .action-btn.brief{background:rgba(167,139,250,0.10); border-color:#a78bfa; color:#a78bfa}
+  .action-btn.brief:hover{background:rgba(167,139,250,0.20)}
+  .empty-tab{text-align:center; padding:32px 16px; color:var(--muted); font-style:italic; font-size:13.5px}
   /* ─── HUD legend strip ─── */
   .hud-legend{position:fixed; right:16px; bottom:16px; z-index:5; background:rgba(26,18,8,0.85); backdrop-filter:blur(8px); border:1px solid rgba(245,232,216,0.10); border-radius:3px; padding:8px 12px; font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; color:var(--muted); text-transform:uppercase; display:flex; gap:14px; align-items:center; flex-wrap:wrap; max-width:calc(100vw - 380px)}
   .hud-legend .li{display:inline-flex; align-items:center; gap:5px}
@@ -224,369 +270,50 @@
 /* ────────────────────────────────────────────────────────────────────────
    PROSPECT CORPUS — unchanged from previous version.
    ─────────────────────────────────────────────────────────────────────── */
-const PROSPECTS = [
-  // TOOL PARTNERS
-  { slug:"rocket-software", zone:"tool", company:"Rocket Software",
-    hq:"Waltham, MA · ≈2,500 employees", phone:"781-226-1100",
-    web:"rocketsoftware.com", linkedin:"linkedin.com/company/rocket-software",
-    role:"VP of Application Modernization",
-    personName:null,
-    bio:"The VP of App Modernization at Rocket runs the modernization tooling product line — BlueZone, TeamStudio, the RPG/COBOL converters. Almost certainly came up through enterprise software at IBM, CA, or a competing modernization vendor before landing here 5-15 years ago. Has seen north of 100 startup pitches. Polite Boston-area enterprise tone, time-pressured, but won't be rude unless you waste theirs.",
-    what:"800-lb gorilla of IBM i / AS400 / mainframe modernization tools. Owns BlueZone, TeamStudio, RPG + COBOL conversion stacks.",
-    techStack:"IBM Z, IBM i, BlueZone terminal emulation, TeamStudio for RPG modernization, COBOL/JCL tooling",
-    digital:["Bain Capital majority-owned since 2018","Acquired Open Sistemas (2023), ASG (2021) — aggressive consolidation play","Active at SHARE, COMMON, IBM TechXchange conferences","Job postings emphasize cloud-native modernization roles"],
-    dealsInFlight:"Continuous customer modernization at Fortune 500 banks & insurers; bidding alongside IBM Garage and AWS Mainframe Modernization",
-    decisionMakers:"VPs of Modernization Practice; Practice Leads for AS400/iSeries — visible via linkedin.com/company/rocket-software/people",
-    alreadyUsing:"Their own stack (BlueZone, TeamStudio), plus partner tools from IBM",
-    competition:"IBM, AWS Mainframe Modernization, Micro Focus/OpenText, LzLabs",
-    abc:{ a:"Your modernization practice burns hundreds of hours manually reverse-engineering copybooks before billable engineering even starts.", b:"Show them the field-parity gate on a real copybook. Rocket has heard 100 vendor pitches — only deterministic verification gets past their bullshit detector.", c:"20-min briefing with VP App Mod or AS400 Practice Lead. Conversation: OEM partnership / co-sell into their installed base." },
-    pushbacks:["We already sell modernization tools. How is this different?","Send a deck. I'll have my team look at it.","If this were valuable, IBM would have built it."] },
-  { slug:"profound-logic", zone:"tool", company:"Profound Logic",
-    hq:"Walnut Creek, CA", phone:"925-271-2444",
-    web:"profoundlogic.com", linkedin:"linkedin.com/company/profound-logic-software-inc-",
-    role:"Director of AS400 / iSeries Integration",
-    personName:null,
-    bio:"Profound Logic is a small, accessible IBM i specialty shop. The Director of AS400 Integration is almost certainly an RPG veteran who wrote green-screen apps before the web existed. Loves tech that bolts cleanly onto Profound UI. Will probe you on IBM i version compatibility, RPG-IV vs RPG-Free, ILE handling. If you can't speak that language, the call ends fast — but if you can, you're talking to a real engineer, not a procurement filter.",
-    what:"Pure-play IBM i / AS400 modernization. Profound UI converts RPG-to-web.",
-    techStack:"IBM i (V5R4+), RPG/RPG-Free, Profound UI for web modernization, Node.js on IBM i",
-    digital:["Founded 1999, headquartered in Walnut Creek CA","COMMON conference regulars; Profound UI is widely-deployed RPG modernization layer","Blog actively publishes IBM i best-practice content"],
-    dealsInFlight:"Mid-market IBM i shops modernizing green-screen apps to web/mobile",
-    decisionMakers:"Founder Alex Roytman is publicly active; tech integration leads handle tool decisions",
-    alreadyUsing:"Profound UI, Profound.js, IBM i tooling",
-    competition:"ARCAD, Fresche Solutions, Looksoftware (now part of Rocket)",
-    abc:{ a:"Your consultants do schema discovery by hand before they touch the actual UI conversion.", b:"Reveal the 13-second AST map on a customer's RPG copybook.", c:"20-min briefing with Director of AS400 Integration. Tool-stack partnership." },
-    pushbacks:["Our customers want our methodology.","How does this work for RPG-IV and ILE, not just COBOL?"] },
-  { slug:"informatik", zone:"tool", company:"Informatik Inc.",
-    hq:"Davis, CA", phone:"800-479-0089",
-    web:"informatik-inc.com", linkedin:"linkedin.com/company/informatik-inc",
-    role:"VP of Application Modernization",
-    personName:null,
-    bio:"A small data-migration shop. The VP title here is probably hands-on — one of 2-3 people running the whole company, not a layer of management. Will engage on the merits if you frame this as complementary integration, not competing with their DataPipe stack.",
-    what:"Document data migration + format conversion software (DataPipe, mainframe data transforms).",
-    techStack:"Mainframe data extraction, EBCDIC/ASCII conversion, structured-file migration",
-    digital:["Niche but long-tenured data-migration vendor","Customer base is enterprise data migration projects from legacy mainframes","Small team — partnership conversation"],
-    dealsInFlight:"Enterprise data migration engagements (mainframe → modern data warehouse)",
-    decisionMakers:"VP App Mod or strategic alliances",
-    alreadyUsing:"Their own DataPipe tools",
-    competition:"Datacom, Cognos, mainframe ETL incumbents",
-    abc:{ a:"Your data migration projects stall when downstream schemas can't be verified field-by-field.", b:"Show how parity verification complements their data movement layer.", c:"20-min briefing — integration / OEM conversation." },
-    pushbacks:["Small firm — partner conversation","How does this fit our DataPipe?"] },
-  // CHANNEL PARTNERS
-  { slug:"syntax", zone:"channel", company:"Syntax",
-    hq:"Montreal HQ · Boston ops", phone:"781-995-2200",
-    web:"syntax.com", linkedin:"linkedin.com/company/syntax",
-    role:"Director of Legacy Modernization",
-    personName:null,
-    bio:"Came up through mainframe outsourcing or SAP consulting. Pragmatic operator focused on engagement economics — knows the names of every major modernization vendor by heart and roughly what they charge. Will ask 'how does this fit existing engagements?' early. Easier to win than Rocket but won't move fast without proof.",
-    what:"Managed IT services. Heavy SAP, JD Edwards, mainframe outsourcing for financial / insurance carriers.",
-    techStack:"SAP, JD Edwards, IBM Z/i, AWS/Azure, managed mainframe operations",
-    digital:["Owned by Novacap (PE) — growth-stage rollup","Strong presence at SAPinsider, JDEdwards InFocus conferences","Multiple acquisitions in MSP space 2020-2024"],
-    dealsInFlight:"Managing mainframes for insurance carriers; modernizing JDE deployments for manufacturing",
-    decisionMakers:"Director of Legacy Modernization; VP of Mainframe Services",
-    alreadyUsing:"IBM tools, internal Syntax methodology",
-    competition:"Ensono, Kyndryl, NTT DATA",
-    abc:{ a:"Your insurance carrier clients are sitting on COBOL copybook risk that becomes your operational problem when they call you to modernize.", b:"Field-level audit in 5 days, deterministic — beats anything they can hand-roll.", c:"20-min briefing with Director of Legacy Modernization. Co-sell into one of their insurance accounts as a pilot beachhead." },
-    pushbacks:["We're SAP-heavy — COBOL isn't where we make money.","How does this fit existing mainframe outsourcing?"] },
-  { slug:"ensono", zone:"channel", company:"Ensono",
-    hq:"Downers Grove, IL · ≈3,500 employees", phone:"877-367-6636",
-    web:"ensono.com", linkedin:"linkedin.com/company/ensono",
-    role:"Mainframe & Midrange Modernization Practice Lead",
-    personName:null,
-    bio:"Senior practice owner with 15-20 years in modernization services. Likely came up through IBM Global Services or a similar mainframe consultancy. Deep ongoing relationships with IBM and Microsoft account teams that shape how Ensono bids. Won't engage on price. Wants to know how you fit her existing delivery stack and partnership commitments.",
-    what:"One of the last hybrid mainframe-to-cloud specialists. Owns modernization journey for ~250 enterprise clients.",
-    techStack:"IBM Z, IBM i, AWS, Azure, ServiceNow, Splunk, mainframe-to-cloud migration tooling",
-    digital:["KKR-owned since 2016","Heavy IBM partnership — Premier Business Partner","Microsoft Azure Expert MSP designation","Active at Gartner IOCS, AWS re:Invent, IBM TechXchange"],
-    dealsInFlight:"Mainframe-to-cloud migrations for BFSI clients; co-sell deals with IBM and Microsoft",
-    decisionMakers:"Mainframe & Midrange Practice Lead; VP of Modernization Services",
-    alreadyUsing:"IBM CloudPak, AWS Mainframe Modernization, internal methodology",
-    competition:"Kyndryl, NTT DATA, DXC, Deloitte modernization practice",
-    abc:{ a:"Your modernization practice wins the mainframe-to-cloud bid but burns weeks proving the migration preserved every field before customers sign off.", b:"Show the 5-day deterministic field-parity guarantee.", c:"20-min briefing with Mainframe Practice Lead. Embed in their delivery stack." },
-    pushbacks:["Deeply partnered with IBM + Microsoft","Our customers want managed service, not another tool"] },
-  { slug:"softserve", zone:"channel", company:"SoftServe",
-    hq:"Austin, TX HQ · Ukraine roots · ≈12,000 employees", phone:"888-576-8737",
-    web:"softserveinc.com", linkedin:"linkedin.com/company/softserve",
-    role:"Practice Lead for Legacy Application Modernization",
-    personName:null,
-    bio:"Mid-career consulting practice lead. Likely came from a Big-4 firm or an established Ukrainian/Eastern-European outsourcing background. Owns the entire modernization service line — bidding against Accenture, IBM, EPAM. Cares about RFP differentiators more than any single feature.",
-    what:"Global IT services + consulting. Modernization practice in EU + US.",
-    techStack:"AWS, Azure, GCP, ServiceNow, SAP, custom enterprise modernization stacks",
-    digital:["Founded 1993 (Lviv); now US HQ in Austin","Strong cloud-modernization positioning","Active at AWS re:Invent, Microsoft Build, Google Cloud Next"],
-    dealsInFlight:"Enterprise modernization bids competing against Big 4 / Accenture",
-    decisionMakers:"Practice Lead for Legacy App Modernization; BFSI vertical lead",
-    alreadyUsing:"Internal methodologies, AWS/Azure native tooling",
-    competition:"Accenture, EPAM, GlobalLogic, Endava, IBM Consulting",
-    abc:{ a:"Your modernization bids are losing to incumbents on parity-risk concerns.", b:"Show a verifiable proof-of-correctness story competitors can't match.", c:"20-min briefing with Practice Lead. Bid-differentiator conversation." },
-    pushbacks:["Enterprise sales cycle is long","Where do you fit our global delivery?"] },
-  { slug:"epam", zone:"channel", company:"EPAM",
-    hq:"Newtown, PA · ≈60,000 employees", phone:"617-577-4400",
-    web:"epam.com", linkedin:"linkedin.com/company/epam-systems",
-    role:"Director of Mainframe Modernization (BFSI vertical)",
-    personName:null,
-    bio:"Enterprise polish. Northeast (NYC, Boston, Philly) background — probably came through banking IT or a Big-4 BFSI practice before landing at EPAM. Manages BFSI modernization deals at top-10 US banks. Will route a founder straight to procurement if you don't sound like you've done this before. Cares about scale, NDA/MSA-readiness, and how you'd survive an enterprise vendor onboarding.",
-    what:"Massive engineering services firm. Deep banking + insurance verticals running COBOL.",
-    techStack:"AWS, Azure, GCP, Salesforce, SAP, IBM Z modernization frameworks (EPAM PHM)",
-    digital:["Public (NYSE: EPAM), ~$4.7B revenue 2024","BFSI is largest vertical (~35%)","Founded 1993, HQ moved from Belarus to PA post-2022","Strong banking modernization references"],
-    dealsInFlight:"Modernization SOWs at multiple top-10 US banks",
-    decisionMakers:"Director of Mainframe Modernization; Practice Head BFSI",
-    alreadyUsing:"EPAM Continuum, internal PHM frameworks, AWS Mainframe Modernization partnership",
-    competition:"Accenture, Deloitte, TCS, Infosys, IBM Consulting",
-    abc:{ a:"Your BFSI modernization SOWs burn weeks on manual field-mapping customers don't see as billable value.", b:"Compress that work to 5 business days with mathematical proof.", c:"20-min briefing with Director of Mainframe Mod or BFSI vertical lead." },
-    pushbacks:["NDA + MSA required.","How are you different from a feature IBM ships in 6 months?"] },
-  { slug:"hexaware", zone:"channel", company:"Hexaware",
-    hq:"Mumbai HQ · NJ US ops · ≈30,000 employees", phone:"877-439-3928",
-    web:"hexaware.com", linkedin:"linkedin.com/company/hexaware-technologies",
-    role:"Head of Legacy Modernization",
-    personName:null,
-    bio:"India-based head of practice, very likely with US BFSI account relationships built over a decade. Practical, will engage on real customer pain. Cares about reducing the internal consultant-hour cost of parity verification — a measurable margin lever for their delivery model. Faster decision-maker than EPAM or LTI for the same kind of conversation.",
-    what:"IT services with strong BFSI practice. Mainframe modernization is publicly marketed.",
-    techStack:"AWS, Azure, Salesforce, IBM Z, automation frameworks (Tensai)",
-    digital:["Carlyle Group acquired majority stake 2021","BFSI is largest vertical","Active partner: AWS Mainframe Modernization, Microsoft, ServiceNow"],
-    dealsInFlight:"BFSI modernization deals; insurance carrier transformations",
-    decisionMakers:"Head of Legacy Modernization; BFSI Practice Head",
-    alreadyUsing:"AWS Mainframe Modernization, in-house Tensai automation",
-    competition:"TCS, Infosys, Wipro, LTI Mindtree, EPAM",
-    abc:{ a:"Your BFSI deals carry parity-risk you mitigate today with senior consultant review hours.", b:"Replace those hours with deterministic math.", c:"20-min briefing with Head of Legacy Modernization." },
-    pushbacks:["May want India delivery model","Pilot too small for our procurement"] },
-  { slug:"lti-mindtree", zone:"channel", company:"LTI Mindtree",
-    hq:"Mumbai HQ · ≈90,000 employees", phone:"877-246-4782",
-    web:"ltimindtree.com", linkedin:"linkedin.com/company/ltimindtree",
-    role:"Lead for Legacy Application Services",
-    personName:null,
-    bio:"At a 90,000-person org this is a director-level person running a practice with hundreds of engineers. Cares about volume + repeatability — anything that becomes a standard step in their delivery methodology is gold. Anything bespoke is friction. Slow decision-maker (committee) but a huge prize if won.",
-    what:"Massive IT services (L&T Infotech + Mindtree merged 2022).",
-    techStack:"AWS, Azure, GCP, SAP, Oracle, ServiceNow, Snowflake, mainframe modernization frameworks",
-    digital:["Public, BSE/NSE listed","Larsen & Toubro Group company","Top-10 Indian IT services firm by revenue"],
-    dealsInFlight:"Continuous modernization projects across BFSI, manufacturing, retail",
-    decisionMakers:"Lead for Legacy App Services; Practice Head Modernization",
-    alreadyUsing:"Internal methodologies, AWS/Azure cloud-native tools",
-    competition:"TCS, Infosys, Wipro, HCL, Cognizant",
-    abc:{ a:"Your legacy app services line ships modernization projects every week — every one needs field-parity verification done by hand.", b:"Position as the verification layer that automates the most error-prone step.", c:"20-min briefing with Lead for Legacy App Services." },
-    pushbacks:["Committee decisions slow things down","We use our own modernization frameworks"] },
-  { slug:"encore", zone:"channel", company:"Encore",
-    hq:"Verify on first call", phone:"866-847-4638",
-    web:"(verify identity first)", linkedin:null,
-    role:"Practice Lead for Legacy Modernization (if AS400/COBOL shop)",
-    personName:null,
-    bio:"Identity unconfirmed — multiple 'Encore' tech firms exist. The opening move is to confirm you've reached the AS400/COBOL one before pitching anything. If it's wrong, ask for a referral and end the call cleanly. If it's right, treat as a boutique channel partner.",
-    what:"Multiple 'Encore' tech firms exist — likely an AS400/COBOL boutique. Verify identity on the call.",
-    techStack:"Unknown until verified",
-    digital:["IDENTITY UNCONFIRMED"],
-    dealsInFlight:"Unknown", decisionMakers:"Practice Lead — but verify the company first",
-    alreadyUsing:"Unknown", competition:"Unknown",
-    abc:{ a:"Confirm identity. If wrong → ask for referral, end clean.", b:"If correct, run the channel-partner pitch.", c:"20-min briefing with Practice Lead — if correctly identified." },
-    pushbacks:["May not be the right Encore"] },
-  { slug:"katalyst", zone:"channel", company:"Katalyst Systems",
-    hq:"Massachusetts boutique", phone:"781-871-4760",
-    web:"katalystsystems.com", linkedin:null,
-    role:"Director of IT Modernization",
-    personName:null,
-    bio:"Likely a founder or near-founder of a Boston-metro boutique. The Director title here is half-marketing, half-real — they probably wear three hats. Cares about differentiation that helps them compete against giants when bidding on the same RFP.",
-    what:"Boutique IT modernization consultancy.",
-    techStack:"Custom enterprise integrations, modernization toolchains",
-    digital:["MA-based boutique","Limited public web footprint"],
-    dealsInFlight:"Boutique modernization deals — typical mid-market",
-    decisionMakers:"Director of IT Modernization; Practice Lead",
-    alreadyUsing:"Custom approaches",
-    competition:"Other boutique consultancies in Boston metro",
-    abc:{ a:"You're a boutique competing against giants for mainframe modernization work — your differentiator is either price or proof.", b:"Show the proof.", c:"20-min briefing with Director of IT Modernization." },
-    pushbacks:["Small budget — partnership over direct deal"] },
-  { slug:"fpt-software", zone:"channel", company:"FPT Software",
-    hq:"Vietnam HQ · San Jose US ops · ≈30,000 employees", phone:"408-541-8800",
-    web:"fpt-software.com", linkedin:"linkedin.com/company/fpt-software",
-    role:"Head of Legacy Modernization Practice (US)",
-    personName:null,
-    bio:"US-based head of practice for a Vietnam-HQ firm aggressively expanding here since 2023. Has performance pressure from APAC leadership to win named enterprise logos against Accenture and IBM Consulting. Cares about differentiated tooling that lets them punch above weight class in US RFPs.",
-    what:"Largest IT services firm in SE Asia. US modernization practice growing fast.",
-    techStack:"AWS, Azure, GCP, SAP, custom modernization frameworks",
-    digital:["Subsidiary of FPT Corporation (HOSE: FPT)","Aggressive US growth strategy 2023-2025"],
-    dealsInFlight:"US enterprise modernization bids; Japan/Korea mainframe migrations",
-    decisionMakers:"Head of Legacy Modernization Practice (US)",
-    alreadyUsing:"Internal frameworks, cloud-native tooling",
-    competition:"Accenture, IBM Consulting, Tata, Infosys, EPAM",
-    abc:{ a:"Your US modernization practice is growing fast — winning enterprise deals means showing differentiated tooling against Accenture and IBM.", b:"Differentiated tool with mathematical proof, runs on customer hardware.", c:"20-min briefing with Head of Legacy Mod (US)." },
-    pushbacks:["Time zone challenges with APAC decision-makers"] },
-  // STAFFING (boutique-flavored)
-  { slug:"enhance-it", zone:"boutique", company:"Enhance IT",
-    hq:"Los Angeles · IT staffing + consulting", phone:"213-452-7700",
-    web:"enhanceit.com", linkedin:"linkedin.com/company/enhance-it",
-    role:"Lead for Mainframe Services",
-    personName:null,
-    bio:"LA-based staffing exec, probably came up through TEKsystems, Robert Half, or a similar IT staffing firm. Sells bodies, not software. The right pitch is bench enablement — your placed consultants ship faster, win more contracts, justify higher rates. Won't buy a 'tool' but will fund consultant upskill.",
-    what:"IT staffing-heavy consulting firm. Mainframe consultant placements.",
-    techStack:"Mainframe + cloud staffing across COBOL, Java, .NET, SAP",
-    digital:["LA-based, regional + national contract placements","Mainframe bench is a stable revenue line"],
-    dealsInFlight:"Contract staffing placements at carriers and banks",
-    decisionMakers:"Lead for Mainframe Services; Practice Lead",
-    alreadyUsing:"Manual consulting methodologies",
-    competition:"TEKsystems, Robert Half Technology, niche mainframe staffing firms",
-    abc:{ a:"Your mainframe consultants are billing hourly for schema discovery work a tool could do in minutes.", b:"Pitch as bench enablement.", c:"20-min briefing with Lead for Mainframe Services." },
-    pushbacks:["We bill bodies, not software — pitch it as bench upskill"] },
-  { slug:"ptg", zone:"boutique", company:"PTG (Primary Talent Group)",
-    hq:"Mainframe consulting specialist", phone:"888-598-0006",
-    web:"primarytalentpartners.com (verify)", linkedin:null,
-    role:"Mainframe Consulting Lead",
-    personName:null,
-    bio:"Owner or senior partner of a niche mainframe consultancy. Cares about force-multiplying their senior consultants. Small enough to make decisions on a single call. Likely a real engineer first, exec second — will respect technical depth.",
-    what:"Mainframe consulting + staffing.",
-    techStack:"Mainframe languages: COBOL, JCL, RPG, PL/I",
-    digital:["Niche mainframe consulting + staffing firm"],
-    dealsInFlight:"Mainframe consultant placements at carriers",
-    decisionMakers:"Mainframe Consulting Lead",
-    alreadyUsing:"Manual methodologies",
-    competition:"Cobol Cowboys, niche mainframe consultancies",
-    abc:{ a:"Your mainframe consultants are doing schema discovery by hand on every engagement.", b:"13-second field-level map.", c:"20-min briefing with Mainframe Consulting Lead." },
-    pushbacks:["Small — partner/referral conversation"] },
-  { slug:"bluebird-it", zone:"boutique", company:"Bluebird IT",
-    hq:"IT staffing / consulting (verify)", phone:"866-258-8411",
-    web:"(verify on call)", linkedin:null,
-    role:"Legacy Modernization Sales Director",
-    personName:null,
-    bio:"Identity unconfirmed. Open the call with verification before pitching anything. If it's a staffing firm, the pitch flips to bench enablement (same as Enhance IT). If it's something else entirely, end clean and move on.",
-    what:"IT staffing + consulting firm. Verify identity first.",
-    techStack:"Mainframe + cloud staffing (assumed)",
-    digital:["IDENTITY UNCONFIRMED"],
-    dealsInFlight:"Unknown", decisionMakers:"Legacy Modernization Sales Director",
-    alreadyUsing:"Unknown", competition:"Other IT staffing firms",
-    abc:{ a:"Verify identity first.", b:"Pitch as bench enablement.", c:"20-min briefing with Sales Director." },
-    pushbacks:["Verify identity first"] },
-  // BOUTIQUES
-  { slug:"cobol-cowboys", zone:"boutique", company:"Cobol Cowboys",
-    hq:"Gainesville, TX · ex-IBM mainframe engineers", phone:"940-736-7733",
-    web:"cobolcowboys.com", linkedin:"linkedin.com/company/cobol-cowboys-llc",
-    role:"Founder · ex-IBM mainframe engineer",
-    personName:"Bill Hinshaw",
-    bio:"Bill Hinshaw started writing COBOL at IBM in 1969 and founded Cobol Cowboys in 2013 in Gainesville, TX. Became nationally famous during the COVID-era unemployment-system crisis when WSJ, NPR, and Reuters all profiled him — states couldn't find mainframe engineers, and Bill's cowboys (retired COBOL veterans he brought back) kept their systems running. Talks plain, slow, with a Texan drawl. Respects technical competence above all else. Will hang up on jargon. Treats his guys like family.",
-    what:"Famous COBOL specialists. Featured in WSJ, NPR.",
-    techStack:"COBOL, CICS, IMS, DB2, JCL, mainframe assembler",
-    digital:["Bill Hinshaw founder — ex-IBM, widely interviewed (WSJ, NPR, Reuters)","Brand built on senior engineer scarcity"],
-    dealsInFlight:"Senior COBOL engineer placements at banks, insurance, federal/state govt",
-    decisionMakers:"Bill Hinshaw, Eileen Hinshaw (named principals)",
-    alreadyUsing:"Their cowboys' brains + decades of muscle memory",
-    competition:"Other niche COBOL staffing firms, TEKsystems",
-    abc:{ a:"Your cowboys do schema discovery by hand on every engagement.", b:"Tool hands your guys the field-level map in 13 seconds. Instrument they wield, NOT replacement.", c:"20-min call with Bill or Eileen." },
-    pushbacks:["My cowboys ARE the senior engineers.","40 years of experience > your AI hallucinations.","Our brand is the people."] },
-  { slug:"keyhole", zone:"boutique", company:"Keyhole Software",
-    hq:"Leawood, KS · custom software consultancy", phone:"877-521-7769",
-    web:"keyholesoftware.com", linkedin:"linkedin.com/company/keyhole-software",
-    role:"Practice Lead for Legacy Modernization",
-    personName:null,
-    bio:"Kansas City consultancy practice lead. Friendly Midwestern tone — engages on technical merits rather than gatekeeping. Probably came up writing Java/.NET before owning the modernization line. The shop isn't COBOL-pure so they may try to steer the conversation toward Java work — steer back.",
-    what:"Mid-sized custom shop. Legacy modernization is one of several offerings (Java, .NET, mainframe).",
-    techStack:"Java, .NET, JavaScript/TypeScript, mainframe modernization toolchains",
-    digital:["Kansas City metro consultancy","Active technical blog (KeyholeLabs)"],
-    dealsInFlight:"Mid-market custom dev + modernization projects",
-    decisionMakers:"Practice Lead for Legacy Modernization",
-    alreadyUsing:"Custom methodologies",
-    competition:"Other mid-sized consultancies in KC/Midwest",
-    abc:{ a:"You're small enough that one tool compressing discovery from weeks to days is the difference between winning and losing the next mainframe bid.", b:"Show the parity verification.", c:"20-min briefing with Practice Lead." },
-    pushbacks:["More Java/.NET than mainframe","We use our own playbooks"] },
-  { slug:"integrative-systems", zone:"boutique", company:"Integrative Systems",
-    hq:"Itasca, IL · 20+ years AS400", phone:"866-468-7974",
-    web:"integrativesystems.com", linkedin:"linkedin.com/company/integrative-systems-inc-",
-    role:"AS400 / COBOL Services Lead",
-    personName:null,
-    bio:"20+ year IBM i specialist running the services line at a Chicago-area shop with India+US delivery. Will know AS400 specifics cold — version compatibility, RPG-IV, ILE, CL. Won't tolerate hand-waving on IBM i details. If your demo can handle one of their actual customer copybooks, you're in.",
-    what:"Pure-play AS400 / IBM i modernization.",
-    techStack:"IBM i 7.1/7.2/7.3+, RPG-IV, RPG-Free, ILE, CL, COBOL, DB2/400",
-    digital:["Founded 2003, 20+ years AS400 specialization","Active publishing IBM i technical content","India + US delivery"],
-    dealsInFlight:"AS400 modernization for mid-market manufacturing, distribution, financial services",
-    decisionMakers:"AS400 / COBOL Services Lead",
-    alreadyUsing:"Their own AS400 conversion methodology",
-    competition:"Profound Logic, Fresche, ARCAD, Rocket Software",
-    abc:{ a:"20 years of AS400 means you've seen every COBOL copybook nightmare.", b:"Tool hands your team field-level maps in 13 seconds.", c:"20-min briefing with AS400 / COBOL Services Lead." },
-    pushbacks:["We have our own methodology","What about RPG-IV / ILE, not just COBOL?"] },
-  { slug:"hexaview", zone:"boutique", company:"Hexaview Technologies",
-    hq:"Noida, India · NYC US ops", phone:"845-653-3855",
-    web:"hexaviewtech.com", linkedin:"linkedin.com/company/hexaviewtech",
-    role:"CTO · Co-founder",
-    personName:"Abhishek Talwar",
-    bio:"Abhishek Talwar is the CTO and co-founder of Hexaview Technologies, a Noida-based custom dev firm with growing US BFSI operations in NYC. Engineering-first leader, publicly active on AI/ML content marketing. Practical, accessible — if you can show him a tool that helps Hexaview win bigger US BFSI bids, this becomes a working partnership conversation, not a vendor pitch.",
-    what:"Custom dev, AI, modernization. Growing US modernization practice.",
-    techStack:"AWS, Azure, Java, .NET, Python, AI/ML platforms",
-    digital:["CTO Abhishek Talwar publicly identified","Growing modernization arm in BFSI vertical"],
-    dealsInFlight:"BFSI modernization bids — expanding US footprint",
-    decisionMakers:"Head of Modernization Services; CTO Abhishek Talwar",
-    alreadyUsing:"Custom dev frameworks, AWS/Azure native tools",
-    competition:"Mid-sized Indian IT services firms",
-    abc:{ a:"Your modernization practice is growing — winning enterprise BFSI deals means showing differentiated tooling.", b:"Mathematical proof nothing got lost.", c:"20-min briefing with Head of Mod Services or CTO." },
-    pushbacks:["Alt phone: 646-403-4525"] },
-  // END CUSTOMERS
-  { slug:"nw-natural", zone:"end", company:"NW Natural",
-    hq:"Portland, OR · natural gas utility", phone:"503-226-4211",
-    web:"nwnatural.com", linkedin:"linkedin.com/company/nw-natural",
-    role:"Office of the CIO contact",
-    personName:null,
-    bio:"Conservative utility IT culture, long tenure typical (10+ years in the same role). Almost certainly an Oregon native or long-time PNW resident. Talks slowly, won't commit to anything fast, but won't say no either. Lives in the lens of PUC regulators and audit cycles. Glacier-paced procurement is a feature to him, not a bug.",
-    what:"Regional natural gas utility. Billing + customer systems include legacy COBOL/mainframe components.",
-    techStack:"Likely legacy CIS on mainframe/AS400; SAP for back-office; Oracle DB",
-    digital:["Public (NYSE: NWN), founded 1859","PUC-regulated — Oregon and SW Washington","10-K mentions ongoing IT system modernization"],
-    dealsInFlight:"Customer information system modernization; billing system risk reduction",
-    decisionMakers:"CIO; Director of Enterprise IT; IT Modernization PMO",
-    alreadyUsing:"Likely Oracle CC&B or mainframe-based CIS",
-    competition:"Oracle, SAP, Accenture utility practice, IBM, Capgemini",
-    abc:{ a:"The engineers who wrote your customer billing system are retiring. AI tools translating that code can quietly drop fields — refunds, regulator letters, audit findings.", b:"Show how field-parity verification protects PUC regulatory reporting.", c:"Name + email of CIO office or Enterprise IT modernization lead." },
-    pushbacks:["We're a utility — we don't move fast","Our billing system has been stable 20 years"] },
-  { slug:"pacificsource", zone:"end", company:"PacificSource Health Plans",
-    hq:"Springfield, OR · regional health insurer", phone:"541-686-1242",
-    web:"pacificsource.com", linkedin:"linkedin.com/company/pacificsource-health-plans",
-    role:"IT Vendor Management → Enterprise Architecture / Claims Tech Lead",
-    personName:null,
-    bio:"Pacific Northwest healthcare IT, mid-career. HIPAA mindset baked into every sentence. Cautious, risk-averse, hides behind the VRM process by default. Warms up only when you make the 'ticking time bomb' framing real to their actual claims system — until then everything routes through procurement.",
-    what:"Regional health insurer. Insurance carrier → ACORD data exchange directly applicable.",
-    techStack:"Claims processing on mainframe; HEDIS/CMS reporting platforms",
-    digital:["Not-for-profit, founded 1933","Operates in OR, ID, WA, MT","Medicare Advantage, commercial, Medicaid lines"],
-    dealsInFlight:"Claims processing modernization; HIPAA-driven systems hardening",
-    decisionMakers:"IT VRM intake → IT Enterprise Architecture → Claims Tech Lead",
-    alreadyUsing:"Likely TriZetto Facets or HealthEdge; mainframe claims engine partial",
-    competition:"Cognizant TriZetto, HealthEdge, Optum, Accenture",
-    abc:{ a:"The engineers who wrote your claims processing are retiring, and the people replacing them use ChatGPT.", b:"Code never leaves your network — meets HIPAA requirements.", c:"Name + email of IT Enterprise Architecture or Claims Tech Lead." },
-    pushbacks:["VRM process is the only entry point","I don't have budget — talk next fiscal"] },
-  { slug:"premera", zone:"end", company:"Premera Blue Cross",
-    hq:"Mountlake Terrace, WA · ≈3M members", phone:"425-918-4000",
-    web:"premera.com", linkedin:"linkedin.com/company/premera-blue-cross",
-    role:"Enterprise Architecture Lead OR Claims Tech Lead",
-    personName:null,
-    bio:"Senior architect at a regional Blues plan, almost certainly hired or promoted in the wake of Premera's 2015 breach. That breach shaped the whole organization's security posture — every conversation runs through HIPAA, HITRUST, BCBSA-shared-infrastructure considerations. The right framing isn't 'cool tech' — it's 'reduce existing modernization risk without opening a new attack surface.'",
-    what:"Large regional Blue Cross plan. Mainframe-heavy carrier; ACORD relevance direct.",
-    techStack:"IBM Z mainframe claims engine; Facets/HealthEdge for some lines; AWS/Azure for digital front-end",
-    digital:["BCBSA licensee, serves WA + AK","Famous 2015 breach — extensive post-breach security investments","Strong HIPAA/HITRUST compliance posture"],
-    dealsInFlight:"Continuous claims processing modernization; mainframe-to-cloud workstreams",
-    decisionMakers:"Enterprise Architecture; Claims Tech Lead; CIO office",
-    alreadyUsing:"Cognizant TriZetto Facets historically; IBM Z mainframe; AWS post-breach",
-    competition:"Cognizant, Accenture, Deloitte healthcare, IBM Consulting",
-    abc:{ a:"Your claims processing engine carries 30+ years of COBOL. Every AI translation tool your engineers are touching is quietly dropping fields in REDEFINES sections.", b:"Zero-data-leak architecture meets post-breach security posture.", c:"Name + email of Enterprise Architecture or Claims Tech Lead." },
-    pushbacks:["Vendor risk management process — start there","Existing relationship with Cognizant","HIPAA compliance is non-negotiable"] },
-  { slug:"symetra", zone:"end", company:"Symetra Financial",
-    hq:"Bellevue, WA · Sumitomo Life subsidiary", phone:"800-796-3872",
-    web:"symetra.com", linkedin:"linkedin.com/company/symetra",
-    role:"Enterprise IT / Modernization PMO lead",
-    personName:null,
-    bio:"Pacific Northwest insurance carrier IT — long-tenured policy admin systems carry 30+ year contracts. Cares about long-tail risk on policies that will outlive every engineer who's ever touched them. Operates under Sumitomo Life (Japanese parent) governance overhead, which slows decisions but rewards anyone who shows regulator-friendly architecture.",
-    what:"Life insurance + retirement carrier. Mainframe legacy in policy admin systems.",
-    techStack:"Mainframe policy admin; Java/.NET front-end; Snowflake/AWS for analytics",
-    digital:["Wholly-owned subsidiary of Sumitomo Life (Japan)","Life, disability, retirement product lines","Long-tenured policies — 30+ year contracts active"],
-    dealsInFlight:"Policy admin modernization; actuarial system upgrades",
-    decisionMakers:"Enterprise IT; Modernization PMO Lead",
-    alreadyUsing:"Mainframe policy admin systems",
-    competition:"Accenture, Cognizant, Capgemini, EPAM insurance practice",
-    abc:{ a:"Your policy admin system carries life policies spanning 30+ years. Every COBOL touch by an AI tool risks a quiet field drop on a $2M annuity.", b:"Translate the code AND mathematically prove nothing got lost.", c:"Name + email of Enterprise IT / Modernization PMO lead." },
-    pushbacks:["Consumer phone tree — route patiently to IT","Zero downtime tolerance"] },
-  { slug:"the-standard", zone:"end", company:"The Standard (StanCorp Financial)",
-    hq:"Portland, OR · group disability + life", phone:"971-321-7000",
-    web:"standard.com", linkedin:"linkedin.com/company/the-standard",
-    role:"IT Sourcing / Office of the CIO contact",
-    personName:null,
-    bio:"Portland-based insurance carrier IT sourcing exec. Polite, Pacific Northwest professional, manages you toward the right channel rather than saying no. Cares about existing Accenture relationships, vendor financial stability, proven case studies. Won't engage with a one-person company on price — needs to see the trust architecture first.",
-    what:"Group disability + life insurance carrier. Owned by Meiji Yasuda. Long-tenured COBOL claims systems.",
-    techStack:"Mainframe claims + policy admin; Java/.NET digital layer; ServiceNow",
-    digital:["Acquired by Meiji Yasuda 2016","Active modernization roadmap publicly mentioned in financial press"],
-    dealsInFlight:"Group disability claims modernization; multi-year mainframe-to-cloud workstreams",
-    decisionMakers:"IT Sourcing; Office of the CIO; Director of Enterprise Architecture",
-    alreadyUsing:"Mainframe + Accenture engagement (publicly known)",
-    competition:"Accenture, Cognizant, Capgemini, Deloitte insurance practice",
-    abc:{ a:"The engineers who wrote your group disability system are retiring, and the people replacing them use AI to translate it — multi-million dollar ticking time bomb.", b:"5-day risk assessment pilot on 5 worst copybooks.", c:"Name + email of IT Sourcing / Office of CIO." },
-    pushbacks:["Ongoing work with Accenture","What's your financial backing?"] },
-];
+const API_BASE = window.CHEERS_API || "http://localhost:7878";
+let PROSPECTS = [];   // populated by fetch on init() below; legacy array shape preserved
+let ORG_GRAPH = {};   // raw org data, keyed by slug, kept for the dossier
+
+function orgToProspect(o) {
+  // Map the new org schema → the legacy PROSPECT shape so the existing
+  // canvas + walking-sprite code keeps working unchanged.
+  const firstPerson = (o.people && o.people[0]) || null;
+  return {
+    slug: o.slug,
+    zone: o.zoneCode || (o.zone ? o.zone.toLowerCase().split(" ")[0] : "end"),
+    company: o.company,
+    hq: o.hq,
+    phone: o.phone,
+    web: o.web,
+    linkedin: o.linkedin,
+    role: firstPerson ? firstPerson.role : (o.default_role || "(unknown — pending discovery)"),
+    personName: firstPerson ? firstPerson.personName : null,
+    bio: o.bio || "",
+    what: o.what || "",
+    techStack: o.techStack || "(unknown)",
+    digital: o.digital || [],
+    dealsInFlight: o.dealsInFlight || "",
+    decisionMakers: o.decisionMakers || "",
+    alreadyUsing: o.alreadyUsing || "",
+    competition: o.competition || "",
+    abc: o.abc || { a: "", b: "", c: "" },
+    pushbacks: o.pushbacks || [],
+    counts: o.counts || { people: 0, calls: 0, deals: 0 },
+    signalsAvailable: !!(o.signals && o.signals.length),
+  };
+}
+
+async function fetchOrgs() {
+  try {
+    const r = await fetch(API_BASE + "/api/organizations");
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const d = await r.json();
+    return d.organizations || [];
+  } catch (e) {
+    console.warn("could not reach trainer server at", API_BASE, "—", e.message);
+    return [];
+  }
+}
 
 const ZONE_NAME  = { end:"End Customer", channel:"Channel Partner", tool:"Tool Partner", boutique:"Boutique / Staffing" };
 const ZONE_SHIRT = { end:"#fbbf24", channel:"#22d3ee", tool:"#a78bfa", boutique:"#34d399" };
@@ -1175,6 +902,43 @@ function openDossier(p) {
 
   identEl.replaceChildren();
 
+  // ── TAB BAR ──────────────────────────────────────────────────────
+  const tabBar = document.createElement("div");
+  tabBar.className = "tab-bar";
+  const cs = p.counts || { people: 0, calls: 0, deals: 0 };
+  const tabs = [
+    { id: "overview", label: "Overview" },
+    { id: "people",   label: "People",   count: cs.people },
+    { id: "calls",    label: "Calls",    count: cs.calls },
+    { id: "deals",    label: "Deals",    count: cs.deals },
+    { id: "brief",    label: "Brief" },
+  ];
+  tabs.forEach((t, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "tab" + (i === 0 ? " active" : "");
+    b.dataset.tab = t.id;
+    b.textContent = t.label;
+    if (t.count) {
+      const c = document.createElement("span"); c.className = "count"; c.textContent = t.count; b.appendChild(c);
+    }
+    b.addEventListener("click", () => switchTab(p, t.id, b));
+    tabBar.appendChild(b);
+  });
+  identEl.appendChild(tabBar);
+
+  // The Overview tab gets the existing bio-card layout, built below.
+  // Other tabs build on-demand in switchTab().
+  const overviewPane = document.createElement("div");
+  overviewPane.className = "tab-pane";
+  overviewPane.dataset.tab = "overview";
+  identEl.appendChild(overviewPane);
+
+  // From here, the original code appends to overviewPane (instead of identEl)
+  // so we can swap tabs without rebuilding the whole dossier.
+  const _identAppend = identEl.appendChild.bind(identEl);
+  identEl.appendChild = (node) => overviewPane.appendChild(node);
+
   // ── BIO HERO ──────────────────────────────────────────────────────
   const hero = document.createElement("div"); hero.className = "bio-hero";
 
@@ -1299,8 +1063,248 @@ function openDossier(p) {
   actions.appendChild(practice);
   metaEl.appendChild(actions);
 
+  // Restore identEl.appendChild now that the overview pane is built
+  identEl.appendChild = _identAppend;
+
   focusEl.classList.add("open");
   document.body.style.overflow = "hidden";
+}
+
+/* ─── Tab switching: lazy-builds tab content on first reveal ─── */
+function switchTab(p, tabId, btnEl) {
+  // Toggle active state on tab buttons
+  identEl.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+  btnEl.classList.add("active");
+
+  // Hide all panes
+  identEl.querySelectorAll(".tab-pane").forEach(el => el.style.display = "none");
+
+  // Find or build the requested pane
+  let pane = identEl.querySelector(`.tab-pane[data-tab="${tabId}"]`);
+  if (!pane) {
+    pane = document.createElement("div");
+    pane.className = "tab-pane";
+    pane.dataset.tab = tabId;
+    if (tabId === "people") buildPeopleTab(pane, p);
+    else if (tabId === "calls") buildCallsTab(pane, p);
+    else if (tabId === "deals") buildDealsTab(pane, p);
+    else if (tabId === "brief") buildBriefTab(pane, p);
+    identEl.appendChild(pane);
+  }
+  pane.style.display = "block";
+}
+
+function buildPeopleTab(pane, p) {
+  const org = ORG_GRAPH[p.slug] || {};
+  const people = org.people || [];
+
+  // ── Action row: Record + Practice ──
+  const actions = document.createElement("div"); actions.className = "action-row";
+  const recordBtn = document.createElement("button"); recordBtn.type = "button";
+  recordBtn.className = "action-btn record"; recordBtn.id = "record-btn-" + p.slug;
+  recordBtn.textContent = "🔴 Record a call";
+  recordBtn.addEventListener("click", () => toggleRecording(p, recordBtn));
+  actions.appendChild(recordBtn);
+
+  const practice = document.createElement("a");
+  practice.className = "action-btn";
+  practice.href = "http://localhost:7878/?persona=" + p.slug + "&autostart=1";
+  practice.target = "_blank"; practice.rel = "noopener";
+  practice.textContent = "▸ Practice the call";
+  actions.appendChild(practice);
+  pane.appendChild(actions);
+
+  if (!people.length) {
+    const e = document.createElement("div"); e.className = "empty-tab";
+    e.textContent = "No contacts known yet. Record a call — extracted contacts appear here automatically.";
+    pane.appendChild(e);
+    return;
+  }
+  const sh = document.createElement("div"); sh.className = "bio-section-h"; sh.textContent = "▸ Known contacts at " + p.company;
+  pane.appendChild(sh);
+  const grid = document.createElement("div"); grid.className = "people-grid";
+  people.forEach(person => {
+    const card = document.createElement("div"); card.className = "person-card";
+    const nm = document.createElement("div"); nm.className = "pn"; nm.textContent = person.personName || person.slug; card.appendChild(nm);
+    if (person.role) {
+      const r = document.createElement("div"); r.className = "pr"; r.textContent = person.role; card.appendChild(r);
+    }
+    const m = document.createElement("div"); m.className = "meta";
+    if (person.relationship) {
+      const rel = document.createElement("span"); rel.className = "rel " + person.relationship; rel.textContent = person.relationship.replace(/_/g, " "); m.appendChild(rel);
+    }
+    if (person.email) { const e = document.createElement("span"); e.textContent = person.email; m.appendChild(e); }
+    if (person.discovered_from) {
+      const d = document.createElement("div"); d.style.fontFamily = "JetBrains Mono, monospace"; d.style.fontSize = "10px"; d.style.color = "var(--muted)"; d.style.marginTop = "4px";
+      d.textContent = "← " + person.discovered_from; m.appendChild(d);
+    }
+    card.appendChild(m);
+    grid.appendChild(card);
+  });
+  pane.appendChild(grid);
+}
+
+function buildCallsTab(pane, p) {
+  const org = ORG_GRAPH[p.slug] || {};
+  const calls = org.calls || [];
+  if (!calls.length) {
+    const e = document.createElement("div"); e.className = "empty-tab";
+    e.textContent = "No calls logged yet. Record one from the People tab to start building the timeline.";
+    pane.appendChild(e);
+    return;
+  }
+  const sh = document.createElement("div"); sh.className = "bio-section-h"; sh.textContent = "▸ Call history (newest first)";
+  pane.appendChild(sh);
+  calls.forEach(c => {
+    const row = document.createElement("div"); row.className = "call-row";
+    const h = document.createElement("div"); h.className = "h";
+    const id = document.createElement("span"); id.className = "id"; id.textContent = c.slug; h.appendChild(id);
+    if (c.deal_signal) {
+      const s = document.createElement("span"); s.className = "sig"; s.textContent = c.deal_signal; h.appendChild(s);
+    }
+    row.appendChild(h);
+    if (c.summary_preview) {
+      const sum = document.createElement("div"); sum.className = "sum"; sum.textContent = c.summary_preview; row.appendChild(sum);
+    } else if (c.has_recording) {
+      const sum = document.createElement("div"); sum.className = "sum"; sum.style.color = "var(--muted)";
+      sum.textContent = "(recording present — debrief not yet run)";
+      row.appendChild(sum);
+    }
+    pane.appendChild(row);
+  });
+}
+
+function buildDealsTab(pane, p) {
+  const org = ORG_GRAPH[p.slug] || {};
+  const deals = org.deals || [];
+  if (!deals.length) {
+    const e = document.createElement("div"); e.className = "empty-tab";
+    e.textContent = "No deals tracked. Deals are auto-created when a call's debrief detects a strong signal.";
+    pane.appendChild(e);
+    return;
+  }
+  const sh = document.createElement("div"); sh.className = "bio-section-h"; sh.textContent = "▸ Deals in pipeline";
+  pane.appendChild(sh);
+  const stageColor = {
+    cold:"#9ca3af", sent:"#60a5fa", voicemail:"#fbbf24", gatekeeper:"#f59e0b",
+    connected:"#22d3ee", qualified:"#34d399", discovery:"#6ee7b7", proposal:"#10b981",
+    signed:"#fde047", disqualified:"#f87171",
+  };
+  deals.forEach(d => {
+    const row = document.createElement("div"); row.className = "deal-row";
+    const nm = document.createElement("div"); nm.className = "nm"; nm.textContent = d.name || d.slug; row.appendChild(nm);
+    const meta = document.createElement("div"); meta.className = "meta";
+    if (d.stage) {
+      const s = document.createElement("span"); s.className = "stage";
+      s.style.background = "rgba(255,255,255,0.05)";
+      s.style.color = stageColor[d.stage] || "var(--muted)";
+      s.style.border = "1px solid " + (stageColor[d.stage] || "var(--border)");
+      s.textContent = d.stage; meta.appendChild(s);
+    }
+    if (d.value) meta.appendChild(document.createTextNode(" · $" + d.value.toLocaleString()));
+    if (d.next_action) {
+      const na = document.createElement("div"); na.style.marginTop = "8px"; na.style.fontSize = "13px"; na.style.color = "#dcdcdc"; na.textContent = "Next: " + d.next_action; row.appendChild(na);
+    }
+    row.appendChild(meta);
+    pane.appendChild(row);
+  });
+}
+
+async function buildBriefTab(pane, p) {
+  const sh = document.createElement("div"); sh.className = "bio-section-h"; sh.textContent = "▸ Pre-call brief — AI-generated for THIS call";
+  pane.appendChild(sh);
+  const btn = document.createElement("button"); btn.type = "button"; btn.className = "action-btn brief";
+  btn.textContent = "✨ Generate brief"; btn.style.width = "100%"; btn.style.marginBottom = "12px";
+  pane.appendChild(btn);
+  const out = document.createElement("div"); out.className = "brief-md";
+  out.textContent = "Click Generate to assemble the brief from everything we know about " + p.company + ".";
+  pane.appendChild(out);
+  btn.addEventListener("click", async () => {
+    btn.disabled = true; btn.textContent = "Thinking… (~20s)";
+    out.textContent = "";
+    try {
+      const r = await fetch(API_BASE + "/api/brief", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ org: p.slug }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || "HTTP " + r.status);
+      // Render markdown via DOM nodes (no innerHTML — XSS-safe by construction)
+      renderMarkdown(out, data.brief);
+      btn.textContent = "✓ Brief ready · click to regenerate";
+      btn.disabled = false;
+    } catch (e) {
+      out.textContent = "× Could not generate: " + e.message;
+      btn.textContent = "✨ Generate brief";
+      btn.disabled = false;
+    }
+  });
+}
+
+function renderMarkdown(target, md) {
+  // Minimal safe-markdown rendering — only handles the structures the
+  // brief prompt actually emits. Everything goes through textContent.
+  target.replaceChildren();
+  for (const line of md.split("\n")) {
+    if (!line.trim()) { target.appendChild(document.createElement("br")); continue; }
+    let el;
+    if (line.startsWith("# "))      { el = document.createElement("h1"); el.textContent = line.slice(2); }
+    else if (line.startsWith("## ")) { el = document.createElement("h2"); el.textContent = line.slice(3); }
+    else if (line.startsWith("### ")) { el = document.createElement("h3"); el.textContent = line.slice(4); }
+    else if (line.startsWith("- "))  { el = document.createElement("div"); el.style.marginLeft = "16px"; el.textContent = "• " + line.slice(2); }
+    else                              { el = document.createElement("div"); el.textContent = line; }
+    target.appendChild(el);
+  }
+}
+
+/* ─── Recorder: MediaRecorder → POST to /api/upload-call ─── */
+let _recState = { mediaRec: null, chunks: [], stream: null, orgSlug: null };
+
+async function toggleRecording(p, btn) {
+  if (_recState.mediaRec && _recState.mediaRec.state === "recording") {
+    // Stop
+    _recState.mediaRec.stop();
+    btn.classList.remove("live"); btn.textContent = "⏳ Saving + debriefing…";
+    return;
+  }
+  // Start
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    _recState.stream = stream;
+    _recState.orgSlug = p.slug;
+    _recState.chunks = [];
+
+    // Use audio/webm — browsers support it well; server will accept any audio
+    const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    _recState.mediaRec = mr;
+    mr.ondataavailable = e => { if (e.data && e.data.size) _recState.chunks.push(e.data); };
+    mr.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(_recState.chunks, { type: "audio/webm" });
+      try {
+        const r = await fetch(API_BASE + "/api/upload-call?org=" + encodeURIComponent(p.slug) + "&debrief=1", {
+          method: "POST", headers: { "Content-Type": "audio/webm" }, body: blob,
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || "HTTP " + r.status);
+        btn.textContent = "✓ Recorded · " + (data.debrief?.created_people?.length || 0) + " new contact(s)";
+        // Refresh the org graph so People/Calls/Deals show new data
+        const refresh = await fetch(API_BASE + "/api/organizations/" + p.slug);
+        if (refresh.ok) {
+          ORG_GRAPH[p.slug] = await refresh.json();
+        }
+        setTimeout(() => { btn.textContent = "🔴 Record a call"; }, 4000);
+      } catch (e) {
+        btn.textContent = "× " + e.message;
+        setTimeout(() => { btn.textContent = "🔴 Record a call"; }, 4000);
+      }
+    };
+    mr.start();
+    btn.classList.add("live"); btn.textContent = "⏹ Stop recording";
+  } catch (e) {
+    btn.textContent = "× mic blocked: " + e.message;
+    setTimeout(() => { btn.textContent = "🔴 Record a call"; }, 3000);
+  }
 }
 
 /* ─── Status panel: editable pipeline state inside the dossier ─── */
@@ -1520,9 +1524,43 @@ focusEl.addEventListener("click", e => {
   if (e.target === focusEl || e.target.closest("[data-close]")) closeDossier();
 });
 
-/* ─── Boot ─── */
-resize();
-requestAnimationFrame(draw);
+/* ─── Boot — async to wait for the org graph from the server ─── */
+function showServerDownPlaceholder() {
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:48px 0 0 0;display:flex;align-items:center;justify-content:center;background:rgba(8,9,11,0.94);z-index:50";
+  const card = document.createElement("div");
+  card.style.cssText = "max-width:580px;padding:32px;text-align:center;font-family:Inter,sans-serif;color:#f5e8d8";
+  const h = document.createElement("h2");
+  h.style.cssText = "font-family:Fraunces,serif;font-weight:600;font-size:28px;margin:0 0 12px";
+  h.textContent = "No orgs loaded";
+  card.appendChild(h);
+  const p1 = document.createElement("p");
+  p1.style.cssText = "color:#a89a87;margin:0 0 16px";
+  p1.textContent = "Start the trainer server to populate the floor:";
+  card.appendChild(p1);
+  const pre = document.createElement("pre");
+  pre.style.cssText = "background:#1a1208;border:1px solid #2a1d10;border-radius:4px;padding:14px 18px;text-align:left;font-family:JetBrains Mono,monospace;font-size:13px;color:#fbbf24;margin:0";
+  pre.textContent = "cd ~/cheers-beers\npython3 server/server.py";
+  card.appendChild(pre);
+  const p2 = document.createElement("p");
+  p2.style.cssText = "color:#a89a87;margin:18px 0 0;font-size:13px";
+  p2.textContent = "Then refresh this page.";
+  card.appendChild(p2);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+}
+
+(async function boot() {
+  const orgs = await fetchOrgs();
+  if (orgs.length === 0) {
+    showServerDownPlaceholder();
+    return;
+  }
+  ORG_GRAPH = Object.fromEntries(orgs.map(o => [o.slug, o]));
+  PROSPECTS = orgs.map(orgToProspect);
+  resize();
+  requestAnimationFrame(draw);
+})();
 </script>
 </body>
 </html>

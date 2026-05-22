@@ -1,0 +1,24 @@
+{
+  "slug": "symetra",
+  "company": "Symetra Financial",
+  "hq": "Bellevue, WA \u00b7 Sumitomo Life subsidiary",
+  "zone": "End Customer",
+  "zoneCode": "end",
+  "what": "Life insurance + retirement carrier. Mainframe legacy in policy admin systems.",
+  "techStack": "Mainframe policy admin; Java/.NET front-end; Snowflake/AWS for analytics",
+  "phone": "800-796-3872",
+  "web": "symetra.com",
+  "linkedin": "linkedin.com/company/symetra",
+  "dealsInFlight": "Policy admin modernization; actuarial system upgrades",
+  "decisionMakers": "Enterprise IT; Modernization PMO Lead",
+  "alreadyUsing": "Mainframe policy admin systems",
+  "competition": "Accenture, Cognizant, Capgemini, EPAM insurance practice",
+  "source": "killsesh-seed",
+  "default_role": "Enterprise IT / Modernization PMO lead",
+  "bio": "Pacific Northwest insurance carrier IT \u2014 long-tenured policy admin systems carry 30+ year contracts. Cares about long-tail risk on policies that will outlive every engineer who's ever touched them. Operates under Sumitomo Life (Japanese parent) governance overhead, which slows decisions but rewards anyone who shows regulator-friendly architecture.",
+  "abc": {
+    "a": "Your policy admin system carries life policies spanning 30+ years. Every COBOL touch by an AI tool risks a quiet field drop on a $2M annuity.",
+    "b": "Translate the code AND mathematically prove nothing got lost.",
+    "c": "Name + email of Enterprise IT / Modernization PMO lead."
+  }
+}

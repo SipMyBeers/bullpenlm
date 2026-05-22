@@ -1,0 +1,24 @@
+{
+  "slug": "nw-natural",
+  "company": "NW Natural",
+  "hq": "Portland, OR \u00b7 natural gas utility",
+  "zone": "End Customer",
+  "zoneCode": "end",
+  "what": "Regional natural gas utility. Billing + customer systems include legacy COBOL/mainframe components.",
+  "techStack": "Likely legacy CIS on mainframe/AS400; SAP for back-office; Oracle DB",
+  "phone": "503-226-4211",
+  "web": "nwnatural.com",
+  "linkedin": "linkedin.com/company/nw-natural",
+  "dealsInFlight": "Customer information system modernization; billing system risk reduction",
+  "decisionMakers": "CIO; Director of Enterprise IT; IT Modernization PMO",
+  "alreadyUsing": "Likely Oracle CC&B or mainframe-based CIS",
+  "competition": "Oracle, SAP, Accenture utility practice, IBM, Capgemini",
+  "source": "killsesh-seed",
+  "default_role": "Office of the CIO contact",
+  "bio": "Conservative utility IT culture, long tenure typical (10+ years in the same role). Almost certainly an Oregon native or long-time PNW resident. Talks slowly, won't commit to anything fast, but won't say no either. Lives in the lens of PUC regulators and audit cycles. Glacier-paced procurement is a feature to him, not a bug.",
+  "abc": {
+    "a": "The engineers who wrote your customer billing system are retiring. AI tools translating that code can quietly drop fields \u2014 refunds, regulator letters, audit findings.",
+    "b": "Show how field-parity verification protects PUC regulatory reporting.",
+    "c": "Name + email of CIO office or Enterprise IT modernization lead."
+  }
+}

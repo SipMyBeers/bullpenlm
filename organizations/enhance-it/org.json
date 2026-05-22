@@ -1,0 +1,24 @@
+{
+  "slug": "enhance-it",
+  "company": "Enhance IT",
+  "hq": "Los Angeles \u00b7 IT staffing + consulting",
+  "zone": "Boutique Partner",
+  "zoneCode": "boutique",
+  "what": "IT staffing-heavy consulting firm. Mainframe consultant placements.",
+  "techStack": "Mainframe + cloud staffing across COBOL, Java, .NET, SAP",
+  "phone": "213-452-7700",
+  "web": "enhanceit.com",
+  "linkedin": "linkedin.com/company/enhance-it",
+  "dealsInFlight": "Contract staffing placements at carriers and banks",
+  "decisionMakers": "Lead for Mainframe Services; Practice Lead",
+  "alreadyUsing": "Manual consulting methodologies",
+  "competition": "TEKsystems, Robert Half Technology, niche mainframe staffing firms",
+  "source": "killsesh-seed",
+  "default_role": "Lead for Mainframe Services",
+  "bio": "LA-based staffing exec, probably came up through TEKsystems, Robert Half, or a similar IT staffing firm. Sells bodies, not software. The right pitch is bench enablement \u2014 your placed consultants ship faster, win more contracts, justify higher rates. Won't buy a 'tool' but will fund consultant upskill.",
+  "abc": {
+    "a": "Your mainframe consultants are billing hourly for schema discovery work a tool could do in minutes.",
+    "b": "Pitch as bench enablement.",
+    "c": "20-min briefing with Lead for Mainframe Services."
+  }
+}

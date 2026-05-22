@@ -1,0 +1,24 @@
+{
+  "slug": "ensono",
+  "company": "Ensono",
+  "hq": "Downers Grove, IL \u00b7 \u22483,500 employees",
+  "zone": "Channel Partner",
+  "zoneCode": "channel",
+  "what": "One of the last hybrid mainframe-to-cloud specialists. Owns modernization journey for ~250 enterprise clients.",
+  "techStack": "IBM Z, IBM i, AWS, Azure, ServiceNow, Splunk, mainframe-to-cloud migration tooling",
+  "phone": "877-367-6636",
+  "web": "ensono.com",
+  "linkedin": "linkedin.com/company/ensono",
+  "dealsInFlight": "Mainframe-to-cloud migrations for BFSI clients; co-sell deals with IBM and Microsoft",
+  "decisionMakers": "Mainframe & Midrange Practice Lead; VP of Modernization Services",
+  "alreadyUsing": "IBM CloudPak, AWS Mainframe Modernization, internal methodology",
+  "competition": "Kyndryl, NTT DATA, DXC, Deloitte modernization practice",
+  "source": "killsesh-seed",
+  "default_role": "Mainframe & Midrange Modernization Practice Lead",
+  "bio": "Senior practice owner with 15-20 years in modernization services. Likely came up through IBM Global Services or a similar mainframe consultancy. Deep ongoing relationships with IBM and Microsoft account teams that shape how Ensono bids. Won't engage on price. Wants to know how you fit her existing delivery stack and partnership commitments.",
+  "abc": {
+    "a": "Your modernization practice wins the mainframe-to-cloud bid but burns weeks proving the migration preserved every field before customers sign off.",
+    "b": "Show the 5-day deterministic field-parity guarantee.",
+    "c": "20-min briefing with Mainframe Practice Lead. Embed in their delivery stack."
+  }
+}

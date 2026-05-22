@@ -1,0 +1,24 @@
+{
+  "slug": "integrative-systems",
+  "company": "Integrative Systems",
+  "hq": "Itasca, IL \u00b7 20+ years AS400",
+  "zone": "Boutique Partner",
+  "zoneCode": "boutique",
+  "what": "Pure-play AS400 / IBM i modernization.",
+  "techStack": "IBM i 7.1/7.2/7.3+, RPG-IV, RPG-Free, ILE, CL, COBOL, DB2/400",
+  "phone": "866-468-7974",
+  "web": "integrativesystems.com",
+  "linkedin": "linkedin.com/company/integrative-systems-inc-",
+  "dealsInFlight": "AS400 modernization for mid-market manufacturing, distribution, financial services",
+  "decisionMakers": "AS400 / COBOL Services Lead",
+  "alreadyUsing": "Their own AS400 conversion methodology",
+  "competition": "Profound Logic, Fresche, ARCAD, Rocket Software",
+  "source": "killsesh-seed",
+  "default_role": "AS400 / COBOL Services Lead",
+  "bio": "20+ year IBM i specialist running the services line at a Chicago-area shop with India+US delivery. Will know AS400 specifics cold \u2014 version compatibility, RPG-IV, ILE, CL. Won't tolerate hand-waving on IBM i details. If your demo can handle one of their actual customer copybooks, you're in.",
+  "abc": {
+    "a": "20 years of AS400 means you've seen every COBOL copybook nightmare.",
+    "b": "Tool hands your team field-level maps in 13 seconds.",
+    "c": "20-min briefing with AS400 / COBOL Services Lead."
+  }
+}

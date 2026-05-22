@@ -1,0 +1,24 @@
+{
+  "slug": "premera",
+  "company": "Premera Blue Cross",
+  "hq": "Mountlake Terrace, WA \u00b7 \u22483M members",
+  "zone": "End Customer",
+  "zoneCode": "end",
+  "what": "Large regional Blue Cross plan. Mainframe-heavy carrier; ACORD relevance direct.",
+  "techStack": "IBM Z mainframe claims engine; Facets/HealthEdge for some lines; AWS/Azure for digital front-end",
+  "phone": "425-918-4000",
+  "web": "premera.com",
+  "linkedin": "linkedin.com/company/premera-blue-cross",
+  "dealsInFlight": "Continuous claims processing modernization; mainframe-to-cloud workstreams",
+  "decisionMakers": "Enterprise Architecture; Claims Tech Lead; CIO office",
+  "alreadyUsing": "Cognizant TriZetto Facets historically; IBM Z mainframe; AWS post-breach",
+  "competition": "Cognizant, Accenture, Deloitte healthcare, IBM Consulting",
+  "source": "killsesh-seed",
+  "default_role": "Enterprise Architecture Lead OR Claims Tech Lead",
+  "bio": "Senior architect at a regional Blues plan, almost certainly hired or promoted in the wake of Premera's 2015 breach. That breach shaped the whole organization's security posture \u2014 every conversation runs through HIPAA, HITRUST, BCBSA-shared-infrastructure considerations. The right framing isn't 'cool tech' \u2014 it's 'reduce existing modernization risk without opening a new attack surface.'",
+  "abc": {
+    "a": "Your claims processing engine carries 30+ years of COBOL. Every AI translation tool your engineers are touching is quietly dropping fields in REDEFINES sections.",
+    "b": "Zero-data-leak architecture meets post-breach security posture.",
+    "c": "Name + email of Enterprise Architecture or Claims Tech Lead."
+  }
+}

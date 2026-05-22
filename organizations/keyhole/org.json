@@ -1,0 +1,24 @@
+{
+  "slug": "keyhole",
+  "company": "Keyhole Software",
+  "hq": "Leawood, KS \u00b7 custom software consultancy",
+  "zone": "Boutique Partner",
+  "zoneCode": "boutique",
+  "what": "Mid-sized custom shop. Legacy modernization is one of several offerings (Java, .NET, mainframe).",
+  "techStack": "Java, .NET, JavaScript/TypeScript, mainframe modernization toolchains",
+  "phone": "877-521-7769",
+  "web": "keyholesoftware.com",
+  "linkedin": "linkedin.com/company/keyhole-software",
+  "dealsInFlight": "Mid-market custom dev + modernization projects",
+  "decisionMakers": "Practice Lead for Legacy Modernization",
+  "alreadyUsing": "Custom methodologies",
+  "competition": "Other mid-sized consultancies in KC/Midwest",
+  "source": "killsesh-seed",
+  "default_role": "Practice Lead for Legacy Modernization",
+  "bio": "Kansas City consultancy practice lead. Friendly Midwestern tone \u2014 engages on technical merits rather than gatekeeping. Probably came up writing Java/.NET before owning the modernization line. The shop isn't COBOL-pure so they may try to steer the conversation toward Java work \u2014 steer back.",
+  "abc": {
+    "a": "You're small enough that one tool compressing discovery from weeks to days is the difference between winning and losing the next mainframe bid.",
+    "b": "Show the parity verification.",
+    "c": "20-min briefing with Practice Lead."
+  }
+}

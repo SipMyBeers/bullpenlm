@@ -1,0 +1,11 @@
+{
+  "slug": "bill-hinshaw",
+  "personName": "Bill Hinshaw",
+  "role": "Founder \u00b7 ex-IBM mainframe engineer",
+  "relationship": "primary_contact",
+  "bio": "Bill Hinshaw started writing COBOL at IBM in 1969 and founded Cobol Cowboys in 2013 in Gainesville, TX. Became nationally famous during the COVID-era unemployment-system crisis when WSJ, NPR, and Reuters all profiled him \u2014 states couldn't find mainframe engineers, and Bill's cowboys (retired COBOL veterans he brought back) kept their systems running. Talks plain, slow, with a Texan drawl. Respects technical competence above all else. Will hang up on jargon. Treats his guys like family.",
+  "say_voice": "Fred",
+  "say_rate": 165,
+  "discovered_from": "killsesh-seed",
+  "discovered_at": "2026-05-22"
+}

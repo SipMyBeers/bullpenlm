@@ -1,0 +1,24 @@
+{
+  "slug": "fpt-software",
+  "company": "FPT Software",
+  "hq": "Vietnam HQ \u00b7 San Jose US ops \u00b7 \u224830,000 employees",
+  "zone": "Channel Partner",
+  "zoneCode": "channel",
+  "what": "Largest IT services firm in SE Asia. US modernization practice growing fast.",
+  "techStack": "AWS, Azure, GCP, SAP, custom modernization frameworks",
+  "phone": "408-541-8800",
+  "web": "fpt-software.com",
+  "linkedin": "linkedin.com/company/fpt-software",
+  "dealsInFlight": "US enterprise modernization bids; Japan/Korea mainframe migrations",
+  "decisionMakers": "Head of Legacy Modernization Practice (US)",
+  "alreadyUsing": "Internal frameworks, cloud-native tooling",
+  "competition": "Accenture, IBM Consulting, Tata, Infosys, EPAM",
+  "source": "killsesh-seed",
+  "default_role": "Head of Legacy Modernization Practice (US)",
+  "bio": "US-based head of practice for a Vietnam-HQ firm aggressively expanding here since 2023. Has performance pressure from APAC leadership to win named enterprise logos against Accenture and IBM Consulting. Cares about differentiated tooling that lets them punch above weight class in US RFPs.",
+  "abc": {
+    "a": "Your US modernization practice is growing fast \u2014 winning enterprise deals means showing differentiated tooling against Accenture and IBM.",
+    "b": "Differentiated tool with mathematical proof, runs on customer hardware.",
+    "c": "20-min briefing with Head of Legacy Mod (US)."
+  }
+}

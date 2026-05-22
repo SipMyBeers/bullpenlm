@@ -1,0 +1,24 @@
+{
+  "slug": "softserve",
+  "company": "SoftServe",
+  "hq": "Austin, TX HQ \u00b7 Ukraine roots \u00b7 \u224812,000 employees",
+  "zone": "Channel Partner",
+  "zoneCode": "channel",
+  "what": "Global IT services + consulting. Modernization practice in EU + US.",
+  "techStack": "AWS, Azure, GCP, ServiceNow, SAP, custom enterprise modernization stacks",
+  "phone": "888-576-8737",
+  "web": "softserveinc.com",
+  "linkedin": "linkedin.com/company/softserve",
+  "dealsInFlight": "Enterprise modernization bids competing against Big 4 / Accenture",
+  "decisionMakers": "Practice Lead for Legacy App Modernization; BFSI vertical lead",
+  "alreadyUsing": "Internal methodologies, AWS/Azure native tooling",
+  "competition": "Accenture, EPAM, GlobalLogic, Endava, IBM Consulting",
+  "source": "killsesh-seed",
+  "default_role": "Practice Lead for Legacy Application Modernization",
+  "bio": "Mid-career consulting practice lead. Likely came from a Big-4 firm or an established Ukrainian/Eastern-European outsourcing background. Owns the entire modernization service line \u2014 bidding against Accenture, IBM, EPAM. Cares about RFP differentiators more than any single feature.",
+  "abc": {
+    "a": "Your modernization bids are losing to incumbents on parity-risk concerns.",
+    "b": "Show a verifiable proof-of-correctness story competitors can't match.",
+    "c": "20-min briefing with Practice Lead. Bid-differentiator conversation."
+  }
+}

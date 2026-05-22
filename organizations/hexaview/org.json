@@ -1,0 +1,24 @@
+{
+  "slug": "hexaview",
+  "company": "Hexaview Technologies",
+  "hq": "Noida, India \u00b7 NYC US ops",
+  "zone": "Boutique Partner",
+  "zoneCode": "boutique",
+  "what": "Custom dev, AI, modernization. Growing US modernization practice.",
+  "techStack": "AWS, Azure, Java, .NET, Python, AI/ML platforms",
+  "phone": "845-653-3855",
+  "web": "hexaviewtech.com",
+  "linkedin": "linkedin.com/company/hexaviewtech",
+  "dealsInFlight": "BFSI modernization bids \u2014 expanding US footprint",
+  "decisionMakers": "Head of Modernization Services; CTO Abhishek Talwar",
+  "alreadyUsing": "Custom dev frameworks, AWS/Azure native tools",
+  "competition": "Mid-sized Indian IT services firms",
+  "source": "killsesh-seed",
+  "default_role": "CTO \u00b7 Co-founder",
+  "bio": "Abhishek Talwar is the CTO and co-founder of Hexaview Technologies, a Noida-based custom dev firm with growing US BFSI operations in NYC. Engineering-first leader, publicly active on AI/ML content marketing. Practical, accessible \u2014 if you can show him a tool that helps Hexaview win bigger US BFSI bids, this becomes a working partnership conversation, not a vendor pitch.",
+  "abc": {
+    "a": "Your modernization practice is growing \u2014 winning enterprise BFSI deals means showing differentiated tooling.",
+    "b": "Mathematical proof nothing got lost.",
+    "c": "20-min briefing with Head of Mod Services or CTO."
+  }
+}

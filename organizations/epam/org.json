@@ -1,0 +1,24 @@
+{
+  "slug": "epam",
+  "company": "EPAM",
+  "hq": "Newtown, PA \u00b7 \u224860,000 employees",
+  "zone": "Channel Partner",
+  "zoneCode": "channel",
+  "what": "Massive engineering services firm. Deep banking + insurance verticals running COBOL.",
+  "techStack": "AWS, Azure, GCP, Salesforce, SAP, IBM Z modernization frameworks (EPAM PHM)",
+  "phone": "617-577-4400",
+  "web": "epam.com",
+  "linkedin": "linkedin.com/company/epam-systems",
+  "dealsInFlight": "Modernization SOWs at multiple top-10 US banks",
+  "decisionMakers": "Director of Mainframe Modernization; Practice Head BFSI",
+  "alreadyUsing": "EPAM Continuum, internal PHM frameworks, AWS Mainframe Modernization partnership",
+  "competition": "Accenture, Deloitte, TCS, Infosys, IBM Consulting",
+  "source": "killsesh-seed",
+  "default_role": "Director of Mainframe Modernization (BFSI vertical)",
+  "bio": "Enterprise polish. Northeast (NYC, Boston, Philly) background \u2014 probably came through banking IT or a Big-4 BFSI practice before landing at EPAM. Manages BFSI modernization deals at top-10 US banks. Will route a founder straight to procurement if you don't sound like you've done this before. Cares about scale, NDA/MSA-readiness, and how you'd survive an enterprise vendor onboarding.",
+  "abc": {
+    "a": "Your BFSI modernization SOWs burn weeks on manual field-mapping customers don't see as billable value.",
+    "b": "Compress that work to 5 business days with mathematical proof.",
+    "c": "20-min briefing with Director of Mainframe Mod or BFSI vertical lead."
+  }
+}

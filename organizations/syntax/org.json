@@ -1,0 +1,24 @@
+{
+  "slug": "syntax",
+  "company": "Syntax",
+  "hq": "Montreal HQ \u00b7 Boston ops",
+  "zone": "Channel Partner",
+  "zoneCode": "channel",
+  "what": "Managed IT services. Heavy SAP, JD Edwards, mainframe outsourcing for financial / insurance carriers.",
+  "techStack": "SAP, JD Edwards, IBM Z/i, AWS/Azure, managed mainframe operations",
+  "phone": "781-995-2200",
+  "web": "syntax.com",
+  "linkedin": "linkedin.com/company/syntax",
+  "dealsInFlight": "Managing mainframes for insurance carriers; modernizing JDE deployments for manufacturing",
+  "decisionMakers": "Director of Legacy Modernization; VP of Mainframe Services",
+  "alreadyUsing": "IBM tools, internal Syntax methodology",
+  "competition": "Ensono, Kyndryl, NTT DATA",
+  "source": "killsesh-seed",
+  "default_role": "Director of Legacy Modernization",
+  "bio": "Came up through mainframe outsourcing or SAP consulting. Pragmatic operator focused on engagement economics \u2014 knows the names of every major modernization vendor by heart and roughly what they charge. Will ask 'how does this fit existing engagements?' early. Easier to win than Rocket but won't move fast without proof.",
+  "abc": {
+    "a": "Your insurance carrier clients are sitting on COBOL copybook risk that becomes your operational problem when they call you to modernize.",
+    "b": "Field-level audit in 5 days, deterministic \u2014 beats anything they can hand-roll.",
+    "c": "20-min briefing with Director of Legacy Modernization. Co-sell into one of their insurance accounts as a pilot beachhead."
+  }
+}

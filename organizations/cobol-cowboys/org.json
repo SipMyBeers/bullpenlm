@@ -1,0 +1,24 @@
+{
+  "slug": "cobol-cowboys",
+  "company": "Cobol Cowboys",
+  "hq": "Gainesville, TX \u00b7 ex-IBM mainframe engineers",
+  "zone": "Boutique Partner",
+  "zoneCode": "boutique",
+  "what": "Famous COBOL specialists. Featured in WSJ, NPR.",
+  "techStack": "COBOL, CICS, IMS, DB2, JCL, mainframe assembler",
+  "phone": "940-736-7733",
+  "web": "cobolcowboys.com",
+  "linkedin": "linkedin.com/company/cobol-cowboys-llc",
+  "dealsInFlight": "Senior COBOL engineer placements at banks, insurance, federal/state govt",
+  "decisionMakers": "Bill Hinshaw, Eileen Hinshaw (named principals)",
+  "alreadyUsing": "Their cowboys' brains + decades of muscle memory",
+  "competition": "Other niche COBOL staffing firms, TEKsystems",
+  "source": "killsesh-seed",
+  "default_role": "Founder \u00b7 ex-IBM mainframe engineer",
+  "bio": "Bill Hinshaw started writing COBOL at IBM in 1969 and founded Cobol Cowboys in 2013 in Gainesville, TX. Became nationally famous during the COVID-era unemployment-system crisis when WSJ, NPR, and Reuters all profiled him \u2014 states couldn't find mainframe engineers, and Bill's cowboys (retired COBOL veterans he brought back) kept their systems running. Talks plain, slow, with a Texan drawl. Respects technical competence above all else. Will hang up on jargon. Treats his guys like family.",
+  "abc": {
+    "a": "Your cowboys do schema discovery by hand on every engagement.",
+    "b": "Tool hands your guys the field-level map in 13 seconds. Instrument they wield, NOT replacement.",
+    "c": "20-min call with Bill or Eileen."
+  }
+}

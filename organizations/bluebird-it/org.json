@@ -1,0 +1,24 @@
+{
+  "slug": "bluebird-it",
+  "company": "Bluebird IT",
+  "hq": "IT staffing / consulting (verify)",
+  "zone": "Boutique Partner",
+  "zoneCode": "boutique",
+  "what": "IT staffing + consulting firm. Verify identity first.",
+  "techStack": "Mainframe + cloud staffing (assumed)",
+  "phone": "866-258-8411",
+  "web": "(verify on call)",
+  "linkedin": null,
+  "dealsInFlight": "Unknown",
+  "decisionMakers": "Legacy Modernization Sales Director",
+  "alreadyUsing": "Unknown",
+  "competition": "Other IT staffing firms",
+  "source": "killsesh-seed",
+  "default_role": "Legacy Modernization Sales Director",
+  "bio": "Identity unconfirmed. Open the call with verification before pitching anything. If it's a staffing firm, the pitch flips to bench enablement (same as Enhance IT). If it's something else entirely, end clean and move on.",
+  "abc": {
+    "a": "Verify identity first.",
+    "b": "Pitch as bench enablement.",
+    "c": "20-min briefing with Sales Director."
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "slug": "katalyst",
+  "company": "Katalyst Systems",
+  "hq": "Massachusetts boutique",
+  "zone": "Channel Partner",
+  "zoneCode": "channel",
+  "what": "Boutique IT modernization consultancy.",
+  "techStack": "Custom enterprise integrations, modernization toolchains",
+  "phone": "781-871-4760",
+  "web": "katalystsystems.com",
+  "linkedin": null,
+  "dealsInFlight": "Boutique modernization deals \u2014 typical mid-market",
+  "decisionMakers": "Director of IT Modernization; Practice Lead",
+  "alreadyUsing": "Custom approaches",
+  "competition": "Other boutique consultancies in Boston metro",
+  "source": "killsesh-seed",
+  "default_role": "Director of IT Modernization",
+  "bio": "Likely a founder or near-founder of a Boston-metro boutique. The Director title here is half-marketing, half-real \u2014 they probably wear three hats. Cares about differentiation that helps them compete against giants when bidding on the same RFP.",
+  "abc": {
+    "a": "You're a boutique competing against giants for mainframe modernization work \u2014 your differentiator is either price or proof.",
+    "b": "Show the proof.",
+    "c": "20-min briefing with Director of IT Modernization."
+  }
+}

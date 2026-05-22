@@ -1,0 +1,24 @@
+{
+  "slug": "profound-logic",
+  "company": "Profound Logic",
+  "hq": "Walnut Creek, CA",
+  "zone": "Tool Partner",
+  "zoneCode": "tool",
+  "what": "Pure-play IBM i / AS400 modernization. Profound UI converts RPG-to-web.",
+  "techStack": "IBM i (V5R4+), RPG/RPG-Free, Profound UI for web modernization, Node.js on IBM i",
+  "phone": "925-271-2444",
+  "web": "profoundlogic.com",
+  "linkedin": "linkedin.com/company/profound-logic-software-inc-",
+  "dealsInFlight": "Mid-market IBM i shops modernizing green-screen apps to web/mobile",
+  "decisionMakers": "Founder Alex Roytman is publicly active; tech integration leads handle tool decisions",
+  "alreadyUsing": "Profound UI, Profound.js, IBM i tooling",
+  "competition": "ARCAD, Fresche Solutions, Looksoftware (now part of Rocket)",
+  "source": "killsesh-seed",
+  "default_role": "Director of AS400 / iSeries Integration",
+  "bio": "Profound Logic is a small, accessible IBM i specialty shop. The Director of AS400 Integration is almost certainly an RPG veteran who wrote green-screen apps before the web existed. Loves tech that bolts cleanly onto Profound UI. Will probe you on IBM i version compatibility, RPG-IV vs RPG-Free, ILE handling. If you can't speak that language, the call ends fast \u2014 but if you can, you're talking to a real engineer, not a procurement filter.",
+  "abc": {
+    "a": "Your consultants do schema discovery by hand before they touch the actual UI conversion.",
+    "b": "Reveal the 13-second AST map on a customer's RPG copybook.",
+    "c": "20-min briefing with Director of AS400 Integration. Tool-stack partnership."
+  }
+}

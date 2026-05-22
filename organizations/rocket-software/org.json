@@ -1,0 +1,24 @@
+{
+  "slug": "rocket-software",
+  "company": "Rocket Software",
+  "hq": "Waltham, MA \u00b7 \u22482,500 employees",
+  "zone": "Tool Partner",
+  "zoneCode": "tool",
+  "what": "800-lb gorilla of IBM i / AS400 / mainframe modernization tools. Owns BlueZone, TeamStudio, RPG + COBOL conversion stacks.",
+  "techStack": "IBM Z, IBM i, BlueZone terminal emulation, TeamStudio for RPG modernization, COBOL/JCL tooling",
+  "phone": "781-226-1100",
+  "web": "rocketsoftware.com",
+  "linkedin": "linkedin.com/company/rocket-software",
+  "dealsInFlight": "Continuous customer modernization at Fortune 500 banks & insurers; bidding alongside IBM Garage and AWS Mainframe Modernization",
+  "decisionMakers": "VPs of Modernization Practice; Practice Leads for AS400/iSeries \u2014 visible via linkedin.com/company/rocket-software/people",
+  "alreadyUsing": "Their own stack (BlueZone, TeamStudio), plus partner tools from IBM",
+  "competition": "IBM, AWS Mainframe Modernization, Micro Focus/OpenText, LzLabs",
+  "source": "killsesh-seed",
+  "default_role": "VP of Application Modernization",
+  "bio": "The VP of App Modernization at Rocket runs the modernization tooling product line \u2014 BlueZone, TeamStudio, the RPG/COBOL converters. Almost certainly came up through enterprise software at IBM, CA, or a competing modernization vendor before landing here 5-15 years ago. Has seen north of 100 startup pitches. Polite Boston-area enterprise tone, time-pressured, but won't be rude unless you waste theirs.",
+  "abc": {
+    "a": "Your modernization practice burns hundreds of hours manually reverse-engineering copybooks before billable engineering even starts.",
+    "b": "Show them the field-parity gate on a real copybook. Rocket has heard 100 vendor pitches \u2014 only deterministic verification gets past their bullshit detector.",
+    "c": "20-min briefing with VP App Mod or AS400 Practice Lead. Conversation: OEM partnership / co-sell into their installed base."
+  }
+}

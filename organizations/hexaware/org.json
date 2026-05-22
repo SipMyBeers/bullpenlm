@@ -1,0 +1,24 @@
+{
+  "slug": "hexaware",
+  "company": "Hexaware",
+  "hq": "Mumbai HQ \u00b7 NJ US ops \u00b7 \u224830,000 employees",
+  "zone": "Channel Partner",
+  "zoneCode": "channel",
+  "what": "IT services with strong BFSI practice. Mainframe modernization is publicly marketed.",
+  "techStack": "AWS, Azure, Salesforce, IBM Z, automation frameworks (Tensai)",
+  "phone": "877-439-3928",
+  "web": "hexaware.com",
+  "linkedin": "linkedin.com/company/hexaware-technologies",
+  "dealsInFlight": "BFSI modernization deals; insurance carrier transformations",
+  "decisionMakers": "Head of Legacy Modernization; BFSI Practice Head",
+  "alreadyUsing": "AWS Mainframe Modernization, in-house Tensai automation",
+  "competition": "TCS, Infosys, Wipro, LTI Mindtree, EPAM",
+  "source": "killsesh-seed",
+  "default_role": "Head of Legacy Modernization",
+  "bio": "India-based head of practice, very likely with US BFSI account relationships built over a decade. Practical, will engage on real customer pain. Cares about reducing the internal consultant-hour cost of parity verification \u2014 a measurable margin lever for their delivery model. Faster decision-maker than EPAM or LTI for the same kind of conversation.",
+  "abc": {
+    "a": "Your BFSI deals carry parity-risk you mitigate today with senior consultant review hours.",
+    "b": "Replace those hours with deterministic math.",
+    "c": "20-min briefing with Head of Legacy Modernization."
+  }
+}

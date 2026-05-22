@@ -1,0 +1,24 @@
+{
+  "slug": "lti-mindtree",
+  "company": "LTI Mindtree",
+  "hq": "Mumbai HQ \u00b7 \u224890,000 employees",
+  "zone": "Channel Partner",
+  "zoneCode": "channel",
+  "what": "Massive IT services (L&T Infotech + Mindtree merged 2022).",
+  "techStack": "AWS, Azure, GCP, SAP, Oracle, ServiceNow, Snowflake, mainframe modernization frameworks",
+  "phone": "877-246-4782",
+  "web": "ltimindtree.com",
+  "linkedin": "linkedin.com/company/ltimindtree",
+  "dealsInFlight": "Continuous modernization projects across BFSI, manufacturing, retail",
+  "decisionMakers": "Lead for Legacy App Services; Practice Head Modernization",
+  "alreadyUsing": "Internal methodologies, AWS/Azure cloud-native tools",
+  "competition": "TCS, Infosys, Wipro, HCL, Cognizant",
+  "source": "killsesh-seed",
+  "default_role": "Lead for Legacy Application Services",
+  "bio": "At a 90,000-person org this is a director-level person running a practice with hundreds of engineers. Cares about volume + repeatability \u2014 anything that becomes a standard step in their delivery methodology is gold. Anything bespoke is friction. Slow decision-maker (committee) but a huge prize if won.",
+  "abc": {
+    "a": "Your legacy app services line ships modernization projects every week \u2014 every one needs field-parity verification done by hand.",
+    "b": "Position as the verification layer that automates the most error-prone step.",
+    "c": "20-min briefing with Lead for Legacy App Services."
+  }
+}

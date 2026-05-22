@@ -1,0 +1,24 @@
+{
+  "slug": "pacificsource",
+  "company": "PacificSource Health Plans",
+  "hq": "Springfield, OR \u00b7 regional health insurer",
+  "zone": "End Customer",
+  "zoneCode": "end",
+  "what": "Regional health insurer. Insurance carrier \u2192 ACORD data exchange directly applicable.",
+  "techStack": "Claims processing on mainframe; HEDIS/CMS reporting platforms",
+  "phone": "541-686-1242",
+  "web": "pacificsource.com",
+  "linkedin": "linkedin.com/company/pacificsource-health-plans",
+  "dealsInFlight": "Claims processing modernization; HIPAA-driven systems hardening",
+  "decisionMakers": "IT VRM intake \u2192 IT Enterprise Architecture \u2192 Claims Tech Lead",
+  "alreadyUsing": "Likely TriZetto Facets or HealthEdge; mainframe claims engine partial",
+  "competition": "Cognizant TriZetto, HealthEdge, Optum, Accenture",
+  "source": "killsesh-seed",
+  "default_role": "IT Vendor Management \u2192 Enterprise Architecture / Claims Tech Lead",
+  "bio": "Pacific Northwest healthcare IT, mid-career. HIPAA mindset baked into every sentence. Cautious, risk-averse, hides behind the VRM process by default. Warms up only when you make the 'ticking time bomb' framing real to their actual claims system \u2014 until then everything routes through procurement.",
+  "abc": {
+    "a": "The engineers who wrote your claims processing are retiring, and the people replacing them use ChatGPT.",
+    "b": "Code never leaves your network \u2014 meets HIPAA requirements.",
+    "c": "Name + email of IT Enterprise Architecture or Claims Tech Lead."
+  }
+}

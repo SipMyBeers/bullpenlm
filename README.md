@@ -148,10 +148,15 @@ If you're curious about the hosted version, email `cheers@beerslabs.com`.
 Be honest about it:
 
 - ✅ Personas as files · ★1 / ★2 / ★3 enrichment · CLI · local STT/TTS · trainer server · sales floor UI · scoring pass
-- ❌ CRM integrations (CSV/HubSpot/Salesforce) — planned, not built
+- ✅ Org-centric model — companies as top-level, people accumulate underneath
+- ✅ Post-call extraction loop — record → whisper → Gemma → auto-creates new contacts + deals
+- ✅ Pre-call brief generator — AI 1-pager per call
+- ✅ Adapter system — `website`, `google_places`, `osm`, `firecrawl`, `csv`, `social_signals`
+- ❌ HubSpot/Salesforce OAuth sync — planned, hosted-tier
 - ❌ Multi-tenant auth / workspaces — local-only for now
 - ❌ Mobile / iOS app — desktop-only
 - ❌ Cross-language (English-only for STT; XTTS supports more if you wire it up)
+- ❌ Speaker diarization in call transcripts (one transcript stream; no per-speaker labels)
 
 ## Contributing
 

@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
-KillSesh Sales Training — v1
-============================
-Local-only AI sales training tool. Pick a prospect from your CRM, the AI plays
-that specific buyer with their actual company context + pushbacks pulled from
-the prospect card. You practice the cold call as text chat. At hang-up the
-transcript runs through a scoring pass against the KillSesh playbook.
+Cheers Beers — local trainer server
+===================================
+Local-only AI sales training tool. Companies live as organizations/<slug>/
+folders. Click any walking character on the floor → org dossier with people,
+calls, deals. Practice the conversation with the AI. Record real calls and
+the debrief loop auto-extracts new contacts.
 
-Runs against your local Ollama Gemma. No cloud, no API key, no telemetry.
+Runs against your local Ollama Gemma + whisper.cpp. No cloud, no API key,
+no telemetry.
 
 Start:
     python3 server.py
-Then open http://localhost:7878
+Then open the floor at floor/index.html or the trainer at
+http://localhost:7878
 """
 import http.server
 import json
@@ -25,16 +27,27 @@ import re
 import shutil
 from pathlib import Path
 
-# Load personas from the file-based store at ~/killsesh-pilots/personas/.
-# Falls back to the hardcoded PERSONAS dict in this file if the loader is
-# unavailable (so the server still boots even mid-migration).
-sys.path.insert(0, "/Users/beers/killsesh-pilots/personas")
+# Cheers Beers uses two file stores: the legacy personas/ (still loaded if
+# present, for back-compat) AND the new organizations/<slug>/ structure that
+# is the canonical source going forward.
+_REPO = Path(__file__).parent.parent
+sys.path.insert(0, str(_REPO / "personas"))
+sys.path.insert(0, str(_REPO / "server"))
+
 try:
     from loader import load_all as _load_personas, build_persona_prompt as _build_persona_prompt, build_scoring_prompt as _build_scoring_prompt
     _USE_FILE_PERSONAS = True
 except Exception as _e:
     print(f"⚠ persona loader unavailable ({_e}); falling back to hardcoded PERSONAS")
     _USE_FILE_PERSONAS = False
+
+# Org graph loader — always available since it ships with the server
+try:
+    from orgs import load_all as _load_orgs, load_org as _load_org
+    _USE_ORG_GRAPH = True
+except Exception as _e:
+    print(f"⚠ org loader unavailable ({_e})")
+    _USE_ORG_GRAPH = False
 
 # ──────────────────────────────────────────────────────────────────────────
 # Config
@@ -47,11 +60,17 @@ MODEL_PREFERENCE = ["gemma2:9b", "gemma3:12b", "gemma2:12b", "deepseek-coder:6.7
 
 # Voice stack — all local. whisper.cpp for STT, macOS `say` for TTS.
 WHISPER_BIN = shutil.which("whisper-cli") or "/opt/homebrew/bin/whisper-cli"
-WHISPER_MODEL = "/Users/beers/killsesh-pilots/training/models/ggml-base.en.bin"
+WHISPER_MODEL = str(_REPO / "server" / "models" / "ggml-base.en.bin")
+# Fallback to the original killsesh-pilots model if the cheers-beers one
+# isn't downloaded yet — saves users a duplicate ~150MB download.
+if not Path(WHISPER_MODEL).exists():
+    _LEGACY = "/Users/beers/killsesh-pilots/training/models/ggml-base.en.bin"
+    if Path(_LEGACY).exists():
+        WHISPER_MODEL = _LEGACY
 SAY_BIN = "/usr/bin/say"
 AFCONVERT_BIN = "/usr/bin/afconvert"
 
-TRAINING_DIR = Path("/Users/beers/killsesh-pilots/training-runs")
+TRAINING_DIR = _REPO / "training-runs"
 TRAINING_DIR.mkdir(parents=True, exist_ok=True)
 
 # Voice mapping — pick a different macOS voice per persona so each call sounds
@@ -1206,13 +1225,25 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         return
 
+    def _cors(self):
+        # Allow the static floor (file:// or any localhost port) to hit us.
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+
     def _send_json(self, code, payload):
         body = json.dumps(payload).encode()
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
+        self._cors()
         self.end_headers()
         self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self._cors()
+        self.end_headers()
 
     def do_GET(self):
         if self.path == "/" or self.path.startswith("/?"):
@@ -1220,9 +1251,32 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
+            self._cors()
             self.end_headers()
             self.wfile.write(body)
             return
+
+        # ── Org graph endpoints ──
+        if self.path == "/api/organizations":
+            if not _USE_ORG_GRAPH:
+                self._send_json(503, {"error": "org loader unavailable"})
+                return
+            orgs = _load_orgs()
+            self._send_json(200, {"organizations": orgs, "model": get_model()})
+            return
+
+        m = re.match(r"^/api/organizations/([a-z0-9\-]+)$", self.path)
+        if m:
+            if not _USE_ORG_GRAPH:
+                self._send_json(503, {"error": "org loader unavailable"})
+                return
+            org = _load_org(m.group(1))
+            if not org:
+                self._send_json(404, {"error": "org not found"})
+                return
+            self._send_json(200, org)
+            return
+
         if self.path == "/api/personas":
             if _USE_FILE_PERSONAS:
                 _refresh_personas()
@@ -1259,6 +1313,42 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(200, {"text": text})
             except subprocess.CalledProcessError as e:
                 self._send_json(500, {"error": "whisper failed", "stderr": e.stderr.decode(errors="ignore")[:400]})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/upload-call also takes binary audio. Path: /api/upload-call?org=<slug>
+        # Saves to organizations/<slug>/calls/<timestamp>/recording.wav and
+        # optionally auto-runs the debrief.
+        if self.path.startswith("/api/upload-call"):
+            try:
+                from urllib.parse import urlparse, parse_qs
+                qs = parse_qs(urlparse(self.path).query)
+                org_slug = (qs.get("org") or [None])[0]
+                auto_debrief = (qs.get("debrief") or ["1"])[0] == "1"
+                if not org_slug:
+                    self._send_json(400, {"error": "missing ?org=<slug>"})
+                    return
+                org_dir = _REPO / "organizations" / org_slug
+                if not org_dir.exists():
+                    self._send_json(404, {"error": f"org not found: {org_slug}"})
+                    return
+                call_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+                call_dir = org_dir / "calls" / call_id
+                call_dir.mkdir(parents=True, exist_ok=True)
+                (call_dir / "recording.wav").write_bytes(raw)
+                result = {"org": org_slug, "call_id": call_id, "bytes": len(raw)}
+                if auto_debrief:
+                    try:
+                        from debrief import debrief_call
+                        d = debrief_call(org_slug, call_id)
+                        result["debrief"] = {
+                            "deal_signal": d.get("deal_signal"),
+                            "created_people": d.get("created_people"),
+                        }
+                    except Exception as e:
+                        result["debrief_error"] = str(e)
+                self._send_json(200, result)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
@@ -1305,10 +1395,39 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "audio/wav")
                 self.send_header("Content-Length", str(len(wav)))
+                self._cors()
                 self.end_headers()
                 self.wfile.write(wav)
             except subprocess.CalledProcessError as e:
                 self._send_json(500, {"error": "say/afconvert failed", "stderr": e.stderr.decode(errors="ignore")[:400]})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path == "/api/brief":
+            try:
+                from brief import generate_brief
+                org_slug = req.get("org")
+                person_slug = req.get("person")
+                if not org_slug:
+                    self._send_json(400, {"error": "missing org"})
+                    return
+                brief_md = generate_brief(org_slug, person_slug)
+                self._send_json(200, {"brief": brief_md})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path == "/api/debrief":
+            try:
+                from debrief import debrief_call
+                org_slug = req.get("org")
+                call_id = req.get("call_id")
+                if not org_slug or not call_id:
+                    self._send_json(400, {"error": "missing org or call_id"})
+                    return
+                result = debrief_call(org_slug, call_id)
+                self._send_json(200, result)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
