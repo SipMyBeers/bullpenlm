@@ -61,12 +61,6 @@ MODEL_PREFERENCE = ["gemma2:9b", "gemma3:12b", "gemma2:12b", "deepseek-coder:6.7
 # Voice stack — all local. whisper.cpp for STT, macOS `say` for TTS.
 WHISPER_BIN = shutil.which("whisper-cli") or "/opt/homebrew/bin/whisper-cli"
 WHISPER_MODEL = str(_REPO / "server" / "models" / "ggml-base.en.bin")
-# Fallback to the original killsesh-pilots model if the cheers-beers one
-# isn't downloaded yet — saves users a duplicate ~150MB download.
-if not Path(WHISPER_MODEL).exists():
-    _LEGACY = "/Users/beers/killsesh-pilots/training/models/ggml-base.en.bin"
-    if Path(_LEGACY).exists():
-        WHISPER_MODEL = _LEGACY
 SAY_BIN = "/usr/bin/say"
 AFCONVERT_BIN = "/usr/bin/afconvert"
 

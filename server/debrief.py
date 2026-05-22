@@ -34,10 +34,7 @@ ORGS = REPO / "organizations"
 # Reuse the server's voice + ollama helpers via module import. Since this
 # module may be imported by the server itself, lazy-import to avoid cycles.
 def _whisper_model() -> Path:
-    # mirror server.py's resolution order
-    primary = REPO / "server" / "models" / "ggml-base.en.bin"
-    legacy = Path("/Users/beers/killsesh-pilots/training/models/ggml-base.en.bin")
-    return primary if primary.exists() else legacy
+    return REPO / "server" / "models" / "ggml-base.en.bin"
 
 
 def _ollama_extract(prompt: str, schema_hint: str = "", model: str = "gemma2:9b") -> dict:
