@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Bullpen — one-shot install on macOS.
+# BullpenLM — one-shot install on macOS.
 # Pulls everything you need for Tier-1 and Tier-2. Tier-3 (XTTS voice cloning)
 # stays optional — install separately via pip when you want it.
 set -euo pipefail
 
 echo "─────────────────────────────────────────────────"
-echo "  Bullpen · local install"
+echo "  BullpenLM · local install"
 echo "─────────────────────────────────────────────────"
 
 if ! command -v brew >/dev/null 2>&1; then

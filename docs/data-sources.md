@@ -1,6 +1,6 @@
 # Data sources — how to populate your org graph
 
-Bullpen is data-source agnostic. You bring the data, the engine turns
+BullpenLM is data-source agnostic. You bring the data, the engine turns
 it into practice-ready org folders + AI personas. This page is the menu of
 ways to get data in.
 

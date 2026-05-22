@@ -3,7 +3,7 @@
 The architecture splits cleanly into two layers:
 
 - **OSS engine** (this repo): reads personas from `personas/<slug>/` directories. Anything that writes those directories is a valid input.
-- **Commercial connectors** (Bullpen Cloud): authenticated bridges between SaaS CRMs and the file system.
+- **Commercial connectors** (BullpenLM Cloud): authenticated bridges between SaaS CRMs and the file system.
 
 This page tracks what's planned, what's shipped, and what's deliberately
 out of scope.
@@ -42,8 +42,8 @@ The lightest CRM integration that matters. Why HubSpot first:
 
 Sync model:
 - Pull contacts + deals + recent activity nightly
-- Map HubSpot Deal Stage → Bullpen status
-- Map HubSpot Owner → Bullpen workspace user
+- Map HubSpot Deal Stage → BullpenLM status
+- Map HubSpot Owner → BullpenLM workspace user
 - Recent emails / call notes → appended to `personality.md` for the matching persona
 
 **Status:** designed, not yet built. Will live in the commercial product.

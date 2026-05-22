@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Bullpen — local trainer server
+BullpenLM — local trainer server
 ===================================
 Local-only AI sales training tool. Companies live as organizations/<slug>/
 folders. Click any walking character on the floor → org dossier with people,
@@ -27,7 +27,7 @@ import re
 import shutil
 from pathlib import Path
 
-# Bullpen uses two file stores: the legacy personas/ (still loaded if
+# BullpenLM uses two file stores: the legacy personas/ (still loaded if
 # present, for back-compat) AND the new organizations/<slug>/ structure that
 # is the canonical source going forward.
 _REPO = Path(__file__).parent.parent
@@ -663,7 +663,7 @@ HTML_PAGE = r"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Bullpen · Trainer</title>
+<title>BullpenLM · Trainer</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -754,7 +754,7 @@ HTML_PAGE = r"""<!doctype html>
 
 <header>
   <div>
-    <div class="brand">Bullpen <span class="accent">·</span> Trainer</div>
+    <div class="brand">BullpenLM <span class="accent">·</span> Trainer</div>
     <div class="meta" id="model-tag">loading model…</div>
   </div>
   <div class="controls">
@@ -1470,7 +1470,7 @@ class ReusableServer(socketserver.ThreadingTCPServer):
 def main():
     model = get_model()
     print("─" * 60)
-    print("  Bullpen · trainer + org graph + post-call debrief")
+    print("  BullpenLM · trainer + org graph + post-call debrief")
     print(f"  Model:   {model}")
     print(f"  Server:  http://localhost:{PORT}")
     print(f"  Logs:    {TRAINING_DIR}")
