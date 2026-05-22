@@ -94,7 +94,7 @@ phrased as something you could literally say to whoever picks up:
 That's your script. Pick the most relevant one for the call you're about
 to make.
 
-## Integration with the rest of Cheers Beers
+## Integration with the rest of Bullpen
 
 When you click "Brief" in the org dossier (the `/api/brief` endpoint),
 the pre-call brief generator reads `signals.md` and `signals.json` if

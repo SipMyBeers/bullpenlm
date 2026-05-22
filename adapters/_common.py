@@ -81,7 +81,7 @@ def fetch_page(url: str, timeout: int = 15) -> str:
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
     req = urllib.request.Request(url, headers={
-        "User-Agent": "Mozilla/5.0 (Cheers Beers / org-ingest)",
+        "User-Agent": "Mozilla/5.0 (Bullpen / org-ingest)",
         "Accept": "text/html,application/xhtml+xml",
     })
     with urllib.request.urlopen(req, timeout=timeout, context=_SSL) as r:

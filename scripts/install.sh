@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Cheers Beers — one-shot install on macOS.
+# Bullpen — one-shot install on macOS.
 # Pulls everything you need for Tier-1 and Tier-2. Tier-3 (XTTS voice cloning)
 # stays optional — install separately via pip when you want it.
 set -euo pipefail
 
 echo "─────────────────────────────────────────────────"
-echo "  Cheers Beers · local install"
+echo "  Bullpen · local install"
 echo "─────────────────────────────────────────────────"
 
 if ! command -v brew >/dev/null 2>&1; then

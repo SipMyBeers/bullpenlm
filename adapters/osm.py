@@ -34,7 +34,7 @@ NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 def geocode(location: str) -> tuple[float, float]:
     """Free geocoding via Nominatim. Returns (lat, lng)."""
     url = f"{NOMINATIM_URL}?format=json&limit=1&q={urllib.parse.quote(location)}"
-    req = urllib.request.Request(url, headers={"User-Agent": "Cheers Beers / OSM adapter"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Bullpen / OSM adapter"})
     with urllib.request.urlopen(req, timeout=15, context=_SSL) as r:
         data = json.loads(r.read())
     if not data:
@@ -61,7 +61,7 @@ def overpass_query(lat: float, lng: float, radius_m: float, tag: str, limit: int
     req = urllib.request.Request(
         OVERPASS_URL,
         data=urllib.parse.urlencode({"data": query}).encode(),
-        headers={"User-Agent": "Cheers Beers / OSM adapter"},
+        headers={"User-Agent": "Bullpen / OSM adapter"},
     )
     with urllib.request.urlopen(req, timeout=45, context=_SSL) as r:
         data = json.loads(r.read())

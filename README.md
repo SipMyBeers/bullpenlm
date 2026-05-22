@@ -1,4 +1,4 @@
-# Cheers Beers
+# Bullpen
 
 > **AI sales-call rehearsal grounded in your actual pipeline.**
 > NotebookLM for your CRM — every prospect becomes an AI roleplay partner the moment you import them.
@@ -17,7 +17,7 @@ point. The conversation your AE is about to have isn't with "a skeptical
 enterprise buyer." It's with **Sarah at Premera, who pushed back on price in
 Q2 and prefers technical depth**.
 
-Cheers Beers flips it. Connect your CRM. Every prospect becomes an AI
+Bullpen flips it. Connect your CRM. Every prospect becomes an AI
 roleplay partner with their actual context: company, role, pushback patterns,
 public-talk transcripts, even a cloned voice if you want it. Your reps
 rehearse the exact call they're about to make.
@@ -31,8 +31,8 @@ rehearse the exact call they're about to make.
 ## Demo
 
 ```bash
-git clone https://github.com/your-org/cheers-beers.git
-cd cheers-beers
+git clone https://github.com/your-org/bullpen.git
+cd bullpen
 ./scripts/install.sh      # brew installs ollama, whisper-cpp, yt-dlp
 ./scripts/pull-model.sh   # ollama pull gemma2:9b
 python3 server/server.py
@@ -49,7 +49,7 @@ the markdown files to add your own.
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│   Your CRM      │ →  │  personas/<slug>/│ →  │  Cheers Beers    │
+│   Your CRM      │ →  │  personas/<slug>/│ →  │  Bullpen    │
 │  (CSV / HubSpot │    │  (markdown +     │    │  (local AI       │
 │   / Salesforce) │    │   transcripts +  │    │   roleplay +     │
 │                 │    │   voice samples) │    │   voice + score) │
@@ -90,7 +90,7 @@ Sales conversations are confidential. Pre-call rehearsal where the AI knows
 real prospect names, deal stages, and notes is the kind of thing security
 teams kill on the first VRM review if it touches a cloud LLM.
 
-Cheers Beers ships designed-for-air-gap from day one:
+Bullpen ships designed-for-air-gap from day one:
 
 - **LLM:** Ollama (Gemma 2 9B by default — runs on any modern Mac/PC)
 - **Speech-to-text:** whisper.cpp (~150MB model, runs locally, <1s transcription)
@@ -98,7 +98,7 @@ Cheers Beers ships designed-for-air-gap from day one:
 - **Text-to-speech (Tier 3):** Coqui XTTS-v2 (local, optional, voice cloning)
 - **No telemetry. No phone-home. No cloud API. Verifiable: `docker network inspect` on any deployment shows zero outbound connections.**
 
-## Why "Cheers Beers"
+## Why "Bullpen"
 
 Built by [Beers Labs](https://github.com/SipMyBeers) (Dylan "Beers"). The
 tool was first built to rehearse cold calls for **KillSesh**, an on-prem
@@ -130,7 +130,7 @@ The roadmap lives at [`docs/crm-integrations.md`](docs/crm-integrations.md).
 **Open source forever:** the entire engine (this repo). MIT license. Use it
 solo, in your team, behind your own VPN, however you want.
 
-**Cheers Beers Cloud** *(coming · pre-launch)*:
+**Bullpen Cloud** *(coming · pre-launch)*:
 
 | Tier | $/seat/mo | What you get |
 |---|---|---|
@@ -139,7 +139,7 @@ solo, in your team, behind your own VPN, however you want.
 | **Team** | $99 | CRM connectors · shared playbook · manager dashboard · scoring history |
 | **Enterprise** | contact | SSO · audit logs · on-prem Ollama deployment · custom voice clones · SOC 2 |
 
-If you're curious about the hosted version, email `cheers@beerslabs.com`.
+If you're curious about the hosted version, email `hello@bullpen.com`.
 
 ---
 

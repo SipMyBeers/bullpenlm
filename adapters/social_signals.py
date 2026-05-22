@@ -110,7 +110,7 @@ def fetch_raw(url: str, timeout: int = 15) -> tuple[str, dict]:
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
     req = urllib.request.Request(url, headers={
-        "User-Agent": "Mozilla/5.0 (Cheers Beers / social-signals)",
+        "User-Agent": "Mozilla/5.0 (Bullpen / social-signals)",
         "Accept": "text/html",
     })
     with urllib.request.urlopen(req, timeout=timeout, context=_SSL) as r:

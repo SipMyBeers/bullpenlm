@@ -1,6 +1,6 @@
 # The post-call loop
 
-The single most defensible feature in Cheers Beers. Most CRMs are *manual
+The single most defensible feature in Bullpen. Most CRMs are *manual
 data entry after a call*. This one **uses the call as the data-entry
 mechanism.**
 
@@ -132,5 +132,5 @@ signal fires. Subsequent calls update the stage and append to the
 - Not a sentiment dashboard for the whole team
 - Not integrated with phone systems (Twilio, Aircall) — bring your own audio
 - Not a Gong replacement at the enterprise tier — Gong does diarization,
-  team-wide analytics, executive dashboards. Cheers Beers does *the moment
+  team-wide analytics, executive dashboards. Bullpen does *the moment
   after a single call*, very well, for free, on your laptop.
