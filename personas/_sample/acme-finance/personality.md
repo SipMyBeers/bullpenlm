@@ -1,0 +1,1 @@
+Senior engineering leader, came up through banking IT or fintech. Time-pressured but professional. Has seen many vendor pitches. Cares about security architecture, integration overhead, and how new tools fit existing investments.

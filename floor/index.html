@@ -1,0 +1,1528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KillSesh · Sales Floor</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ─── Crowds-system palette: warm earth-tones, plaza stone ─── */
+  :root {
+    --bg-0:#1a1208; --bg-1:#2a1d10; --bg-2:#3d2c1a;
+    --plaza:#5a4630; --plaza-2:#6a5640; --plaza-3:#4a3622; --plaza-4:#7a6a50;
+    --ink:#1a0f06;
+    --text:#f5e8d8; --muted:#a89a87;
+    --end:#fbbf24; --channel:#22d3ee; --tool:#a78bfa; --boutique:#34d399;
+    --accent:#34d399; --accent-2:#6ee7b7; --accent-dim:#064e3b;
+    --danger:#f87171; --warn:#fbbf24;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,sans-serif;
+    --serif:"Fraunces",ui-serif,Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html,body{
+    margin:0; height:100%; overflow:hidden;
+    background:radial-gradient(ellipse at 50% 30%, var(--bg-2) 0%, var(--bg-1) 50%, var(--bg-0) 100%);
+    color:var(--text); font-family:var(--sans); font-size:14px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    padding:10px 20px; border-bottom:1px solid rgba(245,232,216,0.08);
+    display:flex; align-items:baseline; justify-content:space-between; gap:18px;
+    background:rgba(26,18,8,0.85); backdrop-filter:blur(8px); position:relative; z-index:10;
+  }
+  header .brand{font-family:var(--serif); font-weight:600; font-size:17px; letter-spacing:-.005em; color:var(--text)}
+  header .brand .accent{color:var(--accent)}
+  header .meta{font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:var(--muted); text-transform:uppercase; display:flex; gap:18px; align-items:baseline}
+  header .meta .legend{display:inline-flex; align-items:center; gap:6px}
+  header .meta .legend .dot{width:8px; height:8px; border-radius:50%; display:inline-block}
+  .legend.end .dot{background:var(--end)}
+  .legend.channel .dot{background:var(--channel)}
+  .legend.tool .dot{background:var(--tool)}
+  .legend.boutique .dot{background:var(--boutique)}
+  .stage{position:fixed; inset:48px 0 0 0; width:100vw; cursor:crosshair}
+  canvas{display:block; width:100%; height:100%; cursor:crosshair}
+
+  .tooltip{
+    position:fixed; pointer-events:none; z-index:5; display:none;
+    background:rgba(26,18,8,0.96); border:1px solid rgba(245,232,216,0.12); border-left-width:3px;
+    border-radius:4px; padding:8px 11px; font-family:var(--mono); font-size:11px; color:var(--text);
+    white-space:nowrap; box-shadow:0 10px 30px -6px rgba(0,0,0,0.9);
+  }
+  .tooltip .co{font-family:var(--sans); font-weight:600; font-size:13px; display:block; margin-bottom:2px; color:#fff}
+  .tooltip .ro{color:var(--muted); font-size:10px; display:block; margin-bottom:4px}
+  .tooltip .stat{color:var(--accent); font-size:10px; letter-spacing:.12em}
+  .tooltip.end{border-left-color:var(--end)}
+  .tooltip.channel{border-left-color:var(--channel)}
+  .tooltip.tool{border-left-color:var(--tool)}
+  .tooltip.boutique{border-left-color:var(--boutique)}
+
+  .hud{
+    position:fixed; left:16px; bottom:16px; z-index:5;
+    font-family:var(--mono); font-size:10px; letter-spacing:.14em; color:var(--muted); text-transform:uppercase;
+    background:rgba(26,18,8,0.85); padding:8px 12px; border:1px solid rgba(245,232,216,0.10); border-radius:3px;
+    backdrop-filter:blur(8px);
+  }
+  .hud kbd{display:inline-block; font-family:var(--mono); background:rgba(245,232,216,0.10); padding:1px 6px; border-radius:2px; font-size:9.5px; color:var(--text); margin:0 3px}
+
+  /* ─── Dossier modal (unchanged business logic, restyled to plaza palette) ─── */
+  .focus{position:fixed; inset:0; z-index:1000; background:rgba(10,7,3,0.96); backdrop-filter:blur(14px); display:none; overflow-y:auto; padding:24px; animation:fadeIn .18s ease}
+  .focus.open{display:block}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .focus-bar{position:sticky; top:-24px; margin:-24px -24px 16px; padding:10px 24px; background:rgba(26,18,8,0.97); border-bottom:1px solid rgba(245,232,216,0.10); display:flex; justify-content:space-between; align-items:center; z-index:10}
+  .focus-bar .crumb{font-family:var(--mono); font-size:10.5px; letter-spacing:.18em; color:var(--accent); text-transform:uppercase}
+  .focus-bar .crumb::before{content:"● "; color:var(--accent)}
+  .focus-close{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; padding:6px 12px; background:rgba(248,113,113,0.10); border:1px solid #4a1818; color:#fca5a5; border-radius:3px; cursor:pointer}
+  .focus-close:hover{background:var(--danger); color:#fff}
+  .focus-close .kbd{display:inline-block; margin-left:6px; padding:1px 5px; background:rgba(255,255,255,0.08); border-radius:2px; font-size:9.5px; color:var(--muted)}
+  .focus-grid{max-width:1240px; margin:0 auto; display:grid; grid-template-columns:1.3fr 1fr; gap:18px; align-items:start}
+  @media(max-width:960px){.focus-grid{grid-template-columns:1fr}}
+  .card{background:rgba(42,29,16,0.92); border:1px solid rgba(245,232,216,0.10); border-radius:8px; padding:22px 24px}
+  .card.identity{border-top:3px solid var(--accent)}
+  .card.identity.end{border-top-color:var(--end)}
+  .card.identity.channel{border-top-color:var(--channel)}
+  .card.identity.tool{border-top-color:var(--tool)}
+  .card.identity.boutique{border-top-color:var(--boutique)}
+  .ident-head{display:flex; justify-content:space-between; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:6px}
+  .ident-name{font-family:var(--serif); font-size:30px; font-weight:600; color:#fff; letter-spacing:-.01em; line-height:1.15}
+  .ident-role{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--muted); text-transform:uppercase; margin-bottom:14px}
+  /* ─── BIO CARD ─── person-first layout ─── */
+  .bio-hero{display:grid; grid-template-columns:88px 1fr; gap:18px; align-items:start; margin-bottom:18px}
+  .bio-avatar{width:88px; height:104px; background:rgba(26,18,8,0.7); border:1px solid rgba(245,232,216,0.12); border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative}
+  .bio-avatar canvas{display:block}
+  .bio-avatar.no-name::after{content:"role"; position:absolute; bottom:4px; right:6px; font-family:var(--mono); font-size:8.5px; letter-spacing:.16em; color:var(--muted); text-transform:uppercase}
+  .bio-meta{min-width:0}
+  .bio-name{font-family:var(--serif); font-size:28px; font-weight:600; color:#fff; letter-spacing:-.01em; line-height:1.1; margin:0 0 4px}
+  .bio-name.role-only{font-size:22px; color:var(--text); font-weight:500; font-style:italic}
+  .bio-role{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--muted); text-transform:uppercase; margin-bottom:6px}
+  .bio-at{font-size:13px; color:#dcdcdc; margin-bottom:6px}
+  .bio-at .at{color:var(--muted); margin:0 4px}
+  .bio-at .co{color:#fff; font-weight:500}
+  .bio-where{font-family:var(--mono); font-size:10.5px; letter-spacing:.10em; color:var(--muted); text-transform:uppercase}
+  .bio-body{margin:14px 0 18px; padding:14px 16px; background:rgba(26,18,8,0.50); border-left:3px solid rgba(245,232,216,0.10); border-radius:0 4px 4px 0}
+  .bio-body.end{border-left-color:var(--end)}
+  .bio-body.channel{border-left-color:var(--channel)}
+  .bio-body.tool{border-left-color:var(--tool)}
+  .bio-body.boutique{border-left-color:var(--boutique)}
+  .bio-body p{margin:0; font-family:var(--serif); font-size:14.5px; line-height:1.65; color:#e6dccc; font-style:italic}
+  .bio-section-h{font-family:var(--mono); font-size:10px; letter-spacing:.20em; color:var(--muted); text-transform:uppercase; margin:18px 0 8px}
+  /* ─── Status panel (editable, inside dossier) ─── */
+  .status-panel{margin:14px 0 0; padding:14px 16px; background:rgba(26,18,8,0.65); border:1px solid rgba(245,232,216,0.10); border-radius:6px}
+  .status-panel h4{font-family:var(--mono); font-size:10px; letter-spacing:.20em; color:var(--accent); text-transform:uppercase; margin:0 0 10px}
+  .status-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:6px; margin-bottom:10px}
+  .status-opt{display:flex; align-items:center; gap:8px; padding:7px 10px; background:#0d0d0d; border:1px solid var(--border, rgba(245,232,216,0.10)); border-radius:4px; cursor:pointer; transition:all .12s; font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--text); text-align:left}
+  .status-opt:hover{border-color:rgba(245,232,216,0.30); background:rgba(26,18,8,0.85)}
+  .status-opt.active{border-color:currentColor; background:rgba(255,255,255,0.05); box-shadow:inset 0 0 0 1px currentColor}
+  .status-opt .badge-dot{width:10px; height:10px; border-radius:50%; background:currentColor; flex-shrink:0; box-shadow:0 0 8px currentColor}
+  .status-opt .badge-label{flex:1}
+  .status-opt[data-s="cold"]{color:#9ca3af}
+  .status-opt[data-s="sent"]{color:#60a5fa}
+  .status-opt[data-s="voicemail"]{color:#fbbf24}
+  .status-opt[data-s="gatekeeper"]{color:#f59e0b}
+  .status-opt[data-s="connected"]{color:#22d3ee}
+  .status-opt[data-s="qualified"]{color:#34d399}
+  .status-opt[data-s="discovery"]{color:#6ee7b7}
+  .status-opt[data-s="proposal"]{color:#10b981}
+  .status-opt[data-s="signed"]{color:#fde047}
+  .status-opt[data-s="disqualified"]{color:#f87171}
+  .meeting-input{display:flex; gap:6px; margin-top:8px}
+  .meeting-input input{flex:1; background:#0d0d0d; color:#fff; border:1px solid rgba(245,232,216,0.15); border-radius:3px; padding:7px 10px; font-family:var(--mono); font-size:12px; color-scheme:dark}
+  .meeting-input input:focus{outline:none; border-color:var(--accent)}
+  .note-input{margin-top:8px}
+  .note-input textarea{width:100%; resize:vertical; min-height:48px; background:#0d0d0d; color:#fff; border:1px solid rgba(245,232,216,0.15); border-radius:3px; padding:7px 10px; font-family:var(--serif); font-size:13px; line-height:1.5}
+  .note-input textarea:focus{outline:none; border-color:var(--accent)}
+  .save-row{display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:10px}
+  .save-row .hint{font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; color:var(--muted); text-transform:uppercase}
+  .save-btn{font-family:var(--mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; padding:7px 14px; background:rgba(52,211,153,0.15); color:var(--accent); border:1px solid var(--accent-dim); border-radius:3px; cursor:pointer}
+  .save-btn:hover{background:rgba(52,211,153,0.25)}
+  .save-btn.saved{background:var(--accent); color:#0d0d0d}
+  /* ─── HUD legend strip ─── */
+  .hud-legend{position:fixed; right:16px; bottom:16px; z-index:5; background:rgba(26,18,8,0.85); backdrop-filter:blur(8px); border:1px solid rgba(245,232,216,0.10); border-radius:3px; padding:8px 12px; font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; color:var(--muted); text-transform:uppercase; display:flex; gap:14px; align-items:center; flex-wrap:wrap; max-width:calc(100vw - 380px)}
+  .hud-legend .li{display:inline-flex; align-items:center; gap:5px}
+  .hud-legend .li .d{width:7px; height:7px; border-radius:50%; box-shadow:0 0 4px currentColor}
+  .hud-legend .li[data-s="cold"]{color:#9ca3af}
+  .hud-legend .li[data-s="sent"]{color:#60a5fa}
+  .hud-legend .li[data-s="voicemail"],.hud-legend .li[data-s="gatekeeper"]{color:#fbbf24}
+  .hud-legend .li[data-s="qualified"]{color:#34d399}
+  .hud-legend .li[data-s="discovery"]{color:#6ee7b7}
+  .hud-legend .li[data-s="signed"]{color:#fde047}
+  .hud-legend .li[data-s="disqualified"]{color:#f87171}
+  .hud-legend .li .d{background:currentColor}
+  .ident-pills{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px}
+  .pill{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; padding:3px 8px; border-radius:2px; border:1px solid currentColor; background:rgba(255,255,255,0.03)}
+  .pill.end{color:var(--end)} .pill.channel{color:var(--channel)} .pill.tool{color:var(--tool)} .pill.boutique{color:var(--boutique)}
+  .pill.status{color:var(--muted)}
+  .phone-btn{display:block; text-align:center; font-family:var(--mono); font-size:22px; font-weight:600; letter-spacing:.02em; color:var(--accent); background:rgba(52,211,153,0.10); border:1px solid var(--accent-dim); padding:14px 18px; border-radius:5px; text-decoration:none; margin:8px 0 14px; transition:all .12s}
+  .phone-btn:hover{background:rgba(52,211,153,0.20); color:var(--accent-2)}
+  .row{display:flex; gap:14px; padding:8px 0; border-bottom:1px dashed rgba(245,232,216,0.08); font-size:13.5px; line-height:1.55}
+  .row:last-child{border-bottom:0}
+  .row .k{font-family:var(--mono); font-size:9.5px; letter-spacing:.18em; color:var(--muted); text-transform:uppercase; flex-shrink:0; width:96px; padding-top:2px}
+  .row .v{flex:1; color:#dcdcdc}
+  .row .v a{color:var(--accent); text-decoration:none}
+  .row .v a:hover{text-decoration:underline}
+  .row .v code{background:rgba(255,255,255,0.04); padding:1px 5px; border-radius:2px; font-size:12px; color:var(--accent)}
+  .row .v ul{margin:0; padding-left:18px}
+  .row .v ul li{margin:2px 0; font-size:13px}
+  .meta-side h3{font-family:var(--serif); font-size:18px; font-weight:600; color:#fff; margin:0 0 12px; padding-bottom:8px; border-bottom:1px solid rgba(245,232,216,0.10)}
+  .meta-side h4{font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--accent); text-transform:uppercase; margin:18px 0 8px}
+  .abc-block{background:rgba(26,18,8,0.75); border:1px solid rgba(245,232,216,0.08); border-left:3px solid var(--accent); border-radius:4px; padding:10px 14px; margin-bottom:8px}
+  .abc-block .label{font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--accent); text-transform:uppercase; margin-bottom:4px; display:block}
+  .abc-block .text{font-family:var(--serif); font-size:14.5px; color:#dcdcdc; line-height:1.55; margin:0}
+  .abc-block.b{border-left-color:var(--channel)}
+  .abc-block.b .label{color:var(--channel)}
+  .abc-block.c{border-left-color:var(--warn)}
+  .abc-block.c .label{color:var(--warn)}
+  .practice-btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; font-family:var(--mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; padding:13px 18px; background:linear-gradient(180deg,rgba(52,211,153,0.20) 0%,rgba(52,211,153,0.10) 100%); border:1px solid var(--accent); color:var(--accent); border-radius:5px; text-decoration:none; cursor:pointer; margin-top:14px; transition:all .15s}
+  .practice-btn:hover{background:rgba(52,211,153,0.30); color:#fff; border-color:var(--accent-2)}
+  .focus-actions{display:grid; grid-template-columns:1fr; gap:8px; margin-top:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">KillSesh <span class="accent">·</span> Sales Floor</div>
+  <div class="meta">
+    <span>2026-05-22 · 24 prospects</span>
+    <span class="legend end"><span class="dot"></span>End Customer</span>
+    <span class="legend channel"><span class="dot"></span>Channel</span>
+    <span class="legend tool"><span class="dot"></span>Tool</span>
+    <span class="legend boutique"><span class="dot"></span>Boutique</span>
+  </div>
+</header>
+
+<div class="stage">
+  <canvas id="floor"></canvas>
+  <div class="tooltip" id="tt"></div>
+  <div class="hud">
+    Hover to inspect · Click to open dossier · <kbd>Esc</kbd> close · <kbd>1</kbd>-<kbd>4</kbd> filter zone
+  </div>
+  <div class="hud-legend" id="hud-legend">
+    <span class="li" data-s="cold"><span class="d"></span>Cold</span>
+    <span class="li" data-s="sent"><span class="d"></span>Sent</span>
+    <span class="li" data-s="voicemail"><span class="d"></span>VM</span>
+    <span class="li" data-s="gatekeeper"><span class="d"></span>Gatekeeper</span>
+    <span class="li" data-s="qualified"><span class="d"></span>Qualified</span>
+    <span class="li" data-s="discovery"><span class="d"></span>Briefing booked</span>
+    <span class="li" data-s="signed"><span class="d"></span>Signed</span>
+    <span class="li" data-s="disqualified"><span class="d"></span>Disqualified</span>
+  </div>
+</div>
+
+<!-- ─── Dossier modal ─── -->
+<div class="focus" id="focus" role="dialog" aria-modal="true">
+  <div class="focus-bar">
+    <span class="crumb" id="crumb">Prospect</span>
+    <button class="focus-close" data-close>✕ Close <span class="kbd">Esc</span></button>
+  </div>
+  <div class="focus-grid">
+    <div class="card identity" id="ident"></div>
+    <aside class="card meta-side" id="meta"></aside>
+  </div>
+</div>
+
+<script>
+/* ────────────────────────────────────────────────────────────────────────
+   PROSPECT CORPUS — unchanged from previous version.
+   ─────────────────────────────────────────────────────────────────────── */
+const PROSPECTS = [
+  // TOOL PARTNERS
+  { slug:"rocket-software", zone:"tool", company:"Rocket Software",
+    hq:"Waltham, MA · ≈2,500 employees", phone:"781-226-1100",
+    web:"rocketsoftware.com", linkedin:"linkedin.com/company/rocket-software",
+    role:"VP of Application Modernization",
+    personName:null,
+    bio:"The VP of App Modernization at Rocket runs the modernization tooling product line — BlueZone, TeamStudio, the RPG/COBOL converters. Almost certainly came up through enterprise software at IBM, CA, or a competing modernization vendor before landing here 5-15 years ago. Has seen north of 100 startup pitches. Polite Boston-area enterprise tone, time-pressured, but won't be rude unless you waste theirs.",
+    what:"800-lb gorilla of IBM i / AS400 / mainframe modernization tools. Owns BlueZone, TeamStudio, RPG + COBOL conversion stacks.",
+    techStack:"IBM Z, IBM i, BlueZone terminal emulation, TeamStudio for RPG modernization, COBOL/JCL tooling",
+    digital:["Bain Capital majority-owned since 2018","Acquired Open Sistemas (2023), ASG (2021) — aggressive consolidation play","Active at SHARE, COMMON, IBM TechXchange conferences","Job postings emphasize cloud-native modernization roles"],
+    dealsInFlight:"Continuous customer modernization at Fortune 500 banks & insurers; bidding alongside IBM Garage and AWS Mainframe Modernization",
+    decisionMakers:"VPs of Modernization Practice; Practice Leads for AS400/iSeries — visible via linkedin.com/company/rocket-software/people",
+    alreadyUsing:"Their own stack (BlueZone, TeamStudio), plus partner tools from IBM",
+    competition:"IBM, AWS Mainframe Modernization, Micro Focus/OpenText, LzLabs",
+    abc:{ a:"Your modernization practice burns hundreds of hours manually reverse-engineering copybooks before billable engineering even starts.", b:"Show them the field-parity gate on a real copybook. Rocket has heard 100 vendor pitches — only deterministic verification gets past their bullshit detector.", c:"20-min briefing with VP App Mod or AS400 Practice Lead. Conversation: OEM partnership / co-sell into their installed base." },
+    pushbacks:["We already sell modernization tools. How is this different?","Send a deck. I'll have my team look at it.","If this were valuable, IBM would have built it."] },
+  { slug:"profound-logic", zone:"tool", company:"Profound Logic",
+    hq:"Walnut Creek, CA", phone:"925-271-2444",
+    web:"profoundlogic.com", linkedin:"linkedin.com/company/profound-logic-software-inc-",
+    role:"Director of AS400 / iSeries Integration",
+    personName:null,
+    bio:"Profound Logic is a small, accessible IBM i specialty shop. The Director of AS400 Integration is almost certainly an RPG veteran who wrote green-screen apps before the web existed. Loves tech that bolts cleanly onto Profound UI. Will probe you on IBM i version compatibility, RPG-IV vs RPG-Free, ILE handling. If you can't speak that language, the call ends fast — but if you can, you're talking to a real engineer, not a procurement filter.",
+    what:"Pure-play IBM i / AS400 modernization. Profound UI converts RPG-to-web.",
+    techStack:"IBM i (V5R4+), RPG/RPG-Free, Profound UI for web modernization, Node.js on IBM i",
+    digital:["Founded 1999, headquartered in Walnut Creek CA","COMMON conference regulars; Profound UI is widely-deployed RPG modernization layer","Blog actively publishes IBM i best-practice content"],
+    dealsInFlight:"Mid-market IBM i shops modernizing green-screen apps to web/mobile",
+    decisionMakers:"Founder Alex Roytman is publicly active; tech integration leads handle tool decisions",
+    alreadyUsing:"Profound UI, Profound.js, IBM i tooling",
+    competition:"ARCAD, Fresche Solutions, Looksoftware (now part of Rocket)",
+    abc:{ a:"Your consultants do schema discovery by hand before they touch the actual UI conversion.", b:"Reveal the 13-second AST map on a customer's RPG copybook.", c:"20-min briefing with Director of AS400 Integration. Tool-stack partnership." },
+    pushbacks:["Our customers want our methodology.","How does this work for RPG-IV and ILE, not just COBOL?"] },
+  { slug:"informatik", zone:"tool", company:"Informatik Inc.",
+    hq:"Davis, CA", phone:"800-479-0089",
+    web:"informatik-inc.com", linkedin:"linkedin.com/company/informatik-inc",
+    role:"VP of Application Modernization",
+    personName:null,
+    bio:"A small data-migration shop. The VP title here is probably hands-on — one of 2-3 people running the whole company, not a layer of management. Will engage on the merits if you frame this as complementary integration, not competing with their DataPipe stack.",
+    what:"Document data migration + format conversion software (DataPipe, mainframe data transforms).",
+    techStack:"Mainframe data extraction, EBCDIC/ASCII conversion, structured-file migration",
+    digital:["Niche but long-tenured data-migration vendor","Customer base is enterprise data migration projects from legacy mainframes","Small team — partnership conversation"],
+    dealsInFlight:"Enterprise data migration engagements (mainframe → modern data warehouse)",
+    decisionMakers:"VP App Mod or strategic alliances",
+    alreadyUsing:"Their own DataPipe tools",
+    competition:"Datacom, Cognos, mainframe ETL incumbents",
+    abc:{ a:"Your data migration projects stall when downstream schemas can't be verified field-by-field.", b:"Show how parity verification complements their data movement layer.", c:"20-min briefing — integration / OEM conversation." },
+    pushbacks:["Small firm — partner conversation","How does this fit our DataPipe?"] },
+  // CHANNEL PARTNERS
+  { slug:"syntax", zone:"channel", company:"Syntax",
+    hq:"Montreal HQ · Boston ops", phone:"781-995-2200",
+    web:"syntax.com", linkedin:"linkedin.com/company/syntax",
+    role:"Director of Legacy Modernization",
+    personName:null,
+    bio:"Came up through mainframe outsourcing or SAP consulting. Pragmatic operator focused on engagement economics — knows the names of every major modernization vendor by heart and roughly what they charge. Will ask 'how does this fit existing engagements?' early. Easier to win than Rocket but won't move fast without proof.",
+    what:"Managed IT services. Heavy SAP, JD Edwards, mainframe outsourcing for financial / insurance carriers.",
+    techStack:"SAP, JD Edwards, IBM Z/i, AWS/Azure, managed mainframe operations",
+    digital:["Owned by Novacap (PE) — growth-stage rollup","Strong presence at SAPinsider, JDEdwards InFocus conferences","Multiple acquisitions in MSP space 2020-2024"],
+    dealsInFlight:"Managing mainframes for insurance carriers; modernizing JDE deployments for manufacturing",
+    decisionMakers:"Director of Legacy Modernization; VP of Mainframe Services",
+    alreadyUsing:"IBM tools, internal Syntax methodology",
+    competition:"Ensono, Kyndryl, NTT DATA",
+    abc:{ a:"Your insurance carrier clients are sitting on COBOL copybook risk that becomes your operational problem when they call you to modernize.", b:"Field-level audit in 5 days, deterministic — beats anything they can hand-roll.", c:"20-min briefing with Director of Legacy Modernization. Co-sell into one of their insurance accounts as a pilot beachhead." },
+    pushbacks:["We're SAP-heavy — COBOL isn't where we make money.","How does this fit existing mainframe outsourcing?"] },
+  { slug:"ensono", zone:"channel", company:"Ensono",
+    hq:"Downers Grove, IL · ≈3,500 employees", phone:"877-367-6636",
+    web:"ensono.com", linkedin:"linkedin.com/company/ensono",
+    role:"Mainframe & Midrange Modernization Practice Lead",
+    personName:null,
+    bio:"Senior practice owner with 15-20 years in modernization services. Likely came up through IBM Global Services or a similar mainframe consultancy. Deep ongoing relationships with IBM and Microsoft account teams that shape how Ensono bids. Won't engage on price. Wants to know how you fit her existing delivery stack and partnership commitments.",
+    what:"One of the last hybrid mainframe-to-cloud specialists. Owns modernization journey for ~250 enterprise clients.",
+    techStack:"IBM Z, IBM i, AWS, Azure, ServiceNow, Splunk, mainframe-to-cloud migration tooling",
+    digital:["KKR-owned since 2016","Heavy IBM partnership — Premier Business Partner","Microsoft Azure Expert MSP designation","Active at Gartner IOCS, AWS re:Invent, IBM TechXchange"],
+    dealsInFlight:"Mainframe-to-cloud migrations for BFSI clients; co-sell deals with IBM and Microsoft",
+    decisionMakers:"Mainframe & Midrange Practice Lead; VP of Modernization Services",
+    alreadyUsing:"IBM CloudPak, AWS Mainframe Modernization, internal methodology",
+    competition:"Kyndryl, NTT DATA, DXC, Deloitte modernization practice",
+    abc:{ a:"Your modernization practice wins the mainframe-to-cloud bid but burns weeks proving the migration preserved every field before customers sign off.", b:"Show the 5-day deterministic field-parity guarantee.", c:"20-min briefing with Mainframe Practice Lead. Embed in their delivery stack." },
+    pushbacks:["Deeply partnered with IBM + Microsoft","Our customers want managed service, not another tool"] },
+  { slug:"softserve", zone:"channel", company:"SoftServe",
+    hq:"Austin, TX HQ · Ukraine roots · ≈12,000 employees", phone:"888-576-8737",
+    web:"softserveinc.com", linkedin:"linkedin.com/company/softserve",
+    role:"Practice Lead for Legacy Application Modernization",
+    personName:null,
+    bio:"Mid-career consulting practice lead. Likely came from a Big-4 firm or an established Ukrainian/Eastern-European outsourcing background. Owns the entire modernization service line — bidding against Accenture, IBM, EPAM. Cares about RFP differentiators more than any single feature.",
+    what:"Global IT services + consulting. Modernization practice in EU + US.",
+    techStack:"AWS, Azure, GCP, ServiceNow, SAP, custom enterprise modernization stacks",
+    digital:["Founded 1993 (Lviv); now US HQ in Austin","Strong cloud-modernization positioning","Active at AWS re:Invent, Microsoft Build, Google Cloud Next"],
+    dealsInFlight:"Enterprise modernization bids competing against Big 4 / Accenture",
+    decisionMakers:"Practice Lead for Legacy App Modernization; BFSI vertical lead",
+    alreadyUsing:"Internal methodologies, AWS/Azure native tooling",
+    competition:"Accenture, EPAM, GlobalLogic, Endava, IBM Consulting",
+    abc:{ a:"Your modernization bids are losing to incumbents on parity-risk concerns.", b:"Show a verifiable proof-of-correctness story competitors can't match.", c:"20-min briefing with Practice Lead. Bid-differentiator conversation." },
+    pushbacks:["Enterprise sales cycle is long","Where do you fit our global delivery?"] },
+  { slug:"epam", zone:"channel", company:"EPAM",
+    hq:"Newtown, PA · ≈60,000 employees", phone:"617-577-4400",
+    web:"epam.com", linkedin:"linkedin.com/company/epam-systems",
+    role:"Director of Mainframe Modernization (BFSI vertical)",
+    personName:null,
+    bio:"Enterprise polish. Northeast (NYC, Boston, Philly) background — probably came through banking IT or a Big-4 BFSI practice before landing at EPAM. Manages BFSI modernization deals at top-10 US banks. Will route a founder straight to procurement if you don't sound like you've done this before. Cares about scale, NDA/MSA-readiness, and how you'd survive an enterprise vendor onboarding.",
+    what:"Massive engineering services firm. Deep banking + insurance verticals running COBOL.",
+    techStack:"AWS, Azure, GCP, Salesforce, SAP, IBM Z modernization frameworks (EPAM PHM)",
+    digital:["Public (NYSE: EPAM), ~$4.7B revenue 2024","BFSI is largest vertical (~35%)","Founded 1993, HQ moved from Belarus to PA post-2022","Strong banking modernization references"],
+    dealsInFlight:"Modernization SOWs at multiple top-10 US banks",
+    decisionMakers:"Director of Mainframe Modernization; Practice Head BFSI",
+    alreadyUsing:"EPAM Continuum, internal PHM frameworks, AWS Mainframe Modernization partnership",
+    competition:"Accenture, Deloitte, TCS, Infosys, IBM Consulting",
+    abc:{ a:"Your BFSI modernization SOWs burn weeks on manual field-mapping customers don't see as billable value.", b:"Compress that work to 5 business days with mathematical proof.", c:"20-min briefing with Director of Mainframe Mod or BFSI vertical lead." },
+    pushbacks:["NDA + MSA required.","How are you different from a feature IBM ships in 6 months?"] },
+  { slug:"hexaware", zone:"channel", company:"Hexaware",
+    hq:"Mumbai HQ · NJ US ops · ≈30,000 employees", phone:"877-439-3928",
+    web:"hexaware.com", linkedin:"linkedin.com/company/hexaware-technologies",
+    role:"Head of Legacy Modernization",
+    personName:null,
+    bio:"India-based head of practice, very likely with US BFSI account relationships built over a decade. Practical, will engage on real customer pain. Cares about reducing the internal consultant-hour cost of parity verification — a measurable margin lever for their delivery model. Faster decision-maker than EPAM or LTI for the same kind of conversation.",
+    what:"IT services with strong BFSI practice. Mainframe modernization is publicly marketed.",
+    techStack:"AWS, Azure, Salesforce, IBM Z, automation frameworks (Tensai)",
+    digital:["Carlyle Group acquired majority stake 2021","BFSI is largest vertical","Active partner: AWS Mainframe Modernization, Microsoft, ServiceNow"],
+    dealsInFlight:"BFSI modernization deals; insurance carrier transformations",
+    decisionMakers:"Head of Legacy Modernization; BFSI Practice Head",
+    alreadyUsing:"AWS Mainframe Modernization, in-house Tensai automation",
+    competition:"TCS, Infosys, Wipro, LTI Mindtree, EPAM",
+    abc:{ a:"Your BFSI deals carry parity-risk you mitigate today with senior consultant review hours.", b:"Replace those hours with deterministic math.", c:"20-min briefing with Head of Legacy Modernization." },
+    pushbacks:["May want India delivery model","Pilot too small for our procurement"] },
+  { slug:"lti-mindtree", zone:"channel", company:"LTI Mindtree",
+    hq:"Mumbai HQ · ≈90,000 employees", phone:"877-246-4782",
+    web:"ltimindtree.com", linkedin:"linkedin.com/company/ltimindtree",
+    role:"Lead for Legacy Application Services",
+    personName:null,
+    bio:"At a 90,000-person org this is a director-level person running a practice with hundreds of engineers. Cares about volume + repeatability — anything that becomes a standard step in their delivery methodology is gold. Anything bespoke is friction. Slow decision-maker (committee) but a huge prize if won.",
+    what:"Massive IT services (L&T Infotech + Mindtree merged 2022).",
+    techStack:"AWS, Azure, GCP, SAP, Oracle, ServiceNow, Snowflake, mainframe modernization frameworks",
+    digital:["Public, BSE/NSE listed","Larsen & Toubro Group company","Top-10 Indian IT services firm by revenue"],
+    dealsInFlight:"Continuous modernization projects across BFSI, manufacturing, retail",
+    decisionMakers:"Lead for Legacy App Services; Practice Head Modernization",
+    alreadyUsing:"Internal methodologies, AWS/Azure cloud-native tools",
+    competition:"TCS, Infosys, Wipro, HCL, Cognizant",
+    abc:{ a:"Your legacy app services line ships modernization projects every week — every one needs field-parity verification done by hand.", b:"Position as the verification layer that automates the most error-prone step.", c:"20-min briefing with Lead for Legacy App Services." },
+    pushbacks:["Committee decisions slow things down","We use our own modernization frameworks"] },
+  { slug:"encore", zone:"channel", company:"Encore",
+    hq:"Verify on first call", phone:"866-847-4638",
+    web:"(verify identity first)", linkedin:null,
+    role:"Practice Lead for Legacy Modernization (if AS400/COBOL shop)",
+    personName:null,
+    bio:"Identity unconfirmed — multiple 'Encore' tech firms exist. The opening move is to confirm you've reached the AS400/COBOL one before pitching anything. If it's wrong, ask for a referral and end the call cleanly. If it's right, treat as a boutique channel partner.",
+    what:"Multiple 'Encore' tech firms exist — likely an AS400/COBOL boutique. Verify identity on the call.",
+    techStack:"Unknown until verified",
+    digital:["IDENTITY UNCONFIRMED"],
+    dealsInFlight:"Unknown", decisionMakers:"Practice Lead — but verify the company first",
+    alreadyUsing:"Unknown", competition:"Unknown",
+    abc:{ a:"Confirm identity. If wrong → ask for referral, end clean.", b:"If correct, run the channel-partner pitch.", c:"20-min briefing with Practice Lead — if correctly identified." },
+    pushbacks:["May not be the right Encore"] },
+  { slug:"katalyst", zone:"channel", company:"Katalyst Systems",
+    hq:"Massachusetts boutique", phone:"781-871-4760",
+    web:"katalystsystems.com", linkedin:null,
+    role:"Director of IT Modernization",
+    personName:null,
+    bio:"Likely a founder or near-founder of a Boston-metro boutique. The Director title here is half-marketing, half-real — they probably wear three hats. Cares about differentiation that helps them compete against giants when bidding on the same RFP.",
+    what:"Boutique IT modernization consultancy.",
+    techStack:"Custom enterprise integrations, modernization toolchains",
+    digital:["MA-based boutique","Limited public web footprint"],
+    dealsInFlight:"Boutique modernization deals — typical mid-market",
+    decisionMakers:"Director of IT Modernization; Practice Lead",
+    alreadyUsing:"Custom approaches",
+    competition:"Other boutique consultancies in Boston metro",
+    abc:{ a:"You're a boutique competing against giants for mainframe modernization work — your differentiator is either price or proof.", b:"Show the proof.", c:"20-min briefing with Director of IT Modernization." },
+    pushbacks:["Small budget — partnership over direct deal"] },
+  { slug:"fpt-software", zone:"channel", company:"FPT Software",
+    hq:"Vietnam HQ · San Jose US ops · ≈30,000 employees", phone:"408-541-8800",
+    web:"fpt-software.com", linkedin:"linkedin.com/company/fpt-software",
+    role:"Head of Legacy Modernization Practice (US)",
+    personName:null,
+    bio:"US-based head of practice for a Vietnam-HQ firm aggressively expanding here since 2023. Has performance pressure from APAC leadership to win named enterprise logos against Accenture and IBM Consulting. Cares about differentiated tooling that lets them punch above weight class in US RFPs.",
+    what:"Largest IT services firm in SE Asia. US modernization practice growing fast.",
+    techStack:"AWS, Azure, GCP, SAP, custom modernization frameworks",
+    digital:["Subsidiary of FPT Corporation (HOSE: FPT)","Aggressive US growth strategy 2023-2025"],
+    dealsInFlight:"US enterprise modernization bids; Japan/Korea mainframe migrations",
+    decisionMakers:"Head of Legacy Modernization Practice (US)",
+    alreadyUsing:"Internal frameworks, cloud-native tooling",
+    competition:"Accenture, IBM Consulting, Tata, Infosys, EPAM",
+    abc:{ a:"Your US modernization practice is growing fast — winning enterprise deals means showing differentiated tooling against Accenture and IBM.", b:"Differentiated tool with mathematical proof, runs on customer hardware.", c:"20-min briefing with Head of Legacy Mod (US)." },
+    pushbacks:["Time zone challenges with APAC decision-makers"] },
+  // STAFFING (boutique-flavored)
+  { slug:"enhance-it", zone:"boutique", company:"Enhance IT",
+    hq:"Los Angeles · IT staffing + consulting", phone:"213-452-7700",
+    web:"enhanceit.com", linkedin:"linkedin.com/company/enhance-it",
+    role:"Lead for Mainframe Services",
+    personName:null,
+    bio:"LA-based staffing exec, probably came up through TEKsystems, Robert Half, or a similar IT staffing firm. Sells bodies, not software. The right pitch is bench enablement — your placed consultants ship faster, win more contracts, justify higher rates. Won't buy a 'tool' but will fund consultant upskill.",
+    what:"IT staffing-heavy consulting firm. Mainframe consultant placements.",
+    techStack:"Mainframe + cloud staffing across COBOL, Java, .NET, SAP",
+    digital:["LA-based, regional + national contract placements","Mainframe bench is a stable revenue line"],
+    dealsInFlight:"Contract staffing placements at carriers and banks",
+    decisionMakers:"Lead for Mainframe Services; Practice Lead",
+    alreadyUsing:"Manual consulting methodologies",
+    competition:"TEKsystems, Robert Half Technology, niche mainframe staffing firms",
+    abc:{ a:"Your mainframe consultants are billing hourly for schema discovery work a tool could do in minutes.", b:"Pitch as bench enablement.", c:"20-min briefing with Lead for Mainframe Services." },
+    pushbacks:["We bill bodies, not software — pitch it as bench upskill"] },
+  { slug:"ptg", zone:"boutique", company:"PTG (Primary Talent Group)",
+    hq:"Mainframe consulting specialist", phone:"888-598-0006",
+    web:"primarytalentpartners.com (verify)", linkedin:null,
+    role:"Mainframe Consulting Lead",
+    personName:null,
+    bio:"Owner or senior partner of a niche mainframe consultancy. Cares about force-multiplying their senior consultants. Small enough to make decisions on a single call. Likely a real engineer first, exec second — will respect technical depth.",
+    what:"Mainframe consulting + staffing.",
+    techStack:"Mainframe languages: COBOL, JCL, RPG, PL/I",
+    digital:["Niche mainframe consulting + staffing firm"],
+    dealsInFlight:"Mainframe consultant placements at carriers",
+    decisionMakers:"Mainframe Consulting Lead",
+    alreadyUsing:"Manual methodologies",
+    competition:"Cobol Cowboys, niche mainframe consultancies",
+    abc:{ a:"Your mainframe consultants are doing schema discovery by hand on every engagement.", b:"13-second field-level map.", c:"20-min briefing with Mainframe Consulting Lead." },
+    pushbacks:["Small — partner/referral conversation"] },
+  { slug:"bluebird-it", zone:"boutique", company:"Bluebird IT",
+    hq:"IT staffing / consulting (verify)", phone:"866-258-8411",
+    web:"(verify on call)", linkedin:null,
+    role:"Legacy Modernization Sales Director",
+    personName:null,
+    bio:"Identity unconfirmed. Open the call with verification before pitching anything. If it's a staffing firm, the pitch flips to bench enablement (same as Enhance IT). If it's something else entirely, end clean and move on.",
+    what:"IT staffing + consulting firm. Verify identity first.",
+    techStack:"Mainframe + cloud staffing (assumed)",
+    digital:["IDENTITY UNCONFIRMED"],
+    dealsInFlight:"Unknown", decisionMakers:"Legacy Modernization Sales Director",
+    alreadyUsing:"Unknown", competition:"Other IT staffing firms",
+    abc:{ a:"Verify identity first.", b:"Pitch as bench enablement.", c:"20-min briefing with Sales Director." },
+    pushbacks:["Verify identity first"] },
+  // BOUTIQUES
+  { slug:"cobol-cowboys", zone:"boutique", company:"Cobol Cowboys",
+    hq:"Gainesville, TX · ex-IBM mainframe engineers", phone:"940-736-7733",
+    web:"cobolcowboys.com", linkedin:"linkedin.com/company/cobol-cowboys-llc",
+    role:"Founder · ex-IBM mainframe engineer",
+    personName:"Bill Hinshaw",
+    bio:"Bill Hinshaw started writing COBOL at IBM in 1969 and founded Cobol Cowboys in 2013 in Gainesville, TX. Became nationally famous during the COVID-era unemployment-system crisis when WSJ, NPR, and Reuters all profiled him — states couldn't find mainframe engineers, and Bill's cowboys (retired COBOL veterans he brought back) kept their systems running. Talks plain, slow, with a Texan drawl. Respects technical competence above all else. Will hang up on jargon. Treats his guys like family.",
+    what:"Famous COBOL specialists. Featured in WSJ, NPR.",
+    techStack:"COBOL, CICS, IMS, DB2, JCL, mainframe assembler",
+    digital:["Bill Hinshaw founder — ex-IBM, widely interviewed (WSJ, NPR, Reuters)","Brand built on senior engineer scarcity"],
+    dealsInFlight:"Senior COBOL engineer placements at banks, insurance, federal/state govt",
+    decisionMakers:"Bill Hinshaw, Eileen Hinshaw (named principals)",
+    alreadyUsing:"Their cowboys' brains + decades of muscle memory",
+    competition:"Other niche COBOL staffing firms, TEKsystems",
+    abc:{ a:"Your cowboys do schema discovery by hand on every engagement.", b:"Tool hands your guys the field-level map in 13 seconds. Instrument they wield, NOT replacement.", c:"20-min call with Bill or Eileen." },
+    pushbacks:["My cowboys ARE the senior engineers.","40 years of experience > your AI hallucinations.","Our brand is the people."] },
+  { slug:"keyhole", zone:"boutique", company:"Keyhole Software",
+    hq:"Leawood, KS · custom software consultancy", phone:"877-521-7769",
+    web:"keyholesoftware.com", linkedin:"linkedin.com/company/keyhole-software",
+    role:"Practice Lead for Legacy Modernization",
+    personName:null,
+    bio:"Kansas City consultancy practice lead. Friendly Midwestern tone — engages on technical merits rather than gatekeeping. Probably came up writing Java/.NET before owning the modernization line. The shop isn't COBOL-pure so they may try to steer the conversation toward Java work — steer back.",
+    what:"Mid-sized custom shop. Legacy modernization is one of several offerings (Java, .NET, mainframe).",
+    techStack:"Java, .NET, JavaScript/TypeScript, mainframe modernization toolchains",
+    digital:["Kansas City metro consultancy","Active technical blog (KeyholeLabs)"],
+    dealsInFlight:"Mid-market custom dev + modernization projects",
+    decisionMakers:"Practice Lead for Legacy Modernization",
+    alreadyUsing:"Custom methodologies",
+    competition:"Other mid-sized consultancies in KC/Midwest",
+    abc:{ a:"You're small enough that one tool compressing discovery from weeks to days is the difference between winning and losing the next mainframe bid.", b:"Show the parity verification.", c:"20-min briefing with Practice Lead." },
+    pushbacks:["More Java/.NET than mainframe","We use our own playbooks"] },
+  { slug:"integrative-systems", zone:"boutique", company:"Integrative Systems",
+    hq:"Itasca, IL · 20+ years AS400", phone:"866-468-7974",
+    web:"integrativesystems.com", linkedin:"linkedin.com/company/integrative-systems-inc-",
+    role:"AS400 / COBOL Services Lead",
+    personName:null,
+    bio:"20+ year IBM i specialist running the services line at a Chicago-area shop with India+US delivery. Will know AS400 specifics cold — version compatibility, RPG-IV, ILE, CL. Won't tolerate hand-waving on IBM i details. If your demo can handle one of their actual customer copybooks, you're in.",
+    what:"Pure-play AS400 / IBM i modernization.",
+    techStack:"IBM i 7.1/7.2/7.3+, RPG-IV, RPG-Free, ILE, CL, COBOL, DB2/400",
+    digital:["Founded 2003, 20+ years AS400 specialization","Active publishing IBM i technical content","India + US delivery"],
+    dealsInFlight:"AS400 modernization for mid-market manufacturing, distribution, financial services",
+    decisionMakers:"AS400 / COBOL Services Lead",
+    alreadyUsing:"Their own AS400 conversion methodology",
+    competition:"Profound Logic, Fresche, ARCAD, Rocket Software",
+    abc:{ a:"20 years of AS400 means you've seen every COBOL copybook nightmare.", b:"Tool hands your team field-level maps in 13 seconds.", c:"20-min briefing with AS400 / COBOL Services Lead." },
+    pushbacks:["We have our own methodology","What about RPG-IV / ILE, not just COBOL?"] },
+  { slug:"hexaview", zone:"boutique", company:"Hexaview Technologies",
+    hq:"Noida, India · NYC US ops", phone:"845-653-3855",
+    web:"hexaviewtech.com", linkedin:"linkedin.com/company/hexaviewtech",
+    role:"CTO · Co-founder",
+    personName:"Abhishek Talwar",
+    bio:"Abhishek Talwar is the CTO and co-founder of Hexaview Technologies, a Noida-based custom dev firm with growing US BFSI operations in NYC. Engineering-first leader, publicly active on AI/ML content marketing. Practical, accessible — if you can show him a tool that helps Hexaview win bigger US BFSI bids, this becomes a working partnership conversation, not a vendor pitch.",
+    what:"Custom dev, AI, modernization. Growing US modernization practice.",
+    techStack:"AWS, Azure, Java, .NET, Python, AI/ML platforms",
+    digital:["CTO Abhishek Talwar publicly identified","Growing modernization arm in BFSI vertical"],
+    dealsInFlight:"BFSI modernization bids — expanding US footprint",
+    decisionMakers:"Head of Modernization Services; CTO Abhishek Talwar",
+    alreadyUsing:"Custom dev frameworks, AWS/Azure native tools",
+    competition:"Mid-sized Indian IT services firms",
+    abc:{ a:"Your modernization practice is growing — winning enterprise BFSI deals means showing differentiated tooling.", b:"Mathematical proof nothing got lost.", c:"20-min briefing with Head of Mod Services or CTO." },
+    pushbacks:["Alt phone: 646-403-4525"] },
+  // END CUSTOMERS
+  { slug:"nw-natural", zone:"end", company:"NW Natural",
+    hq:"Portland, OR · natural gas utility", phone:"503-226-4211",
+    web:"nwnatural.com", linkedin:"linkedin.com/company/nw-natural",
+    role:"Office of the CIO contact",
+    personName:null,
+    bio:"Conservative utility IT culture, long tenure typical (10+ years in the same role). Almost certainly an Oregon native or long-time PNW resident. Talks slowly, won't commit to anything fast, but won't say no either. Lives in the lens of PUC regulators and audit cycles. Glacier-paced procurement is a feature to him, not a bug.",
+    what:"Regional natural gas utility. Billing + customer systems include legacy COBOL/mainframe components.",
+    techStack:"Likely legacy CIS on mainframe/AS400; SAP for back-office; Oracle DB",
+    digital:["Public (NYSE: NWN), founded 1859","PUC-regulated — Oregon and SW Washington","10-K mentions ongoing IT system modernization"],
+    dealsInFlight:"Customer information system modernization; billing system risk reduction",
+    decisionMakers:"CIO; Director of Enterprise IT; IT Modernization PMO",
+    alreadyUsing:"Likely Oracle CC&B or mainframe-based CIS",
+    competition:"Oracle, SAP, Accenture utility practice, IBM, Capgemini",
+    abc:{ a:"The engineers who wrote your customer billing system are retiring. AI tools translating that code can quietly drop fields — refunds, regulator letters, audit findings.", b:"Show how field-parity verification protects PUC regulatory reporting.", c:"Name + email of CIO office or Enterprise IT modernization lead." },
+    pushbacks:["We're a utility — we don't move fast","Our billing system has been stable 20 years"] },
+  { slug:"pacificsource", zone:"end", company:"PacificSource Health Plans",
+    hq:"Springfield, OR · regional health insurer", phone:"541-686-1242",
+    web:"pacificsource.com", linkedin:"linkedin.com/company/pacificsource-health-plans",
+    role:"IT Vendor Management → Enterprise Architecture / Claims Tech Lead",
+    personName:null,
+    bio:"Pacific Northwest healthcare IT, mid-career. HIPAA mindset baked into every sentence. Cautious, risk-averse, hides behind the VRM process by default. Warms up only when you make the 'ticking time bomb' framing real to their actual claims system — until then everything routes through procurement.",
+    what:"Regional health insurer. Insurance carrier → ACORD data exchange directly applicable.",
+    techStack:"Claims processing on mainframe; HEDIS/CMS reporting platforms",
+    digital:["Not-for-profit, founded 1933","Operates in OR, ID, WA, MT","Medicare Advantage, commercial, Medicaid lines"],
+    dealsInFlight:"Claims processing modernization; HIPAA-driven systems hardening",
+    decisionMakers:"IT VRM intake → IT Enterprise Architecture → Claims Tech Lead",
+    alreadyUsing:"Likely TriZetto Facets or HealthEdge; mainframe claims engine partial",
+    competition:"Cognizant TriZetto, HealthEdge, Optum, Accenture",
+    abc:{ a:"The engineers who wrote your claims processing are retiring, and the people replacing them use ChatGPT.", b:"Code never leaves your network — meets HIPAA requirements.", c:"Name + email of IT Enterprise Architecture or Claims Tech Lead." },
+    pushbacks:["VRM process is the only entry point","I don't have budget — talk next fiscal"] },
+  { slug:"premera", zone:"end", company:"Premera Blue Cross",
+    hq:"Mountlake Terrace, WA · ≈3M members", phone:"425-918-4000",
+    web:"premera.com", linkedin:"linkedin.com/company/premera-blue-cross",
+    role:"Enterprise Architecture Lead OR Claims Tech Lead",
+    personName:null,
+    bio:"Senior architect at a regional Blues plan, almost certainly hired or promoted in the wake of Premera's 2015 breach. That breach shaped the whole organization's security posture — every conversation runs through HIPAA, HITRUST, BCBSA-shared-infrastructure considerations. The right framing isn't 'cool tech' — it's 'reduce existing modernization risk without opening a new attack surface.'",
+    what:"Large regional Blue Cross plan. Mainframe-heavy carrier; ACORD relevance direct.",
+    techStack:"IBM Z mainframe claims engine; Facets/HealthEdge for some lines; AWS/Azure for digital front-end",
+    digital:["BCBSA licensee, serves WA + AK","Famous 2015 breach — extensive post-breach security investments","Strong HIPAA/HITRUST compliance posture"],
+    dealsInFlight:"Continuous claims processing modernization; mainframe-to-cloud workstreams",
+    decisionMakers:"Enterprise Architecture; Claims Tech Lead; CIO office",
+    alreadyUsing:"Cognizant TriZetto Facets historically; IBM Z mainframe; AWS post-breach",
+    competition:"Cognizant, Accenture, Deloitte healthcare, IBM Consulting",
+    abc:{ a:"Your claims processing engine carries 30+ years of COBOL. Every AI translation tool your engineers are touching is quietly dropping fields in REDEFINES sections.", b:"Zero-data-leak architecture meets post-breach security posture.", c:"Name + email of Enterprise Architecture or Claims Tech Lead." },
+    pushbacks:["Vendor risk management process — start there","Existing relationship with Cognizant","HIPAA compliance is non-negotiable"] },
+  { slug:"symetra", zone:"end", company:"Symetra Financial",
+    hq:"Bellevue, WA · Sumitomo Life subsidiary", phone:"800-796-3872",
+    web:"symetra.com", linkedin:"linkedin.com/company/symetra",
+    role:"Enterprise IT / Modernization PMO lead",
+    personName:null,
+    bio:"Pacific Northwest insurance carrier IT — long-tenured policy admin systems carry 30+ year contracts. Cares about long-tail risk on policies that will outlive every engineer who's ever touched them. Operates under Sumitomo Life (Japanese parent) governance overhead, which slows decisions but rewards anyone who shows regulator-friendly architecture.",
+    what:"Life insurance + retirement carrier. Mainframe legacy in policy admin systems.",
+    techStack:"Mainframe policy admin; Java/.NET front-end; Snowflake/AWS for analytics",
+    digital:["Wholly-owned subsidiary of Sumitomo Life (Japan)","Life, disability, retirement product lines","Long-tenured policies — 30+ year contracts active"],
+    dealsInFlight:"Policy admin modernization; actuarial system upgrades",
+    decisionMakers:"Enterprise IT; Modernization PMO Lead",
+    alreadyUsing:"Mainframe policy admin systems",
+    competition:"Accenture, Cognizant, Capgemini, EPAM insurance practice",
+    abc:{ a:"Your policy admin system carries life policies spanning 30+ years. Every COBOL touch by an AI tool risks a quiet field drop on a $2M annuity.", b:"Translate the code AND mathematically prove nothing got lost.", c:"Name + email of Enterprise IT / Modernization PMO lead." },
+    pushbacks:["Consumer phone tree — route patiently to IT","Zero downtime tolerance"] },
+  { slug:"the-standard", zone:"end", company:"The Standard (StanCorp Financial)",
+    hq:"Portland, OR · group disability + life", phone:"971-321-7000",
+    web:"standard.com", linkedin:"linkedin.com/company/the-standard",
+    role:"IT Sourcing / Office of the CIO contact",
+    personName:null,
+    bio:"Portland-based insurance carrier IT sourcing exec. Polite, Pacific Northwest professional, manages you toward the right channel rather than saying no. Cares about existing Accenture relationships, vendor financial stability, proven case studies. Won't engage with a one-person company on price — needs to see the trust architecture first.",
+    what:"Group disability + life insurance carrier. Owned by Meiji Yasuda. Long-tenured COBOL claims systems.",
+    techStack:"Mainframe claims + policy admin; Java/.NET digital layer; ServiceNow",
+    digital:["Acquired by Meiji Yasuda 2016","Active modernization roadmap publicly mentioned in financial press"],
+    dealsInFlight:"Group disability claims modernization; multi-year mainframe-to-cloud workstreams",
+    decisionMakers:"IT Sourcing; Office of the CIO; Director of Enterprise Architecture",
+    alreadyUsing:"Mainframe + Accenture engagement (publicly known)",
+    competition:"Accenture, Cognizant, Capgemini, Deloitte insurance practice",
+    abc:{ a:"The engineers who wrote your group disability system are retiring, and the people replacing them use AI to translate it — multi-million dollar ticking time bomb.", b:"5-day risk assessment pilot on 5 worst copybooks.", c:"Name + email of IT Sourcing / Office of CIO." },
+    pushbacks:["Ongoing work with Accenture","What's your financial backing?"] },
+];
+
+const ZONE_NAME  = { end:"End Customer", channel:"Channel Partner", tool:"Tool Partner", boutique:"Boutique / Staffing" };
+const ZONE_SHIRT = { end:"#fbbf24", channel:"#22d3ee", tool:"#a78bfa", boutique:"#34d399" };
+const ZONE_TINT  = { end:"#fbbf24", channel:"#22d3ee", tool:"#a78bfa", boutique:"#34d399" };
+
+/* ────────────────────────────────────────────────────────────────────────
+   PIPELINE STATUS — head-badge + behavior + persistence
+   ─────────────────────────────────────────────────────────────────────── */
+const STATUSES = {
+  cold:         { color:"#9ca3af", label:"Cold",          glyph:"·" },
+  sent:         { color:"#60a5fa", label:"Sent",          glyph:"✉" },
+  voicemail:    { color:"#fbbf24", label:"Voicemail",     glyph:"VM" },
+  gatekeeper:   { color:"#f59e0b", label:"Gatekeeper",    glyph:"GK" },
+  connected:    { color:"#22d3ee", label:"Connected",     glyph:"✓" },
+  qualified:    { color:"#34d399", label:"Qualified",     glyph:"Q" },
+  discovery:    { color:"#6ee7b7", label:"Briefing booked", glyph:"📅" },
+  proposal:     { color:"#10b981", label:"SOW sent",      glyph:"$" },
+  signed:       { color:"#fde047", label:"Signed",        glyph:"★" },
+  disqualified: { color:"#f87171", label:"Disqualified",  glyph:"✕" },
+};
+const STATUS_ORDER = ["cold","sent","voicemail","gatekeeper","connected","qualified","discovery","proposal","signed","disqualified"];
+const STORAGE_KEY = "killsesh-floor-state-v1";
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  catch { return {}; }
+}
+function saveState(state) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { console.warn("localStorage save failed:", e); }
+}
+let pipelineState = loadState();
+
+function getProspectState(slug) {
+  if (!pipelineState[slug]) {
+    pipelineState[slug] = { status:"cold", meeting:"", note:"", updated:null };
+  }
+  return pipelineState[slug];
+}
+function setProspectState(slug, patch) {
+  const cur = getProspectState(slug);
+  Object.assign(cur, patch, { updated: new Date().toISOString() });
+  saveState(pipelineState);
+  // Refresh the agent's state so the floor reflects it instantly
+  const a = agents.find(x => x.slug === slug);
+  if (a) a.state = cur;
+}
+
+function fmtMeeting(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const hr = d.getHours(), min = d.getMinutes();
+  const h12 = ((hr + 11) % 12) + 1;
+  const ampm = hr >= 12 ? "p" : "a";
+  const mm = min === 0 ? "" : ":" + String(min).padStart(2,"0");
+  return `${days[d.getDay()]} ${h12}${mm}${ampm}`;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   CROWDS-STYLE RENDERER — warm plaza, walking characters, drop shadows,
+   sliced-sprite gait. Matches boona13/crowds-system-js aesthetic.
+   ─────────────────────────────────────────────────────────────────────── */
+const canvas = document.getElementById("floor");
+const ctx = canvas.getContext("2d");
+const tt = document.getElementById("tt");
+
+let plazaTile = null;          // offscreen canvas with the procedural plaza texture
+let zoneFilter = null;
+let hover = null;
+let lastT = performance.now();
+
+function resize() {
+  const r = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(r.width * dpr);
+  canvas.height = Math.floor(r.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  buildPlazaTile();
+  layoutAgents();
+}
+window.addEventListener("resize", resize);
+
+/* ─── Plaza floor: procedural 256×256 tile, base #5a4630 + warm flecks ─── */
+function buildPlazaTile() {
+  plazaTile = document.createElement("canvas");
+  plazaTile.width = 256; plazaTile.height = 256;
+  const c = plazaTile.getContext("2d");
+  c.fillStyle = "#5a4630"; c.fillRect(0, 0, 256, 256);
+
+  // Scatter warm accent flecks — recreates the crowds-js plaza look.
+  const accents = ["#6a5640", "#4a3622", "#7a6a50", "#3a2818", "#806848", "#473123"];
+  for (let i = 0; i < 1800; i++) {
+    c.fillStyle = accents[Math.floor(Math.random() * accents.length)];
+    const x = Math.floor(Math.random() * 256);
+    const y = Math.floor(Math.random() * 256);
+    const w = 1 + Math.floor(Math.random() * 3);
+    const h = 1 + Math.floor(Math.random() * 3);
+    c.fillRect(x, y, w, h);
+  }
+  // A few darker stones for variation
+  c.globalAlpha = 0.4;
+  for (let i = 0; i < 60; i++) {
+    c.fillStyle = "#2a1d10";
+    const x = Math.floor(Math.random() * 256);
+    const y = Math.floor(Math.random() * 256);
+    c.fillRect(x, y, 2 + Math.floor(Math.random() * 4), 1 + Math.floor(Math.random() * 3));
+  }
+  c.globalAlpha = 1;
+}
+
+/* ─── Zone quadrants ─── */
+function zoneBounds(zone) {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  const padX = 70, padY = 80;
+  const mw = (w - padX * 3) / 2, mh = (h - padY * 3) / 2;
+  const cells = {
+    end:      { x: padX,            y: padY,            w: mw, h: mh },
+    channel:  { x: padX*2 + mw,     y: padY,            w: mw, h: mh },
+    tool:     { x: padX,            y: padY*2 + mh,     w: mw, h: mh },
+    boutique: { x: padX*2 + mw,     y: padY*2 + mh,     w: mw, h: mh },
+  };
+  return cells[zone];
+}
+
+/* ─── Agents: walking pedestrians, one per prospect ─── */
+const agents = [];
+
+function rand(min, max) { return min + Math.random() * (max - min); }
+
+function newTargetIn(b, padding = 30) {
+  return {
+    x: b.x + padding + Math.random() * (b.w - padding * 2),
+    y: b.y + padding + Math.random() * (b.h - padding * 2),
+  };
+}
+
+function layoutAgents() {
+  agents.length = 0;
+  const skinTones = ["#f5d7a8", "#e8c089", "#d4a574", "#b88e5a", "#8b6f47", "#6e553a"];
+  const hairTones = ["#1a0e08", "#2a1810", "#4a3022", "#6e5234", "#8a7050", "#a89878"];
+
+  const byZone = {};
+  for (const p of PROSPECTS) { byZone[p.zone] = byZone[p.zone] || []; byZone[p.zone].push(p); }
+
+  for (const [zone, list] of Object.entries(byZone)) {
+    const b = zoneBounds(zone);
+    if (!b) continue;
+    for (const p of list) {
+      const start = newTargetIn(b);
+      agents.push({
+        slug: p.slug, prospect: p, zone,
+        x: start.x, y: start.y,
+        target: newTargetIn(b),
+        speed: rand(22, 38),          // px/sec
+        phase: Math.random() * Math.PI * 2,
+        facing: "down",               // up/down/left/right — drives draw orientation
+        idleTimer: 0,
+        zoneBounds: b,
+        skin: skinTones[Math.floor(Math.random() * skinTones.length)],
+        hair: hairTones[Math.floor(Math.random() * hairTones.length)],
+        shirt: ZONE_SHIRT[zone],
+        scale: rand(0.95, 1.08),
+        strideSpeed: rand(8.5, 11),
+        state: getProspectState(p.slug),
+      });
+    }
+  }
+}
+
+/* ─── Walking behavior — wander, with status-driven flavor ─── */
+function stepAgent(a, dt) {
+  const status = a.state?.status || "cold";
+  // Disqualified prospects stand still (slumped). Signed ones idle longer (taking it easy).
+  if (status === "disqualified") {
+    a.idleTimer = 5;  // perpetually idle
+    return;
+  }
+  if (a.idleTimer > 0) {
+    a.idleTimer -= dt;
+    return;
+  }
+  const dx = a.target.x - a.x;
+  const dy = a.target.y - a.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 2) {
+    // Status flavors the idle pause: hot prospects pace, cold ones linger.
+    let idle;
+    if (status === "discovery" || status === "proposal") idle = rand(0.1, 0.6);  // pacing
+    else if (status === "signed") idle = rand(1.5, 3.5);  // relaxed
+    else idle = rand(0.4, 1.8);
+    a.idleTimer = idle;
+    a.target = newTargetIn(a.zoneBounds);
+    return;
+  }
+  // Hot prospects walk a touch faster
+  const speedMul = (status === "discovery" || status === "proposal") ? 1.25
+                 : (status === "qualified") ? 1.10
+                 : 1.0;
+  const step = a.speed * speedMul * dt;
+  a.x += (dx / dist) * step;
+  a.y += (dy / dist) * step;
+  if (Math.abs(dx) > Math.abs(dy)) a.facing = dx > 0 ? "right" : "left";
+  else                              a.facing = dy > 0 ? "down" : "up";
+}
+
+/* ─── Draw a single character — procedural sprite in crowds-js style ─── */
+function drawAgent(a, t) {
+  const s = a.scale;
+  const status = a.state?.status || "cold";
+  const statusCfg = STATUSES[status] || STATUSES.cold;
+  const disqualified = status === "disqualified";
+  const slumped = disqualified;
+  const moving = a.idleTimer <= 0 && !slumped;
+  const gait = moving ? Math.sin(t * a.strideSpeed * 0.001 + a.phase) : 0;
+  const bob = moving ? Math.abs(gait) * 1.2 : 0;
+
+  ctx.save();
+  ctx.translate(a.x, a.y - bob);
+  if (slumped) ctx.globalAlpha = 0.55;  // disqualified prospects look gray/withdrawn
+
+  // Halo for signed prospects — gold glow ring
+  if (status === "signed") {
+    const pulse = 0.85 + Math.sin(t * 0.003) * 0.15;
+    const grad = ctx.createRadialGradient(0, 0, 4 * s, 0, 0, 28 * s);
+    grad.addColorStop(0, "rgba(253,224,71,0)");
+    grad.addColorStop(0.6, "rgba(253,224,71,0.35)");
+    grad.addColorStop(1, "rgba(253,224,71,0)");
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(0, 0, 28 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // Drop shadow
+  ctx.fillStyle = "rgba(0,0,0,0.42)";
+  ctx.beginPath();
+  ctx.ellipse(0, 17 * s, 11 * s, 3.5 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Compute lean — torso sways slightly opposite to gait
+  const lean = gait * 0.6;
+
+  // ── Legs ────────────────────────────────────────────────────────────
+  ctx.fillStyle = "#3a2a1f";  // dark trousers
+  // Front leg
+  ctx.save();
+  ctx.translate(-2.5 * s, 8 * s);
+  ctx.rotate(gait * 0.18);
+  ctx.fillRect(-1.6 * s, 0, 3.2 * s, 9 * s);
+  // tiny shoe
+  ctx.fillStyle = "#1a0f08";
+  ctx.fillRect(-2.2 * s, 8 * s, 4.4 * s, 1.8 * s);
+  ctx.restore();
+  // Back leg
+  ctx.fillStyle = "#3a2a1f";
+  ctx.save();
+  ctx.translate(2.5 * s, 8 * s);
+  ctx.rotate(-gait * 0.18);
+  ctx.fillRect(-1.6 * s, 0, 3.2 * s, 9 * s);
+  ctx.fillStyle = "#1a0f08";
+  ctx.fillRect(-2.2 * s, 8 * s, 4.4 * s, 1.8 * s);
+  ctx.restore();
+
+  // ── Torso ───────────────────────────────────────────────────────────
+  ctx.save();
+  ctx.rotate(lean * 0.04);  // very subtle sway
+  // shirt
+  ctx.fillStyle = a.shirt;
+  ctx.beginPath();
+  roundRect(ctx, -6.5 * s, -2 * s, 13 * s, 11 * s, 2 * s);
+  ctx.fill();
+  // shirt highlight (subtle vertical gradient feel)
+  ctx.fillStyle = "rgba(255,255,255,0.10)";
+  ctx.beginPath();
+  roundRect(ctx, -6 * s, -1.5 * s, 4 * s, 9 * s, 1 * s);
+  ctx.fill();
+
+  // ── Arms ────────────────────────────────────────────────────────────
+  const armSwing = gait * 1.6;
+  ctx.strokeStyle = a.shirt;
+  ctx.lineWidth = 3.2 * s;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-6.5 * s, 0);
+  ctx.lineTo(-8.5 * s, 7 * s + armSwing);
+  ctx.moveTo(6.5 * s, 0);
+  ctx.lineTo(8.5 * s, 7 * s - armSwing);
+  ctx.stroke();
+  // hands
+  ctx.fillStyle = a.skin;
+  ctx.beginPath();
+  ctx.arc(-8.5 * s, 7.5 * s + armSwing, 1.5 * s, 0, Math.PI * 2);
+  ctx.arc(8.5 * s, 7.5 * s - armSwing, 1.5 * s, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+
+  // ── Head ────────────────────────────────────────────────────────────
+  ctx.save();
+  ctx.translate(0, -8 * s);
+  // head counter-sway (very small, opposite to torso lean)
+  ctx.rotate(-lean * 0.02);
+  // skin
+  ctx.fillStyle = a.skin;
+  ctx.beginPath();
+  ctx.arc(0, 0, 5 * s, 0, Math.PI * 2);
+  ctx.fill();
+  // subtle face shadow on the back side
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.beginPath();
+  ctx.arc(a.facing === "left" ? -1.5 * s : 1.5 * s, 0.5 * s, 4 * s, 0, Math.PI * 2);
+  ctx.fill();
+
+  // hair — depends on facing
+  ctx.fillStyle = a.hair;
+  ctx.beginPath();
+  if (a.facing === "up") {
+    // back of head — full coverage
+    ctx.arc(0, -0.5 * s, 5.2 * s, 0, Math.PI * 2);
+  } else if (a.facing === "down") {
+    // front — just the top
+    ctx.arc(0, -2 * s, 5.2 * s, Math.PI, 2 * Math.PI);
+  } else {
+    // side profile — cap-like
+    ctx.arc(0, -1 * s, 5.2 * s, Math.PI, 2 * Math.PI);
+  }
+  ctx.fill();
+  // small ear indicator for facing
+  if (a.facing === "left" || a.facing === "right") {
+    ctx.fillStyle = a.skin;
+    ctx.beginPath();
+    ctx.arc(a.facing === "left" ? -4.5 * s : 4.5 * s, 0.5 * s, 1 * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // ── Status badge above head ────────────────────────────────────────
+  // Always render unless cold (we keep cold "invisible" so the floor isn't
+  // visually polluted with gray dots when nothing's happened yet).
+  if (status !== "cold") {
+    const badgeY = -18 * s;
+    const r = 6.5;
+    // Pulse for hot statuses
+    let pulse = 1;
+    if (status === "discovery" || status === "proposal") pulse = 0.85 + Math.sin(t * 0.006 + a.phase) * 0.15;
+    ctx.globalAlpha = pulse;
+    // Soft glow
+    ctx.fillStyle = statusCfg.color;
+    ctx.shadowColor = statusCfg.color;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(0, badgeY, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Inner ring (slight depth)
+    ctx.strokeStyle = "rgba(0,0,0,0.4)";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(0, badgeY, r, 0, Math.PI * 2); ctx.stroke();
+    // Glyph inside
+    const glyph = statusCfg.glyph;
+    if (glyph && glyph.length <= 2) {
+      ctx.fillStyle = "rgba(0,0,0,0.85)";
+      ctx.font = "700 8px JetBrains Mono, monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(glyph, 0, badgeY + 0.5);
+    } else if (glyph) {
+      // Emoji glyph
+      ctx.font = "9px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(glyph, 0, badgeY);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Hover ring ─────────────────────────────────────────────────────
+  if (hover === a) {
+    ctx.strokeStyle = a.shirt;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.arc(0, 14 * s, 18 * s, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Floating label ─────────────────────────────────────────────────
+  const labelY = 28 * s;
+  ctx.font = (hover === a ? "600 11px " : "500 10px ") + "Inter, sans-serif";
+  ctx.textAlign = "center";
+  const labelText = a.prospect.company;
+  const tw = ctx.measureText(labelText).width;
+  ctx.fillStyle = "rgba(26,18,8,0.7)";
+  ctx.fillRect(-tw / 2 - 4, labelY - 2, tw + 8, 13);
+  ctx.fillStyle = hover === a ? "#fff" : "rgba(245,232,216,0.85)";
+  ctx.fillText(labelText, 0, labelY + 8);
+
+  // ── Meeting time pill (shown when a meeting is scheduled) ──────────
+  const meeting = a.state?.meeting;
+  if (meeting) {
+    const mtxt = "📅 " + fmtMeeting(meeting);
+    ctx.font = "600 10px JetBrains Mono, monospace";
+    const mw = ctx.measureText(mtxt).width;
+    const my = labelY + 16;
+    ctx.fillStyle = "rgba(110,231,183,0.18)";
+    ctx.strokeStyle = "rgba(110,231,183,0.65)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const pillX = -mw / 2 - 6, pillY = my - 2, pillW = mw + 12, pillH = 14, pr = 7;
+    ctx.moveTo(pillX + pr, pillY);
+    ctx.lineTo(pillX + pillW - pr, pillY);
+    ctx.quadraticCurveTo(pillX + pillW, pillY, pillX + pillW, pillY + pr);
+    ctx.lineTo(pillX + pillW, pillY + pillH - pr);
+    ctx.quadraticCurveTo(pillX + pillW, pillY + pillH, pillX + pillW - pr, pillY + pillH);
+    ctx.lineTo(pillX + pr, pillY + pillH);
+    ctx.quadraticCurveTo(pillX, pillY + pillH, pillX, pillY + pillH - pr);
+    ctx.lineTo(pillX, pillY + pr);
+    ctx.quadraticCurveTo(pillX, pillY, pillX + pr, pillY);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#a7f3d0";
+    ctx.fillText(mtxt, 0, my + 9);
+  }
+
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+}
+
+/* ─── Main render loop ─── */
+function draw(t) {
+  const dt = Math.min(0.1, (t - lastT) / 1000);
+  lastT = t;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+
+  // Background — warm radial gradient (handled by CSS on body), but draw an
+  // outer wash so the canvas blends correctly with the body bg.
+  const bg = ctx.createRadialGradient(w * 0.5, h * 0.3, 0, w * 0.5, h * 0.5, Math.max(w, h));
+  bg.addColorStop(0, "#3d2c1a");
+  bg.addColorStop(0.5, "#2a1d10");
+  bg.addColorStop(1, "#1a1208");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Plaza floors — one textured tile per zone, with a very subtle zone tint
+  const tile = plazaTile && ctx.createPattern(plazaTile, "repeat");
+  for (const zone of ["end", "channel", "tool", "boutique"]) {
+    const b = zoneBounds(zone);
+    if (!b) continue;
+    const dim = zoneFilter && zoneFilter !== zone;
+
+    // The plaza tile (textured stone)
+    ctx.globalAlpha = dim ? 0.35 : 1;
+    if (tile) {
+      ctx.fillStyle = tile;
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+    } else {
+      ctx.fillStyle = "#5a4630";
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+    }
+
+    // Subtle zone tint overlay — keeps the plaza visible underneath
+    ctx.globalAlpha = dim ? 0.05 : 0.12;
+    ctx.fillStyle = ZONE_TINT[zone];
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+
+    // Inset shadow (gives the plaza a sunken feel like a real courtyard)
+    ctx.globalAlpha = dim ? 0.2 : 0.45;
+    ctx.strokeStyle = "rgba(0,0,0,0.55)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
+
+    // Inner highlight line
+    ctx.globalAlpha = dim ? 0.05 : 0.18;
+    ctx.strokeStyle = ZONE_TINT[zone];
+    ctx.strokeRect(b.x + 2.5, b.y + 2.5, b.w - 5, b.h - 5);
+
+    // Zone label — engraved on the floor
+    ctx.globalAlpha = dim ? 0.35 : 1;
+    ctx.font = '600 11px "JetBrains Mono", monospace';
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillText("▸ " + ZONE_NAME[zone].toUpperCase(), b.x + 14, b.y + 13);
+    ctx.fillStyle = ZONE_TINT[zone];
+    ctx.fillText("▸ " + ZONE_NAME[zone].toUpperCase(), b.x + 13, b.y + 12);
+    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.fillStyle = "rgba(245,232,216,0.55)";
+    const count = PROSPECTS.filter(p => p.zone === zone).length;
+    ctx.fillText(count + " prospects", b.x + 13, b.y + 28);
+  }
+  ctx.globalAlpha = 1;
+
+  // Update + draw agents (sorted by y so closer ones overlap farther ones)
+  agents.forEach(a => stepAgent(a, dt));
+  const sorted = [...agents].sort((x, y) => x.y - y.y);
+  for (const a of sorted) {
+    const dim = zoneFilter && zoneFilter !== a.zone;
+    ctx.globalAlpha = dim ? 0.3 : 1;
+    drawAgent(a, t);
+  }
+  ctx.globalAlpha = 1;
+
+  requestAnimationFrame(draw);
+}
+
+/* ─── Hit-test, hover, click ─── */
+function agentAt(x, y) {
+  // Iterate back-to-front so frontmost wins
+  const sorted = [...agents].sort((a, b) => b.y - a.y);
+  for (const a of sorted) {
+    const s = a.scale;
+    const dx = x - a.x, dy = y - (a.y + 5 * s);
+    if (dx * dx + dy * dy < (16 * s) * (16 * s)) return a;
+  }
+  return null;
+}
+
+canvas.addEventListener("mousemove", e => {
+  const r = canvas.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  const a = agentAt(x, y);
+  if (a !== hover) hover = a;
+  if (a) {
+    canvas.style.cursor = "pointer";
+    tt.style.display = "block";
+    tt.style.left = (e.clientX + 14) + "px";
+    tt.style.top = (e.clientY + 14) + "px";
+    tt.className = "tooltip " + a.zone;
+    tt.replaceChildren();
+    const co = document.createElement("span"); co.className = "co"; co.textContent = a.prospect.company; tt.appendChild(co);
+    const ro = document.createElement("span"); ro.className = "ro"; ro.textContent = a.prospect.role; tt.appendChild(ro);
+    const stCfg = STATUSES[a.state?.status || "cold"];
+    const stat = document.createElement("span"); stat.className = "stat";
+    let statTxt = "● " + stCfg.label.toUpperCase();
+    if (a.state?.meeting) statTxt += " · 📅 " + fmtMeeting(a.state.meeting);
+    statTxt += " · click for dossier";
+    stat.textContent = statTxt;
+    stat.style.color = stCfg.color;
+    tt.appendChild(stat);
+  } else {
+    canvas.style.cursor = "crosshair";
+    tt.style.display = "none";
+  }
+});
+canvas.addEventListener("mouseleave", () => { hover = null; tt.style.display = "none"; });
+canvas.addEventListener("click", e => {
+  const r = canvas.getBoundingClientRect();
+  const a = agentAt(e.clientX - r.left, e.clientY - r.top);
+  if (a) openDossier(a.prospect);
+});
+document.addEventListener("keydown", e => {
+  const zMap = { "1": "end", "2": "channel", "3": "tool", "4": "boutique" };
+  if (zMap[e.key]) zoneFilter = zoneFilter === zMap[e.key] ? null : zMap[e.key];
+  if (e.key === "0") zoneFilter = null;
+  if (e.key === "Escape") {
+    if (document.getElementById("focus").classList.contains("open")) closeDossier();
+    else zoneFilter = null;
+  }
+});
+
+/* ────────────────────────────────────────────────────────────────────────
+   DOSSIER MODAL — unchanged business logic
+   ─────────────────────────────────────────────────────────────────────── */
+const focusEl = document.getElementById("focus");
+const identEl = document.getElementById("ident");
+const metaEl = document.getElementById("meta");
+const crumbEl = document.getElementById("crumb");
+
+function openDossier(p) {
+  crumbEl.textContent = ZONE_NAME[p.zone] + " · " + p.company;
+  identEl.className = "card identity " + p.zone;
+  metaEl.className = "card meta-side";
+
+  identEl.replaceChildren();
+
+  // ── BIO HERO ──────────────────────────────────────────────────────
+  const hero = document.createElement("div"); hero.className = "bio-hero";
+
+  // Avatar — procedural sprite matching the walking floor character
+  const avatarWrap = document.createElement("div");
+  avatarWrap.className = "bio-avatar" + (p.personName ? "" : " no-name");
+  const av = document.createElement("canvas");
+  av.width = 88; av.height = 104;
+  drawAvatar(av, p);
+  avatarWrap.appendChild(av);
+  hero.appendChild(avatarWrap);
+
+  // Name + role + company line
+  const meta = document.createElement("div"); meta.className = "bio-meta";
+  const nm = document.createElement("h2");
+  nm.className = "bio-name" + (p.personName ? "" : " role-only");
+  nm.textContent = p.personName || p.role;
+  meta.appendChild(nm);
+
+  if (p.personName) {
+    const r = document.createElement("div"); r.className = "bio-role"; r.textContent = p.role; meta.appendChild(r);
+  }
+
+  const at = document.createElement("div"); at.className = "bio-at";
+  if (p.personName) {
+    const atSpan = document.createElement("span"); atSpan.className = "at"; atSpan.textContent = "at"; at.appendChild(atSpan);
+    const co = document.createElement("span"); co.className = "co"; co.textContent = p.company; at.appendChild(co);
+  } else {
+    const co = document.createElement("span"); co.className = "co"; co.textContent = p.company; at.appendChild(co);
+  }
+  meta.appendChild(at);
+
+  const where = document.createElement("div"); where.className = "bio-where"; where.textContent = p.hq;
+  meta.appendChild(where);
+
+  const pills = document.createElement("div"); pills.className = "ident-pills"; pills.style.marginTop = "10px";
+  const zp = document.createElement("span"); zp.className = "pill " + p.zone; zp.textContent = ZONE_NAME[p.zone]; pills.appendChild(zp);
+  const curState = getProspectState(p.slug);
+  const curStatusCfg = STATUSES[curState.status] || STATUSES.cold;
+  const sp = document.createElement("span"); sp.className = "pill status"; sp.id = "current-status-pill";
+  sp.style.color = curStatusCfg.color;
+  sp.textContent = "● " + curStatusCfg.label.toUpperCase();
+  pills.appendChild(sp);
+  meta.appendChild(pills);
+
+  hero.appendChild(meta);
+  identEl.appendChild(hero);
+
+  // ── BIO PARAGRAPH ─────────────────────────────────────────────────
+  if (p.bio) {
+    const body = document.createElement("div"); body.className = "bio-body " + p.zone;
+    const pg = document.createElement("p"); pg.textContent = p.bio;
+    body.appendChild(pg);
+    identEl.appendChild(body);
+  }
+
+  // ── STATUS / MEETING / NOTE PANEL ────────────────────────────────
+  identEl.appendChild(buildStatusPanel(p));
+
+  // ── PHONE BUTTON ─────────────────────────────────────────────────
+  const phone = document.createElement("a"); phone.className = "phone-btn";
+  phone.href = "tel:+1" + p.phone.replace(/\D/g, "");
+  phone.textContent = "📞 " + p.phone;
+  identEl.appendChild(phone);
+
+  // ── WHERE THEY WORK (company context, now secondary) ─────────────
+  const sectionH = document.createElement("div"); sectionH.className = "bio-section-h"; sectionH.textContent = "▸ Where they work";
+  identEl.appendChild(sectionH);
+
+  const rows = [
+    { k: "COMPANY", v: p.what },
+    { k: "TECH STACK", v: p.techStack || "—" },
+    { k: "DIGITAL", v: p.digital },
+    { k: "DEALS IN FLIGHT", v: p.dealsInFlight || "—" },
+    { k: "DECISION MAKERS", v: p.decisionMakers || "—" },
+    { k: "ALREADY USING", v: p.alreadyUsing || "—" },
+    { k: "COMPETING WITH", v: p.competition || "—" },
+    { k: "LINKS", v: linksFor(p) },
+  ];
+  for (const r of rows) {
+    const row = document.createElement("div"); row.className = "row";
+    const k = document.createElement("div"); k.className = "k"; k.textContent = r.k; row.appendChild(k);
+    const v = document.createElement("div"); v.className = "v";
+    if (Array.isArray(r.v)) {
+      const ul = document.createElement("ul");
+      r.v.forEach(it => { const li = document.createElement("li"); li.textContent = it; ul.appendChild(li); });
+      v.appendChild(ul);
+    } else if (r.k === "LINKS" && typeof r.v === "object") {
+      v.appendChild(r.v);
+    } else {
+      v.textContent = r.v;
+    }
+    row.appendChild(v);
+    identEl.appendChild(row);
+  }
+
+  metaEl.replaceChildren();
+  const h3 = document.createElement("h3"); h3.textContent = "The ABCs of this call"; metaEl.appendChild(h3);
+  const a = document.createElement("div"); a.className = "abc-block";
+  const aL = document.createElement("span"); aL.className = "label"; aL.textContent = "A · Attention hook"; a.appendChild(aL);
+  const aT = document.createElement("p"); aT.className = "text"; aT.textContent = "“" + p.abc.a + "”"; a.appendChild(aT);
+  metaEl.appendChild(a);
+  const b = document.createElement("div"); b.className = "abc-block b";
+  const bL = document.createElement("span"); bL.className = "label"; bL.textContent = "B · Buy-in trigger"; b.appendChild(bL);
+  const bT = document.createElement("p"); bT.className = "text"; bT.textContent = p.abc.b; b.appendChild(bT);
+  metaEl.appendChild(b);
+  const c = document.createElement("div"); c.className = "abc-block c";
+  const cL = document.createElement("span"); cL.className = "label"; cL.textContent = "C · Close (the exact ask)"; c.appendChild(cL);
+  const cT = document.createElement("p"); cT.className = "text"; cT.textContent = p.abc.c; c.appendChild(cT);
+  metaEl.appendChild(c);
+
+  const h4 = document.createElement("h4"); h4.textContent = "Expect these pushbacks"; metaEl.appendChild(h4);
+  const ul = document.createElement("ul"); ul.style.marginTop = "4px";
+  p.pushbacks.forEach(q => { const li = document.createElement("li"); li.style.fontSize = "13px"; li.style.lineHeight = "1.55"; li.style.marginBottom = "4px"; li.textContent = "“" + q + "”"; ul.appendChild(li); });
+  metaEl.appendChild(ul);
+
+  const actions = document.createElement("div"); actions.className = "focus-actions";
+  const practice = document.createElement("a"); practice.className = "practice-btn";
+  practice.href = "http://localhost:7878/?persona=" + p.slug + "&autostart=1";
+  practice.target = "_blank"; practice.rel = "noopener";
+  practice.textContent = "▸ Practice the call (AI roleplay + voice)";
+  actions.appendChild(practice);
+  metaEl.appendChild(actions);
+
+  focusEl.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+/* ─── Status panel: editable pipeline state inside the dossier ─── */
+function buildStatusPanel(p) {
+  const cur = getProspectState(p.slug);
+  const wrap = document.createElement("div"); wrap.className = "status-panel";
+  const h = document.createElement("h4"); h.textContent = "▸ Pipeline state — save changes anytime"; wrap.appendChild(h);
+
+  // Status grid
+  const grid = document.createElement("div"); grid.className = "status-grid";
+  for (const s of STATUS_ORDER) {
+    const cfg = STATUSES[s];
+    const btn = document.createElement("button"); btn.type = "button";
+    btn.className = "status-opt" + (cur.status === s ? " active" : "");
+    btn.dataset.s = s;
+    const dot = document.createElement("span"); dot.className = "badge-dot"; btn.appendChild(dot);
+    const lab = document.createElement("span"); lab.className = "badge-label"; lab.textContent = cfg.label; btn.appendChild(lab);
+    btn.addEventListener("click", () => {
+      grid.querySelectorAll(".status-opt").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      cur.status = s;
+      markDirty();
+    });
+    grid.appendChild(btn);
+  }
+  wrap.appendChild(grid);
+
+  // Meeting datetime — visible when status implies a scheduled meeting
+  const mh = document.createElement("h4"); mh.textContent = "Meeting time (optional)";
+  mh.style.marginTop = "14px"; wrap.appendChild(mh);
+  const mRow = document.createElement("div"); mRow.className = "meeting-input";
+  const mInput = document.createElement("input"); mInput.type = "datetime-local";
+  // Convert any stored ISO to the local datetime-local format
+  if (cur.meeting) {
+    try {
+      const d = new Date(cur.meeting);
+      const off = d.getTimezoneOffset();
+      const local = new Date(d.getTime() - off * 60000);
+      mInput.value = local.toISOString().slice(0,16);
+    } catch {}
+  }
+  mInput.addEventListener("input", () => {
+    cur.meeting = mInput.value ? new Date(mInput.value).toISOString() : "";
+    markDirty();
+  });
+  mRow.appendChild(mInput);
+  const mClear = document.createElement("button"); mClear.type = "button"; mClear.className = "save-btn"; mClear.textContent = "Clear";
+  mClear.style.padding = "7px 12px";
+  mClear.addEventListener("click", () => { mInput.value = ""; cur.meeting = ""; markDirty(); });
+  mRow.appendChild(mClear);
+  wrap.appendChild(mRow);
+
+  // Note
+  const nh = document.createElement("h4"); nh.textContent = "Quick note"; nh.style.marginTop = "14px"; wrap.appendChild(nh);
+  const nWrap = document.createElement("div"); nWrap.className = "note-input";
+  const ta = document.createElement("textarea");
+  ta.placeholder = "e.g. Reached the gatekeeper Tuesday — got Janet's name, calling back Friday";
+  ta.value = cur.note || "";
+  ta.addEventListener("input", () => { cur.note = ta.value; markDirty(); });
+  nWrap.appendChild(ta);
+  wrap.appendChild(nWrap);
+
+  // Save row
+  const sr = document.createElement("div"); sr.className = "save-row";
+  const hint = document.createElement("span"); hint.className = "hint"; hint.id = "save-hint";
+  hint.textContent = cur.updated ? "Last saved " + relTime(cur.updated) : "Not yet saved";
+  sr.appendChild(hint);
+  const save = document.createElement("button"); save.type = "button"; save.className = "save-btn"; save.textContent = "Save";
+  save.addEventListener("click", () => {
+    setProspectState(p.slug, { status: cur.status, meeting: cur.meeting, note: cur.note });
+    // Update visible pill on the dossier
+    const pill = document.getElementById("current-status-pill");
+    if (pill) {
+      const cfg = STATUSES[cur.status];
+      pill.style.color = cfg.color;
+      pill.textContent = "● " + cfg.label.toUpperCase();
+    }
+    hint.textContent = "Saved just now";
+    save.classList.add("saved"); save.textContent = "✓ Saved";
+    setTimeout(() => { save.classList.remove("saved"); save.textContent = "Save"; }, 1200);
+    _dirty = false;
+  });
+  sr.appendChild(save);
+  wrap.appendChild(sr);
+
+  return wrap;
+}
+
+let _dirty = false;
+function markDirty() {
+  _dirty = true;
+  const hint = document.getElementById("save-hint");
+  if (hint) hint.textContent = "● unsaved changes";
+}
+function relTime(iso) {
+  const d = new Date(iso);
+  const diff = (Date.now() - d.getTime()) / 1000;
+  if (diff < 60) return "just now";
+  if (diff < 3600) return Math.floor(diff/60) + "m ago";
+  if (diff < 86400) return Math.floor(diff/3600) + "h ago";
+  return Math.floor(diff/86400) + "d ago";
+}
+
+/* ─── Avatar: same procedural sprite used on the floor, frozen, facing down ─── */
+function drawAvatar(canvasEl, p) {
+  const ctx = canvasEl.getContext("2d");
+  const W = canvasEl.width, H = canvasEl.height;
+
+  // Use the same agent the user has been watching walk, if loaded — keeps the
+  // skin/hair/scale identity stable from floor → dossier. Otherwise synthesize.
+  let agent = agents.find(a => a.slug === p.slug);
+  const skin = agent ? agent.skin : "#e8c089";
+  const hair = agent ? agent.hair : "#2a1810";
+  const shirt = agent ? agent.shirt : (ZONE_SHIRT[p.zone] || "#34d399");
+
+  // Warm-stone backdrop
+  ctx.fillStyle = "#3d2c1a"; ctx.fillRect(0, 0, W, H);
+
+  // Speckle the backdrop with plaza accents (~40 dots)
+  const accents = ["#5a4630", "#4a3622", "#6a5640"];
+  for (let i = 0; i < 40; i++) {
+    ctx.fillStyle = accents[i % accents.length];
+    ctx.fillRect(Math.random() * W | 0, Math.random() * H | 0, 1 + Math.random() * 2 | 0, 1);
+  }
+
+  // Center the character
+  ctx.save();
+  ctx.translate(W / 2, H * 0.78);
+  const s = 2.4;  // big sprite scale for the avatar
+
+  // Shadow
+  ctx.fillStyle = "rgba(0,0,0,0.42)";
+  ctx.beginPath();
+  ctx.ellipse(0, 14 * s, 11 * s, 3.2 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Legs (static, slight stance)
+  ctx.fillStyle = "#3a2a1f";
+  ctx.fillRect(-4 * s - 1.4 * s, 8 * s, 3 * s, 9 * s);
+  ctx.fillRect( 4 * s - 1.4 * s, 8 * s, 3 * s, 9 * s);
+  ctx.fillStyle = "#1a0f08";
+  ctx.fillRect(-4 * s - 2 * s, 16 * s, 4 * s, 1.6 * s);
+  ctx.fillRect( 4 * s - 2 * s, 16 * s, 4 * s, 1.6 * s);
+
+  // Torso (shirt)
+  ctx.fillStyle = shirt;
+  const tx = -6.5 * s, ty = -2 * s, tw = 13 * s, th = 11 * s, r = 2 * s;
+  ctx.beginPath();
+  ctx.moveTo(tx + r, ty);
+  ctx.lineTo(tx + tw - r, ty);
+  ctx.quadraticCurveTo(tx + tw, ty, tx + tw, ty + r);
+  ctx.lineTo(tx + tw, ty + th - r);
+  ctx.quadraticCurveTo(tx + tw, ty + th, tx + tw - r, ty + th);
+  ctx.lineTo(tx + r, ty + th);
+  ctx.quadraticCurveTo(tx, ty + th, tx, ty + th - r);
+  ctx.lineTo(tx, ty + r);
+  ctx.quadraticCurveTo(tx, ty, tx + r, ty);
+  ctx.fill();
+  // shirt highlight
+  ctx.fillStyle = "rgba(255,255,255,0.10)";
+  ctx.fillRect(-6 * s, -1.5 * s, 4 * s, 9 * s);
+
+  // Arms — at-rest, slight bend
+  ctx.strokeStyle = shirt; ctx.lineWidth = 3.2 * s; ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-6.5 * s, 0);
+  ctx.lineTo(-9 * s, 8 * s);
+  ctx.moveTo(6.5 * s, 0);
+  ctx.lineTo(9 * s, 8 * s);
+  ctx.stroke();
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.arc(-9 * s, 8.5 * s, 1.6 * s, 0, Math.PI * 2);
+  ctx.arc( 9 * s, 8.5 * s, 1.6 * s, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head — facing forward (down)
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.arc(0, -8 * s, 5.2 * s, 0, Math.PI * 2);
+  ctx.fill();
+  // hair (top half cap)
+  ctx.fillStyle = hair;
+  ctx.beginPath();
+  ctx.arc(0, -10 * s, 5.2 * s, Math.PI, 2 * Math.PI);
+  ctx.fill();
+  // tiny eyes
+  ctx.fillStyle = "#1a0f08";
+  ctx.fillRect(-2.4 * s, -8 * s, 1.2 * s, 1.4 * s);
+  ctx.fillRect( 1.2 * s, -8 * s, 1.2 * s, 1.4 * s);
+
+  ctx.restore();
+}
+
+function linksFor(p) {
+  const wrap = document.createElement("div");
+  wrap.style.display = "flex"; wrap.style.gap = "12px"; wrap.style.flexWrap = "wrap";
+  if (p.web && !p.web.startsWith("(")) {
+    const a = document.createElement("a");
+    a.href = "https://" + p.web; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = "🌐 " + p.web; wrap.appendChild(a);
+  }
+  if (p.linkedin) {
+    const a = document.createElement("a");
+    a.href = "https://" + p.linkedin; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = "in/ company"; wrap.appendChild(a);
+  }
+  if (!wrap.children.length) { wrap.textContent = "— verify identity on call —"; wrap.style.color = "var(--muted)"; }
+  return wrap;
+}
+
+function closeDossier() {
+  focusEl.classList.remove("open");
+  document.body.style.overflow = "";
+}
+focusEl.addEventListener("click", e => {
+  if (e.target === focusEl || e.target.closest("[data-close]")) closeDossier();
+});
+
+/* ─── Boot ─── */
+resize();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

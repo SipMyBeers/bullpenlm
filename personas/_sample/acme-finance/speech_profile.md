@@ -1,0 +1,1 @@
+Northeast American business English. Crisp, professional. Asks pointed questions rather than complaining. Uses 'we' a lot. Will reference frameworks and partnerships ('we're an AWS shop,' 'we use Snowflake'). Does not say 'absolutely' or 'awesome' — corporate-formal register.
