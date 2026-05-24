@@ -179,6 +179,11 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%, var(--bg-2) 0%, var(
       </div>
 
       <div class="panel" style="margin-bottom:18px">
+        <h3>Trophy Case <span class="ct" id="trophy-ct">0</span></h3>
+        <div id="trophy-list" class="ach-grid" style="grid-template-columns:repeat(auto-fill,minmax(96px,1fr))"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:18px">
         <h3>Signed Documents</h3>
         <div class="list" id="signed-list"></div>
       </div>
@@ -322,24 +327,32 @@ function paintRecentLedger(xp){
   }
 }
 
-function computeStreak(xp){
-  const ledger = xp.ledger || [];
-  if (!ledger.length) return 0;
-  const days = new Set(ledger.map(e => (e.ts || '').slice(0,10)).filter(Boolean));
-  let streak = 0;
-  let cur = new Date();
-  for (;;){
-    const key = cur.toISOString().slice(0,10);
-    if (days.has(key)){ streak++; cur.setDate(cur.getDate() - 1); }
-    else break;
-  }
-  return streak;
-}
-
-function paintStreak(n){
+function paintStreak(streakData){
+  const n = (streakData && streakData.streak) || 0;
   if (!n) return;
   document.getElementById('streak-n').textContent = n;
   document.getElementById('streak-card').style.display = 'flex';
+  if (streakData.tier && streakData.tier.label){
+    document.querySelector('.streak-l').textContent =
+      'Day streak · ' + streakData.tier.label;
+  }
+}
+
+function paintTrophies(trophies){
+  const grid = document.getElementById('trophy-list');
+  clear(grid);
+  document.getElementById('trophy-ct').textContent = String(trophies.length);
+  if (!trophies.length){
+    grid.appendChild(el('div', 'empty', 'Close a deal to earn loot'));
+    return;
+  }
+  for (const t of trophies){
+    const tile = el('div', 'ach ' + (t.rarity || 'common'));
+    tile.title = t.name + ' — ' + (t.sub || '');
+    tile.appendChild(el('div', 'icon', t.icon || '🏆'));
+    tile.appendChild(el('div', 'nm', t.name));
+    grid.appendChild(tile);
+  }
 }
 
 function renderClassPicker(member, xp, classes){
@@ -373,19 +386,22 @@ function renderClassPicker(member, xp, classes){
 
 async function load(){
   try {
-    const [profile, catalog, classes] = await Promise.all([
+    const [profile, catalog, classes, trophies, streak] = await Promise.all([
       fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/members/${encodeURIComponent(REP)}`),
       fetchJSON('/api/achievements/catalog'),
       fetchJSON('/api/classes'),
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/trophies/${encodeURIComponent(REP)}`).catch(()=>({trophies:[]})),
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/streaks/${encodeURIComponent(REP)}`).catch(()=>({streak:0})),
     ]);
     CATALOG_BY_ID = {};
     for (const a of catalog.catalog) CATALOG_BY_ID[a.id] = a;
     paintMember(profile.member);
     paintXP(profile.xp);
     paintAchievements(profile.achievements || []);
+    paintTrophies(trophies.trophies || []);
     paintSignedDocs(profile.member);
     paintRecentLedger(profile.xp);
-    paintStreak(computeStreak(profile.xp));
+    paintStreak(streak);
     renderClassPicker(profile.member, profile.xp, classes.classes);
   } catch(err){
     console.error(err);

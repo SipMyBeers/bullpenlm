@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PvP Arena · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}.crumb .sep{margin:0 8px;color:var(--dim)}.crumb .here{color:var(--accent)}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 28px;display:grid;gap:24px;grid-template-columns:1fr;}
+
+.section{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:12px;padding:24px}
+.section h2{font-family:var(--display);font-size:30px;color:var(--gold);text-transform:uppercase;letter-spacing:-.01em;margin:0 0 6px}
+.section .sub{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);margin:0 0 18px}
+
+.create-form{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;margin-bottom:18px;padding:14px;background:rgba(0,0,0,0.20);border-radius:8px}
+.create-form label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+.create-form select,.create-form input{padding:9px 11px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:12px}
+.create-form .start{padding:0 22px;background:var(--accent);color:#0a1a14;border:none;border-radius:5px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;cursor:pointer;align-self:end;height:38px}
+@media(max-width:680px){.create-form{grid-template-columns:1fr 1fr}.create-form .start{grid-column:1 / -1}}
+
+.sprint-card{padding:16px 18px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:10px;margin-bottom:12px}
+.sprint-card .hdr{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.sprint-card .title{font-family:var(--display);font-size:18px;color:var(--accent-2);text-transform:uppercase;letter-spacing:-.01em}
+.sprint-card .badge{padding:3px 10px;border-radius:999px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase}
+.sprint-card .badge.live{background:rgba(52,211,153,0.20);color:var(--accent)}
+.sprint-card .badge.ended{background:rgba(245,232,216,0.06);color:var(--muted)}
+.sprint-card .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin-bottom:14px}
+.sprint-card .meta .key{color:var(--gold)}
+.lb{display:flex;flex-direction:column;gap:6px}
+.lb-row{display:grid;grid-template-columns:24px 1fr auto;gap:12px;padding:9px 13px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.05);border-radius:6px;font-family:var(--mono);font-size:13px;align-items:center}
+.lb-row.first{background:linear-gradient(90deg,rgba(251,191,36,0.18),rgba(42,29,16,0.55));border-color:rgba(251,191,36,0.40)}
+.lb-row.first .rank{color:var(--gold);font-weight:700}
+.lb-row .rank{font-family:var(--display);font-size:18px;color:var(--muted);text-align:center}
+.lb-row .name{color:var(--text);font-family:var(--serif);font-size:14px}
+.lb-row .score{color:var(--accent-2);font-weight:600}
+.lb-row.first .score{color:var(--gold)}
+
+.duels-list .duel{padding:14px 16px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:10px;margin-bottom:10px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.duel .vs{font-family:var(--display);font-size:18px;text-transform:uppercase}
+.duel .vs .ch{color:var(--accent-2)}
+.duel .vs .vstxt{color:var(--gold);margin:0 8px}
+.duel .vs .op{color:var(--accent-2)}
+.duel .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:5px;letter-spacing:.06em}
+.duel .status{padding:4px 11px;border-radius:999px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.duel .status.pending{background:rgba(251,191,36,0.15);color:var(--gold)}
+.duel .status.active{background:rgba(52,211,153,0.18);color:var(--accent-2)}
+.duel .status.resolved{background:rgba(245,232,216,0.06);color:var(--muted)}
+.duel .accept{padding:7px 14px;background:var(--accent);color:#0a1a14;border:none;border-radius:5px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;margin-left:10px}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:24px;letter-spacing:.08em}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <span class="here">PvP Arena</span>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <section class="section">
+    <h2>⚔ Sprints</h2>
+    <p class="sub">A short window. Whoever logs the most wins. Everyone in the bullpen is in by default.</p>
+
+    <div class="create-form">
+      <label>Metric
+        <select id="sp-kind">
+          <option value="dials">Most real calls</option>
+          <option value="demos">Most demos booked</option>
+          <option value="closes">Most closed-won</option>
+          <option value="revenue">Highest gross</option>
+          <option value="xp">Most XP earned</option>
+        </select>
+      </label>
+      <label>Window
+        <select id="sp-hours">
+          <option value="1">1 hour</option>
+          <option value="4">4 hours</option>
+          <option value="24" selected>1 day</option>
+          <option value="168">1 week</option>
+        </select>
+      </label>
+      <label>Name (optional)
+        <input id="sp-name" placeholder="e.g. Lunch Rush" />
+      </label>
+      <button class="start" id="sp-start">Start sprint</button>
+    </div>
+
+    <div id="sprints"><div class="empty">Loading…</div></div>
+  </section>
+
+  <section class="section">
+    <h2>🥊 Duels</h2>
+    <p class="sub">Pick a teammate. Pick a metric. Whoever's ahead in a week wins.</p>
+
+    <div class="create-form">
+      <label>Opponent
+        <select id="du-opp"></select>
+      </label>
+      <label>Metric
+        <select id="du-kind">
+          <option value="dials">Most real calls</option>
+          <option value="demos">Most demos booked</option>
+          <option value="closes">Most closed-won</option>
+          <option value="revenue">Highest gross</option>
+          <option value="xp">Most XP earned</option>
+        </select>
+      </label>
+      <label>Length
+        <select id="du-days">
+          <option value="3">3 days</option>
+          <option value="7" selected>1 week</option>
+          <option value="14">2 weeks</option>
+        </select>
+      </label>
+      <button class="start" id="du-start">Challenge</button>
+    </div>
+
+    <div class="duels-list" id="duels"><div class="empty">Loading…</div></div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b')   || 'killsesh';
+const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' error':''); setTimeout(()=>t.className='toast'+(err?' error':''),2400); }
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if(!r.ok){ let m=r.statusText; try{m=(await r.json()).error||m;}catch(_){} throw new Error(m); }
+  return r.json();
+}
+function $(id){ return document.getElementById(id); }
+function fmtScore(kind, score){
+  if(kind==='revenue') return '$' + Number(score||0).toLocaleString(undefined,{maximumFractionDigits:0});
+  if(kind==='xp') return Math.round(score) + ' xp';
+  return String(Math.round(score));
+}
+function timeLeft(expiresAt){
+  const ms = new Date(expiresAt) - new Date();
+  if(ms <= 0) return 'ended';
+  const m = Math.floor(ms/60000), h = Math.floor(m/60);
+  if(h >= 24) return Math.floor(h/24) + 'd ' + (h%24) + 'h left';
+  if(h > 0) return h + 'h ' + (m%60) + 'm left';
+  return m + 'm left';
+}
+
+async function renderSprint(sp, container){
+  const card = el('div', 'sprint-card');
+  const isLive = new Date(sp.expires_at) > new Date();
+  const hdr = el('div', 'hdr');
+  hdr.appendChild(el('div', 'title', sp.name));
+  hdr.appendChild(el('span', 'badge ' + (isLive ? 'live' : 'ended'), isLive ? '● LIVE' : 'ENDED'));
+  card.appendChild(hdr);
+  const meta = el('div', 'meta');
+  meta.appendChild(document.createTextNode('Metric: '));
+  meta.appendChild(el('span', 'key', sp.score_label));
+  meta.appendChild(document.createTextNode('  ·  '));
+  meta.appendChild(el('span', 'key', timeLeft(sp.expires_at)));
+  meta.appendChild(document.createTextNode('  ·  by ' + sp.authored_by));
+  card.appendChild(meta);
+
+  const lbResp = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/pvp/sprints/${encodeURIComponent(sp.id)}`).catch(()=>({leaderboard:[]}));
+  const lb = el('div', 'lb');
+  const rows = (lbResp.leaderboard || []).filter(r => r.score > 0);
+  if(!rows.length){
+    lb.appendChild(el('div', 'empty', 'No score yet. Get on the phones.'));
+  } else {
+    rows.forEach((r, i) => {
+      const row = el('div', 'lb-row' + (i===0 ? ' first' : ''));
+      row.appendChild(el('div', 'rank', i===0 ? '🏆' : String(i+1)));
+      row.appendChild(el('div', 'name', r.rep));
+      row.appendChild(el('div', 'score', fmtScore(sp.score_kind, r.score)));
+      lb.appendChild(row);
+    });
+  }
+  card.appendChild(lb);
+  container.appendChild(card);
+}
+
+async function loadSprints(){
+  const c = $('sprints'); clear(c);
+  try {
+    const r = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/pvp/sprints`);
+    const live = r.sprints || [];
+    if(!live.length){
+      c.appendChild(el('div', 'empty', 'No active sprints. Start one above.'));
+      return;
+    }
+    for(const sp of live) await renderSprint(sp, c);
+  } catch(e){
+    c.appendChild(el('div', 'empty', 'Failed: ' + e.message));
+  }
+}
+
+async function loadDuels(){
+  const c = $('duels'); clear(c);
+  try {
+    const r = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/pvp/duels?rep=${encodeURIComponent(REP)}`);
+    const ds = r.duels || [];
+    if(!ds.length){
+      c.appendChild(el('div', 'empty', 'No duels. Challenge someone above.'));
+      return;
+    }
+    for(const d of ds){
+      const row = el('div', 'duel');
+      const left = el('div');
+      const vs = el('div', 'vs');
+      vs.appendChild(el('span', 'ch', d.challenger));
+      vs.appendChild(el('span', 'vstxt', 'vs'));
+      vs.appendChild(el('span', 'op', d.opponent));
+      left.appendChild(vs);
+      const meta = el('div', 'meta');
+      let metaTxt = d.score_label;
+      if(d.status==='active') metaTxt += ' · ' + timeLeft(d.expires_at);
+      else if(d.status==='pending') metaTxt += ' · accept by ' + (d.accept_by||'').slice(11,16);
+      meta.textContent = metaTxt;
+      left.appendChild(meta);
+
+      // Show live scores when active
+      if(d.status === 'active'){
+        try {
+          const ds2 = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/pvp/duels/${encodeURIComponent(d.id)}/scores`);
+          const s = ds2.scores || {};
+          const sb = el('div', 'meta', d.challenger + ': ' + fmtScore(d.score_kind, s[d.challenger]||0)
+            + '   vs   ' + d.opponent + ': ' + fmtScore(d.score_kind, s[d.opponent]||0));
+          left.appendChild(sb);
+        } catch(_){}
+      }
+      row.appendChild(left);
+
+      const right = el('div');
+      right.appendChild(el('span', 'status ' + d.status, d.status));
+      if(d.status === 'pending' && d.opponent === REP){
+        const btn = el('button', 'accept', 'Accept');
+        btn.onclick = async () => {
+          try {
+            await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/pvp/duels/${encodeURIComponent(d.id)}/accept`,
+              {method:'POST', headers:{'Content-Type':'application/json'},
+               body: JSON.stringify({rep: REP})});
+            toast('Duel accepted — game on');
+            loadDuels();
+          } catch(e){ toast(e.message, true); }
+        };
+        right.appendChild(btn);
+      }
+      row.appendChild(right);
+      c.appendChild(row);
+    }
+  } catch(e){
+    c.appendChild(el('div', 'empty', 'Failed: ' + e.message));
+  }
+}
+
+async function loadOpponents(){
+  const sel = $('du-opp'); clear(sel);
+  try {
+    const r = await fetchJSON('/api/team/roster');
+    const reps = (r.reps || []).map(x => x.rep || x).filter(x => x && x !== REP);
+    if(!reps.length){
+      const o = el('option', null, '— no teammates yet —'); o.value = ''; sel.appendChild(o);
+    } else {
+      for(const rep of reps){
+        const o = el('option', null, rep); o.value = rep; sel.appendChild(o);
+      }
+    }
+  } catch(_){}
+}
+
+$('sp-start').onclick = async () => {
+  try {
+    await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/pvp/sprints`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: REP, score_kind: $('sp-kind').value,
+                            duration_hours: Number($('sp-hours').value),
+                            name: $('sp-name').value.trim() || null}),
+    });
+    $('sp-name').value = '';
+    toast('Sprint started');
+    loadSprints();
+  } catch(e){ toast(e.message, true); }
+};
+$('du-start').onclick = async () => {
+  const opp = $('du-opp').value;
+  if(!opp){ toast('Pick an opponent first', true); return; }
+  try {
+    await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/pvp/duels`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({challenger: REP, opponent: opp,
+                            score_kind: $('du-kind').value,
+                            duration_days: Number($('du-days').value)}),
+    });
+    toast('Challenge sent to ' + opp);
+    loadDuels();
+  } catch(e){ toast(e.message, true); }
+};
+
+(async () => {
+  await loadOpponents();
+  loadSprints();
+  loadDuels();
+  setInterval(loadSprints, 15000);
+  setInterval(loadDuels, 20000);
+})();
+</script>
+
+</body>
+</html>

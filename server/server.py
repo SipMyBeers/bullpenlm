@@ -1917,6 +1917,70 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Trophies ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/trophies/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from trophies import for_rep
+                self._send_json(200, {"trophies": for_rep(m.group(1), m.group(2))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Streaks ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/streaks/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from streaks import compute as streak_compute
+                self._send_json(200, streak_compute(m.group(1), m.group(2)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── PvP sprints + duels ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/pvp/sprints(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from pvp import list_sprints
+                qs = parse_qs(urlparse(self.path).query)
+                inc = (qs.get("include_expired") or ["false"])[0].lower() in ("1", "true", "yes")
+                self._send_json(200, {"sprints": list_sprints(m.group(1), include_expired=inc),
+                                       "score_kinds": __import__("pvp").SCORE_KINDS})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/pvp/sprints/([a-zA-Z0-9_\-]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from pvp import sprint_leaderboard
+                self._send_json(200, sprint_leaderboard(m.group(1), m.group(2)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/pvp/duels(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from pvp import list_duels
+                qs = parse_qs(urlparse(self.path).query)
+                rep = (qs.get("rep") or [None])[0]
+                self._send_json(200, {"duels": list_duels(m.group(1), rep)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/pvp/duels/([a-zA-Z0-9_\-]+)/scores(?:$|\?)", self.path)
+        if m:
+            try:
+                from pvp import duel_scores
+                self._send_json(200, duel_scores(m.group(1), m.group(2)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         if self.path == "/api/team/roster":
             try:
                 from team import get_roster
@@ -2192,6 +2256,71 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 from commissions import generate as cgen
                 s = cgen(m.group(1), m.group(2), m.group(3))
                 self._send_json(200, s)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Start a PvP sprint ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/pvp/sprints$", self.path)
+        if m:
+            try:
+                from pvp import create_sprint
+                req2 = json.loads(raw) if raw else {}
+                s = create_sprint(
+                    m.group(1),
+                    authored_by=(req2.get("rep") or self._current_rep() or "self").strip(),
+                    score_kind=(req2.get("score_kind") or "dials").strip(),
+                    duration_hours=int(req2.get("duration_hours") or 1),
+                    name=req2.get("name"),
+                )
+                self._send_json(200, s)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Challenge / accept a duel ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/pvp/duels$", self.path)
+        if m:
+            try:
+                from pvp import create_duel
+                req2 = json.loads(raw) if raw else {}
+                d = create_duel(
+                    m.group(1),
+                    challenger=(req2.get("challenger") or self._current_rep() or "self").strip(),
+                    opponent=(req2.get("opponent") or "").strip(),
+                    score_kind=(req2.get("score_kind") or "dials").strip(),
+                    duration_days=int(req2.get("duration_days") or 7),
+                )
+                self._send_json(200, d)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/pvp/duels/([a-zA-Z0-9_\-]+)/accept$", self.path)
+        if m:
+            try:
+                from pvp import accept_duel
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                d = accept_duel(m.group(1), m.group(2), rep)
+                self._send_json(200, d)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Backfill trophies for any past close-won that missed a roll ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/trophies/backfill$", self.path)
+        if m:
+            try:
+                from trophies import backfill
+                new = backfill(m.group(1))
+                self._send_json(200, {"count": len(new), "new": new})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

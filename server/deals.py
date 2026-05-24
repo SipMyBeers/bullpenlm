@@ -174,6 +174,13 @@ def move_stage(bullpen: str, deal_id: str, new_stage_id: str,
                      target_type="deal", target_id=deal_id,
                      payload={"amount": deal.get("amount", 0),
                               "prospect": deal.get("prospect_slug")})
+        # Roll a trophy for the rep who closed it (idempotent per deal_id)
+        if deal["closed_won"]:
+            try:
+                from trophies import award as trophy_award
+                trophy_award(bullpen, deal_id, actor_rep, float(deal.get("amount") or 0))
+            except Exception:
+                pass
 
     return {"ok": True, "deal": deal}
 
