@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forecast · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}.crumb .sep{margin:0 8px;color:var(--dim)}.crumb .here{color:var(--accent)}
+.scope-pick{margin-left:auto;display:inline-flex;border:1px solid rgba(245,232,216,0.10);border-radius:5px;overflow:hidden;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase}
+.scope-pick button{padding:7px 14px;background:transparent;color:var(--muted);border:none;cursor:pointer;font-family:inherit;font-size:inherit;letter-spacing:inherit;text-transform:inherit}
+.scope-pick button.active{background:var(--accent);color:#0a1a14;font-weight:700}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px}
+
+.totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:28px}
+.tot-card{padding:24px 26px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:10px}
+.tot-card .label{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.tot-card .v{font-family:var(--display);font-size:42px;line-height:1.05;color:var(--accent-2);margin-top:8px;letter-spacing:-.01em}
+.tot-card.gold .v{color:var(--gold)}
+.tot-card.dim .v{color:var(--muted)}
+.tot-card .sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--dim);margin-top:6px}
+
+.section{margin-bottom:28px}
+.section h3{font-family:var(--mono);font-size:11px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+
+.stage-rows{display:grid;grid-template-columns:1fr;gap:8px}
+.stage-row{display:grid;grid-template-columns:200px 1fr auto auto;gap:14px;align-items:center;padding:13px 16px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:8px}
+.stage-row .name{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;gap:9px}
+.stage-row .name .dot{width:10px;height:10px;border-radius:50%}
+.stage-row .name .prob{color:var(--muted);font-size:10px}
+.stage-row .bar{height:10px;background:rgba(0,0,0,0.30);border-radius:6px;overflow:hidden}
+.stage-row .bar-fill{height:100%;border-radius:6px;transition:width .5s ease-out}
+.stage-row .gross{font-family:var(--mono);font-size:12px;color:var(--text);min-width:90px;text-align:right}
+.stage-row .weighted{font-family:var(--mono);font-size:12px;color:var(--accent-2);min-width:90px;text-align:right;font-weight:600}
+
+table.dl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:8px;overflow:hidden}
+table.dl th{text-align:left;padding:10px 14px;color:var(--muted);font-weight:500;letter-spacing:.10em;text-transform:uppercase;font-size:10px;background:rgba(0,0,0,0.20)}
+table.dl td{padding:10px 14px;border-top:1px solid rgba(245,232,216,0.05);color:var(--text)}
+table.dl td.amt{color:var(--gold);text-align:right;font-weight:600}
+table.dl td.wt{color:var(--accent-2);text-align:right;font-weight:600}
+table.dl td.pros{font-family:var(--serif);font-size:14px}
+table.dl td .stage-chip{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9.5px;letter-spacing:.10em;text-transform:uppercase;background:rgba(245,232,216,0.06);color:var(--muted)}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:30px;letter-spacing:.08em}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <span class="here">Forecast</span>
+  </nav>
+  <div class="scope-pick" id="scope">
+    <button data-scope="me" class="active">My deals</button>
+    <button data-scope="all">Bullpen-wide</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="content"><div class="empty">Loading…</div></div>
+</main>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b')   || 'killsesh';
+const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+let SCOPE = 'me';
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+async function fetchJSON(url){ const r=await fetch(url); if(!r.ok)throw new Error(r.statusText); return r.json(); }
+function fmtMoney(n){ return '$' + Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0}); }
+
+async function render(){
+  const root = document.getElementById('content'); clear(root);
+  root.appendChild(el('div', 'empty', 'Loading forecast…'));
+  try {
+    const [pipeline, deals] = await Promise.all([
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/pipeline/default`),
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/deals`),
+    ]);
+    clear(root);
+
+    const stages = pipeline.stages || [];
+    const allDeals = (deals.deals || []).filter(d => SCOPE==='all' || d.owner_rep === REP);
+
+    // Compute totals
+    let pipelineGross = 0, pipelineWeighted = 0, wonAmount = 0, lostAmount = 0;
+    const byStage = {};
+    for(const s of stages){ byStage[s.id] = {stage:s, deals:[], gross:0, weighted:0}; }
+
+    for(const d of allDeals){
+      const s = stages.find(x => x.id === d.stage);
+      if(!s) continue;
+      const amt = Number(d.amount || 0);
+      const wt  = amt * (s.probability || 0);
+      byStage[s.id].deals.push(d);
+      byStage[s.id].gross += amt;
+      byStage[s.id].weighted += wt;
+      if(s.id === 'won') wonAmount += amt;
+      else if(s.id === 'lost') lostAmount += amt;
+      else { pipelineGross += amt; pipelineWeighted += wt; }
+    }
+
+    // Totals cards
+    const totals = el('div', 'totals');
+    const card = (label, value, sub, kls) => {
+      const c = el('div', 'tot-card ' + (kls||''));
+      c.appendChild(el('div', 'label', label));
+      c.appendChild(el('div', 'v', value));
+      if(sub) c.appendChild(el('div', 'sub', sub));
+      return c;
+    };
+    totals.appendChild(card('Pipeline (gross)', fmtMoney(pipelineGross),
+      allDeals.filter(d => d.stage !== 'won' && d.stage !== 'lost').length + ' open deals', ''));
+    totals.appendChild(card('Weighted forecast', fmtMoney(pipelineWeighted),
+      'Stage-probability weighted', 'gold'));
+    totals.appendChild(card('Won this period', fmtMoney(wonAmount),
+      byStage.won?.deals.length + ' closed-won', ''));
+    totals.appendChild(card('Lost / disqualified', fmtMoney(lostAmount), '', 'dim'));
+    root.appendChild(totals);
+
+    // Stage rows
+    const sec = el('div', 'section');
+    sec.appendChild(el('h3', null, 'Pipeline by stage'));
+    const list = el('div', 'stage-rows');
+    const maxWeighted = Math.max(1, ...stages.map(s => byStage[s.id].weighted));
+    for(const s of stages){
+      if(s.id === 'lost' && byStage[s.id].deals.length === 0) continue;
+      const row = el('div', 'stage-row');
+      const name = el('div', 'name');
+      const dot = el('span', 'dot'); dot.style.background = s.color || 'var(--accent)';
+      name.appendChild(dot);
+      name.appendChild(document.createTextNode(s.name));
+      const prob = el('span', 'prob', Math.round((s.probability||0)*100) + '%');
+      name.appendChild(prob);
+      row.appendChild(name);
+
+      const bar = el('div', 'bar');
+      const fill = el('div', 'bar-fill');
+      fill.style.background = s.color || 'var(--accent)';
+      fill.style.width = (byStage[s.id].weighted / maxWeighted * 100) + '%';
+      bar.appendChild(fill);
+      row.appendChild(bar);
+
+      row.appendChild(el('span', 'gross', fmtMoney(byStage[s.id].gross)));
+      row.appendChild(el('span', 'weighted', fmtMoney(byStage[s.id].weighted)));
+      list.appendChild(row);
+    }
+    sec.appendChild(list);
+    root.appendChild(sec);
+
+    // Top deals (weighted, non-terminal)
+    const top = allDeals
+      .filter(d => d.stage !== 'won' && d.stage !== 'lost')
+      .map(d => {
+        const s = stages.find(x => x.id === d.stage) || {};
+        return {...d, _w: Number(d.amount||0) * (s.probability||0), _stage_name: s.name};
+      })
+      .sort((a,b) => b._w - a._w)
+      .slice(0, 15);
+
+    const top_sec = el('div', 'section');
+    top_sec.appendChild(el('h3', null, 'Top open deals (by weighted value)'));
+    if(!top.length){
+      top_sec.appendChild(el('div', 'empty', 'No open deals. Build the pipeline.'));
+    } else {
+      const tbl = el('table', 'dl');
+      const thead = document.createElement('thead');
+      const trh = document.createElement('tr');
+      for(const h of (SCOPE==='all' ? ['Prospect','Owner','Stage','Gross','Weighted'] : ['Prospect','Stage','Gross','Weighted'])){
+        trh.appendChild(el('th', null, h));
+      }
+      thead.appendChild(trh); tbl.appendChild(thead);
+      const tb = document.createElement('tbody');
+      for(const d of top){
+        const tr = document.createElement('tr');
+        tr.appendChild(el('td', 'pros', d.prospect_slug || d.prospect || '—'));
+        if(SCOPE==='all'){ tr.appendChild(el('td', null, d.owner_rep || '—')); }
+        const sc = el('td');
+        sc.appendChild(el('span', 'stage-chip', d._stage_name || d.stage));
+        tr.appendChild(sc);
+        tr.appendChild(el('td', 'amt', fmtMoney(d.amount)));
+        tr.appendChild(el('td', 'wt', fmtMoney(d._w)));
+        tb.appendChild(tr);
+      }
+      tbl.appendChild(tb);
+      top_sec.appendChild(tbl);
+    }
+    root.appendChild(top_sec);
+  } catch(e){
+    clear(root);
+    root.appendChild(el('div', 'empty', 'Failed: ' + e.message));
+  }
+}
+
+for(const b of document.querySelectorAll('#scope button')){
+  b.onclick = () => {
+    SCOPE = b.dataset.scope;
+    for(const x of document.querySelectorAll('#scope button')) x.classList.remove('active');
+    b.classList.add('active');
+    render();
+  };
+}
+
+render();
+setInterval(render, 30000);
+</script>
+
+</body>
+</html>

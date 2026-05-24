@@ -717,6 +717,29 @@
     inviteRow.appendChild(inviteBtn);
     body.appendChild(inviteRow);
 
+    // Navigation chips → app sub-pages
+    const navRow = document.createElement("div");
+    navRow.style.cssText = "display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px";
+    const pages = [
+      ["📈 Deals",       "/app/deals.html"],
+      ["💰 Forecast",    "/app/forecast.html"],
+      ["⚔ Rep card",     "/app/profile.html"],
+      ["📜 Legal",       "/app/legal.html"],
+      ["🧾 Commissions", "/app/commissions.html"],
+      ["🔍 Audit log",   "/app/audit.html"],
+    ];
+    pages.forEach(([label, href]) => {
+      const a = document.createElement("a");
+      a.href = href + "?b=killsesh";
+      a.textContent = label;
+      a.target = "_blank";
+      a.style.cssText = "padding:7px 13px; background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.25); border-radius:4px; color:var(--accent-2); text-decoration:none; font-family:JetBrains Mono,monospace; font-size:11px; letter-spacing:.08em; transition:background .12s, transform .12s";
+      a.addEventListener("mouseenter", () => { a.style.background = "rgba(52,211,153,0.18)"; a.style.transform = "translateY(-1px)"; });
+      a.addEventListener("mouseleave", () => { a.style.background = "rgba(52,211,153,0.08)"; a.style.transform = "translateY(0)"; });
+      navRow.appendChild(a);
+    });
+    body.appendChild(navRow);
+
     // Leaderboard
     const lbHead = document.createElement("h3");
     lbHead.style.cssText = "font-family:JetBrains Mono,monospace; font-size:10.5px; letter-spacing:.20em; text-transform:uppercase; color:var(--accent); margin:0 0 10px";

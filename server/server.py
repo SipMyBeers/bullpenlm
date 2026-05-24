@@ -1855,6 +1855,68 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Legal docs ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/legal(?:$|\?)", self.path)
+        if m:
+            try:
+                from legal import list_docs
+                self._send_json(200, {"docs": list_docs(m.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/legal/([a-z0-9_\-]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from legal import get_doc
+                doc = get_doc(m.group(1), m.group(2))
+                if not doc:
+                    self._send_json(404, {"error": "doc_not_found"}); return
+                self._send_json(200, doc)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/signatures/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from legal import get_signatures
+                self._send_json(200, {"signatures": get_signatures(m.group(1), m.group(2))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Commissions ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/commissions/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from commissions import list_for_rep
+                self._send_json(200, {"statements": list_for_rep(m.group(1), m.group(2))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/commissions/([a-z0-9_\-\.]+)/(\d{4}-\d{2})(?:$|\?)", self.path)
+        if m:
+            try:
+                from commissions import get as cget
+                s = cget(m.group(1), m.group(2), m.group(3))
+                if not s:
+                    self._send_json(404, {"error": "no_statement_for_period"}); return
+                self._send_json(200, s)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/commissions(?:$|\?)", self.path)
+        if m:
+            try:
+                from commissions import list_all
+                self._send_json(200, {"by_rep": list_all(m.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         if self.path == "/api/team/roster":
             try:
                 from team import get_roster
@@ -2095,6 +2157,41 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     party_size=int(req2.get("party_size") or 2),
                 )
                 self._send_json(200, raid)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Sign a legal doc ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/legal/([a-z0-9_\-]+)/sign$", self.path)
+        if m:
+            try:
+                from legal import sign as legal_sign
+                bullpen, doc = m.group(1), m.group(2)
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                typed = (req2.get("typed_name") or "").strip()
+                if not typed:
+                    self._send_json(400, {"error": "missing_typed_name"}); return
+                sig = legal_sign(bullpen, rep, doc, typed)
+                # XP from doc_signed event is automatically picked up by xp.py
+                try:
+                    from xp import invalidate as xp_invalidate
+                    xp_invalidate(bullpen)
+                except Exception: pass
+                self._send_json(200, {"ok": True, "signature": sig})
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Generate (rebuild) a commission statement ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/commissions/([a-z0-9_\-\.]+)/(\d{4}-\d{2})/generate$", self.path)
+        if m:
+            try:
+                from commissions import generate as cgen
+                s = cgen(m.group(1), m.group(2), m.group(3))
+                self._send_json(200, s)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

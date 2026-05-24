@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Legal · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}.crumb .sep{margin:0 8px;color:var(--dim)}.crumb .here{color:var(--accent)}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px;display:grid;grid-template-columns:280px 1fr;gap:24px}
+@media(max-width:880px){.wrap{grid-template-columns:1fr}}
+.sidebar{display:flex;flex-direction:column;gap:8px}
+.doc-card{padding:14px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:8px;cursor:pointer;transition:border-color .12s,transform .12s}
+.doc-card:hover{border-color:var(--accent-dim);transform:translateY(-1px)}
+.doc-card.active{border-color:var(--accent);background:rgba(52,211,153,0.06)}
+.doc-card h4{font-family:var(--serif);font-size:14px;color:var(--text);margin:0 0 4px;font-weight:600}
+.doc-card .meta{font-family:var(--mono);font-size:10px;letter-spacing:.10em;color:var(--muted);text-transform:uppercase}
+.doc-card .status{display:inline-block;margin-top:6px;padding:2px 7px;border-radius:3px;font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase}
+.doc-card .status.signed{background:rgba(52,211,153,0.15);color:var(--accent-2)}
+.doc-card .status.stale{background:rgba(248,113,113,0.15);color:var(--danger)}
+.doc-card .status.unsigned{background:rgba(245,232,216,0.06);color:var(--dim)}
+.reader{padding:30px 38px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:10px;min-height:60vh}
+.reader-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding-bottom:18px;border-bottom:1px solid rgba(245,232,216,0.08);margin-bottom:24px}
+.reader-head h1{font-family:var(--display);font-size:36px;letter-spacing:-.01em;margin:0 0 6px;color:var(--text);text-transform:uppercase;line-height:1.05}
+.reader-meta{font-family:var(--mono);font-size:11px;letter-spacing:.10em;color:var(--muted);text-transform:uppercase}
+.reader-meta .sha{color:var(--gold)}
+.sign-btn{padding:11px 22px;background:var(--accent);color:#0a1a14;border:none;border-radius:6px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;cursor:pointer;flex-shrink:0;transition:transform .12s}
+.sign-btn:hover{transform:translateY(-1px)}
+.sign-btn.disabled{background:var(--accent-dim);color:var(--muted);cursor:default}
+.sign-btn.stale{background:var(--danger);color:#fff}
+.banner{padding:14px 18px;border-radius:8px;margin-bottom:20px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;display:flex;align-items:center;gap:12px}
+.banner.warn{background:rgba(248,113,113,0.10);border:1px solid rgba(248,113,113,0.30);color:#fda4a4}
+.banner.ok{background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);color:var(--accent-2)}
+.body{font-family:var(--serif);font-size:15px;line-height:1.75;color:#e5d8c4;white-space:pre-wrap;word-wrap:break-word;max-width:75ch}
+.body h1,.body h2,.body h3{font-family:var(--display);text-transform:uppercase;color:var(--gold);letter-spacing:-.01em;margin-top:1.5em}
+.body h1{font-size:24px}.body h2{font-size:18px}.body h3{font-size:15px;color:var(--accent-2)}
+.body table{border-collapse:collapse;width:100%;margin:14px 0;font-family:var(--mono);font-size:12px}
+.body th,.body td{border:1px solid rgba(245,232,216,0.10);padding:7px 10px;text-align:left}
+.body th{background:rgba(251,191,36,0.10);color:var(--gold);font-weight:600}
+.body code{font-family:var(--mono);background:rgba(0,0,0,0.30);padding:1px 5px;border-radius:3px;font-size:12px;color:var(--gold)}
+.sig-history{margin-top:30px;padding-top:18px;border-top:1px solid rgba(245,232,216,0.08)}
+.sig-history h3{font-family:var(--mono);font-size:11px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.sig-row{padding:10px 12px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:6px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:.05em;margin-bottom:6px}
+.sig-row .name{color:var(--accent-2)}
+.sig-row .meta{color:var(--muted)}
+.sig-row.stale .name{color:var(--danger)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;z-index:100}
+.modal.open{display:flex}
+.modal-card{background:var(--bg-1);border:1px solid rgba(251,191,36,0.30);border-radius:12px;padding:30px;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+.modal-card h2{font-family:var(--display);font-size:28px;text-transform:uppercase;color:var(--gold);margin:0 0 10px;letter-spacing:-.01em}
+.modal-card p{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);margin:0 0 20px}
+.modal-card input{width:100%;padding:13px 16px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em}
+.modal-card input:focus{outline:none;border-color:var(--gold)}
+.modal-card .legal-line{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--dim);margin-top:10px;line-height:1.6}
+.modal-actions{display:flex;gap:10px;margin-top:24px;justify-content:flex-end}
+.modal-actions button{padding:10px 20px;border-radius:6px;border:none;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;cursor:pointer}
+.modal-actions .cancel{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.modal-actions .confirm{background:var(--accent);color:#0a1a14}
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:18px;letter-spacing:.08em}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <span class="here">Legal Docs</span>
+  </nav>
+</header>
+
+<main class="wrap">
+  <aside class="sidebar" id="sidebar"></aside>
+  <section class="reader" id="reader">
+    <div class="empty">Loading…</div>
+  </section>
+</main>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <h2>✒ Sign document</h2>
+    <p id="modal-doc-title">…</p>
+    <input id="modal-name" type="text" placeholder="Type your full legal name" autocomplete="off">
+    <div class="legal-line">
+      By typing your name above and confirming, you agree this constitutes
+      your binding electronic signature on this document as of today's date.
+      The signature is cryptographically bound to the document's content
+      hash; if the doc changes, you'll need to re-sign.
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="modal-cancel">Cancel</button>
+      <button class="confirm" id="modal-confirm">Confirm signature</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b')   || 'killsesh';
+const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+
+let DOCS = [];
+let SIGS = [];
+let ACTIVE = null;
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' error':''); setTimeout(()=>t.className='toast'+(err?' error':''),2400); }
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if(!r.ok){ let m=r.statusText; try{m=(await r.json()).error||m;}catch(_){} throw new Error(m); }
+  return r.json();
+}
+
+function sigStatus(docId, docSha){
+  const for_doc = SIGS.filter(s => s.doc === docId);
+  if(!for_doc.length) return {state:'unsigned'};
+  const latest = for_doc.sort((a,b)=>(a.signed_at||'').localeCompare(b.signed_at||''))[for_doc.length-1];
+  if(latest.doc_sha256 === docSha) return {state:'signed', sig:latest};
+  return {state:'stale', sig:latest};
+}
+
+function renderSidebar(){
+  const s = document.getElementById('sidebar');
+  clear(s);
+  for(const d of DOCS){
+    const st = sigStatus(d.id, d.sha256);
+    const card = el('div', 'doc-card' + (ACTIVE === d.id ? ' active' : ''));
+    card.appendChild(el('h4', null, d.title));
+    card.appendChild(el('div', 'meta', d.id + ' · ' + d.sha256.slice(0,10)));
+    const status = el('span', 'status ' + st.state,
+      st.state==='signed' ? '✓ Signed' :
+      st.state==='stale'  ? '⚠ Out of date' :
+                            'Unsigned');
+    card.appendChild(status);
+    card.onclick = () => openDoc(d.id);
+    s.appendChild(card);
+  }
+}
+
+// Tiny safe markdown → DOM (headings, bold, italic, code, tables, paragraphs, hr, lists, blockquotes).
+function renderMarkdown(md){
+  const root = document.createElement('div'); root.className = 'body';
+  const lines = md.split('\n');
+  let i = 0;
+  function inline(text, host){
+    // bold **x**, italic _x_ or *x*, code `x`. Process in order to avoid conflicts.
+    const tokens = [];
+    let buf = ''; let j = 0;
+    function flush(){ if(buf){ tokens.push({t:'text',v:buf}); buf=''; } }
+    while(j < text.length){
+      const c = text[j];
+      if(c==='`'){ const end=text.indexOf('`',j+1); if(end>0){ flush(); tokens.push({t:'code',v:text.slice(j+1,end)}); j=end+1; continue; } }
+      if(c==='*' && text[j+1]==='*'){ const end=text.indexOf('**',j+2); if(end>0){ flush(); tokens.push({t:'b',v:text.slice(j+2,end)}); j=end+2; continue; } }
+      if(c==='_'){ const end=text.indexOf('_',j+1); if(end>0 && end-j<60){ flush(); tokens.push({t:'i',v:text.slice(j+1,end)}); j=end+1; continue; } }
+      buf += c; j++;
+    }
+    flush();
+    for(const tok of tokens){
+      if(tok.t==='text') host.appendChild(document.createTextNode(tok.v));
+      else host.appendChild(el(tok.t==='b'?'strong':tok.t==='i'?'em':'code', null, tok.v));
+    }
+  }
+  while(i < lines.length){
+    const L = lines[i];
+    if(/^---+\s*$/.test(L)){ root.appendChild(document.createElement('hr')); i++; continue; }
+    if(/^#{1,6}\s+/.test(L)){
+      const n = L.match(/^#+/)[0].length;
+      const h = el('h'+Math.min(n,3));
+      inline(L.replace(/^#+\s+/,''), h);
+      root.appendChild(h); i++; continue;
+    }
+    if(L.startsWith('|') && lines[i+1] && /^[\s\|\-:]+$/.test(lines[i+1])){
+      const headerCells = L.split('|').slice(1,-1).map(c=>c.trim());
+      const tbl = document.createElement('table');
+      const thead = document.createElement('thead');
+      const trh = document.createElement('tr');
+      for(const c of headerCells){ const th=document.createElement('th'); inline(c, th); trh.appendChild(th); }
+      thead.appendChild(trh); tbl.appendChild(thead);
+      i += 2;
+      const tbody = document.createElement('tbody');
+      while(i < lines.length && lines[i].startsWith('|')){
+        const cells = lines[i].split('|').slice(1,-1).map(c=>c.trim());
+        const tr = document.createElement('tr');
+        for(const c of cells){ const td=document.createElement('td'); inline(c, td); tr.appendChild(td); }
+        tbody.appendChild(tr); i++;
+      }
+      tbl.appendChild(tbody); root.appendChild(tbl); continue;
+    }
+    if(/^[-*]\s+/.test(L)){
+      const ul = document.createElement('ul');
+      while(i < lines.length && /^[-*]\s+/.test(lines[i])){
+        const li = document.createElement('li');
+        inline(lines[i].replace(/^[-*]\s+/,''), li);
+        ul.appendChild(li); i++;
+      }
+      root.appendChild(ul); continue;
+    }
+    if(L.trim()===''){ i++; continue; }
+    // Paragraph: collect contiguous non-blank lines
+    const p = document.createElement('p');
+    let para = L;
+    i++;
+    while(i < lines.length && lines[i].trim() !== '' && !/^[#|>\-*]/.test(lines[i])){
+      para += ' ' + lines[i]; i++;
+    }
+    inline(para, p);
+    root.appendChild(p);
+  }
+  return root;
+}
+
+async function openDoc(id){
+  ACTIVE = id;
+  renderSidebar();
+  const reader = document.getElementById('reader');
+  clear(reader);
+  reader.appendChild(el('div', 'empty', 'Loading…'));
+  try {
+    const doc = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/legal/${encodeURIComponent(id)}`);
+    const st = sigStatus(doc.id, doc.sha256);
+    clear(reader);
+
+    const head = el('div', 'reader-head');
+    const left = el('div');
+    left.appendChild(el('h1', null, doc.title));
+    const meta = el('div', 'reader-meta');
+    meta.appendChild(document.createTextNode('SHA: '));
+    meta.appendChild(el('span', 'sha', doc.sha256.slice(0,16)));
+    meta.appendChild(document.createTextNode('  ·  modified ' + doc.modified.slice(0,10)));
+    left.appendChild(meta);
+    head.appendChild(left);
+
+    const btn = el('button', 'sign-btn ' + (st.state==='stale'?'stale':''),
+      st.state==='signed' ? '✓ Signed' :
+      st.state==='stale'  ? '⚠ Re-sign — version changed' :
+                            'Sign this document');
+    if(st.state==='signed') btn.disabled = true;
+    btn.onclick = () => openSignModal(doc);
+    head.appendChild(btn);
+    reader.appendChild(head);
+
+    if(st.state === 'stale'){
+      const b = el('div', 'banner warn',
+        '⚠ Your signed version is no longer current. The doc was modified after you last signed. Please re-sign to keep your authority valid.');
+      reader.appendChild(b);
+    } else if(st.state === 'signed'){
+      const b = el('div', 'banner ok',
+        '✓ You signed this on ' + (st.sig.signed_at||'').slice(0,10) + ' as "' + st.sig.typed_name + '" (v' + st.sig.version + ').');
+      reader.appendChild(b);
+    }
+
+    reader.appendChild(renderMarkdown(doc.body_md));
+
+    // Signature history (all reps)
+    if(SIGS.some(s => s.doc === doc.id)){
+      const hist = el('div', 'sig-history');
+      hist.appendChild(el('h3', null, 'YOUR SIGNATURE HISTORY'));
+      for(const s of SIGS.filter(x=>x.doc===doc.id).sort((a,b)=>(b.signed_at||'').localeCompare(a.signed_at||''))){
+        const row = el('div', 'sig-row' + (s.doc_sha256!==doc.sha256?' stale':''));
+        row.appendChild(el('span', 'name', s.typed_name + ' (v' + s.version + ')'));
+        row.appendChild(el('span', 'meta', (s.signed_at||'').slice(0,16) + ' · sha ' + (s.doc_sha256||'').slice(0,10)));
+        hist.appendChild(row);
+      }
+      reader.appendChild(hist);
+    }
+  } catch(e){
+    clear(reader);
+    reader.appendChild(el('div', 'empty', 'Failed: ' + e.message));
+  }
+}
+
+let PENDING_DOC = null;
+function openSignModal(doc){
+  PENDING_DOC = doc;
+  document.getElementById('modal-doc-title').textContent = doc.title;
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>document.getElementById('modal-name').focus(), 50);
+}
+document.getElementById('modal-cancel').onclick = () => document.getElementById('modal').classList.remove('open');
+document.getElementById('modal-confirm').onclick = async () => {
+  const name = document.getElementById('modal-name').value.trim();
+  if(!name){ toast('Type your name first', true); return; }
+  try {
+    await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/legal/${encodeURIComponent(PENDING_DOC.id)}/sign`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: REP, typed_name: name}),
+    });
+    toast('✓ Signed — your authority is on the chain');
+    document.getElementById('modal').classList.remove('open');
+    await loadAll();
+    openDoc(PENDING_DOC.id);
+  } catch(e){ toast(e.message, true); }
+};
+document.getElementById('modal').onclick = (e) => {
+  if(e.target.id==='modal') document.getElementById('modal').classList.remove('open');
+};
+
+async function loadAll(){
+  const [d, s] = await Promise.all([
+    fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/legal`),
+    fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/signatures/${encodeURIComponent(REP)}`),
+  ]);
+  DOCS = d.docs;
+  SIGS = s.signatures;
+  renderSidebar();
+}
+
+(async () => {
+  try {
+    await loadAll();
+    if(DOCS.length) openDoc(DOCS[0].id);
+  } catch(e){
+    document.getElementById('reader').textContent = 'Failed to load: ' + e.message;
+  }
+})();
+</script>
+
+</body>
+</html>

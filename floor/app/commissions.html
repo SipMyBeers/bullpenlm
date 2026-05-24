@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Commissions · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}.crumb .sep{margin:0 8px;color:var(--dim)}.crumb .here{color:var(--accent)}
+.controls{margin-left:auto;display:flex;gap:10px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.10em;color:var(--muted)}
+.controls input,.controls select{padding:6px 10px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:11px}
+.controls button{padding:7px 14px;background:var(--gold);color:#0a1a14;border:none;border-radius:4px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 28px}
+
+.hero-stmt{padding:28px 32px;background:linear-gradient(135deg,rgba(251,191,36,0.10),rgba(52,211,153,0.06));border:1px solid rgba(251,191,36,0.25);border-radius:12px;margin-bottom:22px}
+.stmt-period{font-family:var(--mono);font-size:11px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.stmt-amount{font-family:var(--display);font-size:72px;line-height:1;color:var(--gold);letter-spacing:-.02em;text-shadow:0 4px 0 rgba(0,0,0,0.30)}
+.stmt-side{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:22px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(245,232,216,0.08)}
+.stmt-stat{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stmt-stat .v{display:block;font-family:var(--serif);font-style:italic;font-size:22px;color:var(--accent-2);font-weight:600;line-height:1.1;margin-top:4px}
+.stmt-stat .v.gold{color:var(--gold)}.stmt-stat .v.warn{color:var(--danger)}
+
+.banner{padding:13px 18px;border-radius:8px;margin-bottom:18px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;display:flex;align-items:center;gap:12px}
+.banner.warn{background:rgba(248,113,113,0.10);border:1px solid rgba(248,113,113,0.30);color:#fda4a4}
+.banner.warn a{color:var(--gold);text-decoration:underline}
+
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:10px;padding:22px;margin-bottom:20px}
+.panel h3{font-family:var(--mono);font-size:11px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid rgba(245,232,216,0.08);display:flex;justify-content:space-between}
+
+table.items{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+table.items th{text-align:left;padding:8px 10px;color:var(--muted);font-weight:500;letter-spacing:.10em;text-transform:uppercase;font-size:10px;border-bottom:1px solid rgba(245,232,216,0.10)}
+table.items td{padding:11px 10px;border-bottom:1px solid rgba(245,232,216,0.05);color:var(--text)}
+table.items td.amt{color:var(--gold);font-weight:600;text-align:right}
+table.items td.com{color:var(--accent-2);text-align:right}
+table.items td.pros{font-family:var(--serif);font-size:14px;font-weight:500}
+table.items tr:last-child td{border-bottom:none}
+
+.history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.hist-card{padding:14px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:8px;cursor:pointer;transition:border-color .12s,transform .12s}
+.hist-card:hover{border-color:var(--accent-dim);transform:translateY(-1px)}
+.hist-card.active{border-color:var(--gold);background:rgba(251,191,36,0.06)}
+.hist-card .p{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.10em;text-transform:uppercase}
+.hist-card .a{font-family:var(--display);font-size:22px;color:var(--gold);margin-top:4px;line-height:1}
+.hist-card .d{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:6px;letter-spacing:.05em}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:24px;letter-spacing:.08em}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <span class="here">Commissions</span>
+  </nav>
+  <div class="controls">
+    <span>Period:</span>
+    <input id="period" type="month" />
+    <button id="regen">Regenerate</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="content"><div class="empty">Loading…</div></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b')   || 'killsesh';
+const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' error':''); setTimeout(()=>t.className='toast'+(err?' error':''),2400); }
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if(!r.ok){ let m=r.statusText; try{m=(await r.json()).error||m;}catch(_){} throw new Error(m); }
+  return r.json();
+}
+function $(id){ return document.getElementById(id); }
+function fmtMoney(n){ return '$' + Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function currentMonth(){
+  const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+
+let HISTORY = [];
+
+async function render(period){
+  const root = $('content'); clear(root);
+  root.appendChild(el('div', 'empty', 'Loading ' + period + '…'));
+  let stmt = null;
+  try {
+    stmt = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/commissions/${encodeURIComponent(REP)}/${period}`);
+  } catch(_) {
+    // Auto-generate first time
+    try {
+      stmt = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/commissions/${encodeURIComponent(REP)}/${period}/generate`, {method:'POST'});
+    } catch(e){
+      clear(root);
+      root.appendChild(el('div', 'empty', 'No statement available: ' + e.message));
+      return;
+    }
+  }
+
+  clear(root);
+
+  // Hero
+  const hero = el('div', 'hero-stmt');
+  hero.appendChild(el('div', 'stmt-period', period + ' · ' + REP));
+  hero.appendChild(el('div', 'stmt-amount', fmtMoney(stmt.commission_amount)));
+  const side = el('div', 'stmt-side');
+  const ss = (label, value, kls) => {
+    const w = el('div', 'stmt-stat'); w.appendChild(document.createTextNode(label));
+    w.appendChild(el('span', 'v ' + (kls||''), value)); return w;
+  };
+  side.appendChild(ss('Deals closed',    String(stmt.deals_closed),         'gold'));
+  side.appendChild(ss('Gross revenue',   fmtMoney(stmt.gross_amount),       ''));
+  side.appendChild(ss('Rate applied',    stmt.rate_pct_applied + ' %',      'gold'));
+  side.appendChild(ss('Signature',
+    stmt.signature_status==='current' ? '✓ Current' :
+    stmt.signature_status==='out_of_date' ? '⚠ Out of date' : '× Missing',
+    stmt.signature_status==='current' ? '' : 'warn'));
+  hero.appendChild(side);
+  root.appendChild(hero);
+
+  // Warnings
+  for(const w of (stmt.warnings || [])){
+    const b = el('div', 'banner warn');
+    const msg = ({
+      'no_current_signature_on_referral_agreement': '× You don\'t have a current signature on the referral agreement. ',
+      'rate_table_not_parseable_from_referral_agreement': '× Could not parse a rate table from the referral agreement. Edit the doc and add a clear "| Revenue | Rate |" table.',
+      'no_closed_won_deals_in_period': 'No closed-won deals attributed to you for this period.',
+    })[w] || w;
+    b.appendChild(document.createTextNode(msg));
+    if(w === 'no_current_signature_on_referral_agreement'){
+      const a = el('a', null, 'Go sign it →');
+      a.href = '/app/legal.html?b=' + encodeURIComponent(BULLPEN) + '&rep=' + encodeURIComponent(REP);
+      b.appendChild(a);
+    }
+    root.appendChild(b);
+  }
+
+  // Line items
+  const lp = el('div', 'panel');
+  const h3 = el('h3');
+  h3.appendChild(document.createTextNode('Line items'));
+  h3.appendChild(el('span', null, 'generated ' + (stmt.generated_at||'').slice(0,16).replace('T',' ')));
+  lp.appendChild(h3);
+  if((stmt.line_items||[]).length === 0){
+    lp.appendChild(el('div', 'empty', 'No closed-won deals in this period yet. Get on the phones.'));
+  } else {
+    const tbl = el('table', 'items');
+    const thead = document.createElement('thead');
+    const trh = document.createElement('tr');
+    for(const c of ['Prospect','Deal ID','Closed','Type','Gross','Rate','Commission']){
+      trh.appendChild(el('th', null, c));
+    }
+    thead.appendChild(trh); tbl.appendChild(thead);
+    const tb = document.createElement('tbody');
+    for(const li of stmt.line_items){
+      const tr = document.createElement('tr');
+      tr.appendChild(el('td', 'pros', li.prospect || '—'));
+      tr.appendChild(el('td', null, li.deal_id || '—'));
+      tr.appendChild(el('td', null, (li.closed_at||'').slice(0,10)));
+      tr.appendChild(el('td', null, li.revenue_type || 'pilot'));
+      tr.appendChild(el('td', 'amt', fmtMoney(li.amount)));
+      tr.appendChild(el('td', null, li.rate_pct + '%'));
+      tr.appendChild(el('td', 'com', fmtMoney(li.commission)));
+      tb.appendChild(tr);
+    }
+    tbl.appendChild(tb);
+    lp.appendChild(tbl);
+  }
+  root.appendChild(lp);
+
+  // Statement history
+  if(HISTORY.length > 1){
+    const hp = el('div', 'panel');
+    hp.appendChild(el('h3', null, 'YOUR STATEMENT HISTORY'));
+    const grid = el('div', 'history-grid');
+    for(const h of HISTORY){
+      const c = el('div', 'hist-card' + (h.period===period?' active':''));
+      c.appendChild(el('div', 'p', h.period));
+      c.appendChild(el('div', 'a', fmtMoney(h.commission_amount)));
+      c.appendChild(el('div', 'd', h.deals_closed + ' deals · ' + (h.signature_status||'?')));
+      c.onclick = () => { $('period').value = h.period; render(h.period); };
+      grid.appendChild(c);
+    }
+    hp.appendChild(grid);
+    root.appendChild(hp);
+  }
+}
+
+$('regen').onclick = async () => {
+  const p = $('period').value;
+  if(!p) return;
+  try {
+    await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/commissions/${encodeURIComponent(REP)}/${p}/generate`, {method:'POST'});
+    toast('✓ Regenerated');
+    await loadHistory();
+    render(p);
+  } catch(e){ toast(e.message, true); }
+};
+$('period').onchange = () => render($('period').value);
+
+async function loadHistory(){
+  try {
+    const r = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/commissions/${encodeURIComponent(REP)}`);
+    HISTORY = r.statements || [];
+  } catch(_){ HISTORY = []; }
+}
+
+(async () => {
+  $('period').value = currentMonth();
+  await loadHistory();
+  render(currentMonth());
+})();
+</script>
+
+</body>
+</html>
