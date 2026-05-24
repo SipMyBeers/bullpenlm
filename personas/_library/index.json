@@ -1,0 +1,78 @@
+{
+  "tiers": {
+    "beginner": [
+      "curious-champion",
+      "warm-gatekeeper"
+    ],
+    "intermediate": [
+      "skeptical-cto",
+      "pe-pressured-cfo",
+      "time-poor-ceo"
+    ],
+    "advanced": [
+      "hostile-buyer",
+      "indifferent-it-manager"
+    ],
+    "coach": [
+      "mentor-coach"
+    ]
+  },
+  "personas": [
+    {
+      "slug": "curious-champion",
+      "tier": "beginner",
+      "axis": "Finding a champion",
+      "role": "Director of Operations \u00b7 internal advocate",
+      "what": "An internal advocate who already sees the problem you solve. Wants ammo for an internal sell, not a sales pitch."
+    },
+    {
+      "slug": "warm-gatekeeper",
+      "tier": "beginner",
+      "axis": "Getting past the gatekeeper",
+      "role": "Executive Assistant to the SVP",
+      "what": "The EA who controls SVP calendar access. Friendly but firm \u2014 defaults to 'send me your materials, I'll forward.'"
+    },
+    {
+      "slug": "skeptical-cto",
+      "tier": "intermediate",
+      "axis": "Technical credibility",
+      "role": "CTO",
+      "what": "A technical CTO who has seen 50 vendor pitches and trusts none of them. Architecture-first, marketing-allergic."
+    },
+    {
+      "slug": "pe-pressured-cfo",
+      "tier": "intermediate",
+      "axis": "ROI math",
+      "role": "CFO",
+      "what": "A CFO at a PE-acquired company. Every conversation is about ROI in real dollars on a quarterly horizon."
+    },
+    {
+      "slug": "time-poor-ceo",
+      "tier": "intermediate",
+      "axis": "60-second hook",
+      "role": "CEO",
+      "what": "A founder-CEO. You have 60 seconds, maximum. After that you're either intrigued or hanging up."
+    },
+    {
+      "slug": "hostile-buyer",
+      "tier": "advanced",
+      "axis": "Composure under attack",
+      "role": "VP Procurement",
+      "what": "Actively rude \u2014 has been burned by vendors before and now treats every rep as guilty until proven innocent."
+    },
+    {
+      "slug": "indifferent-it-manager",
+      "tier": "advanced",
+      "axis": "Driving commitment from yes-men",
+      "role": "IT Manager",
+      "what": "Says yes to everything. Commits to nothing. The hardest sale: someone who never says no but never moves."
+    },
+    {
+      "slug": "mentor-coach",
+      "tier": "coach",
+      "axis": "Self-reflection",
+      "role": "Sales mentor \u00b7 post-call coach",
+      "what": "Not a buyer \u2014 a coach. After a practice call you can switch to mentor mode to be challenged on what you did and how you'd do it differently."
+    }
+  ]
+}

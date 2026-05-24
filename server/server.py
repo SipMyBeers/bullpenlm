@@ -31,11 +31,12 @@ from pathlib import Path
 # present, for back-compat) AND the new organizations/<slug>/ structure that
 # is the canonical source going forward.
 _REPO = Path(__file__).parent.parent
+sys.path.insert(0, str(_REPO))           # repo root → enables `from adapters.ingest import ...`
 sys.path.insert(0, str(_REPO / "personas"))
 sys.path.insert(0, str(_REPO / "server"))
 
 try:
-    from loader import load_all as _load_personas, build_persona_prompt as _build_persona_prompt, build_scoring_prompt as _build_scoring_prompt
+    from loader import load_all as _load_personas, build_persona_prompt as _build_persona_prompt, build_scoring_prompt as _build_scoring_prompt, load_library as _load_library, load_library_index as _load_library_index, load_orgs_as_personas as _load_orgs_as_personas
     _USE_FILE_PERSONAS = True
 except Exception as _e:
     print(f"⚠ persona loader unavailable ({_e}); falling back to hardcoded PERSONAS")
@@ -60,7 +61,14 @@ MODEL_PREFERENCE = ["gemma2:9b", "gemma3:12b", "gemma2:12b", "deepseek-coder:6.7
 
 # Voice stack — all local. whisper.cpp for STT, macOS `say` for TTS.
 WHISPER_BIN = shutil.which("whisper-cli") or "/opt/homebrew/bin/whisper-cli"
-WHISPER_MODEL = str(_REPO / "server" / "models" / "ggml-base.en.bin")
+# Prefer small.en (4x more accurate than base.en, still real-time on M-series).
+# Falls back to base.en if small.en isn't downloaded yet — keeps the install
+# graceful on fresh checkouts.
+_WHISPER_DIR = _REPO / "server" / "models"
+WHISPER_MODEL = str(
+    (_WHISPER_DIR / "ggml-small.en.bin") if (_WHISPER_DIR / "ggml-small.en.bin").exists()
+    else (_WHISPER_DIR / "ggml-base.en.bin")
+)
 SAY_BIN = "/usr/bin/say"
 AFCONVERT_BIN = "/usr/bin/afconvert"
 
@@ -318,17 +326,58 @@ PERSONAS = {
 _runtime_personas = {}
 
 def _refresh_personas():
+    """Reload personas from disk. Library personas (curated training scenarios)
+    are merged in under a `library:` slug prefix so they share the same chat /
+    score / synthesize pipeline as CRM-imported personas without name collisions."""
     global _runtime_personas
-    if _USE_FILE_PERSONAS:
-        _runtime_personas = _load_personas()
+    if not _USE_FILE_PERSONAS:
+        return
+    merged = _load_personas()
+    # Auto-bridge every org in organizations/ into a practiceable persona so
+    # any CRM prospect can be roleplayed. Hand-curated personas in personas/
+    # take precedence over the auto-generated ones (slug collision wins).
+    for slug, persona in _load_orgs_as_personas().items():
+        merged.setdefault(slug, persona)
+    for slug, persona in _load_library().items():
+        merged[f"library:{slug}"] = persona
+    _runtime_personas = merged
 
 
-def persona_system_prompt(slug):
-    """Build the system prompt that makes the model play the prospect."""
+DIFFICULTY_MODIFIERS = {
+    "beginner": """
+DIFFICULTY OVERRIDE — BEGINNER MODE
+───────────────────────────────────
+This rep is new to sales. Be warm, patient, and supportive. Surface objections
+gently — phrase them as questions, not pushback. If the rep stumbles, give them
+a moment to recover instead of pouncing. You're still in character, but you're a
+generous-spirited version of this character. Reward good discovery questions
+with substantive answers.
+""",
+    "intermediate": "",   # default — no modifier
+    "advanced": """
+DIFFICULTY OVERRIDE — ADVANCED MODE
+───────────────────────────────────
+This rep is experienced. Be skeptical, time-pressured, and harder to convince.
+Press on weak claims. Interrupt monologues. Ask the hard follow-up questions a
+real senior buyer would. Test composure — if the rep gets defensive or starts
+apologizing, become more dismissive. Reserve genuine engagement for moments
+when the rep demonstrates real competence.
+""",
+}
+
+
+def persona_system_prompt(slug, difficulty: str = "intermediate"):
+    """Build the system prompt that makes the model play the prospect.
+
+    `difficulty` ∈ {beginner, intermediate, advanced} adjusts hostility/patience
+    without changing the persona identity. Library personas already encode their
+    own difficulty axis — the modifier still applies on top."""
+    mod = DIFFICULTY_MODIFIERS.get(difficulty, "")
     if _USE_FILE_PERSONAS:
         _refresh_personas()
         if slug in _runtime_personas:
-            return _build_persona_prompt(_runtime_personas[slug])
+            base = _build_persona_prompt(_runtime_personas[slug])
+            return base + ("\n" + mod if mod else "")
     p = PERSONAS[slug]
     pushbacks_block = "\n".join(f"  - \"{q}\"" for q in p["pushbacks"])
     speech = p.get("speech_profile", "")
@@ -408,7 +457,7 @@ ABSOLUTE RULES
 - If you push back, USE YOUR ACTUAL PUSHBACKS:
 {pushbacks_block}
 
-GO. The phone just rang. Pick up."""
+GO. The phone just rang. Pick up.""" + ("\n" + mod if mod else "")
 
 
 def scoring_system_prompt(slug):
@@ -494,20 +543,47 @@ def get_model():
 # Voice — local STT (whisper.cpp) + TTS (macOS `say`)
 # ──────────────────────────────────────────────────────────────────────────
 
+# Whisper hallucinations on silent/short clips — the model was trained on
+# YouTube subtitles, so it emits these strings when fed near-silent audio.
+# Filtering them turns "you", "Thank you.", "Thanks for watching!" into "".
+_WHISPER_HALLUCINATIONS = {
+    "", ".", "you", "you.", "thank you", "thank you.",
+    "thanks for watching", "thanks for watching.", "thanks for watching!",
+    "thank you for watching", "thank you for watching.",
+    "bye", "bye.", "bye!", "okay", "okay.",
+    "[music]", "[silence]", "[noise]",
+}
+
+
 def transcribe_wav(wav_bytes: bytes) -> str:
-    """Pipe WAV audio through whisper.cpp; return transcribed text."""
+    """Pipe WAV audio through whisper.cpp; return transcribed text.
+
+    Hardened against whisper's well-known hallucinations on silent/short audio:
+      1. Reject clips shorter than 0.4 sec (push-to-talk false triggers)
+      2. Pass --no-speech-thold + --logprob-thold to make the model conservative
+      3. Filter known hallucination outputs ("you", "Thank you.", etc.)
+    """
     if not Path(WHISPER_MODEL).exists():
         raise RuntimeError(f"whisper model missing at {WHISPER_MODEL}")
+
+    # Reject very short audio outright — whisper hallucinates worst on these.
+    # WAV header is ~44 bytes; 16kHz mono 16-bit = 32000 bytes/sec. 0.4s = 12800 bytes.
+    if len(wav_bytes) < 12000:
+        return ""
+
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         f.write(wav_bytes)
         in_path = f.name
-    out_base = in_path[:-4]  # strip .wav for -of arg
+    out_base = in_path[:-4]
     try:
         subprocess.run(
             [
                 WHISPER_BIN, "-m", WHISPER_MODEL,
                 in_path, "-nt", "-otxt", "-of", out_base,
-                "-l", "en", "-t", "4",  # threads
+                "-l", "en", "-t", "4",
+                "--no-speech-thold", "0.6",   # default 0.6; bumps make it more conservative
+                "--logprob-thold", "-0.8",    # reject low-confidence segments (default -1.0)
+                "--temperature", "0",          # deterministic — no creative hallucination
             ],
             check=True,
             capture_output=True,
@@ -516,7 +592,11 @@ def transcribe_wav(wav_bytes: bytes) -> str:
         txt_path = out_base + ".txt"
         if not Path(txt_path).exists():
             return ""
-        return Path(txt_path).read_text().strip()
+        text = Path(txt_path).read_text().strip()
+        # Strip known hallucinations — case-insensitive match on the whole output
+        if text.lower().strip(' .!?,"\'') in _WHISPER_HALLUCINATIONS:
+            return ""
+        return text
     finally:
         for p in (in_path, out_base + ".txt"):
             try: Path(p).unlink()
@@ -617,8 +697,13 @@ def ollama_chat(messages, temperature=0.85):
 # Transcript saving
 # ──────────────────────────────────────────────────────────────────────────
 
-def save_transcript(slug, messages, score):
-    """Drop a markdown transcript into ~/killsesh-pilots/training-runs/."""
+def save_transcript(slug, messages, score, metrics: dict | None = None, rep: str = "self"):
+    """Save the practice-session markdown + a sibling metrics.json so the trend
+    endpoint can chart improvement over time.
+
+    `rep` attributes the call to a specific person — set per-request so multiple
+    teammates calling through the same BullpenLM instance can each track their
+    own metrics."""
     if _USE_FILE_PERSONAS and slug in _runtime_personas:
         rp = _runtime_personas[slug]
         p = {"company": rp.company, "role": rp.role, "zone": rp.zone}
@@ -653,6 +738,22 @@ def save_transcript(slug, messages, score):
     lines.append("")
 
     path.write_text("\n".join(lines))
+
+    if metrics:
+        metrics_path = path.with_suffix(".metrics.json")
+        record = {
+            "slug": slug,
+            "date": today,
+            "timestamp": datetime.datetime.now().isoformat(timespec="seconds"),
+            "company": p["company"],
+            "role": p["role"],
+            "rep": rep,
+            "attempt": n,
+            "transcript_path": str(path),
+            **metrics,
+        }
+        metrics_path.write_text(json.dumps(record, indent=2) + "\n")
+
     return str(path)
 
 
@@ -776,9 +877,9 @@ HTML_PAGE = r"""<!doctype html>
     </div>
     <div class="typing" id="typing" style="display:none"><span class="spinner"></span> <span id="typing-name">prospect</span> is thinking…<span class="audio-indicator" id="audio-indicator"></span></div>
     <div class="voice-bar">
-      <button type="button" class="mic-btn" id="mic-btn" disabled aria-label="Hold to talk">
+      <button type="button" class="mic-btn" id="mic-btn" disabled aria-label="Auto-listen status — click to force-send current utterance">
         <span class="mic-dot"></span>
-        <span id="mic-label">Hold space (or click and hold) to talk</span>
+        <span id="mic-label">Click Start Call — the mic listens automatically</span>
       </button>
       <label class="voice-toggle on" id="voice-toggle-wrap"><input type="checkbox" id="voice-toggle" checked> AI voice</label>
     </div>
@@ -908,11 +1009,13 @@ async function startCall() {
 
 async function aiTurn(opening) {
   typingEl.style.display = "block";
+  const params = new URLSearchParams(window.location.search);
+  const difficulty = params.get("difficulty") || "intermediate";
   try {
     const r = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: activeSlug, history: messages, opening: !!opening }),
+      body: JSON.stringify({ slug: activeSlug, history: messages, opening: !!opening, difficulty }),
     });
     if (!r.ok) throw new Error("chat failed");
     const data = await r.json();
@@ -943,10 +1046,11 @@ async function hangUp() {
   typingEl.style.display = "block";
   typingName.textContent = "coach";
   try {
+    const rep = new URLSearchParams(window.location.search).get("rep") || "self";
     const r = await fetch("/api/score", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: activeSlug, history: messages }),
+      body: JSON.stringify({ slug: activeSlug, history: messages, rep }),
     });
     const data = await r.json();
     statusEl.textContent = "Call complete";
@@ -1094,26 +1198,132 @@ async function startRecording() {
 }
 
 async function stopRecording() {
+  // Legacy push-to-talk shim — kept so the manual mic button still works as a
+  // "force-send what you have now" gesture. The continuous-VAD loop below is
+  // the primary path during a live call.
   if (!recording) return;
   recording = false;
   micBtn.classList.remove("recording");
-  micLabel.textContent = "Transcribing…";
+  await flushUtterance("manual");
+}
+
+/* ────────────────────────────────────────────────────────────────────
+   Continuous VAD-driven mic. While a call is live, the mic listens the
+   whole time. We detect speech via per-block RMS amplitude:
+     · level > THRESHOLD                → start/extend an utterance
+     · level < THRESHOLD for SILENCE_MS → cut utterance, send to whisper
+   We pause listening while the AI is "speaking" (TTS playback) so the
+   model doesn't transcribe its own voice as your turn.
+   ────────────────────────────────────────────────────────────────── */
+
+const VAD = {
+  threshold: 0.012,        // RMS amplitude — tuned for mic noise floor on Mac mics
+  silenceMs: 900,          // pause after speech before we send to whisper
+  minSpeechMs: 350,        // utterance must contain this much above-threshold audio
+  preRollSamples: 4096,    // keep ~90ms before speech kicks in (capture "uh-")
+};
+let vadState = "idle";     // idle | listening | recording | suspended
+let silenceFrameCount = 0;
+let speechFrameCount = 0;
+let utteranceSamples = [];
+let preRollBuffer = [];    // ring of recent pre-speech samples
+let framesPerMs = 0;
+
+async function startContinuousMic() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") await audioCtx.resume();
+  if (!mediaStream) {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+    });
+  }
+  sourceNode = audioCtx.createMediaStreamSource(mediaStream);
+  processorNode = audioCtx.createScriptProcessor(4096, 1, 1);
+  framesPerMs = audioCtx.sampleRate / 1000;
+
+  processorNode.onaudioprocess = (e) => {
+    if (vadState === "idle" || vadState === "suspended") return;
+    const ch = e.inputBuffer.getChannelData(0);
+    // RMS amplitude
+    let sum = 0;
+    for (let i = 0; i < ch.length; i++) sum += ch[i] * ch[i];
+    const rms = Math.sqrt(sum / ch.length);
+
+    if (vadState === "listening") {
+      // Ring-buffer the pre-roll so we capture the start of speech
+      preRollBuffer.push(new Float32Array(ch));
+      if (preRollBuffer.length > 3) preRollBuffer.shift();   // ~280ms of pre-roll at 44.1kHz
+
+      if (rms > VAD.threshold) {
+        vadState = "recording";
+        utteranceSamples = preRollBuffer.slice();
+        preRollBuffer = [];
+        silenceFrameCount = 0;
+        speechFrameCount = ch.length;
+        micBtn.classList.add("recording");
+        micLabel.textContent = "Listening…";
+      }
+    } else if (vadState === "recording") {
+      utteranceSamples.push(new Float32Array(ch));
+      if (rms > VAD.threshold) {
+        speechFrameCount += ch.length;
+        silenceFrameCount = 0;
+      } else {
+        silenceFrameCount += ch.length;
+      }
+      const silenceMs = silenceFrameCount / framesPerMs;
+      const speechMs = speechFrameCount / framesPerMs;
+      if (silenceMs >= VAD.silenceMs && speechMs >= VAD.minSpeechMs) {
+        // End of utterance
+        const samples = utteranceSamples;
+        utteranceSamples = [];
+        speechFrameCount = 0;
+        silenceFrameCount = 0;
+        vadState = "suspended";
+        micBtn.classList.remove("recording");
+        micLabel.textContent = "Transcribing…";
+        cutAndSend(samples).catch(err => console.warn("VAD send error:", err));
+      } else if (silenceMs >= VAD.silenceMs && speechMs < VAD.minSpeechMs) {
+        // False trigger — went quiet too fast, discard
+        utteranceSamples = [];
+        speechFrameCount = 0;
+        silenceFrameCount = 0;
+        vadState = "listening";
+        micBtn.classList.remove("recording");
+        micLabel.textContent = "Listening — go ahead";
+      }
+    }
+  };
+
+  sourceNode.connect(processorNode);
+  processorNode.connect(audioCtx.destination);
+  vadState = "listening";
+  micLabel.textContent = "Listening — go ahead";
+}
+
+function stopContinuousMic() {
+  vadState = "idle";
   try {
     if (processorNode) { processorNode.disconnect(); processorNode.onaudioprocess = null; processorNode = null; }
     if (sourceNode) { sourceNode.disconnect(); sourceNode = null; }
   } catch (_) {}
-  // Concat all chunks.
+  micBtn.classList.remove("recording");
+  micLabel.textContent = "Call ended";
+}
+
+async function cutAndSend(samples) {
   let total = 0;
-  for (const c of recordedSamples) total += c.length;
-  const flat = new Float32Array(total);
-  let off = 0;
-  for (const c of recordedSamples) { flat.set(c, off); off += c.length; }
-  recordedSamples = [];
-  if (flat.length < 1600) {  // < 0.1s
-    micLabel.textContent = "Too short — hold longer";
-    setTimeout(() => { micLabel.textContent = "Hold space (or click and hold) to talk"; }, 1500);
+  for (const c of samples) total += c.length;
+  if (total < audioCtx.sampleRate * 0.3) {  // < 300ms → likely noise
+    if (vadState === "suspended") {
+      vadState = "listening";
+      micLabel.textContent = "Listening — go ahead";
+    }
     return;
   }
+  const flat = new Float32Array(total);
+  let off = 0;
+  for (const c of samples) { flat.set(c, off); off += c.length; }
   const wav = floatToWav(flat, audioCtx.sampleRate);
   try {
     const r = await fetch("/api/transcribe", {
@@ -1123,23 +1333,45 @@ async function stopRecording() {
     });
     const data = await r.json();
     const text = (data.text || "").trim();
-    micLabel.textContent = "Hold space (or click and hold) to talk";
     if (text) {
-      await sendUser(text);
-    } else {
-      addMsg("system", "× nothing transcribed — try again", "system");
+      await sendUser(text);   // sendUser → aiTurn → speakReply (which suspends mic)
     }
   } catch (e) {
-    micLabel.textContent = "Hold space (or click and hold) to talk";
-    addMsg("system", `× transcription error: ${e.message}`, "system");
+    console.warn("transcribe error:", e);
+  } finally {
+    // If TTS playback didn't kick in (e.g. text was empty), resume listening
+    if (vadState === "suspended" && (!lastAudio || lastAudio.paused || lastAudio.ended)) {
+      vadState = "listening";
+      micLabel.textContent = "Listening — go ahead";
+    }
   }
+}
+
+async function flushUtterance(reason) {
+  if (utteranceSamples.length === 0) return;
+  const samples = utteranceSamples;
+  utteranceSamples = [];
+  speechFrameCount = 0;
+  silenceFrameCount = 0;
+  vadState = "suspended";
+  await cutAndSend(samples);
 }
 
 // Play TTS for the AI reply.
 async function speakReply(text) {
-  if (!aiVoiceEnabled() || !text) return;
+  if (!aiVoiceEnabled() || !text) {
+    // Even without TTS, give the user a beat then resume listening
+    if (vadState === "suspended") {
+      vadState = "listening";
+      micLabel.textContent = "Listening — go ahead";
+    }
+    return;
+  }
   audioIndicator.textContent = "speaking";
   audioIndicator.classList.add("playing");
+  // Mic is already suspended from cutAndSend; keep it suspended so we don't
+  // transcribe the AI's own voice as the user's next turn.
+  vadState = "suspended";
   try {
     const r = await fetch("/api/synthesize", {
       method: "POST",
@@ -1152,13 +1384,25 @@ async function speakReply(text) {
     if (lastAudio) { lastAudio.pause(); }
     const audio = new Audio(url);
     lastAudio = audio;
-    audio.onended = () => { audioIndicator.textContent = ""; audioIndicator.classList.remove("playing"); URL.revokeObjectURL(url); };
-    audio.onerror = () => { audioIndicator.textContent = ""; audioIndicator.classList.remove("playing"); };
+    const resumeMic = () => {
+      audioIndicator.textContent = "";
+      audioIndicator.classList.remove("playing");
+      URL.revokeObjectURL(url);
+      if (live && vadState === "suspended") {
+        vadState = "listening";
+        micLabel.textContent = "Listening — go ahead";
+      }
+    };
+    audio.onended = resumeMic;
+    audio.onerror = resumeMic;
     await audio.play();
   } catch (e) {
     audioIndicator.textContent = "";
     audioIndicator.classList.remove("playing");
-    // Silent fallback — don't break the chat for a TTS error.
+    if (live && vadState === "suspended") {
+      vadState = "listening";
+      micLabel.textContent = "Listening — go ahead";
+    }
   }
 }
 
@@ -1172,31 +1416,36 @@ aiTurn = async function(opening) {
   }
 };
 
-// Wire mic button — hold-to-talk (mouse + keyboard).
-micBtn.addEventListener("mousedown", e => { e.preventDefault(); startRecording(); });
-micBtn.addEventListener("mouseup", e => { e.preventDefault(); stopRecording(); });
-micBtn.addEventListener("mouseleave", () => { if (recording) stopRecording(); });
-micBtn.addEventListener("touchstart", e => { e.preventDefault(); startRecording(); });
-micBtn.addEventListener("touchend", e => { e.preventDefault(); stopRecording(); });
+// Mic button is now a status indicator + manual "force-send" button rather
+// than push-to-talk. Clicking it during a paused/suspended state flushes
+// whatever is buffered (useful for the "model didn't notice I finished" case).
+micBtn.addEventListener("click", () => {
+  if (!live) return;
+  if (vadState === "recording") {
+    flushUtterance("button").catch(_ => {});
+  }
+});
 
+// Spacebar still works as a manual flush during a live call — useful if the
+// VAD silence-detection is slow.
 document.addEventListener("keydown", e => {
-  if (e.code === "Space" && live && !recording && document.activeElement !== inputEl) {
+  if (e.code === "Space" && live && vadState === "recording" && document.activeElement !== inputEl) {
     e.preventDefault();
-    startRecording();
-  }
-});
-document.addEventListener("keyup", e => {
-  if (e.code === "Space" && recording) {
-    e.preventDefault();
-    stopRecording();
+    flushUtterance("space").catch(_ => {});
   }
 });
 
-// Tie mic enable/disable to call state.
+// Tie continuous VAD lifecycle to call state.
 const _setLive = setLive;
-setLive = function(on) {
+setLive = async function(on) {
   _setLive(on);
   micBtn.disabled = !on;
+  if (on) {
+    try { await startContinuousMic(); }
+    catch (e) { addMsg("system", `× mic error: ${e.message}`, "system"); }
+  } else {
+    stopContinuousMic();
+  }
 };
 
 // ── Events ────────────────────────────────────────────────────────
@@ -1213,6 +1462,22 @@ init();
 </body>
 </html>
 """
+
+
+def _is_localhost(addr: tuple) -> bool:
+    """Localhost connections bypass auth — the host is always trusted."""
+    if not addr or not addr[0]:
+        return False
+    ip = addr[0]
+    return ip in ("127.0.0.1", "::1", "localhost") or ip.startswith("127.")
+
+
+# Endpoints that are public (no session required) even over the public tunnel.
+_PUBLIC_PATHS = {
+    "/api/invite/redeem",      # POST: redeem a code → set session cookie
+    "/api/team/roster",        # GET: friend's /join page shows rep count
+    "/api/health",             # for cloudflared liveness checks
+}
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -1234,12 +1499,62 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _current_rep(self) -> str | None:
+        """Read the session cookie and return the rep name if valid."""
+        cookie = self.headers.get("Cookie", "") or ""
+        for part in cookie.split(";"):
+            kv = part.strip().split("=", 1)
+            if len(kv) == 2 and kv[0].strip() == "bullpen-session":
+                try:
+                    from invites import validate_session_cookie
+                    from urllib.parse import unquote
+                    return validate_session_cookie(unquote(kv[1].strip()))
+                except Exception:
+                    return None
+        return None
+
+    def _require_auth(self) -> bool:
+        """Return True if this request should be allowed through. Localhost
+        always allowed; public endpoints (invite redeem, roster) always allowed;
+        everything else needs a valid session cookie."""
+        # Path-based bypass — must match before cookie check
+        from urllib.parse import urlparse
+        path_only = urlparse(self.path).path
+        if path_only in _PUBLIC_PATHS:
+            return True
+        # Localhost bypass — host machine never needs auth
+        if _is_localhost(self.client_address):
+            return True
+        # Cookie check
+        return self._current_rep() is not None
+
+    def _deny_auth(self):
+        """Respond with a 401 + helpful pointer to /join."""
+        body = json.dumps({"error": "auth_required",
+                           "join_url": "/join.html"}).encode()
+        self.send_response(401)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("WWW-Authenticate", "BullpenInvite")
+        self._cors()
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_OPTIONS(self):
         self.send_response(204)
         self._cors()
         self.end_headers()
 
     def do_GET(self):
+        # Gate: localhost + public-path bypass, otherwise need cookie
+        if not self._require_auth():
+            return self._deny_auth()
+
+        # Lightweight health endpoint (public)
+        if self.path == "/api/health":
+            self._send_json(200, {"ok": True})
+            return
+
         if self.path == "/" or self.path.startswith("/?"):
             body = HTML_PAGE.encode()
             self.send_response(200)
@@ -1271,6 +1586,251 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(200, org)
             return
 
+        if self.path == "/api/crm/hubspot/status":
+            try:
+                from crm.hubspot import status
+                self._send_json(200, status())
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path == "/api/crm/hubspot/connect":
+            """Redirect to HubSpot OAuth. Caller's browser goes to HubSpot, approves,
+            and is sent back to /api/crm/hubspot/callback with a `?code=...`."""
+            try:
+                from crm.hubspot import build_authorize_url
+                url, err = build_authorize_url()
+                if err:
+                    self._send_json(400, {"error": err})
+                    return
+                self.send_response(302)
+                self.send_header("Location", url)
+                self._cors()
+                self.end_headers()
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path.startswith("/api/crm/hubspot/callback"):
+            """OAuth landing page — receives ?code=..., exchanges it for tokens,
+            persists tokens to ~/.bullpenlm/hubspot-tokens.json, then shows a
+            confirmation page so the user knows it worked."""
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from crm.hubspot import exchange_code
+                qs = parse_qs(urlparse(self.path).query)
+                code = (qs.get("code") or [None])[0]
+                if not code:
+                    self._send_json(400, {"error": "missing ?code= from HubSpot"})
+                    return
+                exchange_code(code)
+                html = ("<!doctype html><html><body style='font-family:system-ui;background:#1a1208;color:#dcdcdc;padding:40px;text-align:center'>"
+                        "<h2 style='color:#34d399'>HubSpot connected ✓</h2>"
+                        "<p>Tokens saved. You can close this tab and run "
+                        "<code style='background:#2a1d10;padding:4px 8px;border-radius:3px'>POST /api/crm/hubspot/sync</code> "
+                        "to pull your CRM.</p></body></html>").encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(html)))
+                self._cors()
+                self.end_headers()
+                self.wfile.write(html)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path.startswith("/api/metrics/history"):
+            """Return chronological metrics records. Query params:
+                 slug=<persona-slug>   restrict to one persona
+                 rep=<name>            restrict to one rep (your calls vs friend's)
+                 limit=<int>           cap result count (default 100)
+            """
+            try:
+                from urllib.parse import urlparse, parse_qs
+                qs = parse_qs(urlparse(self.path).query)
+                want_slug = (qs.get("slug") or [None])[0]
+                want_rep = (qs.get("rep") or [None])[0]
+                limit = int((qs.get("limit") or ["100"])[0])
+                records = []
+                reps_seen = set()
+                # Practice + speaking metrics
+                for mf in sorted(TRAINING_DIR.glob("*.metrics.json")):
+                    try:
+                        rec = json.loads(mf.read_text())
+                    except Exception:
+                        continue
+                    reps_seen.add(rec.get("rep", "self"))
+                    if want_slug and rec.get("slug") != want_slug: continue
+                    if want_rep and rec.get("rep") != want_rep: continue
+                    records.append(rec)
+                # Real recorded calls — pull metrics from each call dir + the
+                # org/metadata for rep + slug attribution.
+                orgs_dir = _REPO / "organizations"
+                if orgs_dir.exists():
+                    for call_metrics in orgs_dir.glob("*/calls/*/metrics.json"):
+                        try:
+                            mdata = json.loads(call_metrics.read_text())
+                            meta_path = call_metrics.parent / "metadata.json"
+                            meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+                        except Exception:
+                            continue
+                        rec = {
+                            "slug": meta.get("org") or call_metrics.parent.parent.parent.name,
+                            "kind": "real-call",
+                            "call_id": meta.get("call_id") or call_metrics.parent.name,
+                            "date": meta.get("date"),
+                            "timestamp": meta.get("call_id", ""),  # call_id IS the timestamp
+                            "company": meta.get("org"),
+                            "role": "(real call)",
+                            "rep": meta.get("rep", "self"),
+                            **mdata,
+                        }
+                        reps_seen.add(rec["rep"])
+                        if want_slug and rec["slug"] != want_slug: continue
+                        if want_rep and rec["rep"] != want_rep: continue
+                        records.append(rec)
+                records.sort(key=lambda r: r.get("timestamp", ""))
+                self._send_json(200, {
+                    "records": records[-limit:],
+                    "count": len(records),
+                    "reps_seen": sorted(reps_seen),
+                })
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Team layer endpoints (multi-rep coordination) ──
+        # ── Bullpens (multi-tenant) — list, get, members ──
+        if self.path == "/api/bullpens":
+            try:
+                from bullpens import list_bullpens
+                self._send_json(200, {"bullpens": list_bullpens()})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/bullpens/([a-z0-9\-]+)$", self.path)
+        if m:
+            try:
+                from bullpens import get_bullpen, list_members
+                b = get_bullpen(m.group(1))
+                if not b:
+                    self._send_json(404, {"error": "bullpen_not_found"}); return
+                b["members"] = list_members(m.group(1))
+                self._send_json(200, b)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Pipeline + Deals ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/pipeline(?:/([a-z0-9\-]+))?$", self.path)
+        if m:
+            try:
+                from pipeline import get as get_pipeline, list_pipelines
+                bullpen, name = m.group(1), m.group(2)
+                if name:
+                    p = get_pipeline(bullpen, name)
+                    if not p: self._send_json(404, {"error": "pipeline_not_found"}); return
+                    self._send_json(200, p)
+                else:
+                    self._send_json(200, {"pipelines": list_pipelines(bullpen)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/deals(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from deals import list_all
+                bullpen = m.group(1)
+                qs = parse_qs(urlparse(self.path).query)
+                owner = (qs.get("rep") or [None])[0]
+                self._send_json(200, {"deals": list_all(bullpen, owner_rep=owner)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/forecast(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from deals import forecast
+                bullpen = m.group(1)
+                qs = parse_qs(urlparse(self.path).query)
+                owner = (qs.get("rep") or [None])[0]
+                self._send_json(200, forecast(bullpen, owner_rep=owner))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/audit(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from audit import tail, verify
+                bullpen = m.group(1)
+                qs = parse_qs(urlparse(self.path).query)
+                limit = int((qs.get("limit") or ["100"])[0])
+                ok, broken_at = verify(bullpen)
+                self._send_json(200, {"events": tail(bullpen, n=limit),
+                                       "chain_ok": ok, "broken_at": broken_at})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path == "/api/team/roster":
+            try:
+                from team import get_roster
+                self._send_json(200, {"reps": get_roster()})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path == "/api/team/leaderboard":
+            try:
+                from team import get_leaderboard
+                self._send_json(200, {"leaderboard": get_leaderboard()})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path.startswith("/api/team/feed"):
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from team import get_activity_feed
+                qs = parse_qs(urlparse(self.path).query)
+                limit = int((qs.get("limit") or ["30"])[0])
+                self._send_json(200, {"events": get_activity_feed(limit=limit)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path == "/api/team/claims":
+            try:
+                from team import list_all_claims
+                self._send_json(200, {"claims": list_all_claims()})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/team/claim/([a-z0-9\-]+)$", self.path)
+        if m:
+            try:
+                from team import get_claim
+                self._send_json(200, {"claim": get_claim(m.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path == "/api/library":
+            try:
+                idx = _load_library_index() if _USE_FILE_PERSONAS else {"tiers": {}, "personas": []}
+                self._send_json(200, idx)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         if self.path == "/api/personas":
             if _USE_FILE_PERSONAS:
                 _refresh_personas()
@@ -1300,6 +1860,54 @@ class Handler(http.server.BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         raw = self.rfile.read(length) if length else b""
 
+        # ── Invite redeem (public) — must come before auth gate ──
+        if self.path == "/api/invite/redeem":
+            try:
+                from invites import redeem_invite, make_session_cookie
+                req = json.loads(raw) if raw else {}
+                result = redeem_invite(req.get("code", ""))
+                if not result.get("ok"):
+                    self._send_json(400, result)
+                    return
+                rep = result["rep"]
+                cookie_val = make_session_cookie(rep)
+                # Set-Cookie: 30-day expiry, HttpOnly, secure-if-https,
+                # Lax SameSite so the cookie survives the redirect to /floor
+                body = json.dumps({"ok": True, "rep": rep}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Set-Cookie",
+                    f"bullpen-session={cookie_val}; Path=/; Max-Age={30*86400}; "
+                    f"SameSite=Lax; HttpOnly")
+                self._cors()
+                self.end_headers()
+                self.wfile.write(body)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Invite create (localhost-only) ──
+        if self.path == "/api/invite/create":
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from invites import create_invite
+                req = json.loads(raw) if raw else {}
+                rep = (req.get("rep") or "").strip()
+                if not rep:
+                    self._send_json(400, {"error": "rep name required"})
+                    return
+                inv = create_invite(rep, note=req.get("note", ""))
+                self._send_json(200, inv)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # Gate everything else
+        if not self._require_auth():
+            return self._deny_auth()
+
         # /api/transcribe takes binary WAV — skip JSON parsing for that path.
         if self.path == "/api/transcribe":
             try:
@@ -1307,6 +1915,160 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(200, {"text": text})
             except subprocess.CalledProcessError as e:
                 self._send_json(500, {"error": "whisper failed", "stderr": e.stderr.decode(errors="ignore")[:400]})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Deals POSTs — create, move-stage, update-amount ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/deals$", self.path)
+        if m:
+            try:
+                from deals import create
+                bullpen = m.group(1)
+                req2 = json.loads(raw) if raw else {}
+                prospect = (req2.get("prospect_slug") or "").strip()
+                rep = (req2.get("owner_rep") or "").strip() or "self"
+                if not prospect:
+                    self._send_json(400, {"error": "prospect_slug required"}); return
+                d = create(bullpen, prospect, rep,
+                           amount=req2.get("amount", 0),
+                           pipeline_name=req2.get("pipeline", "default"),
+                           stage_id=req2.get("stage", "lead"),
+                           source_call_id=req2.get("source_call_id"),
+                           notes=req2.get("notes", ""))
+                self._send_json(200, d)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/deals/([0-9\-a-z]+)/stage$", self.path)
+        if m:
+            try:
+                from deals import move_stage
+                bullpen, deal_id = m.group(1), m.group(2)
+                req2 = json.loads(raw) if raw else {}
+                new_stage = (req2.get("stage") or "").strip()
+                rep = (req2.get("rep") or "").strip() or "self"
+                if not new_stage:
+                    self._send_json(400, {"error": "stage required"}); return
+                self._send_json(200, move_stage(bullpen, deal_id, new_stage, rep))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/deals/([0-9\-a-z]+)/amount$", self.path)
+        if m:
+            try:
+                from deals import update_amount
+                bullpen, deal_id = m.group(1), m.group(2)
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or "").strip() or "self"
+                self._send_json(200, update_amount(bullpen, deal_id,
+                                                    req2.get("amount", 0), rep))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Team-layer POSTs: claim + release (parse JSON inline since this
+        #    block runs before the shared `req = json.loads(raw)` line below) ──
+        if self.path in ("/api/team/claim", "/api/team/release"):
+            try:
+                team_req = json.loads(raw) if raw else {}
+                prospect = (team_req.get("prospect") or "").strip()
+                rep = (team_req.get("rep") or "").strip() or "self"
+                if not prospect:
+                    self._send_json(400, {"error": "missing prospect slug"})
+                    return
+                if self.path == "/api/team/claim":
+                    from team import claim as team_claim
+                    self._send_json(200, team_claim(prospect, rep))
+                else:
+                    from team import release_claim
+                    self._send_json(200, release_claim(prospect, by=rep))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path.startswith("/api/speaking/record"):
+            """Speaking-only mode: take audio, transcribe via whisper, compute
+            metrics (filler/hedge/question count, avg sentence length), persist
+            into training-runs/ so the Trend view can chart it alongside calls.
+            No persona involved — just the rep practicing how they speak."""
+            try:
+                from metrics import compute_text_metrics
+                from urllib.parse import urlparse, parse_qs
+                qs = parse_qs(urlparse(self.path).query)
+                label = (qs.get("label") or ["speaking"])[0]
+                rep = (qs.get("rep") or ["self"])[0]
+                if not raw:
+                    self._send_json(400, {"error": "empty audio body"})
+                    return
+                transcript = transcribe_wav(raw)
+                metrics = compute_text_metrics(transcript)
+                today = datetime.date.today().isoformat()
+                ts = datetime.datetime.now().isoformat(timespec="seconds")
+                existing = list(TRAINING_DIR.glob(f"{today}-speaking-*.metrics.json"))
+                n = len(existing) + 1
+                metrics_path = TRAINING_DIR / f"{today}-speaking-attempt-{n}.metrics.json"
+                record = {
+                    "slug": "speaking",
+                    "date": today,
+                    "timestamp": ts,
+                    "company": "Speaking practice",
+                    "role": label,
+                    "rep": rep,
+                    "attempt": n,
+                    "transcript": transcript,
+                    **metrics,
+                }
+                metrics_path.write_text(json.dumps(record, indent=2) + "\n")
+                self._send_json(200, {"transcript": transcript, "metrics": metrics, "path": str(metrics_path)})
+            except subprocess.CalledProcessError as e:
+                self._send_json(500, {"error": "whisper failed", "stderr": e.stderr.decode(errors="ignore")[:400]})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path == "/api/crm/hubspot/sync":
+            """Pull contacts/companies/deals from HubSpot into the org graph.
+            Tokens must already be saved (visit /api/crm/hubspot/connect first)."""
+            try:
+                from crm.hubspot import sync_to_org_graph
+                result = sync_to_org_graph()
+                self._send_json(200, result)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/ingest — universal "drop anything" endpoint. Accepts:
+        #   * Raw file bytes (with ?filename=<name> + Content-Type header) for
+        #     CSV/PDF/EML/JSON/TXT/MD uploads from the drop-zone UI.
+        #   * JSON body {"text": "..."} or {"url": "..."} for paste-box inputs.
+        # Sniffs the input via adapters.ingest and routes to the right parser.
+        if self.path.startswith("/api/ingest"):
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from adapters.ingest import ingest_anything
+                qs = parse_qs(urlparse(self.path).query)
+                filename = (qs.get("filename") or [None])[0]
+                ctype = self.headers.get("Content-Type", "").lower()
+
+                if ctype.startswith("application/json"):
+                    payload = json.loads(raw) if raw else {}
+                    if "url" in payload:
+                        body = payload["url"].encode("utf-8")
+                        sniff_name = None
+                    elif "text" in payload:
+                        body = payload["text"].encode("utf-8")
+                        sniff_name = filename
+                    else:
+                        self._send_json(400, {"error": "JSON body must include 'url' or 'text'"})
+                        return
+                    result = ingest_anything(body, filename=sniff_name, mime=None)
+                else:
+                    result = ingest_anything(raw, filename=filename, mime=ctype)
+
+                self._send_json(200, result)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
@@ -1320,6 +2082,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 qs = parse_qs(urlparse(self.path).query)
                 org_slug = (qs.get("org") or [None])[0]
                 auto_debrief = (qs.get("debrief") or ["1"])[0] == "1"
+                rep = (qs.get("rep") or ["self"])[0]
                 if not org_slug:
                     self._send_json(400, {"error": "missing ?org=<slug>"})
                     return
@@ -1331,7 +2094,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 call_dir = org_dir / "calls" / call_id
                 call_dir.mkdir(parents=True, exist_ok=True)
                 (call_dir / "recording.wav").write_bytes(raw)
-                result = {"org": org_slug, "call_id": call_id, "bytes": len(raw)}
+                (call_dir / "rep.txt").write_text(rep + "\n")
+                result = {"org": org_slug, "call_id": call_id, "bytes": len(raw), "rep": rep}
+                # Team: bump the claim's last-activity + log the event
+                try:
+                    from team import touch_claim, log_call
+                    touch_claim(org_slug, rep)
+                    log_call(rep=rep, prospect_slug=org_slug, kind="real")
+                except Exception:
+                    pass
                 if auto_debrief:
                     try:
                         from debrief import debrief_call
@@ -1339,6 +2110,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         result["debrief"] = {
                             "deal_signal": d.get("deal_signal"),
                             "created_people": d.get("created_people"),
+                            "metrics": d.get("metrics"),
                         }
                     except Exception as e:
                         result["debrief_error"] = str(e)
@@ -1358,11 +2130,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             slug = req.get("slug")
             history = req.get("history") or []
             opening = bool(req.get("opening"))
+            difficulty = (req.get("difficulty") or "intermediate").lower()
+            if difficulty not in DIFFICULTY_MODIFIERS:
+                difficulty = "intermediate"
             _refresh_personas() if _USE_FILE_PERSONAS else None
             if slug not in PERSONAS and slug not in _runtime_personas:
                 self._send_json(400, {"error": "unknown slug"})
                 return
-            sys_prompt = persona_system_prompt(slug)
+            sys_prompt = persona_system_prompt(slug, difficulty=difficulty)
             msgs = [{"role": "system", "content": sys_prompt}] + history
             if opening:
                 msgs.append({
@@ -1373,6 +2148,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 reply = ollama_chat(msgs)
                 # Strip any leading stage directions if the model leaks them.
                 reply = re.sub(r"^\s*\*[^*]+\*\s*", "", reply).strip()
+                # Safety net: if Gemma slips out of character and starts pitching
+                # as the rep ("Hi, my name's Dylan / Beers Labs / I'm calling
+                # about..."), kick it back into character with a single in-role
+                # acknowledgement instead of the broken line.
+                low = reply.lower()
+                rep_hijack = (
+                    "my name's dylan" in low or "my name is dylan" in low
+                    or "beers labs" in low or "i'm calling about" in low
+                    or "i'm with beers" in low or "this is dylan" in low
+                )
+                if rep_hijack:
+                    reply = "Hello? Sorry — what's this about?"
                 self._send_json(200, {"reply": reply})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
@@ -1452,9 +2239,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 {"role": "user", "content": user_prompt},
             ]
             try:
+                from metrics import compute_metrics
+                metrics = compute_metrics(history)
+                rep = (req.get("rep") or "self").strip() or "self"
                 score = ollama_chat(msgs, temperature=0.4)
-                path = save_transcript(slug, history, score)
-                self._send_json(200, {"score": score, "path": path})
+                path = save_transcript(slug, history, score, metrics=metrics, rep=rep)
+                # Team feed: every practice scoring is a team event
+                try:
+                    from team import log_call
+                    log_call(rep=rep, prospect_slug=slug, kind="practice", metrics=metrics)
+                except Exception:
+                    pass
+                self._send_json(200, {"score": score, "path": path, "metrics": metrics})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

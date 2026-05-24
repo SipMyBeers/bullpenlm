@@ -1,0 +1,13 @@
+{
+  "slug": "warm-gatekeeper",
+  "company": "(Training scenario)",
+  "role": "Executive Assistant to the SVP",
+  "hq": "Anywhere, USA",
+  "size": "Enterprise \u00b7 5,000+ employees",
+  "zone": "End Customer",
+  "what": "The EA who controls SVP calendar access. Friendly but firm \u2014 defaults to 'send me your materials, I'll forward.'",
+  "tier": "beginner",
+  "axis": "Getting past the gatekeeper",
+  "say_voice": "Kathy",
+  "say_rate": 175
+}

@@ -151,6 +151,111 @@ def load_all(root: Path = PERSONAS_ROOT) -> dict[str, Persona]:
     return out
 
 
+_LIBRARY_ROOT = PERSONAS_ROOT / "_library"
+
+
+def load_library() -> dict[str, Persona]:
+    """Load the curated training-library personas (skeptical-cto, hostile-buyer,
+    etc.) without merging them into the active roster. Used by /api/library."""
+    out = {}
+    if not _LIBRARY_ROOT.exists():
+        return out
+    for d in sorted(_LIBRARY_ROOT.iterdir()):
+        if not d.is_dir() or d.name.startswith("."):
+            continue
+        if not (d / "persona.json").exists():
+            continue
+        try:
+            out[d.name] = load_persona(d.name, _LIBRARY_ROOT)
+        except Exception as e:
+            print(f"⚠ skipping library/{d.name}: {e}")
+    return out
+
+
+def load_library_index() -> dict:
+    """Read the index.json the seed script writes — tier groupings + summaries."""
+    p = _LIBRARY_ROOT / "index.json"
+    if p.exists():
+        return json.loads(p.read_text())
+    return {"tiers": {}, "personas": []}
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Bridge: turn each org in organizations/ into a practiceable Persona.
+# Without this, you can drop 100 prospects into the CRM but can't rehearse
+# against any of them.
+# ─────────────────────────────────────────────────────────────────────────
+
+_ORGS_ROOT = PERSONAS_ROOT.parent / "organizations"
+
+_GENERIC_PUSHBACKS = [
+    "What's this regarding?",
+    "How did you get my number?",
+    "I'm in the middle of something — can you make it quick?",
+    "We already have a solution for that.",
+    "Send me some materials — I'll forward them on.",
+    "What does this cost?",
+    "Why are you better than [your competitor]?",
+]
+
+
+def load_orgs_as_personas() -> dict[str, Persona]:
+    """Synthesize a Persona from each org.json — pulls bio/role/tech-stack into
+    the personality block so the model can roleplay any prospect in your CRM
+    without you having to hand-write a persona file."""
+    out = {}
+    if not _ORGS_ROOT.exists():
+        return out
+    for d in sorted(_ORGS_ROOT.iterdir()):
+        if not d.is_dir() or d.name.startswith((".", "_")):
+            continue
+        org_json = d / "org.json"
+        if not org_json.exists():
+            continue
+        try:
+            org = json.loads(org_json.read_text())
+        except Exception:
+            continue
+
+        # Pull supplementary context from digital.md + abc.md + pushbacks.txt
+        digital = _read(d / "digital.md")
+        abc     = _read(d / "abc.md")
+        push_file = d / "pushbacks.txt"
+        pushbacks = ([ln.strip() for ln in push_file.read_text().splitlines() if ln.strip()]
+                     if push_file.exists() else _GENERIC_PUSHBACKS)
+
+        # Compose a personality block from whatever data we have.
+        # `enriched_personality.md` (written by scripts/enrich_org.py) takes
+        # priority — it has scraped public facts about the real company's
+        # stack, modernization initiatives, and executive quotes. Without it
+        # we fall back to whatever's in org.json.
+        enriched = _read(d / "enriched_personality.md")
+        bits = []
+        if enriched:
+            bits.append(enriched)
+        else:
+            if org.get("bio"):       bits.append(org["bio"])
+            if org.get("what"):      bits.append(f"What they do: {org['what']}")
+            if org.get("techStack"): bits.append(f"Tech stack: {org['techStack']}")
+            if org.get("industry"):  bits.append(f"Industry: {org['industry']}")
+        if abc and not enriched: bits.append(f"Buying context: {abc}")
+        personality = "\n\n".join(bits) or "(No detail captured yet — answer the phone in a realistic way for this role.)"
+
+        persona = Persona(
+            slug=org.get("slug") or d.name,
+            company=org.get("company") or d.name,
+            role=org.get("role") or "Buyer · pending discovery",
+            hq=org.get("hq") or "(unknown)",
+            size=str(org.get("size") or "(unknown)"),
+            zone=org.get("zone") or "End Customer",
+            what=org.get("what") or "",
+            personality=personality,
+            pushbacks=pushbacks,
+        )
+        out[persona.slug] = persona
+    return out
+
+
 # ─────────────────────────────────────────────────────────────────────────
 # Prompt builders (consume the Persona object)
 # ─────────────────────────────────────────────────────────────────────────
@@ -193,7 +298,19 @@ def build_persona_prompt(p: Persona) -> str:
             parts.append(f"EXCERPTS FROM PUBLIC TALKS (note diction, sentence length, hedge words)\n────────────────────────────────────────────────────────────────────────\n{t_text}")
         tier2_block = "\n" + "\n\n".join(parts) + "\n"
 
-    return f"""You are roleplaying as a real human picking up a cold call. Dylan Beers from Beers Labs is the caller. You are NOT an assistant. You are NOT a chatbot. You just picked up a ringing phone in the middle of your workday.
+    return f"""You are roleplaying as a real human picking up a cold call. The CALLER (the human on the other end) is selling something to YOU. You are the BUYER. You are NOT an assistant. You are NOT a chatbot. You just picked up a ringing phone in the middle of your workday.
+
+═════════════════════════════════════════════════════════════════
+ROLE LOCK — READ THIS FIRST. VIOLATIONS BREAK THE TRAINING.
+═════════════════════════════════════════════════════════════════
+You are {p.role} at {p.company}.
+You are NOT the caller. You are NOT a salesperson. You are NOT pitching anything.
+You do NOT work at Beers Labs. You do NOT sell products. You ANSWER the phone.
+
+If the caller says "Hello?" — they are testing the line. You acknowledge briefly.
+If the caller is silent or unclear — wait for them to speak, or say "Hello? Can I help you?"
+You NEVER introduce yourself by saying "Hi, my name's Dylan" or any other name that isn't your own.
+You NEVER pitch a product, a tool, or a service. You're the buyer.
 
 WHO YOU ARE
 ───────────

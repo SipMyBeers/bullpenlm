@@ -77,13 +77,17 @@ def detect_zone(industry: str, role: str = "") -> str:
     return "End Customer"
 
 
-def import_csv(path: str, *, zone_override: str = None, map_overrides: dict = None, slug_prefix: str = "") -> int:
+def import_csv(path: str, *, zone_override: str = None, map_overrides: dict = None, slug_prefix: str = "", verbose: bool = True) -> dict:
+    """Import rows from a CSV → org graph.
+
+    Returns {"count": int, "created": [slug, ...], "warnings": [str, ...]}.
+    Raises ValueError on unreadable input — callers in HTTP context should catch.
+    """
     p = Path(path).expanduser().resolve()
     if not p.exists():
-        sys.exit(f"× CSV not found: {p}")
+        raise ValueError(f"CSV not found: {p}")
 
     with p.open(newline="") as f:
-        # Sniff delimiter — handles both , and ;
         sample = f.read(4096); f.seek(0)
         try:
             dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
@@ -94,19 +98,21 @@ def import_csv(path: str, *, zone_override: str = None, map_overrides: dict = No
         headers = reader.fieldnames or []
 
     if not rows:
-        sys.exit("× CSV has no rows")
+        raise ValueError("CSV has no rows")
 
     field_map = auto_map(headers)
     if map_overrides:
         field_map.update(map_overrides)
 
-    print(f"▸ loaded {len(rows)} rows from {p.name}")
-    print(f"▸ column mapping detected:")
-    for target, col in sorted(field_map.items()):
-        print(f"    {target:<14} ← {col!r}")
-    print()
+    if verbose:
+        print(f"▸ loaded {len(rows)} rows from {p.name}")
+        print(f"▸ column mapping detected:")
+        for target, col in sorted(field_map.items()):
+            print(f"    {target:<14} ← {col!r}")
+        print()
 
-    written = 0
+    created: list[str] = []
+    warnings: list[str] = []
     for row in rows:
         # Pull mapped values
         company = row.get(field_map.get("company", ""), "").strip()
@@ -158,10 +164,11 @@ def import_csv(path: str, *, zone_override: str = None, map_overrides: dict = No
                     "discovered_from": "csv-import",
                 }, indent=2) + "\n")
 
-        written += 1
+        created.append(slug)
 
-    print(f"✓ imported {written} organizations")
-    return written
+    if verbose:
+        print(f"✓ imported {len(created)} organizations")
+    return {"count": len(created), "created": created, "warnings": warnings}
 
 
 def parse_map_overrides(pairs: list[str]) -> dict:

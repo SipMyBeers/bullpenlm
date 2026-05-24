@@ -34,7 +34,11 @@ ORGS = REPO / "organizations"
 # Reuse the server's voice + ollama helpers via module import. Since this
 # module may be imported by the server itself, lazy-import to avoid cycles.
 def _whisper_model() -> Path:
-    return REPO / "server" / "models" / "ggml-base.en.bin"
+    """Prefer ggml-small.en.bin (4x more accurate than base) when present;
+    fall back to base for graceful behavior before the upgrade."""
+    small = REPO / "server" / "models" / "ggml-small.en.bin"
+    base  = REPO / "server" / "models" / "ggml-base.en.bin"
+    return small if small.exists() else base
 
 
 def _ollama_extract(prompt: str, schema_hint: str = "", model: str = "gemma2:9b") -> dict:
@@ -279,10 +283,13 @@ def debrief_call(org_slug: str, call_id: str) -> dict:
     timeline_path.write_text(existing + new_line)
 
     # ── Metadata stub ──
+    rep_file = call_dir / "rep.txt"
+    rep = rep_file.read_text().strip() if rep_file.exists() else "self"
     meta = {
         "call_id": call_id,
         "org": org_slug,
         "date": datetime.date.today().isoformat(),
+        "rep": rep,
         "transcript_chars": len(transcript),
         "speaker_count": len(speakers),
         "deal_signal": deal_signal,
@@ -290,8 +297,21 @@ def debrief_call(org_slug: str, call_id: str) -> dict:
     }
     (call_dir / "metadata.json").write_text(json.dumps(meta, indent=2) + "\n")
 
+    try:
+        from metrics import compute_text_metrics
+        speech_metrics = compute_text_metrics(transcript)
+        (call_dir / "metrics.json").write_text(json.dumps(speech_metrics, indent=2) + "\n")
+    except Exception as e:
+        print(f"  ⚠ metrics computation failed: {e}")
+        speech_metrics = {}
+
     print(f"✓ debrief complete · {len(created_people)} new contact(s) · signal={deal_signal}")
-    return {"extracted": extracted, "created_people": created_people, "deal_signal": deal_signal}
+    return {
+        "extracted": extracted,
+        "created_people": created_people,
+        "deal_signal": deal_signal,
+        "metrics": speech_metrics,
+    }
 
 
 def main():

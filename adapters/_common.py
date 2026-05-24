@@ -77,18 +77,44 @@ class _TextExtractor(HTMLParser):
 
 
 def fetch_page(url: str, timeout: int = 15) -> str:
-    """Plain HTTP GET, returns extracted text. No external deps."""
+    """Plain HTTP GET, returns extracted text. Tries https://<host> then
+    https://www.<host> automatically since enterprise sites split content
+    between bare and www subdomains (Citigroup, Centene, etc. all 404 on bare)."""
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
-    req = urllib.request.Request(url, headers={
-        "User-Agent": "Mozilla/5.0 (BullpenLM / org-ingest)",
+    headers = {
+        # Enterprise sites (Allstate, big banks) often serve blank shells to
+        # obvious bot UAs. Use a realistic Chrome string so we get actual HTML.
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml",
-    })
-    with urllib.request.urlopen(req, timeout=timeout, context=_SSL) as r:
-        raw = r.read().decode("utf-8", errors="ignore")
-    ex = _TextExtractor()
-    ex.feed(raw)
-    return ex.text()
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
+    # Try the requested URL first; if it returns less than 200 chars of
+    # extracted text (anti-bot shell or 404 page), retry with the www variant.
+    candidates = [url]
+    from urllib.parse import urlparse
+    parsed = urlparse(url)
+    if parsed.hostname and not parsed.hostname.startswith("www."):
+        with_www = url.replace(parsed.hostname, "www." + parsed.hostname, 1)
+        candidates.append(with_www)
+
+    last_err = None
+    for candidate in candidates:
+        try:
+            req = urllib.request.Request(candidate, headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout, context=_SSL) as r:
+                raw = r.read().decode("utf-8", errors="ignore")
+            ex = _TextExtractor()
+            ex.feed(raw)
+            text = ex.text()
+            if len(text) >= 200:
+                return text
+        except Exception as e:
+            last_err = e
+    if last_err:
+        raise last_err
+    return ""
 
 
 def ollama_extract(prompt: str, schema_hint: str = "", model: str = "gemma2:9b") -> dict:

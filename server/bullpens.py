@@ -1,0 +1,257 @@
+"""Bullpen — the top-level tenant. Every other primitive (claims, deals,
+members, quests, legal docs, signatures) scopes to one bullpen.
+
+A bullpen IS a folder on disk: `bullpens/<slug>/`. The codebase only ever
+operates on "the active bullpen for this request" — resolved by the
+middleware before handlers run.
+
+CLI:
+  python3 server/bullpens.py create --slug killsesh --founder beers --product KillSesh
+  python3 server/bullpens.py list
+  python3 server/bullpens.py get killsesh
+"""
+from __future__ import annotations
+import datetime
+import json
+import re
+import shutil
+from pathlib import Path
+from typing import Optional
+
+REPO = Path(__file__).parent.parent
+BULLPENS_ROOT = REPO / "bullpens"
+SALES_TEMPLATE = REPO / "sales"
+
+BULLPENS_ROOT.mkdir(exist_ok=True)
+
+
+SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9\-]{1,38}[a-z0-9]$")
+
+
+def _bullpen_dir(slug: str) -> Path:
+    return BULLPENS_ROOT / slug
+
+
+def _bullpen_json(slug: str) -> Path:
+    return _bullpen_dir(slug) / "bullpen.json"
+
+
+def list_bullpens() -> list[dict]:
+    """Return the manifest of every bullpen on this host."""
+    out = []
+    if not BULLPENS_ROOT.exists():
+        return out
+    for d in sorted(BULLPENS_ROOT.iterdir()):
+        if not d.is_dir() or d.name.startswith((".", "_")):
+            continue
+        manifest = d / "bullpen.json"
+        if manifest.exists():
+            try:
+                out.append(json.loads(manifest.read_text()))
+            except Exception:
+                continue
+    return out
+
+
+def get_bullpen(slug: str) -> Optional[dict]:
+    p = _bullpen_json(slug)
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return None
+
+
+def exists(slug: str) -> bool:
+    return _bullpen_json(slug).exists()
+
+
+def create_bullpen(slug: str, founder_rep: str, product: str = "",
+                   name: Optional[str] = None,
+                   seed_legal: bool = True) -> dict:
+    """Scaffold a new bullpen on disk + return its manifest."""
+    slug = slug.strip().lower()
+    founder_rep = founder_rep.strip()
+    if not SLUG_RE.match(slug):
+        raise ValueError(f"slug must be 3-40 chars, [a-z0-9-], got: {slug!r}")
+    if not founder_rep:
+        raise ValueError("founder_rep required")
+    if exists(slug):
+        raise ValueError(f"bullpen '{slug}' already exists")
+
+    d = _bullpen_dir(slug)
+    for sub in ("claims", "invites", "invites/used", "members", "pipelines",
+                "deals", "quests", "quests/progress", "achievements",
+                "commissions", "legal", "signatures", "trophies"):
+        (d / sub).mkdir(parents=True, exist_ok=True)
+
+    # Seed legal docs from the master template at sales/
+    template_version = "0"
+    if seed_legal and SALES_TEMPLATE.exists():
+        for md in SALES_TEMPLATE.glob("*.md"):
+            shutil.copy2(md, d / "legal" / md.name)
+        # Snapshot the template version as the source manifest's hash
+        sha = __import__("hashlib").sha256()
+        for md in sorted(SALES_TEMPLATE.glob("*.md")):
+            sha.update(md.read_bytes())
+        template_version = sha.hexdigest()[:12]
+
+    manifest = {
+        "slug": slug,
+        "name": name or slug.replace("-", " ").title(),
+        "founder_rep": founder_rep,
+        "product": product,
+        "public_url": "",
+        "brand": {"logo": "", "color": ""},
+        "feature_flags": {
+            "transparency_commissions": "members",  # members | founder-only
+            "transparency_legal": "members",
+            "transparency_audit": "members",
+            "public_roster": False,
+        },
+        "template_version": template_version,
+        "created_at": datetime.datetime.now().isoformat(timespec="seconds"),
+    }
+    _bullpen_json(slug).write_text(json.dumps(manifest, indent=2) + "\n")
+
+    # Genesis audit entry — establishes the chain head for this bullpen.
+    from audit import append as audit_append
+    audit_append(slug, founder_rep, "bullpen_created",
+                 target_type="bullpen", target_id=slug,
+                 payload={"product": product, "name": manifest["name"]})
+
+    # Bootstrap the founder as a member
+    write_member(slug, founder_rep, role="founder")
+
+    return manifest
+
+
+def write_member(bullpen: str, rep: str, role: str = "rep") -> dict:
+    """Idempotently create/update a member record for a rep in a bullpen."""
+    m_path = _bullpen_dir(bullpen) / "members" / f"{rep}.json"
+    if m_path.exists():
+        try:
+            data = json.loads(m_path.read_text())
+        except Exception:
+            data = {}
+    else:
+        data = {}
+    data.setdefault("rep", rep)
+    data.setdefault("joined_at", datetime.datetime.now().isoformat(timespec="seconds"))
+    data["role"] = data.get("role") or role
+    data.setdefault("class", None)
+    data.setdefault("level", 1)
+    data.setdefault("xp", 0)
+    data.setdefault("signed_docs", [])
+    data.setdefault("status", "active")
+    m_path.write_text(json.dumps(data, indent=2) + "\n")
+    return data
+
+
+def get_member(bullpen: str, rep: str) -> Optional[dict]:
+    p = _bullpen_dir(bullpen) / "members" / f"{rep}.json"
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return None
+
+
+def list_members(bullpen: str) -> list[dict]:
+    d = _bullpen_dir(bullpen) / "members"
+    if not d.exists():
+        return []
+    out = []
+    for p in sorted(d.glob("*.json")):
+        try:
+            out.append(json.loads(p.read_text()))
+        except Exception:
+            continue
+    return out
+
+
+def is_member(bullpen: str, rep: str) -> bool:
+    return get_member(bullpen, rep) is not None
+
+
+def resolve_active_bullpen(url_path: str, cookie_bullpen: Optional[str],
+                            memberships: list[str]) -> Optional[str]:
+    """Pick the active bullpen for the current request:
+      1. URL prefix /b/<slug>/...  (preferred, explicit)
+      2. cookie 'bullpen-active=<slug>'
+      3. If user has exactly 1 membership, use it
+      4. Else None (caller renders a switcher)
+    """
+    m = re.match(r"^/b/([a-z0-9][a-z0-9\-]{1,38}[a-z0-9])(/|$)", url_path)
+    if m and exists(m.group(1)):
+        return m.group(1)
+    if cookie_bullpen and exists(cookie_bullpen):
+        return cookie_bullpen
+    if len(memberships) == 1 and exists(memberships[0]):
+        return memberships[0]
+    return None
+
+
+def memberships_for_rep(rep: str) -> list[str]:
+    """Every bullpen this rep is a member of."""
+    out = []
+    for b in list_bullpens():
+        if is_member(b["slug"], rep):
+            out.append(b["slug"])
+    return out
+
+
+# ── CLI ────────────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    import sys, argparse
+    ap = argparse.ArgumentParser(description=__doc__,
+                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    p_create = sub.add_parser("create", help="Create a new bullpen")
+    p_create.add_argument("--slug", required=True)
+    p_create.add_argument("--founder", required=True, help="Rep name of the founder")
+    p_create.add_argument("--product", default="", help="What this bullpen sells")
+    p_create.add_argument("--name", default=None, help="Display name (default: title-case of slug)")
+    p_create.add_argument("--no-seed-legal", action="store_true")
+
+    sub.add_parser("list", help="List bullpens on this host")
+
+    p_get = sub.add_parser("get", help="Show one bullpen's manifest")
+    p_get.add_argument("slug")
+
+    p_member = sub.add_parser("add-member", help="Add a member to a bullpen")
+    p_member.add_argument("bullpen")
+    p_member.add_argument("rep")
+    p_member.add_argument("--role", default="rep")
+
+    args = ap.parse_args()
+
+    if args.cmd == "create":
+        try:
+            m = create_bullpen(args.slug, args.founder, args.product,
+                                args.name, seed_legal=not args.no_seed_legal)
+            print(f"✓ Created bullpen '{m['slug']}' founded by {m['founder_rep']}")
+            print(f"  Folder: bullpens/{m['slug']}/")
+            print(f"  Legal template version: {m['template_version']}")
+        except ValueError as e:
+            print(f"× {e}"); sys.exit(1)
+    elif args.cmd == "list":
+        bs = list_bullpens()
+        if not bs:
+            print("No bullpens. Create one with: bullpens.py create --slug X --founder Y")
+            sys.exit(0)
+        for b in bs:
+            members = len(list_members(b["slug"]))
+            print(f"  {b['slug']:24}  founder={b['founder_rep']:12}  members={members}  {b.get('product','')}")
+    elif args.cmd == "get":
+        m = get_bullpen(args.slug)
+        if not m:
+            print(f"× no bullpen '{args.slug}'"); sys.exit(1)
+        print(json.dumps(m, indent=2))
+    elif args.cmd == "add-member":
+        m = write_member(args.bullpen, args.rep, role=args.role)
+        print(f"✓ {args.rep} added to {args.bullpen} as {m['role']}")

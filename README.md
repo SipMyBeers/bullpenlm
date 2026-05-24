@@ -1,179 +1,147 @@
 # BullpenLM
 
-> **AI sales-call rehearsal grounded in your actual pipeline.**
-> NotebookLM for your CRM — every prospect becomes an AI roleplay partner the moment you import them.
+> **NotebookLM, but for sales calls.** A self-hosted, multiplayer CRM
+> where building a business is the meta-game. Drop in your CRM →
+> BullpenLM creates an AI version of every prospect → cold-call them →
+> get graded on filler words and pitch discipline → level up before the
+> real call.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Local-first](https://img.shields.io/badge/local--first-100%25-success)
-![Voice in/out](https://img.shields.io/badge/voice%20in%2Fout-whisper%20%2B%20say%2FXTTS-blue)
+**[bullpenlm.com](https://bullpenlm.com)** · open source (MIT) · runs
+entirely on your laptop · your data never leaves.
 
 ---
 
-## What it is
+## What this is
 
-Every sales-training tool out there (Second Nature, Mindtickle, Gong) trains
-your reps on **generic personas you season with content**. That misses the
-point. The conversation your AE is about to have isn't with "a skeptical
-enterprise buyer." It's with **Sarah at Premera, who pushed back on price in
-Q2 and prefers technical depth**.
+- **A CRM** — drop in HubSpot / Salesforce / any CSV; every contact
+  becomes a roleplay persona.
+- **A practice arena** — 7-phase Gauntlet of progressively harder
+  drills (gatekeeper → pitch → objection → CIO elevator → handoff). Pass
+  one to unlock the next. Earn badges + rank up.
+- **A real-call recorder** — hit record on a real call → whisper
+  transcribes locally → Gemma extracts contacts, deal signals, next
+  steps → your CRM writes itself.
+- **A live multiplayer game** — multiple reps join one bullpen (your
+  Mac Mini hosts; teammates Tailscale or visit a tunnel URL with an
+  invite code). Shared leaderboard, claims, activity feed. Plus deal
+  pipeline + weighted forecast + hash-chained audit log.
+- **A founder's toolkit** — anyone can spin up a new bullpen for their
+  own product. They become the founder; they decide the legal docs,
+  commission structure, who joins.
 
-BullpenLM flips it. Connect your CRM. Every prospect becomes an AI
-roleplay partner with their actual context: company, role, pushback patterns,
-public-talk transcripts, even a cloned voice if you want it. Your reps
-rehearse the exact call they're about to make.
-
-- 🧑‍💼 **Walking sales floor** — see your pipeline as people you can approach
-- 🎙️ **Voice in, voice out** — push-to-talk practice, AI replies in the persona's voice
-- 📊 **Auto-scored against your playbook** — every transcript graded A–F with specific fixes
-- 🔒 **100% local** — Ollama + whisper.cpp + macOS TTS. Your CRM data never leaves your machine
-- 🧱 **File-based personas** — every persona lives as plain markdown/JSON, no database, no lock-in
-
-## Demo
+## Quick start (host your own)
 
 ```bash
-git clone https://github.com/your-org/bullpen.git
-cd bullpen
-./scripts/install.sh      # brew installs ollama, whisper-cpp, yt-dlp
-./scripts/pull-model.sh   # ollama pull gemma2:9b
+git clone https://github.com/SipMyBeers/bullpenlm.git
+cd bullpenlm
+
+# Install dependencies
+brew install ollama whisper-cpp
+ollama pull gemma2:9b
+ollama serve &
+pip3 install pypdf certifi
+
+# Download the whisper model (~466 MB, one-time)
+mkdir -p server/models
+curl -L -o server/models/ggml-small.en.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
+
+# Start the trainer
 python3 server/server.py
-# → open http://localhost:7878 (trainer)
-# → open floor/index.html (walking sales floor)
+
+# Open the floor in your browser
+open floor/index.html
 ```
 
-A sample persona ships at `personas/_sample/acme-finance/`. Copy it and edit
-the markdown files to add your own.
-
----
-
-## How it works
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│   Your CRM      │ →  │  personas/<slug>/│ →  │  BullpenLM    │
-│  (CSV / HubSpot │    │  (markdown +     │    │  (local AI       │
-│   / Salesforce) │    │   transcripts +  │    │   roleplay +     │
-│                 │    │   voice samples) │    │   voice + score) │
-└─────────────────┘    └──────────────────┘    └──────────────────┘
-       ↑                       ↑                       ↑
-   commercial             open source              open source
-    (paid tier)              (this repo)             (this repo)
-```
-
-### The three enrichment tiers
-
-| Tier | What's added | Effort | Quality gain |
-|---|---|---|---|
-| **★1** Personality + speech profile + pushbacks | `personality.md`, `speech_profile.md`, `pushbacks.txt` | 5 min | Baseline persona |
-| **★2** Real quotes + public-talk transcripts | `examples.md`, `transcripts/*.txt` | 5–30 min | Mimics actual phrasing |
-| **★3** Cloned voice from 30s sample | `voice/sample.wav` → XTTS-v2 | 10 min + one-time install | Sounds like the actual person |
-
-Lower tiers always work — Tier 3 falls back to Tier 2 falls back to Tier 1.
-
-### The CLI
+Or with Docker (one container hosts everything; Cloudflare Tunnel
+included so you can share a public URL with teammates):
 
 ```bash
-cd personas
-
-python3 manage.py list                            # show all personas + their tier
-python3 manage.py new <slug>                      # scaffold a new persona
-python3 manage.py ingest-talk <slug> <yt-url>     # tier-2 from a YouTube talk
-python3 manage.py ingest-talk <slug> <file.mp3>   # or any local audio file
-python3 manage.py clone-voice <slug>              # tier-3 voice cloning (XTTS-v2)
-python3 manage.py show <slug>                     # dump the assembled system prompt
+docker compose up -d
+docker compose logs -f tunnel   # grab the trycloudflare.com URL it prints
 ```
 
----
+See [HOSTING.md](HOSTING.md) for the full hosting guide
+(Mac Mini · VPS · Tailscale path · invite codes).
 
-## Why local-first
-
-Sales conversations are confidential. Pre-call rehearsal where the AI knows
-real prospect names, deal stages, and notes is the kind of thing security
-teams kill on the first VRM review if it touches a cloud LLM.
-
-BullpenLM ships designed-for-air-gap from day one:
-
-- **LLM:** Ollama (Gemma 2 9B by default — runs on any modern Mac/PC)
-- **Speech-to-text:** whisper.cpp (~150MB model, runs locally, <1s transcription)
-- **Text-to-speech (Tier 1):** macOS `say` command (built-in, no install)
-- **Text-to-speech (Tier 3):** Coqui XTTS-v2 (local, optional, voice cloning)
-- **No telemetry. No phone-home. No cloud API. Verifiable: `docker network inspect` on any deployment shows zero outbound connections.**
-
-## Why "BullpenLM"
-
-Built by [Beers Labs](https://github.com/SipMyBeers) (Dylan "Beers"). The
-tool was first built to rehearse cold calls for **KillSesh**, an on-prem
-COBOL modernization product. After 24 prospects of self-training, we
-realized the engine should be its own thing.
-
-The name is a toast — *cheers* to whoever picks up the other end of the line.
-
----
-
-## CRM integrations (roadmap)
-
-The OSS engine reads personas from files. **Commercial CRM connectors** write
-those files automatically:
-
-| Integration | Status | Tier |
-|---|---|---|
-| **CSV import** | ✅ planned for v0.2 | OSS |
-| **HubSpot OAuth** | 🔜 v0.3 | Hosted |
-| **Salesforce** | 🔜 v0.4 | Hosted |
-| **Pipedrive, Outreach, Salesloft** | future | Hosted |
-
-The roadmap lives at [`docs/crm-integrations.md`](docs/crm-integrations.md).
-
----
-
-## Pricing
-
-**Open source forever:** the entire engine (this repo). MIT license. Use it
-solo, in your team, behind your own VPN, however you want.
-
-**BullpenLM Cloud** *(coming · pre-launch)*:
-
-| Tier | $/seat/mo | What you get |
-|---|---|---|
-| **Free (OSS)** | $0 | Everything in this repo · self-hosted |
-| **Pro** | $49 | CSV import · hosted multi-tenant · unlimited practice |
-| **Team** | $99 | CRM connectors · shared playbook · manager dashboard · scoring history |
-| **Enterprise** | contact | SSO · audit logs · on-prem Ollama deployment · custom voice clones · SOC 2 |
-
-If you're curious about the hosted version, email `hello@bullpen.com`.
-
----
-
-## What's NOT here yet
-
-Be honest about it:
-
-- ✅ Personas as files · ★1 / ★2 / ★3 enrichment · CLI · local STT/TTS · trainer server · sales floor UI · scoring pass
-- ✅ Org-centric model — companies as top-level, people accumulate underneath
-- ✅ Post-call extraction loop — record → whisper → Gemma → auto-creates new contacts + deals
-- ✅ Pre-call brief generator — AI 1-pager per call
-- ✅ Adapter system — `website`, `google_places`, `osm`, `firecrawl`, `csv`, `social_signals`
-- ❌ HubSpot/Salesforce OAuth sync — planned, hosted-tier
-- ❌ Multi-tenant auth / workspaces — local-only for now
-- ❌ Mobile / iOS app — desktop-only
-- ❌ Cross-language (English-only for STT; XTTS supports more if you wire it up)
-- ❌ Speaker diarization in call transcripts (one transcript stream; no per-speaker labels)
-
-## Contributing
-
-Issues + PRs welcome. The architecture is small enough to read in one sitting:
+## Architecture in 30 seconds
 
 ```
-~440 lines  personas/loader.py     # how personas become system prompts
-~340 lines  personas/manage.py     # the CLI
-~ 80 lines  personas/clone_voice.py
-~600 lines  server/server.py       # the trainer HTTP server
-~900 lines  floor/index.html       # the walking sales floor + dossier
+┌──────────────────────────────────────────────────────────────┐
+│  YOUR MAC MINI (or a small VPS)                              │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │  Trainer server (Python http.server, port 7878)        │  │
+│  │   ├─ Ollama (Gemma 2 9B) for AI personas + scoring     │  │
+│  │   ├─ whisper.cpp for local STT                         │  │
+│  │   ├─ macOS `say` / XTTS-v2 / ElevenLabs for TTS        │  │
+│  │   ├─ bullpens/<slug>/ — per-tenant data on disk        │  │
+│  │   └─ hash-chained audit.jsonl (tamper-evident)         │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                            │                                 │
+└────────────────────────────┼─────────────────────────────────┘
+                             │
+                Cloudflare Tunnel / Tailscale
+                             │
+            ┌────────────────┼────────────────┐
+            ▼                ▼                ▼
+        Brad's laptop    Mike's laptop    Your laptop
+        (browser opens   (browser opens   (browser opens
+         tunnel URL +     tunnel URL +     localhost:7878)
+         invite code)     invite code)
 ```
 
-No build step. No bundler. Open the files and read.
+## Repo layout
+
+```
+server/             Python HTTP server + business logic
+  server.py             HTTP shell, routes
+  bullpens.py           Multi-tenant: one bullpen = one folder
+  team.py               Claims, roster, leaderboard, activity feed
+  invites.py            HMAC-signed cookies + single-use invite codes
+  pipeline.py           Pipeline + stages + probabilities
+  deals.py              Deal CRUD + weighted forecast
+  audit.py              Hash-chained append-only event log
+  metrics.py            Speech metrics (talk ratio, fillers, hedges)
+  debrief.py            Whisper + Gemma post-call extraction
+  orgs.py               Org graph loader
+  crm/hubspot.py        HubSpot OAuth + sync
+
+floor/              Browser UI (vanilla JS, no framework)
+  index.html            The sales-floor canvas
+  app/
+    deals.html          Pipeline kanban
+
+landing/            Marketing site (deployed to bullpenlm.com)
+  index.html            Hero, Gauntlet, Multiplayer, FAQ
+  join.html             Friend-invite redeem page
+
+personas/           AI buyer personas
+  _library/             8 starter training personas
+  loader.py             Persona loader + prompt builder
+
+sales/              Legal-doc + sales-playbook templates
+  referral-agreement.md
+  house-accounts.md
+  playbook.md
+  cheat-card.md
+  the-gauntlet.md
+
+adapters/           Universal ingest (URL, CSV, PDF, EML, JSON, TXT)
+scripts/            One-shot CLI utilities + the migration script
+```
+
+## What it's NOT
+
+- Not a SaaS — you host it. Your data never leaves.
+- Not a coach — Gemma scores you on objective metrics (filler words, talk
+  ratio, pitch discipline) but it doesn't motivate you. That's your job.
+- Not a CRM replacement (yet) — works alongside your existing CRM via
+  CSV import; deeper integrations are roadmap.
 
 ## License
 
-[MIT](LICENSE). Use it however you want.
+MIT. Use it. Fork it. Sell consulting on top of it. Don't pretend you
+wrote it.
 
-Built by [Beers Labs](https://beerslabs.com).
+— Beers Labs LLC

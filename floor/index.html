@@ -253,8 +253,38 @@
     <span class="legend channel"><span class="dot"></span>Channel</span>
     <span class="legend tool"><span class="dot"></span>Tool</span>
     <span class="legend boutique"><span class="dot"></span>Boutique</span>
+    <span class="rep-picker" title="Who is making calls right now — attribution applies to all recordings, practice, and speaking sessions">
+      <span class="rep-label">REP</span>
+      <input type="text" id="repInput" placeholder="self" maxlength="32">
+    </span>
   </div>
 </header>
+
+<style>
+  .rep-picker{display:inline-flex; align-items:center; gap:8px; padding:3px 10px;
+    border:1px solid rgba(245,232,216,0.12); border-radius:3px; background:rgba(8,5,3,0.40)}
+  .rep-picker .rep-label{font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
+    color:#7a6f5f}
+  .rep-picker input{background:transparent; border:none; color:var(--accent);
+    font-family:var(--mono); font-size:11px; width:90px; outline:none; padding:2px 0}
+  .rep-picker input::placeholder{color:#7a6f5f}
+</style>
+
+<script>
+/* Rep picker — sets `window.CURRENT_REP` for every downstream recording or
+   practice request, persisted in localStorage so it survives reloads. */
+(function() {
+  const input = document.getElementById("repInput");
+  window.CURRENT_REP = localStorage.getItem("bullpen-rep") || "self";
+  input.value = window.CURRENT_REP === "self" ? "" : window.CURRENT_REP;
+  input.addEventListener("change", () => {
+    const v = input.value.trim() || "self";
+    window.CURRENT_REP = v;
+    localStorage.setItem("bullpen-rep", v);
+  });
+  input.addEventListener("blur", () => input.dispatchEvent(new Event("change")));
+})();
+</script>
 
 <div class="industry-strip" id="industry-strip">
   <span class="label">Filter by industry · keys</span>
@@ -296,6 +326,1926 @@
     <aside class="card meta-side" id="meta"></aside>
   </div>
 </div>
+
+<!-- ─── Universal ingest drawer ───
+     Drop anything (URL, CSV, PDF, EML, JSON, TXT, MD) → org graph.
+     Triggered by the floating "+ Ingest" button in the bottom-right corner. -->
+<style>
+  .ingest-fab{position:fixed; right:22px; bottom:22px; z-index:80; padding:13px 20px;
+    background:var(--accent); color:#0d0d0d; border:none; border-radius:999px;
+    font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    font-weight:600; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,0.40);
+    transition:transform .15s, box-shadow .15s}
+  .ingest-fab:hover{transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,0.50)}
+
+  .ingest-overlay{position:fixed; inset:0; z-index:200; background:rgba(8,5,3,0.84);
+    backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center; padding:24px}
+  .ingest-overlay.open{display:flex}
+
+  .ingest-drawer{width:min(640px, 100%); max-height:88vh; overflow-y:auto;
+    background:linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    border:1px solid rgba(245,232,216,0.12); border-radius:8px; padding:28px}
+  .ingest-drawer h2{margin:0 0 6px; font-family:var(--serif); font-size:24px; font-weight:500}
+  .ingest-drawer .lead{color:#a39888; font-size:13.5px; line-height:1.55; margin:0 0 22px}
+
+  .drop{border:2px dashed rgba(245,232,216,0.22); border-radius:6px; padding:36px 18px;
+    text-align:center; cursor:pointer; transition:border-color .15s, background .15s}
+  .drop:hover, .drop.over{border-color:var(--accent); background:rgba(52,211,153,0.06)}
+  .drop .icon{font-family:var(--mono); font-size:24px; color:var(--accent); margin-bottom:8px}
+  .drop .hint{font-size:12.5px; color:#c5b89f}
+  .drop .types{font-family:var(--mono); font-size:10.5px; color:#7a6f5f; letter-spacing:.10em;
+    text-transform:uppercase; margin-top:10px}
+  .drop input[type=file]{display:none}
+
+  .or-divider{display:flex; align-items:center; gap:12px; margin:18px 0; color:#7a6f5f;
+    font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase}
+  .or-divider::before, .or-divider::after{content:""; flex:1; height:1px; background:rgba(245,232,216,0.10)}
+
+  .paste-box{width:100%; min-height:88px; padding:12px 14px;
+    background:rgba(8,5,3,0.50); border:1px solid rgba(245,232,216,0.12);
+    border-radius:4px; color:#dcdcdc; font-family:var(--mono); font-size:12.5px;
+    line-height:1.55; resize:vertical; box-sizing:border-box}
+  .paste-box:focus{outline:none; border-color:var(--accent)}
+  .paste-row{display:flex; gap:10px; align-items:center; margin-top:10px}
+  .ingest-go{padding:8px 18px; background:var(--accent); color:#0d0d0d; border:none;
+    border-radius:4px; font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; font-weight:600; cursor:pointer}
+  .ingest-go:disabled{opacity:.5; cursor:wait}
+  .ingest-cancel{padding:8px 14px; background:transparent; color:#7a6f5f; border:1px solid rgba(245,232,216,0.10);
+    border-radius:4px; font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; cursor:pointer}
+
+  .ingest-result{margin-top:16px; padding:12px 14px; border-radius:4px;
+    border:1px solid rgba(52,211,153,0.30); background:rgba(52,211,153,0.08);
+    font-family:var(--mono); font-size:12px; line-height:1.55; color:#dcdcdc}
+  .ingest-result.warn{border-color:rgba(251,191,36,0.30); background:rgba(251,191,36,0.08)}
+  .ingest-result .label{font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--accent); display:block; margin-bottom:6px}
+  .ingest-result.warn .label{color:#fbbf24}
+  .ingest-result ul{margin:6px 0 0; padding-left:18px}
+
+  .ingest-spinner{display:inline-block; width:12px; height:12px;
+    border:2px solid rgba(13,13,13,0.30); border-top-color:#0d0d0d;
+    border-radius:50%; animation:ingestspin .8s linear infinite; vertical-align:-2px; margin-right:8px}
+  @keyframes ingestspin{to{transform:rotate(360deg)}}
+</style>
+
+<button type="button" class="ingest-fab" id="ingestFab" title="Drop anything to add prospects">+ Ingest</button>
+
+<!-- ─── Top 5 to call right now ───
+     Ranked queue anchored top-left below the industry strip. Surfaces the
+     highest-priority prospects so you know exactly where to start each day.
+     Click any row to open that dossier.  -->
+<aside class="top-queue" id="topQueue" aria-label="Top calls to make right now">
+  <div class="tq-head">
+    <span class="tq-label">▸ Call queue</span>
+    <button type="button" class="tq-toggle" id="tqToggle" aria-label="Collapse">−</button>
+  </div>
+  <div class="tq-body" id="tqBody"></div>
+</aside>
+
+<style>
+  .top-queue{position:fixed; left:22px; top:104px; z-index:60; width:280px;
+    background:rgba(8,5,3,0.92); border:1px solid rgba(245,232,216,0.10);
+    border-radius:6px; backdrop-filter:blur(8px); box-shadow:0 6px 22px rgba(0,0,0,0.40);
+    overflow:hidden; transition:max-height .25s ease}
+  .top-queue.collapsed .tq-body{display:none}
+  .top-queue.collapsed{width:auto}
+  .top-queue.collapsed .tq-toggle::before{content:"+"} .tq-toggle::before{content:""}
+
+  .tq-head{display:flex; align-items:center; padding:9px 14px;
+    background:rgba(26,18,8,0.50); border-bottom:1px solid rgba(245,232,216,0.06)}
+  .tq-label{flex:1; font-family:var(--mono); font-size:10px; letter-spacing:.20em;
+    text-transform:uppercase; color:var(--accent)}
+  .tq-toggle{background:transparent; color:#7a6f5f; border:1px solid rgba(245,232,216,0.10);
+    border-radius:3px; width:24px; height:20px; cursor:pointer; font-size:14px; line-height:0}
+  .tq-toggle:hover{color:var(--accent); border-color:var(--accent-dim)}
+
+  .tq-body{padding:4px 0}
+  .tq-row{display:flex; align-items:center; gap:10px; padding:9px 14px;
+    cursor:pointer; transition:background .12s; border:none;
+    background:transparent; width:100%; text-align:left; color:#dcdcdc}
+  .tq-row:hover{background:rgba(52,211,153,0.08)}
+  .tq-row + .tq-row{border-top:1px solid rgba(245,232,216,0.04)}
+  .tq-rank{flex-shrink:0; width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:11px; font-weight:700;
+    background:var(--accent); color:#0d0d0d}
+  .tq-row:nth-child(1) .tq-rank{background:#fbbf24}
+  .tq-row:nth-child(2) .tq-rank{background:#34d399}
+  .tq-row:nth-child(3) .tq-rank{background:#22d3ee}
+  .tq-row:nth-child(4),
+  .tq-row:nth-child(5){opacity:.85}
+  .tq-row:nth-child(4) .tq-rank,
+  .tq-row:nth-child(5) .tq-rank{background:rgba(245,232,216,0.18); color:#f0e4cf}
+  .tq-content{flex:1; min-width:0}
+  .tq-name{font-family:var(--serif); font-size:13.5px; color:#f0e4cf;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.30}
+  .tq-reason{font-family:var(--mono); font-size:10px; color:var(--accent-2);
+    margin-top:2px; letter-spacing:.04em;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+</style>
+
+<script>
+/* Top 5 ranked call queue — recomputes from PROSPECTS + ORG_GRAPH + status.
+   Refresh hook: window.refreshTopQueue() — call this after any state change
+   (status update, ingest, fresh server data) so the queue stays current. */
+(function() {
+  const tq      = document.getElementById("topQueue");
+  const body    = document.getElementById("tqBody");
+  const toggle  = document.getElementById("tqToggle");
+
+  toggle.addEventListener("click", () => {
+    tq.classList.toggle("collapsed");
+    localStorage.setItem("bullpen-tq-collapsed", tq.classList.contains("collapsed") ? "1" : "0");
+  });
+  if (localStorage.getItem("bullpen-tq-collapsed") === "1") tq.classList.add("collapsed");
+
+  function topReason(p) {
+    /* The single most compelling reason to call this prospect first. Ordered
+       so the strongest signal wins over the weakest. */
+    const org = ORG_GRAPH[p.slug] || {};
+    const state = (typeof getProspectState === "function" ? getProspectState(p.slug) : null) || {};
+    if (state.status === "discovery" || state.status === "proposal") return "Briefing booked — close the loop";
+    if (state.status === "qualified")                                return "Qualified — push to next stage";
+    if ((org.counts?.deals || 0) > 0)                                return "Open deal in motion";
+    if (state.status === "voicemail")                                return "Left VM — follow up";
+    if (state.status === "sent")                                     return "Sent — needs follow-up";
+    if (org.enriched && (org.industry || "").toLowerCase().includes("insurance")) return "Enriched · Insurance · KillSesh wedge";
+    if (org.enriched && (org.industry || "").toLowerCase().includes("banking"))   return "Enriched · Banking · KillSesh wedge";
+    if (org.enriched)                                                return "Deeply researched — ready for the pitch";
+    if ((org.counts?.people || 0) > 0)                               return `${org.counts.people} contact${org.counts.people > 1 ? "s" : ""} known`;
+    const ind = (org.industry || "").toLowerCase();
+    if (ind.includes("insurance")) return "Insurance — KillSesh wedge";
+    if (ind.includes("banking"))   return "Banking — KillSesh wedge";
+    return "Cold — fresh dial";
+  }
+
+  window.refreshTopQueue = function() {
+    if (!window.PROSPECTS || !window.PROSPECTS.length) {
+      // Fallback: read from outer scope
+      try {
+        // PROSPECTS is declared with `let` at module level — accessible from this IIFE
+      } catch (_) {}
+    }
+    const list = (typeof PROSPECTS !== "undefined" ? PROSPECTS : []);
+    if (!list.length) {
+      body.replaceChildren();
+      const empty = document.createElement("div");
+      empty.style.cssText = "padding:14px; font-family:JetBrains Mono,monospace; font-size:11px; color:#7a6f5f";
+      empty.textContent = "No prospects yet";
+      body.appendChild(empty);
+      return;
+    }
+
+    // Sort by priorityScore, take top 5
+    const ranked = list
+      .filter(p => {
+        // Skip disqualified — never recommend a closed-loss call
+        const s = (typeof getProspectState === "function" ? getProspectState(p.slug) : null);
+        return !s || s.status !== "disqualified";
+      })
+      .map(p => ({ p, score: (typeof priorityScore === "function" ? priorityScore(p) : 0) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    body.replaceChildren();
+    ranked.forEach(({ p }, i) => {
+      const row = document.createElement("button");
+      row.type = "button"; row.className = "tq-row";
+      row.addEventListener("click", () => {
+        if (typeof openDossier === "function") openDossier(p);
+      });
+
+      const rank = document.createElement("span"); rank.className = "tq-rank"; rank.textContent = String(i + 1);
+      row.appendChild(rank);
+
+      const content = document.createElement("div"); content.className = "tq-content";
+      const name = document.createElement("div"); name.className = "tq-name"; name.textContent = p.company;
+      const reason = document.createElement("div"); reason.className = "tq-reason"; reason.textContent = topReason(p);
+      content.appendChild(name); content.appendChild(reason);
+      row.appendChild(content);
+
+      body.appendChild(row);
+    });
+  };
+})();
+</script>
+<button type="button" class="practice-fab" id="practiceFab" title="Open the Practice Lab — train against curated personas">⌁ Practice</button>
+<button type="button" class="trend-fab" id="trendFab" title="See your improvement over time">📈 Trend</button>
+<button type="button" class="speak-fab" id="speakFab" title="Speaking-only mode — record yourself, get coached on filler words and pacing">🎤 Speak</button>
+<button type="button" class="team-fab" id="teamFab" title="Team — roster, leaderboard, live call feed">👥 Team</button>
+
+<style>
+  .team-fab{position:fixed; right:22px; bottom:230px; z-index:80; padding:11px 18px;
+    background:rgba(8,5,3,0.85); color:#fbbf24; border:1px solid rgba(251,191,36,0.30);
+    border-radius:999px; font-family:var(--mono); font-size:10.5px; letter-spacing:.18em;
+    text-transform:uppercase; font-weight:600; cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,0.30);
+    transition:transform .15s, border-color .15s}
+  .team-fab:hover{transform:translateY(-2px); border-color:#fbbf24}
+
+  .team-overlay{position:fixed; inset:0; z-index:200; background:rgba(8,5,3,0.86);
+    backdrop-filter:blur(10px); display:none; align-items:flex-start; justify-content:center;
+    padding:48px 24px 24px; overflow-y:auto}
+  .team-overlay.open{display:flex}
+  .team-drawer{width:min(880px, 100%); background:linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    border:1px solid rgba(245,232,216,0.12); border-radius:8px; padding:32px}
+  .team-drawer h2{margin:0 0 6px; font-family:var(--serif); font-size:28px; font-weight:500}
+  .team-drawer .lead{color:#a39888; font-size:14px; line-height:1.55; margin:0 0 24px}
+
+  .lb-table{width:100%; border-collapse:collapse; margin-bottom:28px; font-family:var(--mono); font-size:11.5px}
+  .lb-table th{font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:#7a6f5f; text-align:left; padding:8px 10px; border-bottom:1px solid rgba(245,232,216,0.10)}
+  .lb-table td{padding:10px; border-bottom:1px solid rgba(245,232,216,0.05)}
+  .lb-table .rep-name{font-family:var(--serif); font-size:15px; color:#f0e4cf; font-weight:500}
+  .lb-table .rep-rank{padding:3px 8px; border-radius:3px; font-size:9.5px; letter-spacing:.14em;
+    background:rgba(52,211,153,0.10); color:var(--accent); border:1px solid var(--accent-dim)}
+  .lb-table .rep-rank.rookie{background:rgba(245,232,216,0.06); color:#a39888; border-color:rgba(245,232,216,0.10)}
+  .lb-table .rep-rank.all-star, .lb-table .rep-rank.legend{background:rgba(251,191,36,0.10); color:#fbbf24; border-color:rgba(251,191,36,0.30)}
+  .lb-table .badges{font-size:10px; color:var(--accent-2)}
+
+  .feed-list{max-height:300px; overflow-y:auto; border:1px solid rgba(245,232,216,0.08); border-radius:4px}
+  .feed-event{padding:9px 14px; border-bottom:1px solid rgba(245,232,216,0.04);
+    display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:11.5px; color:#c5b89f}
+  .feed-event:last-child{border-bottom:0}
+  .feed-event .feed-ts{color:#7a6f5f; font-size:10px; flex-shrink:0}
+  .feed-event .feed-rep{color:var(--accent); font-weight:600}
+  .feed-event .feed-kind{padding:1px 7px; border-radius:2px; font-size:9.5px;
+    background:rgba(245,232,216,0.06); color:#a39888; letter-spacing:.10em; text-transform:uppercase}
+  .feed-event .feed-kind.call{color:var(--accent-2); background:rgba(52,211,153,0.08)}
+  .feed-event .feed-kind.claim{color:#fbbf24; background:rgba(251,191,36,0.08)}
+  .feed-event .feed-kind.release{color:#f87171; background:rgba(248,113,113,0.08)}
+
+  /* Claim button in the dossier */
+  .claim-row{margin:14px 0; padding:11px 14px; background:rgba(251,191,36,0.05);
+    border:1px solid rgba(251,191,36,0.20); border-radius:4px;
+    display:flex; align-items:center; gap:12px; font-family:var(--mono); font-size:11px}
+  .claim-row.unclaimed{background:rgba(52,211,153,0.05); border-color:rgba(52,211,153,0.25)}
+  .claim-row .claim-label{flex:1; color:#dcdcdc; letter-spacing:.06em}
+  .claim-row .claim-label strong{color:#fbbf24}
+  .claim-row.unclaimed .claim-label strong{color:var(--accent)}
+  .claim-row button{padding:6px 12px; border:none; border-radius:3px; cursor:pointer;
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; font-weight:600}
+  .claim-row .claim-btn{background:var(--accent); color:#0d0d0d}
+  .claim-row .claim-btn:hover{background:var(--accent-2)}
+  .claim-row .release-btn{background:transparent; color:#fda4a4; border:1px solid rgba(248,113,113,0.30)}
+  .claim-row .release-btn:hover{background:rgba(248,113,113,0.10)}
+</style>
+
+<div class="team-overlay" id="teamOverlay" role="dialog" aria-modal="true">
+  <div class="team-drawer">
+    <h2>Team</h2>
+    <p class="lead">Everyone calling through this bullpen. Ranks, badges, recent activity. Auto-refreshes every 8 seconds.</p>
+    <div id="teamBody"></div>
+  </div>
+</div>
+
+<script>
+/* Team layer — fetches roster/leaderboard/feed from /api/team/*, renders
+   the team panel + the claim button injected into the prospect dossier. */
+(function() {
+  const fab     = document.getElementById("teamFab");
+  const overlay = document.getElementById("teamOverlay");
+  const body    = document.getElementById("teamBody");
+  let pollHandle = null;
+
+  fab.addEventListener("click", () => {
+    overlay.classList.add("open");
+    refresh();
+    pollHandle = setInterval(refresh, 8000);
+  });
+  overlay.addEventListener("click", e => {
+    if (e.target === overlay) { overlay.classList.remove("open"); clearInterval(pollHandle); pollHandle = null; }
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && overlay.classList.contains("open")) {
+      overlay.classList.remove("open"); clearInterval(pollHandle); pollHandle = null;
+    }
+  });
+
+  async function promptCreateInvite(btn) {
+    const name = prompt("Rep name for the new teammate (e.g. brad, mike):");
+    if (!name || !name.trim()) return;
+    btn.disabled = true; const oldText = btn.textContent;
+    btn.textContent = "Generating…";
+    try {
+      const r = await fetch(API_BASE + "/api/invite/create", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rep: name.trim() }),
+      });
+      const d = await r.json();
+      if (!r.ok || !d.code) throw new Error(d.error || "create failed");
+      const url = window.location.origin + "/join.html?code=" + d.code;
+      await navigator.clipboard.writeText(url);
+      btn.textContent = "✓ Copied to clipboard";
+      btn.style.background = "var(--accent)";
+      setTimeout(() => {
+        alert("Share this link with " + d.rep + ":\n\n" + url + "\n\nOne-time use. Already copied to your clipboard.");
+      }, 100);
+    } catch (e) {
+      btn.textContent = "× " + e.message;
+      btn.style.background = "#f87171";
+    } finally {
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = oldText;
+        btn.style.background = "#fbbf24";
+      }, 3500);
+    }
+  }
+
+  async function refresh() {
+    try {
+      const [lb, fd] = await Promise.all([
+        fetch(API_BASE + "/api/team/leaderboard").then(r => r.json()),
+        fetch(API_BASE + "/api/team/feed?limit=20").then(r => r.json()),
+      ]);
+      render(lb.leaderboard || [], fd.events || []);
+    } catch (e) {
+      body.replaceChildren();
+      const p = document.createElement("p");
+      p.style.cssText = "color:#fda4a4; font-family:JetBrains Mono,monospace; font-size:12px";
+      p.textContent = "× could not reach trainer: " + e.message;
+      body.appendChild(p);
+    }
+  }
+
+  function render(lb, fd) {
+    body.replaceChildren();
+
+    // Invite-a-friend row at the top — generates a single-use code +
+    // copies the share URL to the clipboard. Localhost-only endpoint;
+    // shown to everyone but only the host machine actually succeeds.
+    const inviteRow = document.createElement("div");
+    inviteRow.style.cssText = "display:flex; gap:10px; align-items:center; padding:14px 16px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.25); border-radius:5px; margin-bottom:22px";
+    const inviteLbl = document.createElement("div");
+    inviteLbl.style.cssText = "flex:1; min-width:0; font-family:JetBrains Mono,monospace; font-size:11px; line-height:1.55; color:#dcdcdc";
+    inviteLbl.innerHTML = "";
+    const inviteHead = document.createElement("strong");
+    inviteHead.style.cssText = "display:block; color:#fbbf24; letter-spacing:.10em; font-size:10px; text-transform:uppercase; margin-bottom:2px";
+    inviteHead.textContent = "Invite a teammate";
+    const inviteSub = document.createElement("span");
+    inviteSub.style.color = "#a39888";
+    inviteSub.textContent = "Generate a one-time code → share the link → they're in.";
+    inviteLbl.appendChild(inviteHead); inviteLbl.appendChild(inviteSub);
+    const inviteBtn = document.createElement("button");
+    inviteBtn.type = "button";
+    inviteBtn.style.cssText = "padding:7px 14px; background:#fbbf24; color:#0d0d0d; border:none; border-radius:3px; font-family:JetBrains Mono,monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; font-weight:700; cursor:pointer";
+    inviteBtn.textContent = "Generate code";
+    inviteBtn.addEventListener("click", () => promptCreateInvite(inviteBtn));
+    inviteRow.appendChild(inviteLbl);
+    inviteRow.appendChild(inviteBtn);
+    body.appendChild(inviteRow);
+
+    // Leaderboard
+    const lbHead = document.createElement("h3");
+    lbHead.style.cssText = "font-family:JetBrains Mono,monospace; font-size:10.5px; letter-spacing:.20em; text-transform:uppercase; color:var(--accent); margin:0 0 10px";
+    lbHead.textContent = "▸ Leaderboard";
+    body.appendChild(lbHead);
+    if (lb.length === 0) {
+      const p = document.createElement("p");
+      p.style.cssText = "color:#a39888; font-size:13px";
+      p.textContent = "No reps logged yet. Set REP in the header and take a call.";
+      body.appendChild(p);
+    } else {
+      const t = document.createElement("table"); t.className = "lb-table";
+      const head = document.createElement("tr");
+      ["Rep","Rank","Badges","Calls","Last seen"].forEach(h => {
+        const th = document.createElement("th"); th.textContent = h; head.appendChild(th);
+      });
+      const thead = document.createElement("thead"); thead.appendChild(head); t.appendChild(thead);
+      const tb = document.createElement("tbody");
+      lb.forEach(r => {
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td");
+        const rname = document.createElement("span"); rname.className = "rep-name"; rname.textContent = r.rep;
+        td1.appendChild(rname);
+        const td2 = document.createElement("td");
+        const rrank = document.createElement("span");
+        rrank.className = "rep-rank " + r.rank.toLowerCase().replace(/[^a-z]/g, "");
+        rrank.textContent = r.rank;
+        td2.appendChild(rrank);
+        const td3 = document.createElement("td"); td3.className = "badges";
+        td3.textContent = `${r.phases_passed.length}/7${r.badges.length ? " · " + r.badges.slice(0,2).join(", ") + (r.badges.length>2?"…":"") : ""}`;
+        const td4 = document.createElement("td"); td4.textContent = `${r.total_calls} (${r.real_calls} real)`;
+        const td5 = document.createElement("td"); td5.style.color = "#7a6f5f"; td5.style.fontSize = "10.5px";
+        td5.textContent = r.last_seen ? r.last_seen.slice(0, 16).replace("T", " ") : "—";
+        [td1,td2,td3,td4,td5].forEach(td => tr.appendChild(td));
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb);
+      body.appendChild(t);
+    }
+
+    // Feed
+    const fdHead = document.createElement("h3");
+    fdHead.style.cssText = "font-family:JetBrains Mono,monospace; font-size:10.5px; letter-spacing:.20em; text-transform:uppercase; color:var(--accent); margin:28px 0 10px";
+    fdHead.textContent = "▸ Live activity";
+    body.appendChild(fdHead);
+    const list = document.createElement("div"); list.className = "feed-list";
+    if (fd.length === 0) {
+      const p = document.createElement("div");
+      p.style.cssText = "padding:18px; color:#7a6f5f; font-size:12.5px; text-align:center";
+      p.textContent = "No activity yet.";
+      list.appendChild(p);
+    } else {
+      fd.forEach(e => {
+        const row = document.createElement("div"); row.className = "feed-event";
+        const ts = document.createElement("span"); ts.className = "feed-ts";
+        ts.textContent = (e.ts || "").slice(11, 19);
+        const kind = document.createElement("span"); kind.className = "feed-kind " + (e.kind || "");
+        kind.textContent = e.kind || "?";
+        const rep = document.createElement("span"); rep.className = "feed-rep"; rep.textContent = e.rep || "?";
+        const desc = document.createElement("span"); desc.style.color = "#a39888";
+        if (e.kind === "claim")        desc.textContent = "claimed " + (e.prospect || "");
+        else if (e.kind === "release") desc.textContent = "released " + (e.prospect || "");
+        else if (e.kind === "call")    desc.textContent = (e.call_kind === "real" ? "recorded real call with " : "practiced ") + (e.prospect || "");
+        else                            desc.textContent = e.prospect || "";
+        [ts, kind, rep, desc].forEach(el => row.appendChild(el));
+        list.appendChild(row);
+      });
+    }
+    body.appendChild(list);
+  }
+})();
+
+/* Inject a Claim row into the prospect dossier when it opens.
+   Listens for our existing openDossier() call by polling for the dossier
+   container's open state. */
+(function() {
+  const dossierEl = document.getElementById("focus") || document.getElementById("ident");
+  if (!dossierEl) return;
+
+  async function injectClaimUI(prospect) {
+    if (!prospect) return;
+    // Remove any stale claim row from a previous dossier
+    document.querySelectorAll(".claim-row").forEach(el => el.remove());
+
+    let claim = null;
+    try {
+      const r = await fetch(API_BASE + "/api/team/claim/" + encodeURIComponent(prospect.slug));
+      claim = (await r.json()).claim;
+    } catch (_) {}
+
+    const me = window.CURRENT_REP || "self";
+    const row = document.createElement("div"); row.className = "claim-row";
+    if (!claim) row.classList.add("unclaimed");
+
+    const label = document.createElement("span"); label.className = "claim-label";
+    if (!claim) {
+      label.innerHTML = "";
+      const s = document.createElement("strong"); s.textContent = "Unclaimed.";
+      label.appendChild(s);
+      label.appendChild(document.createTextNode(" Anyone can dial this prospect."));
+    } else {
+      const s = document.createElement("strong"); s.textContent = "Claimed by " + claim.rep;
+      label.appendChild(s);
+      label.appendChild(document.createTextNode(claim.rep === me ? " — that's you." : " — off-limits unless they release."));
+    }
+    row.appendChild(label);
+
+    if (!claim) {
+      const btn = document.createElement("button"); btn.className = "claim-btn";
+      btn.textContent = "Claim for " + me;
+      btn.addEventListener("click", async () => {
+        const r = await fetch(API_BASE + "/api/team/claim", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prospect: prospect.slug, rep: me }),
+        });
+        const d = await r.json();
+        if (d.ok) injectClaimUI(prospect);
+        else alert("Couldn't claim: " + (d.error || "unknown"));
+      });
+      row.appendChild(btn);
+    } else if (claim.rep === me) {
+      const btn = document.createElement("button"); btn.className = "release-btn";
+      btn.textContent = "Release";
+      btn.addEventListener("click", async () => {
+        await fetch(API_BASE + "/api/team/release", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prospect: prospect.slug, rep: me }),
+        });
+        injectClaimUI(prospect);
+        if (typeof window.refreshClaims === "function") window.refreshClaims();
+      });
+      row.appendChild(btn);
+    }
+
+    // Inject at the top of the meta side card
+    const meta = document.getElementById("meta");
+    if (meta) meta.insertBefore(row, meta.firstChild);
+  }
+
+  // Hook into the existing openDossier function
+  if (typeof window.openDossier === "function") {
+    const orig = window.openDossier;
+    window.openDossier = function(p) {
+      orig(p);
+      setTimeout(() => injectClaimUI(p), 30);
+    };
+  } else {
+    // openDossier is declared later in the page — wait for it
+    const interval = setInterval(() => {
+      if (typeof window.openDossier === "function") {
+        clearInterval(interval);
+        const orig = window.openDossier;
+        window.openDossier = function(p) {
+          orig(p);
+          setTimeout(() => injectClaimUI(p), 30);
+        };
+      }
+    }, 200);
+  }
+})();
+</script>
+
+<style>
+  .speak-fab{position:fixed; right:22px; bottom:178px; z-index:80; padding:11px 18px;
+    background:rgba(8,5,3,0.85); color:#f0e4cf; border:1px solid rgba(245,232,216,0.18);
+    border-radius:999px; font-family:var(--mono); font-size:10.5px; letter-spacing:.18em;
+    text-transform:uppercase; font-weight:600; cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,0.30);
+    transition:transform .15s, border-color .15s}
+  .speak-fab:hover{transform:translateY(-2px); border-color:#f0e4cf}
+
+  .speak-overlay{position:fixed; inset:0; z-index:200; background:rgba(8,5,3,0.86);
+    backdrop-filter:blur(10px); display:none; align-items:flex-start; justify-content:center;
+    padding:48px 24px 24px; overflow-y:auto}
+  .speak-overlay.open{display:flex}
+  .speak-drawer{width:min(640px, 100%); background:linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    border:1px solid rgba(245,232,216,0.12); border-radius:8px; padding:32px}
+  .speak-drawer h2{margin:0 0 6px; font-family:var(--serif); font-size:28px; font-weight:500}
+  .speak-drawer .lead{color:#a39888; font-size:14px; line-height:1.55; margin:0 0 24px}
+
+  .speak-prompt{padding:14px 18px; background:rgba(26,18,8,0.50); border-radius:6px;
+    border-left:3px solid var(--accent); margin-bottom:18px; font-family:var(--serif);
+    font-size:16px; line-height:1.55; color:#dcdcdc}
+  .speak-prompt .label{display:block; font-family:var(--mono); font-size:10px;
+    letter-spacing:.20em; text-transform:uppercase; color:var(--accent); margin-bottom:6px}
+
+  /* ── Level-locked roadmap (the gameification layer) ── */
+  .progress-strip{margin-bottom:20px}
+  .progress-strip .label{display:flex; justify-content:space-between; font-family:var(--mono);
+    font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:#7a6f5f; margin-bottom:6px}
+  .progress-strip .bar{height:6px; background:rgba(245,232,216,0.08); border-radius:3px; overflow:hidden}
+  .progress-strip .bar-fill{height:100%; background:linear-gradient(90deg,#34d399 0%, #fbbf24 60%, #f87171 100%);
+    transition:width .35s ease-out}
+  .mode-row{display:flex; align-items:center; gap:14px; margin:14px 0 16px}
+  .mode-row .seg{display:inline-flex; gap:0; padding:2px; background:rgba(245,232,216,0.05);
+    border:1px solid rgba(245,232,216,0.10); border-radius:4px}
+  .mode-row .seg button{padding:5px 12px; background:transparent; color:#a39888; border:none;
+    border-radius:3px; cursor:pointer; font-family:var(--mono); font-size:10.5px;
+    letter-spacing:.14em; text-transform:uppercase}
+  .mode-row .seg button.active{background:var(--accent); color:#0d0d0d; font-weight:600}
+
+  .drill-board{display:flex; flex-direction:column; gap:8px; margin-bottom:18px}
+  .drill-board.grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px}
+
+  .drill-card{padding:14px 16px; background:rgba(26,18,8,0.55);
+    border:1px solid rgba(245,232,216,0.08); border-radius:6px; cursor:pointer;
+    transition:border-color .15s, transform .15s; position:relative;
+    display:flex; align-items:center; gap:14px; text-align:left}
+  .drill-card:hover{border-color:var(--accent); transform:translateY(-1px)}
+  .drill-card.locked{opacity:0.45; cursor:not-allowed; pointer-events:auto}
+  .drill-card.locked:hover{border-color:rgba(245,232,216,0.08); transform:none}
+  .drill-card.done{border-color:var(--accent-dim)}
+
+  .drill-card .level-badge{flex-shrink:0; width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-family:var(--mono);
+    font-size:13px; font-weight:700; color:#0d0d0d; background:var(--accent);
+    border:2px solid var(--accent)}
+  .drill-card.locked .level-badge{background:transparent; color:#7a6f5f;
+    border-color:rgba(245,232,216,0.20)}
+  .drill-card.done .level-badge{background:var(--accent-2); position:relative}
+  .drill-card.done .level-badge::after{content:"✓"; position:absolute; right:-6px; bottom:-6px;
+    width:16px; height:16px; border-radius:50%; background:#0d0d0d; color:var(--accent);
+    font-size:11px; display:flex; align-items:center; justify-content:center; border:2px solid var(--accent)}
+
+  .drill-card .body{flex:1; min-width:0}
+  .drill-card .cat{font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
+    text-transform:uppercase; color:#7a6f5f; margin-bottom:4px}
+  .drill-card .name{font-family:var(--serif); font-size:16px; font-weight:500;
+    color:#f0e4cf; margin-bottom:3px; line-height:1.30}
+  .drill-card .meta{font-family:var(--mono); font-size:10.5px; color:#a39888}
+  .drill-card .audience-line{font-family:Georgia, serif; font-style:italic;
+    font-size:11.5px; color:#c5b89f; margin-top:2px}
+  .drill-card .best{font-family:var(--mono); font-size:10px; color:var(--accent-2); margin-top:3px}
+
+  .drill-card .cat.pitch{color:#34d399}
+  .drill-card .cat.objection{color:#fbbf24}
+  .drill-card .cat.open{color:#f87171}
+  .drill-card .cat.clarity{color:#22d3ee}
+  .drill-card .cat.handoff{color:#a78bfa}
+
+  .drill-card .lock-icon{flex-shrink:0; color:#7a6f5f; font-size:18px}
+  .drill-card.done .lock-icon, .drill-card:not(.locked) .lock-icon{display:none}
+
+  /* Pass criteria block on the active flash card */
+  .pass-criteria{margin:6px 0 14px; padding:10px 14px; background:rgba(52,211,153,0.06);
+    border:1px solid rgba(52,211,153,0.20); border-radius:4px}
+  .pass-criteria .label{font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--accent); margin-bottom:6px}
+  .pass-criteria ul{margin:4px 0 0; padding-left:18px}
+  .pass-criteria li{font-size:12.5px; line-height:1.55; color:#dcdcdc; margin-bottom:3px}
+
+  /* Pass/fail result banner */
+  .pass-banner{margin-bottom:12px; padding:12px 14px; border-radius:4px; font-family:var(--mono);
+    font-size:12.5px; line-height:1.55; letter-spacing:.04em}
+  .pass-banner.pass{background:rgba(52,211,153,0.10); border:1px solid var(--accent-dim); color:var(--accent-2)}
+  .pass-banner.fail{background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.30); color:#fbbf24}
+  .pass-banner .head{font-size:14px; font-weight:600; margin-bottom:4px; letter-spacing:.10em}
+  .pass-banner ul{margin:6px 0 0; padding-left:18px}
+  .pass-banner li{font-size:11.5px; line-height:1.55}
+
+  .drill-active{padding:18px 20px; background:rgba(26,18,8,0.55);
+    border:1px solid rgba(245,232,216,0.10); border-radius:6px; margin-bottom:18px}
+  .drill-active .name-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px}
+  .drill-active h3{margin:0; font-family:var(--serif); font-size:20px; font-weight:500; color:#f0e4cf}
+  .drill-active .duration{font-family:var(--mono); font-size:11px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--accent); padding:4px 10px; border:1px solid var(--accent-dim); border-radius:3px}
+  .drill-active .back-btn{padding:4px 10px; background:transparent; color:#7a6f5f;
+    border:1px solid rgba(245,232,216,0.10); border-radius:3px; cursor:pointer;
+    font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase}
+  .drill-active .back-btn:hover{color:var(--accent); border-color:var(--accent-dim)}
+  .drill-section{margin-bottom:10px; font-size:13px; line-height:1.55; color:#dcdcdc}
+  .drill-section .sec-label{font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
+    text-transform:uppercase; color:#7a6f5f; margin-right:8px}
+  .drill-section ul{margin:6px 0 0; padding-left:20px}
+  .drill-section li{font-size:12.5px; line-height:1.55; margin-bottom:2px}
+  .drill-tip{margin-top:14px; padding:10px 12px; background:rgba(251,191,36,0.06);
+    border:1px solid rgba(251,191,36,0.20); border-radius:4px; font-size:12.5px;
+    line-height:1.55; color:#fbbf24; font-family:var(--serif); font-style:italic}
+  .drill-tip::before{content:"PRO TIP · "; font-family:var(--mono); font-style:normal;
+    font-size:9.5px; letter-spacing:.18em; font-weight:600}
+
+  .mic-blocked-help{margin-top:10px; padding:12px 14px; background:rgba(248,113,113,0.06);
+    border:1px solid rgba(248,113,113,0.30); border-radius:4px; font-size:12.5px;
+    line-height:1.55; color:#fda4a4}
+  .mic-blocked-help button{margin-top:8px; padding:6px 12px; background:var(--accent);
+    color:#0d0d0d; border:none; border-radius:3px; font-family:var(--mono); font-size:11px;
+    letter-spacing:.14em; text-transform:uppercase; font-weight:600; cursor:pointer}
+
+  .speak-record-btn{display:block; width:100%; padding:20px; background:rgba(248,113,113,0.10);
+    color:#f87171; border:2px solid rgba(248,113,113,0.40); border-radius:6px;
+    font-family:var(--mono); font-size:13px; letter-spacing:.18em; text-transform:uppercase;
+    font-weight:600; cursor:pointer; transition:all .15s}
+  .speak-record-btn:hover{background:rgba(248,113,113,0.20)}
+  .speak-record-btn.live{background:#f87171; color:#0d0d0d; border-color:#f87171; animation:speakpulse 1.4s ease-in-out infinite}
+  @keyframes speakpulse{0%,100%{box-shadow:0 0 0 0 rgba(248,113,113,0.50)}50%{box-shadow:0 0 0 12px rgba(248,113,113,0)}}
+
+  .speak-meter{margin-top:14px; height:8px; background:rgba(245,232,216,0.08); border-radius:4px; overflow:hidden}
+  .speak-meter-bar{height:100%; width:0%; background:linear-gradient(90deg,#34d399,#fbbf24,#f87171); transition:width 80ms linear}
+  .speak-timer{font-family:var(--mono); font-size:13px; color:#a39888; margin-top:8px; text-align:center; font-variant-numeric:tabular-nums}
+
+  .speak-result{margin-top:22px}
+  .speak-result h3{font-family:var(--mono); font-size:10.5px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 14px}
+  .speak-transcript{padding:12px 14px; background:rgba(8,5,3,0.50); border:1px solid rgba(245,232,216,0.08);
+    border-radius:4px; font-family:var(--serif); font-size:14px; line-height:1.65; color:#dcdcdc;
+    max-height:220px; overflow-y:auto; margin-bottom:16px}
+  .speak-stats{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:14px}
+  .speak-stat{padding:12px; background:rgba(26,18,8,0.55); border:1px solid rgba(245,232,216,0.06); border-radius:4px}
+  .speak-stat .lab{font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
+    text-transform:uppercase; color:#7a6f5f; margin-bottom:4px}
+  .speak-stat .val{font-family:var(--serif); font-size:22px; color:#f0e4cf}
+  .speak-stat.warn .val{color:#fbbf24}
+  .speak-coach{padding:12px 14px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.20);
+    border-radius:4px; font-family:var(--mono); font-size:12px; line-height:1.55; color:#fbbf24}
+  .speak-coach .row{margin-bottom:5px}
+</style>
+
+<div class="speak-overlay" id="speakOverlay" role="dialog" aria-modal="true" aria-labelledby="speakTitle">
+  <div class="speak-drawer">
+    <h2 id="speakTitle">Speaking practice</h2>
+    <p class="lead">Pick a drill, hit record, and BullpenLM grades you locally on fillers, hedges, pace, and clarity.</p>
+
+    <!-- Bulletin board of drill cards — populated by JS -->
+    <div id="drillBoard" class="drill-board"></div>
+
+    <!-- Active drill view — shown when a card is selected -->
+    <div id="drillActive" class="drill-active" style="display:none"></div>
+
+    <button type="button" class="speak-record-btn" id="speakRecordBtn" style="display:none">🔴 Start recording</button>
+    <div class="speak-meter" id="speakMeterFrame" style="display:none"><div class="speak-meter-bar" id="speakMeter"></div></div>
+    <div class="speak-timer" id="speakTimer" style="display:none">00:00</div>
+
+    <div id="speakResult" class="speak-result" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+/* Speaking-only mode — record yourself, get scored on filler/hedge/question
+   patterns. Uses the same whisper + metrics pipeline as the post-call debrief,
+   but with no buyer in the loop. */
+(function() {
+  const fab        = document.getElementById("speakFab");
+  const overlay    = document.getElementById("speakOverlay");
+  const btn        = document.getElementById("speakRecordBtn");
+  const meter      = document.getElementById("speakMeter");
+  const meterFrame = document.getElementById("speakMeterFrame");
+  const timer      = document.getElementById("speakTimer");
+  const result     = document.getElementById("speakResult");
+  const board      = document.getElementById("drillBoard");
+  const active     = document.getElementById("drillActive");
+
+  /* The product context — what YOU are selling. Shows up on every drill card
+     so you're rehearsing YOUR actual pitch, not a generic one. Edit this when
+     your product changes (or when your friend uses it for a different
+     product — change once, applies to every drill). */
+  const PRODUCT_CONTEXT = {
+    name: "KillSesh",
+    oneLine: "Deterministic COBOL → TypeScript translation with verifiable field-level parity. Replaces 30+ year-old policy admin and claims engines without dropping fields.",
+    problem: "Every COBOL modernization tool on the market today (Accenture, IBM, AWS Mainframe Modernization) uses LLMs that silently drop fields in REDEFINES sections. For an insurance carrier, one dropped field = a HIPAA reporting incident or a state DOI audit finding.",
+    moat: "Deterministic field-level parity proof. Every translated field maps 1:1 to the source COBOL with cryptographic checksums. Auditors can verify each line. No probabilistic translation. Runs on the customer's hardware.",
+    pricing: "Pilot: $15K for the first business-critical module (claims engine, policy admin, billing). Expansion: tied to translated lines + audit hours saved.",
+    askDefault: "Book a 15-minute technical briefing — or get the name + email of the right tech lead (VP App Mod / Claims Tech VP).",
+    competitor: "Accenture, IBM Consulting, Deloitte, TCS, AWS Mainframe Modernization (the partner ecosystem)",
+    buyer: "VP of Application Modernization · Claims Tech Lead · CIO at a top-100 insurance carrier or top-50 US bank",
+  };
+
+  /* Drills are organized as LEVELS — sequential roadmap, each unlocks the next
+     when you pass the metrics gate. Mirrors the actual cold-call sequence: you
+     can't pitch a CTO if you can't get past the EA. Pass criteria are computed
+     against the transcript + metrics from the speaking endpoint, so passing
+     requires actually nailing the drill, not just hitting Stop.
+
+     Each drill carries `pass`: a function that receives the metrics record and
+     returns {passed: bool, checks: [{label, ok, why?}]}. */
+  const DRILLS = [
+    // ─────────── LEVEL 1 · Gatekeeper (no jargon, get the transfer) ───────────
+    {
+      id: "gatekeeper", level: 1, category: "open", duration: 15,
+      name: "Get past the gatekeeper",
+      audience: "Front-desk / EA / general operator · NOT technical",
+      setup: "You dialed the main number at Allstate. A receptionist or EA picks up. They've blocked 50 vendor calls today already and their default move is 'send me your materials, I'll forward them.'",
+      task: "In 15 seconds, earn the transfer to the VP of Application Modernization. NO technical jargon. NO 'COBOL' or 'REDEFINES' — they don't know what those are.",
+      gradedOn: ["Confidence", "Brevity", "Plain language", "Specificity of who you're asking for"],
+      tip: "Use the exact name + title. 'Could you connect me to Jane Smith, your VP of Application Modernization' beats 'whoever handles your tech modernization' every time.",
+      yourPitchHints: [
+        "Confident opener: 'Hi, this is Dylan Beers — could you connect me to [exact name], your VP of Application Modernization?'",
+        "If they ask what it's about: 'It's regarding their COBOL modernization roadmap — they're expecting a follow-up on the audit-verification layer.' (Vague enough, specific enough.)",
+        "If they push for materials: 'Happy to send a one-pager, but a 30-second voice connection saves both of us an email thread. Is she at her desk?'",
+        "NEVER say: 'COBOL', 'REDEFINES', 'cryptographic', 'field-level parity'. The EA does not care. The EA wants to make you go away politely.",
+      ],
+      pass: (m) => check([
+        { label: "Said something (≥10 words)",         ok: (m.total_words || 0) >= 10 },
+        { label: "Kept it tight (≤45 words)",          ok: (m.total_words || 0) <= 45 },
+        { label: "Filler discipline (≤2 fillers)",     ok: (m.filler_count || 0) <= 2 },
+        { label: "No technical jargon",                ok: !containsAny(m.transcript, ["redefines", "cryptographic", "checksum", "parity", "field-level"]) },
+        { label: "Confident — no hedge phrases",       ok: (m.hedge_count || 0) <= 1 },
+      ]),
+    },
+    {
+      id: "voicemail", level: 2, category: "open", duration: 30,
+      name: "Leave a voicemail that gets returned",
+      audience: "Direct to the buyer (VP App Mod) · semi-technical",
+      setup: "You finally got the direct dial. It rings out. You're about to leave a voicemail. 80% of voicemails get deleted in 3 seconds — yours has to be in the 20%.",
+      task: "30-second voicemail that earns a callback. Mention one specific thing about THEIR company. Leave a callback number twice.",
+      gradedOn: ["Specificity", "Brevity", "Confidence", "Clear callback ask"],
+      tip: "The opening 4 seconds decide whether they delete or listen. Start with 'I'll be quick' or their first name — never 'Hi this is...' (universal delete signal).",
+      yourPitchHints: [
+        "Opener: '[First name], this is Dylan Beers — I'll be quick.'",
+        "Specific hook: 'Saw your Q3 earnings call mentioned the claims-platform modernization. Calling because the field-verification gap that's likely slowing it down is what we fix.'",
+        "Ask: 'Worth 15 minutes Thursday? Best number to reach me is 503-555-XXXX.'",
+        "End: 'Again, Dylan Beers, 503-555-XXXX. Thanks.'  (Repeat the number once. Always.)",
+      ],
+      pass: (m) => check([
+        { label: "Tight (25-90 words)",                ok: (m.total_words || 0) >= 25 && (m.total_words || 0) <= 90 },
+        { label: "Filler discipline (≤3 fillers)",     ok: (m.filler_count || 0) <= 3 },
+        { label: "Named yourself by first name",       ok: /dylan|beers/i.test(m.transcript || "") },
+        { label: "Stated a specific ask",              ok: containsAny(m.transcript, ["15 minutes", "thursday", "tuesday", "wednesday", "friday", "monday", "this week", "next week", "callback", "call back"]) },
+      ]),
+    },
+
+    // ─────────── LEVEL 3 · The buyer (technical depth ok) ───────────
+    {
+      id: "pitch-vp-app-mod", level: 3, category: "pitch", duration: 60,
+      name: "60-sec pitch to a VP App Mod",
+      audience: "VP of Application Modernization · technical, has heard 50 vendor pitches",
+      setup: "The gatekeeper transferred you. You're now on the phone with the actual buyer. They've heard from Accenture and IBM Consulting this quarter. You have 60 seconds before they decide to keep listening or hang up.",
+      task: "Full technical pitch. Start with the FIELD-DROP problem. Name Accenture or IBM as the incumbent. End with the 15-minute briefing ask.",
+      gradedOn: ["Hook strength", "Field-drop specificity", "Filler words", "Time discipline"],
+      tip: "Name the incumbent (Accenture / IBM) in the first 20 seconds. It signals you know who they're actually evaluating.",
+      yourPitchHints: [
+        "Open with the specific failure mode: 'Off-the-shelf AI translation tools silently drop fields in REDEFINES sections.'",
+        "Consequence: 'For a claims engine, that's a HIPAA reporting incident waiting to happen.'",
+        "Differentiator: 'We do deterministic field-level parity — every translated field maps 1:1 with cryptographic checksums auditors can verify.'",
+        "Ask: 'Worth 15 minutes to show your team how the verification layer works?'",
+      ],
+      pass: (m) => check([
+        { label: "Used the full minute (80-160 words)", ok: (m.total_words || 0) >= 80 && (m.total_words || 0) <= 160 },
+        { label: "Filler discipline (≤5 fillers)",     ok: (m.filler_count || 0) <= 5 },
+        { label: "Named the incumbent",                ok: containsAny(m.transcript, ["accenture", "ibm", "deloitte", "tcs", "aws"]) },
+        { label: "Mentioned the specific failure",     ok: containsAny(m.transcript, ["field", "drop", "redefines", "lose", "lost"]) },
+        { label: "Specific ask (15 min briefing)",     ok: containsAny(m.transcript, ["15 minutes", "fifteen minutes", "briefing", "demo"]) },
+      ]),
+    },
+    {
+      id: "objection-price", level: 4, category: "objection", duration: 45,
+      name: "Defending the $15K pilot",
+      audience: "VP App Mod or CFO · already pays Accenture",
+      setup: "Buyer just said: 'We're already paying Accenture half a million a year on modernization. Why would I add another $15K vendor?'",
+      task: "Reframe in 45 seconds. Don't apologize. Don't compete on price.",
+      gradedOn: ["Confidence", "Reframe", "Filler words", "Hedge phrases"],
+      tip: "The $15K isn't a competitor to Accenture — it's the audit-trail layer Accenture doesn't have. You're insurance, not a replacement.",
+      yourPitchHints: [
+        "Reframe: 'We're not competing with your Accenture engagement — we're the verification layer underneath it.'",
+        "Value math: 'One dropped field on a claims migration = a 7-figure HIPAA incident. The $15K is insurance.'",
+        "Close: 'Worth 15 minutes to show your team what the verification looks like before you green-light the next Accenture sprint?'",
+      ],
+      pass: (m) => check([
+        { label: "Tight reframe (50-120 words)",       ok: (m.total_words || 0) >= 50 && (m.total_words || 0) <= 120 },
+        { label: "Filler discipline (≤3 fillers)",     ok: (m.filler_count || 0) <= 3 },
+        { label: "Didn't apologize",                   ok: !containsAny(m.transcript, ["sorry", "i apologize", "i understand it sounds", "i know it seems"]) },
+        { label: "Stayed confident (≤2 hedges)",       ok: (m.hedge_count || 0) <= 2 },
+        { label: "Reframed to value (not price)",      ok: containsAny(m.transcript, ["audit", "verification", "insurance", "risk", "incident", "compliance"]) },
+      ]),
+    },
+
+    // ─────────── LEVEL 5 · Senior strategic (CTO/CIO — strategic, not technical) ───────────
+    {
+      id: "cto-elevator", level: 5, category: "pitch", duration: 30,
+      name: "30-sec elevator to a CIO",
+      audience: "CIO at a conference · senior, strategic, jargon-allergic",
+      setup: "You bumped into the CIO of a top-50 bank at a Gartner event. She has 30 seconds before her next session. She doesn't want a tech pitch — she wants to know if you're worth her team's time.",
+      task: "Pitch in business terms — risk, compliance, executive accountability. No 'REDEFINES'. No 'cryptographic'. Get her to ask 'who on my team should I have call you?'",
+      gradedOn: ["Executive framing", "Risk language", "Concision", "Clear next step"],
+      tip: "CIOs buy on board-level risk language. Reframe field drops as audit-finding exposure. Then make HER the hero who caught it.",
+      yourPitchHints: [
+        "Open: 'Quick one — your team is probably modernizing some COBOL systems with the major SI partners.'",
+        "Risk frame: 'The AI translation tools they're using have a quiet audit-finding problem — fields silently get lost. We're the verification layer that catches it.'",
+        "CIO close: 'Worth a 15-minute briefing with your App Mod lead? I won't waste their time.'",
+      ],
+      pass: (m) => check([
+        { label: "Concise (30-80 words)",              ok: (m.total_words || 0) >= 30 && (m.total_words || 0) <= 80 },
+        { label: "Filler discipline (≤2 fillers)",     ok: (m.filler_count || 0) <= 2 },
+        { label: "Used risk/audit language",           ok: containsAny(m.transcript, ["risk", "audit", "finding", "compliance", "exposure", "incident"]) },
+        { label: "No deep jargon",                     ok: !containsAny(m.transcript, ["redefines", "cryptographic", "checksum"]) },
+        { label: "Clear next-step ask",                ok: containsAny(m.transcript, ["briefing", "15 min", "your team", "your lead"]) },
+      ]),
+    },
+
+    // ─────────── LEVEL 6 · Skill drills (cross-cutting) ───────────
+    {
+      id: "grandparent", level: 6, category: "clarity", duration: 30,
+      name: "Explain KillSesh to your grandma",
+      audience: "Anyone non-technical · friend, family, civilian on a plane",
+      setup: "Your grandparent asks what your startup does. No jargon — they don't know what COBOL is, and don't care.",
+      task: "Explain it in 30 seconds using an analogy. If they'd ask 'what's that?' you simplified too little.",
+      gradedOn: ["Clarity", "Filler words", "Concreteness"],
+      tip: "Use a translation analogy. Everyone gets translation. Nobody gets REDEFINES.",
+      yourPitchHints: [
+        "Analogy: 'Banks and insurance companies run on 60-year-old computer code.'",
+        "Problem: 'When they try to upgrade it, the modern tools quietly lose tiny pieces of information — like translating a recipe and forgetting an ingredient.'",
+        "What we do: 'We make sure nothing gets lost. We can prove it line by line.'",
+      ],
+      pass: (m) => check([
+        { label: "Said something (≥40 words)",         ok: (m.total_words || 0) >= 40 },
+        { label: "Filler discipline (≤3 fillers)",     ok: (m.filler_count || 0) <= 3 },
+        { label: "No banned tech terms",               ok: !containsAny(m.transcript, ["cobol", "redefines", "cryptographic", "checksum", "facets", "z/os", "mainframe"]) },
+        { label: "Used an analogy",                    ok: containsAny(m.transcript, ["like", "imagine", "think of", "it's as if", "kind of like"]) },
+      ]),
+    },
+    {
+      id: "post-call-recap", level: 7, category: "handoff", duration: 60,
+      name: "Recap a real call to your teammate",
+      audience: "Your teammate (Brad) · also calling KillSesh prospects",
+      setup: "You just hung up with the VP App Mod at Cigna. Brad needs the 60-second download so he doesn't duplicate your work on his next call.",
+      task: "Summarize: who you talked to, what they said about their stack, your read on the deal, the next concrete step.",
+      gradedOn: ["Structure", "Specificity", "Concision"],
+      tip: "Lead with the next-step commitment, not the rapport. 'Got a 15-min briefing booked for Thursday' beats 'They seemed receptive'.",
+      yourPitchHints: [
+        "Structure: who · their tech context · their pushback · what you committed to · your read",
+        "Specific facts beat impressions: 'They're on Facets, ACORD AL3' beats 'sounds technical'",
+        "End with what BRAD should do next, if anything",
+      ],
+      pass: (m) => check([
+        { label: "Real recap length (80-160 words)",   ok: (m.total_words || 0) >= 80 && (m.total_words || 0) <= 160 },
+        { label: "Filler discipline (≤5 fillers)",     ok: (m.filler_count || 0) <= 5 },
+        { label: "Mentioned a specific role/title",    ok: containsAny(m.transcript, ["vp", "cto", "cio", "director", "lead", "head of", "manager", "founder"]) },
+        { label: "Named a concrete next step",         ok: containsAny(m.transcript, ["next", "thursday", "follow up", "follow-up", "briefing", "send", "book", "schedule"]) },
+      ]),
+    },
+  ];
+
+  // ─── Pass-criteria helpers used by every drill ───
+  function check(items) {
+    return { passed: items.every(i => i.ok), checks: items };
+  }
+  function containsAny(text, words) {
+    if (!text) return false;
+    const low = text.toLowerCase();
+    return words.some(w => low.includes(w.toLowerCase()));
+  }
+
+  let state = { mr: null, chunks: [], stream: null, startedAt: 0, animFrame: 0, audioCtx: null, analyser: null, drill: null };
+
+  // ── Progress tracking (lifetime, not just today) ──
+  function getProgress() {
+    try { return JSON.parse(localStorage.getItem("bullpen-drill-progress") || "{}"); }
+    catch { return {}; }
+  }
+  function recordPass(drillId) {
+    const p = getProgress();
+    const cur = p[drillId] || { passes: 0, attempts: 0 };
+    cur.passes += 1;
+    cur.attempts += 1;
+    cur.lastPassed = new Date().toISOString();
+    p[drillId] = cur;
+    localStorage.setItem("bullpen-drill-progress", JSON.stringify(p));
+  }
+  function recordAttempt(drillId) {
+    const p = getProgress();
+    const cur = p[drillId] || { passes: 0, attempts: 0 };
+    cur.attempts += 1;
+    p[drillId] = cur;
+    localStorage.setItem("bullpen-drill-progress", JSON.stringify(p));
+  }
+  function isPassed(drillId) {
+    return (getProgress()[drillId]?.passes || 0) > 0;
+  }
+  function isUnlocked(drill, mode) {
+    if (mode === "free") return true;
+    if (drill.level === 1) return true;
+    // Sequential — find the drill at the previous level and check if passed
+    const prev = DRILLS.find(d => d.level === drill.level - 1);
+    return prev ? isPassed(prev.id) : true;
+  }
+
+  // ── Mode: "roadmap" (sequential locks) vs "free" (any drill) ──
+  let mode = localStorage.getItem("bullpen-drill-mode") || "roadmap";
+
+  function renderBoard() {
+    board.replaceChildren();
+    board.className = "drill-board" + (mode === "free" ? " grid" : "");
+    active.style.display = "none";
+    btn.style.display = "none";
+    meterFrame.style.display = "none";
+    timer.style.display = "none";
+    result.style.display = "none";
+
+    // Progress strip
+    const passed = DRILLS.filter(d => isPassed(d.id)).length;
+    const pct = Math.round(passed / DRILLS.length * 100);
+    const strip = document.createElement("div");
+    strip.className = "progress-strip";
+    const lab = document.createElement("div");
+    lab.className = "label";
+    const lt = document.createElement("span"); lt.textContent = "Roadmap progress";
+    const rt = document.createElement("span"); rt.textContent = `${passed} / ${DRILLS.length} levels passed`;
+    lab.appendChild(lt); lab.appendChild(rt);
+    strip.appendChild(lab);
+    const bar = document.createElement("div"); bar.className = "bar";
+    const fill = document.createElement("div"); fill.className = "bar-fill"; fill.style.width = pct + "%";
+    bar.appendChild(fill);
+    strip.appendChild(bar);
+    board.appendChild(strip);
+
+    // Mode selector
+    const modeRow = document.createElement("div"); modeRow.className = "mode-row";
+    const mlbl = document.createElement("span");
+    mlbl.style.cssText = "font-family:JetBrains Mono,monospace; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:#7a6f5f";
+    mlbl.textContent = "Mode";
+    modeRow.appendChild(mlbl);
+    const seg = document.createElement("div"); seg.className = "seg";
+    [["roadmap", "Roadmap"], ["free", "Free practice"]].forEach(([id, lbl]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = lbl;
+      if (mode === id) b.className = "active";
+      b.addEventListener("click", () => {
+        mode = id;
+        localStorage.setItem("bullpen-drill-mode", mode);
+        renderBoard();
+      });
+      seg.appendChild(b);
+    });
+    modeRow.appendChild(seg);
+    if (mode === "roadmap") {
+      const hint = document.createElement("span");
+      hint.style.cssText = "margin-left:auto; font-family:Georgia,serif; font-style:italic; font-size:11.5px; color:#a39888";
+      hint.textContent = "Pass each level to unlock the next";
+      modeRow.appendChild(hint);
+    }
+    board.appendChild(modeRow);
+
+    // Drill cards — sorted by level
+    const sorted = DRILLS.slice().sort((a, b) => (a.level || 99) - (b.level || 99));
+    sorted.forEach(d => {
+      const unlocked = isUnlocked(d, mode);
+      const passed = isPassed(d.id);
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "drill-card" + (passed ? " done" : "") + (unlocked ? "" : " locked");
+      if (unlocked) card.addEventListener("click", () => openDrill(d));
+      else card.addEventListener("click", () => {
+        const prev = DRILLS.find(x => x.level === d.level - 1);
+        flashLockedHint(card, prev ? `Pass Level ${prev.level} to unlock` : "Locked");
+      });
+
+      const badge = document.createElement("div"); badge.className = "level-badge";
+      badge.textContent = unlocked ? (d.level || "•") : "🔒";
+      if (!unlocked) badge.textContent = "" + (d.level || "•");
+      card.appendChild(badge);
+
+      const body = document.createElement("div"); body.className = "body";
+      const cat = document.createElement("div"); cat.className = "cat " + d.category; cat.textContent = d.category;
+      body.appendChild(cat);
+      const name = document.createElement("div"); name.className = "name"; name.textContent = d.name;
+      body.appendChild(name);
+      if (d.audience) {
+        const aud = document.createElement("div"); aud.className = "audience-line";
+        aud.textContent = "→ " + d.audience.split(" · ")[0];
+        body.appendChild(aud);
+      }
+      const meta = document.createElement("div"); meta.className = "meta";
+      meta.textContent = `${d.duration}s · ${d.gradedOn.length} criteria${passed ? ` · ${getProgress()[d.id]?.passes || 1}× passed` : ""}`;
+      body.appendChild(meta);
+      card.appendChild(body);
+
+      if (!unlocked) {
+        const lock = document.createElement("span"); lock.className = "lock-icon"; lock.textContent = "🔒";
+        card.appendChild(lock);
+      }
+
+      board.appendChild(card);
+    });
+  }
+
+  function flashLockedHint(el, msg) {
+    const existing = el.querySelector(".lock-hint");
+    if (existing) return;
+    const hint = document.createElement("div");
+    hint.className = "lock-hint";
+    hint.style.cssText = "position:absolute; right:14px; top:50%; transform:translateY(-50%); background:rgba(248,113,113,0.15); color:#fda4a4; padding:4px 10px; border-radius:3px; font-family:JetBrains Mono,monospace; font-size:10px; letter-spacing:.10em; white-space:nowrap";
+    hint.textContent = msg;
+    el.appendChild(hint);
+    setTimeout(() => hint.remove(), 1800);
+  }
+
+  function openDrill(d) {
+    state.drill = d;
+    board.style.display = "none";
+    active.style.display = "block";
+    active.replaceChildren();
+
+    const row = document.createElement("div"); row.className = "name-row";
+    const backBtn = document.createElement("button");
+    backBtn.type = "button"; backBtn.className = "back-btn";
+    backBtn.textContent = "← Drills";
+    backBtn.addEventListener("click", renderBoard);
+    row.appendChild(backBtn);
+    const dur = document.createElement("span"); dur.className = "duration";
+    dur.textContent = `${d.duration} sec`;
+    row.appendChild(dur);
+    active.appendChild(row);
+
+    const h = document.createElement("h3"); h.textContent = d.name; active.appendChild(h);
+
+    // Who you're talking to — most important context, surfaced loud.
+    if (d.audience) {
+      const aud = document.createElement("div");
+      aud.style.cssText = `
+        padding:10px 14px; margin:6px 0 14px;
+        background:rgba(34,211,238,0.06); border-left:3px solid #22d3ee;
+        border-radius:0 4px 4px 0; font-size:13.5px; line-height:1.45; color:#f0e4cf;
+      `;
+      const lab = document.createElement("span");
+      lab.style.cssText = "font-family:JetBrains Mono,monospace; font-size:9.5px; letter-spacing:.20em; text-transform:uppercase; color:#22d3ee; margin-right:8px";
+      lab.textContent = "AUDIENCE";
+      aud.appendChild(lab);
+      const a = document.createElement("span");
+      a.textContent = d.audience;
+      aud.appendChild(a);
+      active.appendChild(aud);
+    }
+
+    const setup = document.createElement("div"); setup.className = "drill-section";
+    const sl = document.createElement("span"); sl.className = "sec-label"; sl.textContent = "Setup"; setup.appendChild(sl);
+    const ss = document.createElement("span"); ss.textContent = d.setup; setup.appendChild(ss);
+    active.appendChild(setup);
+
+    const task = document.createElement("div"); task.className = "drill-section";
+    const tl = document.createElement("span"); tl.className = "sec-label"; tl.textContent = "Task"; task.appendChild(tl);
+    const ts = document.createElement("span"); ts.textContent = d.task; task.appendChild(ts);
+    active.appendChild(task);
+
+    const graded = document.createElement("div"); graded.className = "drill-section";
+    const gl = document.createElement("div"); gl.className = "sec-label"; gl.textContent = "Graded on"; graded.appendChild(gl);
+    const ul = document.createElement("ul");
+    d.gradedOn.forEach(g => { const li = document.createElement("li"); li.textContent = g; ul.appendChild(li); });
+    graded.appendChild(ul);
+    active.appendChild(graded);
+
+    // Pitch hints — concrete sentences you can rehearse with
+    if (d.yourPitchHints && d.yourPitchHints.length) {
+      const hints = document.createElement("div"); hints.className = "drill-section";
+      const hl = document.createElement("div"); hl.className = "sec-label"; hl.textContent = "Sentences to rehearse"; hints.appendChild(hl);
+      const ul = document.createElement("ul");
+      d.yourPitchHints.forEach(h => {
+        const li = document.createElement("li");
+        li.style.cssText = "font-family:var(--serif); font-size:13.5px; color:#dcdcdc; line-height:1.55; margin-bottom:5px";
+        li.textContent = h;
+        ul.appendChild(li);
+      });
+      hints.appendChild(ul);
+      active.appendChild(hints);
+    }
+
+    // Pass criteria — what we'll measure against so the user knows the win
+    if (d.pass) {
+      const sample = d.pass({ total_words: 0, filler_count: 0, hedge_count: 0, transcript: "" });
+      const pc = document.createElement("div"); pc.className = "pass-criteria";
+      const pl = document.createElement("div"); pl.className = "label";
+      pl.textContent = `To pass Level ${d.level || "•"} — all of these`;
+      pc.appendChild(pl);
+      const ul = document.createElement("ul");
+      sample.checks.forEach(c => {
+        const li = document.createElement("li");
+        li.textContent = c.label;
+        ul.appendChild(li);
+      });
+      pc.appendChild(ul);
+      active.appendChild(pc);
+    }
+
+    const tip = document.createElement("div"); tip.className = "drill-tip"; tip.textContent = d.tip;
+    active.appendChild(tip);
+
+    // Permanent product context strip at the bottom — small reminder of what
+    // you're pitching so you don't have to leave the flash card to remember.
+    const ctx = document.createElement("div");
+    ctx.style.cssText = "margin-top:14px; padding:10px 12px; background:rgba(8,5,3,0.50); border-radius:4px; font-size:11.5px; line-height:1.55; color:#a39888; font-family:JetBrains Mono,monospace";
+    const ctxLabel = document.createElement("div");
+    ctxLabel.style.cssText = "font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:#7a6f5f; margin-bottom:6px";
+    ctxLabel.textContent = "What you're selling · " + PRODUCT_CONTEXT.name;
+    ctx.appendChild(ctxLabel);
+    const ctxLine = document.createElement("div");
+    ctxLine.textContent = PRODUCT_CONTEXT.oneLine;
+    ctx.appendChild(ctxLine);
+    active.appendChild(ctx);
+
+    btn.style.display = "block";
+    meterFrame.style.display = "block";
+    timer.style.display = "block";
+    result.style.display = "none";
+    result.replaceChildren();
+    btn.textContent = "🔴 Start recording";
+    btn.classList.remove("live");
+  }
+
+  function showMicBlocked(message) {
+    result.style.display = "block";
+    result.replaceChildren();
+    const help = document.createElement("div");
+    help.className = "mic-blocked-help";
+    const p = document.createElement("div");
+    p.textContent = "Mic permission was denied. Fix in two clicks:";
+    help.appendChild(p);
+    const ol = document.createElement("ol");
+    ol.style.cssText = "margin:6px 0 6px 20px; padding:0; line-height:1.55";
+    [
+      "Look for the camera/mic icon in your browser's address bar (usually a slashed-out mic)",
+      "Click it → set Microphone to 'Allow' → reload this page",
+    ].forEach(t => { const li = document.createElement("li"); li.textContent = t; ol.appendChild(li); });
+    help.appendChild(ol);
+    const retry = document.createElement("button");
+    retry.type = "button"; retry.textContent = "↻ Try again";
+    retry.addEventListener("click", () => { result.style.display = "none"; btn.click(); });
+    help.appendChild(retry);
+    if (message) {
+      const m = document.createElement("div");
+      m.style.cssText = "margin-top:8px; font-family:JetBrains Mono,monospace; font-size:10.5px; color:#7a6f5f";
+      m.textContent = "browser said: " + message;
+      help.appendChild(m);
+    }
+    result.appendChild(help);
+  }
+
+  fab.addEventListener("click", () => {
+    overlay.classList.add("open");
+    renderBoard();
+  });
+  overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && overlay.classList.contains("open")) close();
+  });
+  function close() {
+    if (state.mr && state.mr.state === "recording") state.mr.stop();
+    overlay.classList.remove("open");
+  }
+
+  btn.addEventListener("click", async () => {
+    if (state.mr && state.mr.state === "recording") {
+      state.mr.stop();
+      btn.classList.remove("live");
+      btn.textContent = "⏳ Transcribing…";
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      state.stream = stream;
+      state.chunks = [];
+      result.style.display = "none";   // clear any prior mic-blocked help
+
+      const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      state.mr = mr;
+      mr.ondataavailable = e => { if (e.data && e.data.size) state.chunks.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        if (state.animFrame) cancelAnimationFrame(state.animFrame);
+        if (state.audioCtx) state.audioCtx.close().catch(() => {});
+        const blob = new Blob(state.chunks, { type: "audio/webm" });
+        try {
+          const rep   = encodeURIComponent(window.CURRENT_REP || "self");
+          const label = encodeURIComponent(state.drill ? state.drill.name : "freeform");
+          const r = await fetch("http://localhost:7878/api/speaking/record?label=" + label + "&rep=" + rep, {
+            method: "POST",
+            headers: { "Content-Type": "audio/webm" },
+            body: blob,
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.error || "HTTP " + r.status);
+          renderResult(data);
+          // Pass-evaluate against the drill's criteria
+          if (state.drill && state.drill.pass) {
+            // Include transcript so containsAny() can match
+            const evalInput = { ...(data.metrics || {}), transcript: data.transcript || "" };
+            const verdict = state.drill.pass(evalInput);
+            renderPassBanner(verdict);
+            recordAttempt(state.drill.id);
+            if (verdict.passed) recordPass(state.drill.id);
+          }
+        } catch (e) {
+          renderError(e);
+        }
+        btn.textContent = "🔴 Start recording";
+      };
+      mr.start();
+      btn.classList.add("live");
+      btn.textContent = "⏹ Stop";
+      startMeter(stream);
+    } catch (e) {
+      btn.textContent = "🔴 Start recording";
+      // Distinguish permission denial from other errors so the user gets a
+      // recovery path instead of just a red error string.
+      const isPermDenied = (
+        e.name === "NotAllowedError" || e.name === "PermissionDeniedError"
+        || /permission|denied|dismissed|blocked/i.test(e.message || "")
+      );
+      if (isPermDenied) showMicBlocked(e.message);
+      else renderError(e);
+    }
+  });
+
+  function startMeter(stream) {
+    state.startedAt = performance.now();
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    src.connect(analyser);
+    state.audioCtx = ctx; state.analyser = analyser;
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+    function tick() {
+      if (!state.mr || state.mr.state !== "recording") return;
+      const ms = performance.now() - state.startedAt;
+      const secs = Math.floor(ms / 1000);
+      timer.textContent = `${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")}`;
+      analyser.getByteFrequencyData(buf);
+      const avg = buf.reduce((a, b) => a + b, 0) / buf.length;
+      meter.style.width = Math.min(100, (avg / 255) * 150) + "%";
+      state.animFrame = requestAnimationFrame(tick);
+    }
+    tick();
+  }
+
+  function renderPassBanner(verdict) {
+    // Inserted BEFORE the transcript by renderResult — caller invokes after
+    // the result is already rendered, so we prepend.
+    const banner = document.createElement("div");
+    banner.className = "pass-banner " + (verdict.passed ? "pass" : "fail");
+    const head = document.createElement("div"); head.className = "head";
+    if (verdict.passed) {
+      const prev = state.drill;
+      const next = DRILLS.find(d => d.level === (prev?.level || 0) + 1);
+      head.textContent = next ? `✓ LEVEL ${prev.level} PASSED — Level ${next.level} unlocked` : `✓ LEVEL ${prev?.level || ""} PASSED — all levels complete`;
+    } else {
+      head.textContent = "Almost — keep these in mind next try";
+    }
+    banner.appendChild(head);
+    const ul = document.createElement("ul");
+    verdict.checks.forEach(c => {
+      const li = document.createElement("li");
+      li.textContent = (c.ok ? "✓ " : "× ") + c.label;
+      if (!c.ok) li.style.color = "#fbbf24";
+      ul.appendChild(li);
+    });
+    banner.appendChild(ul);
+    // Insert as first child of result
+    result.insertBefore(banner, result.firstChild);
+  }
+
+  function renderResult(data) {
+    result.replaceChildren();
+    result.style.display = "block";
+    const m = data.metrics || {};
+
+    const h = document.createElement("h3"); h.textContent = "Transcript + grade"; result.appendChild(h);
+
+    const tx = document.createElement("div");
+    tx.className = "speak-transcript";
+    tx.textContent = data.transcript || "(no transcript — was the mic silent?)";
+    result.appendChild(tx);
+
+    const stats = document.createElement("div");
+    stats.className = "speak-stats";
+    [
+      { l: "Words", v: m.total_words ?? "—" },
+      { l: "Fillers", v: m.filler_count ?? 0, warn: (m.filler_count || 0) >= 4 },
+      { l: "Questions", v: m.questions ?? 0 },
+      { l: "Hedges", v: m.hedge_count ?? 0, warn: (m.hedge_count || 0) >= 3 },
+      { l: "Avg sentence", v: m.avg_sentence_words ?? "—" },
+      { l: "Sentences", v: m.sentences ?? "—" },
+    ].forEach(s => {
+      const card = document.createElement("div");
+      card.className = "speak-stat" + (s.warn ? " warn" : "");
+      const lab = document.createElement("div"); lab.className = "lab"; lab.textContent = s.l;
+      const val = document.createElement("div"); val.className = "val"; val.textContent = String(s.v);
+      card.appendChild(lab); card.appendChild(val);
+      stats.appendChild(card);
+    });
+    result.appendChild(stats);
+
+    if (m.fillers && Object.keys(m.fillers).length) {
+      const fb = document.createElement("div");
+      fb.style.cssText = "font-family:var(--mono); font-size:11.5px; color:#a39888; margin-bottom:14px";
+      const entries = Object.entries(m.fillers).sort((a, b) => b[1] - a[1]);
+      fb.textContent = "Fillers detected: " + entries.map(([k, v]) => `${k} ×${v}`).join(" · ");
+      result.appendChild(fb);
+    }
+
+    if (m.coaching_signals && m.coaching_signals.length) {
+      const coach = document.createElement("div");
+      coach.className = "speak-coach";
+      m.coaching_signals.forEach(sig => {
+        const r = document.createElement("div"); r.className = "row"; r.textContent = "▸ " + sig;
+        coach.appendChild(r);
+      });
+      result.appendChild(coach);
+    }
+  }
+
+  function renderError(e) {
+    result.replaceChildren();
+    result.style.display = "block";
+    const div = document.createElement("div");
+    div.style.cssText = "padding:14px; background:rgba(248,113,113,0.10); border:1px solid rgba(248,113,113,0.30); border-radius:4px; color:#f87171; font-family:JetBrains Mono,monospace; font-size:12px";
+    div.textContent = "× " + (e.message || e);
+    result.appendChild(div);
+  }
+})();
+</script>
+
+<style>
+  .trend-fab{position:fixed; right:22px; bottom:126px; z-index:80; padding:11px 18px;
+    background:rgba(8,5,3,0.85); color:#a78bfa; border:1px solid rgba(167,139,250,0.30);
+    border-radius:999px; font-family:var(--mono); font-size:10.5px; letter-spacing:.18em;
+    text-transform:uppercase; font-weight:600; cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,0.30);
+    transition:transform .15s, border-color .15s}
+  .trend-fab:hover{transform:translateY(-2px); border-color:#a78bfa}
+
+  .trend-overlay{position:fixed; inset:0; z-index:200; background:rgba(8,5,3,0.86);
+    backdrop-filter:blur(10px); display:none; align-items:flex-start; justify-content:center;
+    padding:48px 24px 24px; overflow-y:auto}
+  .trend-overlay.open{display:flex}
+  .trend-drawer{width:min(1040px, 100%); background:linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    border:1px solid rgba(245,232,216,0.12); border-radius:8px; padding:32px}
+  .trend-drawer h2{margin:0 0 6px; font-family:var(--serif); font-size:28px; font-weight:500}
+  .trend-drawer .lead{color:#a39888; font-size:14px; line-height:1.55; margin:0 0 22px}
+
+  .trend-empty{color:#a39888; font-size:13px; padding:32px; text-align:center;
+    background:rgba(26,18,8,0.50); border-radius:6px; border:1px dashed rgba(245,232,216,0.10)}
+
+  .trend-summary{display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:24px}
+  .stat-card{padding:14px 16px; background:rgba(26,18,8,0.55); border:1px solid rgba(245,232,216,0.08);
+    border-radius:6px}
+  .stat-card .label{font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
+    text-transform:uppercase; color:#7a6f5f; margin-bottom:6px}
+  .stat-card .value{font-family:var(--serif); font-size:24px; font-weight:500; color:#f0e4cf}
+  .stat-card .delta{font-family:var(--mono); font-size:11px; margin-top:4px; color:#7a6f5f}
+  .stat-card .delta.up{color:#34d399}   .stat-card .delta.down{color:#f87171}
+
+  .trend-chart{margin-bottom:24px; padding:20px; background:rgba(26,18,8,0.40);
+    border:1px solid rgba(245,232,216,0.06); border-radius:6px}
+  .trend-chart h3{margin:0 0 14px; font-family:var(--mono); font-size:11px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--accent)}
+  .trend-chart svg{display:block; width:100%; height:160px}
+
+  .trend-table{font-family:var(--mono); font-size:11.5px; color:#c5b89f}
+  .trend-table .hdr{display:grid; grid-template-columns:120px 1fr 70px 60px 60px 60px;
+    padding:8px 12px; color:#7a6f5f; letter-spacing:.14em; text-transform:uppercase; font-size:9.5px;
+    border-bottom:1px solid rgba(245,232,216,0.08)}
+  .trend-row{display:grid; grid-template-columns:120px 1fr 70px 60px 60px 60px;
+    padding:8px 12px; border-bottom:1px solid rgba(245,232,216,0.04)}
+  .trend-row .when{color:#a39888}
+</style>
+
+<div class="trend-overlay" id="trendOverlay" role="dialog" aria-modal="true" aria-labelledby="trendTitle">
+  <div class="trend-drawer">
+    <h2 id="trendTitle">Your improvement</h2>
+    <p class="lead">Every practice run writes a metrics file. Watch your fillers drop, your question ratio climb, and your monologues shrink over time.</p>
+    <div id="trendBody"></div>
+  </div>
+</div>
+
+<script>
+/* Trend view — pulls /api/metrics/history, renders a stat strip + 4 sparklines
+   (talk ratio, question ratio, filler count, longest monologue) + a recent-runs table. */
+(function() {
+  const fab     = document.getElementById("trendFab");
+  const overlay = document.getElementById("trendOverlay");
+  const body    = document.getElementById("trendBody");
+
+  fab.addEventListener("click", async () => {
+    overlay.classList.add("open");
+    await load();
+  });
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.classList.remove("open"); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && overlay.classList.contains("open")) overlay.classList.remove("open");
+  });
+
+  async function load() {
+    try {
+      const r = await fetch("http://localhost:7878/api/metrics/history?limit=50");
+      const d = await r.json();
+      render(d.records || []);
+    } catch (e) {
+      renderEmpty(`Could not reach trainer · ${e.message}`);
+    }
+  }
+
+  function renderEmpty(msg) {
+    body.replaceChildren();
+    const div = document.createElement("div");
+    div.className = "trend-empty";
+    div.textContent = msg;
+    body.appendChild(div);
+  }
+
+  function render(records) {
+    body.replaceChildren();
+    if (!records.length) {
+      renderEmpty("No practice runs yet. Take a call from the Practice Lab — the metrics start tracking from session #1.");
+      return;
+    }
+
+    // ── Summary stat cards (latest vs first session) ──
+    const summary = document.createElement("div");
+    summary.className = "trend-summary";
+    const first = records[0], last = records[records.length - 1];
+    const stats = [
+      { label: "Sessions",       value: records.length.toString(),                       delta: null },
+      { label: "Talk ratio",     value: pct(last.talk_ratio),         delta: deltaPct(first.talk_ratio, last.talk_ratio, false) },
+      { label: "Question ratio", value: pct(last.question_ratio),     delta: deltaPct(first.question_ratio, last.question_ratio, true) },
+      { label: "Fillers (last)", value: String(last.filler_count ?? 0), delta: deltaInt(first.filler_count, last.filler_count, false) },
+    ];
+    stats.forEach(s => summary.appendChild(buildStat(s)));
+    body.appendChild(summary);
+
+    // ── Sparklines ──
+    body.appendChild(buildSpark("Talk ratio (target ~43%)", records.map(r => r.talk_ratio || 0), { fmt: pct, target: 0.43 }));
+    body.appendChild(buildSpark("Question ratio (target 25-40%)", records.map(r => r.question_ratio || 0), { fmt: pct, target: 0.30 }));
+    body.appendChild(buildSpark("Filler count (lower = better)", records.map(r => r.filler_count || 0), { fmt: n => String(n), invert: true }));
+    body.appendChild(buildSpark("Longest monologue words (target <80)", records.map(r => r.longest_monologue_words || 0), { fmt: n => String(n), target: 80, invert: true }));
+
+    // ── Recent runs table ──
+    const tbl = document.createElement("div");
+    tbl.className = "trend-table";
+    const hdr = document.createElement("div");
+    hdr.className = "hdr";
+    ["When", "Persona", "Talk", "Q%", "Fillers", "Max turn"].forEach(t => {
+      const c = document.createElement("span"); c.textContent = t; hdr.appendChild(c);
+    });
+    tbl.appendChild(hdr);
+    records.slice().reverse().slice(0, 15).forEach(r => {
+      const row = document.createElement("div");
+      row.className = "trend-row";
+      const cells = [
+        { text: (r.timestamp || r.date || "—").slice(0, 16).replace("T", " "), cls: "when" },
+        { text: `${r.role || ""} · ${r.company || r.slug}` },
+        { text: pct(r.talk_ratio) },
+        { text: pct(r.question_ratio) },
+        { text: String(r.filler_count ?? 0) },
+        { text: String(r.longest_monologue_words ?? 0) },
+      ];
+      cells.forEach(c => {
+        const span = document.createElement("span");
+        if (c.cls) span.className = c.cls;
+        span.textContent = c.text;
+        row.appendChild(span);
+      });
+      tbl.appendChild(row);
+    });
+    body.appendChild(tbl);
+  }
+
+  function pct(v) { return ((v || 0) * 100).toFixed(0) + "%"; }
+
+  function deltaPct(a, b, higherIsBetter) {
+    if (a == null || b == null) return null;
+    const d = (b - a) * 100;
+    if (Math.abs(d) < 1) return { text: "no change", cls: "" };
+    const better = higherIsBetter ? d > 0 : d < 0;
+    return { text: `${d > 0 ? "+" : ""}${d.toFixed(1)} pts`, cls: better ? "up" : "down" };
+  }
+
+  function deltaInt(a, b, higherIsBetter) {
+    if (a == null || b == null) return null;
+    const d = b - a;
+    if (d === 0) return { text: "no change", cls: "" };
+    const better = higherIsBetter ? d > 0 : d < 0;
+    return { text: `${d > 0 ? "+" : ""}${d}`, cls: better ? "up" : "down" };
+  }
+
+  function buildStat(s) {
+    const card = document.createElement("div"); card.className = "stat-card";
+    const l = document.createElement("div"); l.className = "label"; l.textContent = s.label;
+    const v = document.createElement("div"); v.className = "value"; v.textContent = s.value;
+    card.appendChild(l); card.appendChild(v);
+    if (s.delta) {
+      const d = document.createElement("div");
+      d.className = "delta " + (s.delta.cls || "");
+      d.textContent = s.delta.text;
+      card.appendChild(d);
+    }
+    return card;
+  }
+
+  function buildSpark(title, values, opts) {
+    const wrap = document.createElement("div"); wrap.className = "trend-chart";
+    const h = document.createElement("h3"); h.textContent = title; wrap.appendChild(h);
+
+    const W = 1000, H = 160, PAD = 20;
+    const max = Math.max(...values, opts.target || 0, 0.001);
+    const min = 0;
+    const range = Math.max(max - min, 0.001);
+    const step = values.length > 1 ? (W - 2 * PAD) / (values.length - 1) : 0;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("preserveAspectRatio", "none");
+
+    // Target line
+    if (opts.target != null) {
+      const ty = H - PAD - ((opts.target - min) / range) * (H - 2 * PAD);
+      const tline = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      tline.setAttribute("x1", PAD); tline.setAttribute("x2", W - PAD);
+      tline.setAttribute("y1", ty); tline.setAttribute("y2", ty);
+      tline.setAttribute("stroke", "#fbbf24");
+      tline.setAttribute("stroke-dasharray", "4 4");
+      tline.setAttribute("stroke-width", "1");
+      svg.appendChild(tline);
+    }
+
+    // Data polyline
+    const points = values.map((v, i) => {
+      const x = PAD + i * step;
+      const y = H - PAD - ((v - min) / range) * (H - 2 * PAD);
+      return `${x},${y}`;
+    }).join(" ");
+    const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    poly.setAttribute("points", points);
+    poly.setAttribute("fill", "none");
+    poly.setAttribute("stroke", "#34d399");
+    poly.setAttribute("stroke-width", "2");
+    svg.appendChild(poly);
+
+    // Dots
+    values.forEach((v, i) => {
+      const x = PAD + i * step;
+      const y = H - PAD - ((v - min) / range) * (H - 2 * PAD);
+      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", "3");
+      c.setAttribute("fill", "#34d399");
+      svg.appendChild(c);
+    });
+
+    wrap.appendChild(svg);
+    return wrap;
+  }
+})();
+</script>
+
+<style>
+  .practice-fab{position:fixed; right:22px; bottom:74px; z-index:80; padding:11px 18px;
+    background:rgba(8,5,3,0.85); color:var(--accent); border:1px solid var(--accent-dim);
+    border-radius:999px; font-family:var(--mono); font-size:10.5px; letter-spacing:.18em;
+    text-transform:uppercase; font-weight:600; cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,0.30);
+    transition:transform .15s, border-color .15s}
+  .practice-fab:hover{transform:translateY(-2px); border-color:var(--accent)}
+
+  .lab-overlay{position:fixed; inset:0; z-index:200; background:rgba(8,5,3,0.86);
+    backdrop-filter:blur(10px); display:none; align-items:flex-start; justify-content:center;
+    padding:48px 24px 24px; overflow-y:auto}
+  .lab-overlay.open{display:flex}
+  .lab-drawer{width:min(960px, 100%); background:linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    border:1px solid rgba(245,232,216,0.12); border-radius:8px; padding:32px}
+  .lab-drawer h2{margin:0 0 6px; font-family:var(--serif); font-size:28px; font-weight:500}
+  .lab-drawer .lead{color:#a39888; font-size:14px; line-height:1.55; margin:0 0 28px;
+    max-width:620px}
+  .lab-close{position:absolute; top:24px; right:24px; background:transparent; color:#c5b89f;
+    border:1px solid rgba(245,232,216,0.10); border-radius:4px; padding:7px 12px;
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer}
+  .lab-close:hover{color:var(--accent); border-color:var(--accent-dim)}
+
+  .tier-section{margin-bottom:24px}
+  .tier-label{font-family:var(--mono); font-size:10.5px; letter-spacing:.20em;
+    text-transform:uppercase; color:var(--accent); margin-bottom:12px; display:flex;
+    gap:10px; align-items:center}
+  .tier-label .dot{width:6px; height:6px; border-radius:50%; background:var(--accent)}
+  .tier-label.beginner{color:#34d399}      .tier-label.beginner .dot{background:#34d399}
+  .tier-label.intermediate{color:#fbbf24}  .tier-label.intermediate .dot{background:#fbbf24}
+  .tier-label.advanced{color:#f87171}      .tier-label.advanced .dot{background:#f87171}
+  .tier-label.coach{color:#a78bfa}         .tier-label.coach .dot{background:#a78bfa}
+
+  .persona-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px}
+  .persona-card{padding:16px; background:rgba(26,18,8,0.55); border:1px solid rgba(245,232,216,0.08);
+    border-radius:6px; cursor:pointer; transition:border-color .15s, transform .15s}
+  .persona-card:hover{border-color:var(--accent); transform:translateY(-1px)}
+  .persona-card .axis{font-family:var(--mono); font-size:10px; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--accent); margin-bottom:8px}
+  .persona-card .role{font-family:var(--serif); font-size:15px; font-weight:500;
+    color:#f0e4cf; margin-bottom:4px; line-height:1.30}
+  .persona-card .what{font-size:12.5px; line-height:1.55; color:#a39888}
+</style>
+
+<div class="lab-overlay" id="labOverlay" role="dialog" aria-modal="true" aria-labelledby="labTitle">
+  <button type="button" class="lab-close" data-close-lab>✕ Close</button>
+  <div class="lab-drawer">
+    <h2 id="labTitle">Practice Lab</h2>
+    <p class="lead">Curated training personas grouped by difficulty. No CRM data needed — pick a scenario, take the call, get scored on talk ratio + filler words + composure. Click any card to start.</p>
+    <div id="labBody"></div>
+  </div>
+</div>
+
+<script>
+/* Practice Lab — loads /api/library and renders training personas grouped by tier.
+   Click a card → opens the trainer at /?persona=library:<slug>&autostart=1 */
+(function() {
+  const fab     = document.getElementById("practiceFab");
+  const overlay = document.getElementById("labOverlay");
+  const body    = document.getElementById("labBody");
+  let cached    = null;
+
+  const TIER_LABELS = {
+    beginner:     "Beginner · learn the basics safely",
+    intermediate: "Intermediate · realistic objection density",
+    advanced:     "Advanced · hostile, time-pressured, evasive",
+    coach:        "Coach · post-call self-reflection",
+  };
+
+  fab.addEventListener("click", async () => {
+    overlay.classList.add("open");
+    if (!cached) await loadLibrary();
+    render();
+  });
+  document.querySelectorAll("[data-close-lab]").forEach(el =>
+    el.addEventListener("click", () => overlay.classList.remove("open")));
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.classList.remove("open"); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && overlay.classList.contains("open")) overlay.classList.remove("open");
+  });
+
+  async function loadLibrary() {
+    try {
+      const r = await fetch("http://localhost:7878/api/library");
+      cached = await r.json();
+    } catch (e) {
+      cached = { tiers: {}, personas: [] };
+    }
+  }
+
+  function render() {
+    body.replaceChildren();
+    if (!cached.personas || cached.personas.length === 0) {
+      const p = document.createElement("p");
+      p.style.color = "#a39888";
+      p.textContent = "Library not loaded. Make sure the trainer server is running on :7878.";
+      body.appendChild(p);
+      return;
+    }
+
+    const byTier = {};
+    cached.personas.forEach(p => {
+      (byTier[p.tier] = byTier[p.tier] || []).push(p);
+    });
+
+    ["beginner", "intermediate", "advanced", "coach"].forEach(tier => {
+      const list = byTier[tier];
+      if (!list || list.length === 0) return;
+      const section = document.createElement("section");
+      section.className = "tier-section";
+
+      const label = document.createElement("div");
+      label.className = `tier-label ${tier}`;
+      const dot = document.createElement("span"); dot.className = "dot";
+      label.appendChild(dot);
+      const lt = document.createElement("span"); lt.textContent = TIER_LABELS[tier] || tier;
+      label.appendChild(lt);
+      section.appendChild(label);
+
+      const grid = document.createElement("div");
+      grid.className = "persona-grid";
+      list.forEach(p => grid.appendChild(buildCard(p)));
+      section.appendChild(grid);
+
+      body.appendChild(section);
+    });
+  }
+
+  function buildCard(p) {
+    const card = document.createElement("a");
+    card.className = "persona-card";
+    card.href = `http://localhost:7878/?persona=${encodeURIComponent("library:" + p.slug)}&autostart=1`;
+    card.target = "_blank";
+    card.rel = "noopener";
+
+    const axis = document.createElement("div"); axis.className = "axis"; axis.textContent = p.axis;
+    const role = document.createElement("div"); role.className = "role"; role.textContent = p.role;
+    const what = document.createElement("div"); what.className = "what"; what.textContent = p.what;
+
+    card.appendChild(axis); card.appendChild(role); card.appendChild(what);
+    return card;
+  }
+})();
+</script>
+
+<div class="ingest-overlay" id="ingestOverlay" role="dialog" aria-modal="true" aria-labelledby="ingestTitle">
+  <div class="ingest-drawer" role="document">
+    <h2 id="ingestTitle">Add to your bullpen</h2>
+    <p class="lead">Drop a file, paste a URL, or paste a list — BullpenLM extracts companies and adds them to the floor. Runs locally; nothing leaves your machine.</p>
+
+    <label class="drop" id="dropZone">
+      <div class="icon">▾</div>
+      <div class="hint"><strong>Drop a file here</strong> or click to choose</div>
+      <div class="types">CSV · PDF · EML · JSON · TXT · MD</div>
+      <input type="file" id="dropInput" accept=".csv,.pdf,.eml,.mbox,.json,.txt,.md,.markdown,text/csv,application/pdf,application/json,text/plain,text/markdown,message/rfc822">
+    </label>
+
+    <div class="or-divider">or paste</div>
+
+    <textarea class="paste-box" id="pasteBox" placeholder="Paste a URL (https://acme.com), or paste a list of prospects with company names + context, or paste meeting notes..."></textarea>
+    <div class="paste-row">
+      <button type="button" class="ingest-go" id="pasteGo">Ingest</button>
+      <button type="button" class="ingest-cancel" data-close-ingest>Cancel</button>
+      <span style="flex:1"></span>
+      <span style="font-family:var(--mono); font-size:10px; color:#7a6f5f; letter-spacing:.10em">Gemma runs locally · 20-60s</span>
+    </div>
+
+    <div id="ingestResult"></div>
+  </div>
+</div>
+
+<script>
+/* Universal ingest — wires the drawer to /api/ingest. After a successful
+   ingest, refresh the prospect list from /api/organizations so the new
+   characters walk onto the floor. */
+(function() {
+  const fab     = document.getElementById("ingestFab");
+  const overlay = document.getElementById("ingestOverlay");
+  const drop    = document.getElementById("dropZone");
+  const input   = document.getElementById("dropInput");
+  const paste   = document.getElementById("pasteBox");
+  const goBtn   = document.getElementById("pasteGo");
+  const result  = document.getElementById("ingestResult");
+
+  const open  = () => { overlay.classList.add("open"); setTimeout(() => paste.focus(), 50); };
+  const close = () => { overlay.classList.remove("open"); result.replaceChildren(); paste.value = ""; };
+
+  fab.addEventListener("click", open);
+  document.querySelectorAll("[data-close-ingest]").forEach(el => el.addEventListener("click", close));
+  overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && overlay.classList.contains("open")) close(); });
+
+  /* Drag-and-drop visual feedback + file drop */
+  ["dragenter", "dragover"].forEach(ev =>
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev =>
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => {
+    const f = e.dataTransfer?.files?.[0];
+    if (f) sendFile(f);
+  });
+  input.addEventListener("change", () => {
+    const f = input.files?.[0];
+    if (f) sendFile(f);
+  });
+
+  goBtn.addEventListener("click", () => {
+    const text = paste.value.trim();
+    if (!text) return;
+    sendJSON(/^https?:\/\//i.test(text.split("\n")[0]) ? { url: text } : { text });
+  });
+
+  async function sendFile(file) {
+    showLoading(`Reading ${file.name}…`);
+    const buf = await file.arrayBuffer();
+    const ctype = file.type || "application/octet-stream";
+    try {
+      const r = await fetch(`/api/ingest?filename=${encodeURIComponent(file.name)}`, {
+        method: "POST",
+        headers: { "Content-Type": ctype },
+        body: buf,
+      });
+      const data = await r.json();
+      renderResult(data);
+    } catch (e) {
+      renderError(e);
+    }
+  }
+
+  async function sendJSON(payload) {
+    showLoading("Extracting…");
+    try {
+      const r = await fetch("/api/ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      renderResult(data);
+    } catch (e) {
+      renderError(e);
+    }
+  }
+
+  function showLoading(msg) {
+    goBtn.disabled = true;
+    const div = document.createElement("div");
+    div.className = "ingest-result";
+    const sp = document.createElement("span");
+    sp.className = "ingest-spinner";
+    const txt = document.createElement("span");
+    txt.textContent = msg;
+    div.append(sp, txt);
+    result.replaceChildren(div);
+  }
+
+  function renderResult(data) {
+    goBtn.disabled = false;
+    const div = document.createElement("div");
+    const warned = data.warnings && data.warnings.length && !(data.orgs && data.orgs.length);
+    div.className = "ingest-result" + (warned ? " warn" : "");
+
+    const label = document.createElement("span");
+    label.className = "label";
+    label.textContent = data.kind ? `Kind · ${data.kind}` : "Result";
+    div.appendChild(label);
+
+    const summary = document.createElement("div");
+    summary.textContent = data.summary || (data.orgs && data.orgs.length ? `Added ${data.orgs.length} org(s)` : "No orgs created");
+    div.appendChild(summary);
+
+    if (data.orgs && data.orgs.length) {
+      const ul = document.createElement("ul");
+      data.orgs.forEach(slug => {
+        const li = document.createElement("li");
+        li.textContent = slug;
+        ul.appendChild(li);
+      });
+      div.appendChild(ul);
+    }
+
+    if (data.warnings && data.warnings.length) {
+      const w = document.createElement("div");
+      w.style.marginTop = "8px";
+      w.style.color = "#fbbf24";
+      w.style.fontSize = "11px";
+      w.textContent = data.warnings.join(" · ");
+      div.appendChild(w);
+    }
+
+    result.replaceChildren(div);
+
+    if (data.orgs && data.orgs.length && typeof window.refreshProspects === "function") {
+      window.refreshProspects();
+    }
+  }
+
+  function renderError(e) {
+    goBtn.disabled = false;
+    const div = document.createElement("div");
+    div.className = "ingest-result warn";
+    div.textContent = `Error: ${e.message || e}`;
+    result.replaceChildren(div);
+  }
+})();
+</script>
 
 <script>
 /* ────────────────────────────────────────────────────────────────────────
@@ -484,36 +2434,79 @@ function newTargetIn(b, padding = 30) {
   };
 }
 
+function priorityScore(p) {
+  /* Higher = call this one first. Used to sort within each zone so the most
+     promising prospects sit at the top-left (where the eye lands). */
+  const org = ORG_GRAPH[p.slug] || {};
+  const state = getProspectState(p.slug) || {};
+  let score = 0;
+  // Late-stage pipeline = top priority
+  if (state.status === "discovery" || state.status === "proposal") score += 1000;
+  else if (state.status === "qualified")                            score += 500;
+  else if (state.status === "gatekeeper" || state.status === "voicemail" || state.status === "sent") score += 200;
+  // Disqualified = bottom
+  if (state.status === "disqualified") score -= 1000;
+  // Enriched orgs have richer personas → better practice value
+  if (org.enriched) score += 80;
+  // Has known contacts already (people count > 0)
+  if ((org.counts?.people || 0) > 0) score += 60;
+  if ((org.counts?.deals  || 0) > 0) score += 400;
+  // Industry priority for KillSesh — insurance + banking are the wedge
+  const ind = (org.industry || p.industry || "").toLowerCase();
+  if (ind.includes("insurance"))     score += 50;
+  else if (ind.includes("banking") || ind.includes("financial")) score += 40;
+  else if (ind.includes("healthcare")) score += 25;
+  return score;
+}
+
 function layoutAgents() {
   agents.length = 0;
   const skinTones = ["#f5d7a8", "#e8c089", "#d4a574", "#b88e5a", "#8b6f47", "#6e553a"];
   const hairTones = ["#1a0e08", "#2a1810", "#4a3022", "#6e5234", "#8a7050", "#a89878"];
 
   const byZone = {};
-  for (const p of PROSPECTS) { byZone[p.zone] = byZone[p.zone] || []; byZone[p.zone].push(p); }
+  for (const p of PROSPECTS) { (byZone[p.zone] = byZone[p.zone] || []).push(p); }
 
   for (const [zone, list] of Object.entries(byZone)) {
     const b = zoneBounds(zone);
     if (!b) continue;
-    for (const p of list) {
-      const start = newTargetIn(b);
+    // Sort by priority (desc), then alphabetical so layout is stable
+    list.sort((a, c) => priorityScore(c) - priorityScore(a) || a.company.localeCompare(c.company));
+
+    // Grid layout — derive cols/rows from zone aspect ratio + agent count
+    const n = list.length;
+    const aspect = b.w / Math.max(1, b.h);
+    const cols = Math.max(1, Math.ceil(Math.sqrt(n * aspect)));
+    const rows = Math.max(1, Math.ceil(n / cols));
+    const pad = 50;
+    const cellW = (b.w - pad * 2) / cols;
+    const cellH = (b.h - pad * 2) / rows;
+
+    list.forEach((p, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const cx = b.x + pad + (col + 0.5) * cellW;
+      const cy = b.y + pad + (row + 0.5) * cellH;
       agents.push({
         slug: p.slug, prospect: p, zone,
-        x: start.x, y: start.y,
-        target: newTargetIn(b),
-        speed: rand(22, 38),          // px/sec
+        x: cx, y: cy,
+        target: { x: cx, y: cy },     // anchored — no wandering
+        homeX: cx, homeY: cy,
+        speed: 0,
         phase: Math.random() * Math.PI * 2,
-        facing: "down",               // up/down/left/right — drives draw orientation
-        idleTimer: 0,
+        facing: "down",
+        idleTimer: 999999,            // permanently idle so stepAgent is a no-op
         zoneBounds: b,
         skin: skinTones[Math.floor(Math.random() * skinTones.length)],
         hair: hairTones[Math.floor(Math.random() * hairTones.length)],
         shirt: ZONE_SHIRT[zone],
-        scale: rand(0.95, 1.08),
+        scale: rand(0.95, 1.05),
         strideSpeed: rand(8.5, 11),
         state: getProspectState(p.slug),
+        priority: priorityScore(p),
+        gridIndex: i,                 // for subtle breathing offset
       });
-    }
+    });
   }
 }
 
@@ -736,15 +2729,68 @@ function drawAgent(a, t) {
   }
 
   // ── Floating label ─────────────────────────────────────────────────
+  // Truncate long names off-hover so neighboring labels don't overlap in
+  // the grid. Full name re-appears on hover.
   const labelY = 28 * s;
-  ctx.font = (hover === a ? "600 11px " : "500 10px ") + "Inter, sans-serif";
+  const isHovered = (hover === a);
+  ctx.font = (isHovered ? "600 11px " : "500 10px ") + "Inter, sans-serif";
   ctx.textAlign = "center";
-  const labelText = a.prospect.company;
+  let labelText = a.prospect.company;
+  const maxOffHoverChars = 18;
+  if (!isHovered && labelText.length > maxOffHoverChars) {
+    labelText = labelText.slice(0, maxOffHoverChars - 1) + "…";
+  }
   const tw = ctx.measureText(labelText).width;
-  ctx.fillStyle = "rgba(26,18,8,0.7)";
+  ctx.fillStyle = isHovered ? "rgba(26,18,8,0.92)" : "rgba(26,18,8,0.72)";
   ctx.fillRect(-tw / 2 - 4, labelY - 2, tw + 8, 13);
-  ctx.fillStyle = hover === a ? "#fff" : "rgba(245,232,216,0.85)";
+  ctx.fillStyle = isHovered ? "#fff" : "rgba(245,232,216,0.88)";
   ctx.fillText(labelText, 0, labelY + 8);
+
+  // Priority pin: a small gold dot above the head for highly-enriched / hot
+  // prospects, so the eye finds the worth-calling-first ones at a glance.
+  if (a.priority >= 100) {
+    const pinY = -26 * s;
+    ctx.fillStyle = "#fbbf24";
+    ctx.shadowColor = "#fbbf24"; ctx.shadowBlur = 6;
+    ctx.beginPath();
+    // Simple star — 5 quick triangles
+    for (let i = 0; i < 5; i++) {
+      const ang = -Math.PI / 2 + i * (Math.PI * 2 / 5);
+      const x = Math.cos(ang) * 3.5;
+      const y = pinY + Math.sin(ang) * 3.5;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // ── Claim flag — small "OWNED BY X" chip when a teammate has claimed
+  //    this prospect. Pulled from the live claim cache populated by the
+  //    Team panel. Mine = green tint, theirs = gold tint.
+  const claim = window.CLAIMS_BY_SLUG && window.CLAIMS_BY_SLUG[a.slug];
+  if (claim && claim.rep) {
+    const me = (window.CURRENT_REP || "self");
+    const isMine = claim.rep === me;
+    const flagY = -36 * s;
+    const initials = claim.rep.slice(0, 2).toUpperCase();
+    ctx.font = "700 8px JetBrains Mono, monospace";
+    const fw = ctx.measureText(initials).width + 10;
+    const fh = 11;
+    ctx.fillStyle = isMine ? "rgba(52,211,153,0.95)" : "rgba(251,191,36,0.95)";
+    ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    const fx = -fw / 2, fy = flagY - fh / 2, fr = 2;
+    ctx.moveTo(fx + fr, fy);
+    ctx.arcTo(fx + fw, fy, fx + fw, fy + fh, fr);
+    ctx.arcTo(fx + fw, fy + fh, fx, fy + fh, fr);
+    ctx.arcTo(fx, fy + fh, fx, fy, fr);
+    ctx.arcTo(fx, fy, fx + fw, fy, fr);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#0d0d0d";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(initials, 0, flagY);
+    ctx.textBaseline = "alphabetic";
+  }
 
   // ── Meeting time pill (shown when a meeting is scheduled) ──────────
   const meeting = a.state?.meeting;
@@ -1120,8 +3166,50 @@ function openDossier(p) {
   metaEl.appendChild(ul);
 
   const actions = document.createElement("div"); actions.className = "focus-actions";
+
+  // Difficulty picker — sits above the Practice button so the rep picks the
+  // intensity before launching. Beginner/Intermediate/Advanced map to prompt
+  // modifiers in /api/chat (warmth, default, hostility).
+  const diffWrap = document.createElement("div");
+  diffWrap.style.cssText = "display:flex; gap:6px; margin-bottom:10px; align-items:center";
+  const diffLabel = document.createElement("span");
+  diffLabel.style.cssText = "font-family:var(--mono); font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:#7a6f5f; margin-right:6px";
+  diffLabel.textContent = "Mode";
+  diffWrap.appendChild(diffLabel);
+  const diffStorageKey = "bullpen-difficulty-" + p.slug;
+  let currentDiff = localStorage.getItem(diffStorageKey) || "intermediate";
+  ["beginner", "intermediate", "advanced"].forEach(d => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.dataset.diff = d;
+    btn.textContent = d[0].toUpperCase() + d.slice(1);
+    btn.style.cssText = `
+      padding:5px 10px; font-family:var(--mono); font-size:10.5px;
+      letter-spacing:.10em; text-transform:uppercase; border-radius:3px; cursor:pointer;
+      background:transparent; color:#a39888; border:1px solid rgba(245,232,216,0.10);
+    `;
+    if (d === currentDiff) {
+      btn.style.background = "var(--accent)";
+      btn.style.color = "#0d0d0d";
+      btn.style.borderColor = "var(--accent)";
+    }
+    btn.addEventListener("click", () => {
+      currentDiff = d;
+      localStorage.setItem(diffStorageKey, d);
+      diffWrap.querySelectorAll("button").forEach(b => {
+        const active = b.dataset.diff === d;
+        b.style.background = active ? "var(--accent)" : "transparent";
+        b.style.color = active ? "#0d0d0d" : "#a39888";
+        b.style.borderColor = active ? "var(--accent)" : "rgba(245,232,216,0.10)";
+      });
+      practice.href = `http://localhost:7878/?persona=${encodeURIComponent(p.slug)}&autostart=1&difficulty=${d}&rep=${encodeURIComponent(window.CURRENT_REP || "self")}`;
+    });
+    diffWrap.appendChild(btn);
+  });
+  actions.appendChild(diffWrap);
+
   const practice = document.createElement("a"); practice.className = "practice-btn";
-  practice.href = "http://localhost:7878/?persona=" + p.slug + "&autostart=1";
+  practice.href = `http://localhost:7878/?persona=${encodeURIComponent(p.slug)}&autostart=1&difficulty=${currentDiff}&rep=${encodeURIComponent(window.CURRENT_REP || "self")}`;
   practice.target = "_blank"; practice.rel = "noopener";
   practice.textContent = "▸ Practice the call (AI roleplay + voice)";
   actions.appendChild(practice);
@@ -1321,24 +3409,166 @@ function renderMarkdown(target, md) {
   }
 }
 
-/* ─── Recorder: MediaRecorder → POST to /api/upload-call ─── */
-let _recState = { mediaRec: null, chunks: [], stream: null, orgSlug: null };
+/* ─── Recorder: MediaRecorder → POST to /api/upload-call ───
+   Now with a live companion overlay (duration + audio meter during recording)
+   and a post-call metrics card (talk ratio, fillers, coaching) the moment the
+   debrief returns. */
+let _recState = { mediaRec: null, chunks: [], stream: null, orgSlug: null,
+                  startedAt: 0, animFrame: 0, audioCtx: null, analyser: null,
+                  overlay: null, levelBar: null, timerEl: null };
+
+function ensureLiveOverlay() {
+  if (_recState.overlay) return _recState.overlay;
+  const wrap = document.createElement("div");
+  wrap.id = "liveOverlay";
+  wrap.style.cssText = `
+    position:fixed; left:22px; bottom:22px; z-index:90;
+    background:rgba(8,5,3,0.92); border:1px solid #f87171; border-radius:8px;
+    padding:14px 18px; font-family:JetBrains Mono,monospace; color:#fff;
+    box-shadow:0 8px 24px rgba(0,0,0,0.40); display:none; min-width:220px;
+  `;
+  const row = document.createElement("div");
+  row.style.cssText = "display:flex; align-items:center; gap:10px; margin-bottom:8px";
+  const dot = document.createElement("span");
+  dot.style.cssText = "width:10px; height:10px; border-radius:50%; background:#f87171; animation:pulse 1s ease-in-out infinite";
+  const lbl = document.createElement("span");
+  lbl.style.cssText = "font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:#f87171";
+  lbl.textContent = "RECORDING";
+  const time = document.createElement("span");
+  time.style.cssText = "margin-left:auto; font-size:14px; font-variant-numeric:tabular-nums";
+  time.textContent = "00:00";
+  row.appendChild(dot); row.appendChild(lbl); row.appendChild(time);
+  wrap.appendChild(row);
+  const meterFrame = document.createElement("div");
+  meterFrame.style.cssText = "height:6px; background:rgba(245,232,216,0.10); border-radius:3px; overflow:hidden";
+  const meter = document.createElement("div");
+  meter.style.cssText = "height:100%; width:0%; background:linear-gradient(90deg,#34d399,#fbbf24,#f87171); transition:width 80ms linear";
+  meterFrame.appendChild(meter);
+  wrap.appendChild(meterFrame);
+  const pulseCss = document.createElement("style");
+  pulseCss.textContent = "@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}";
+  document.head.appendChild(pulseCss);
+  document.body.appendChild(wrap);
+  _recState.overlay = wrap;
+  _recState.levelBar = meter;
+  _recState.timerEl = time;
+  return wrap;
+}
+
+function startLiveOverlay(stream) {
+  const overlay = ensureLiveOverlay();
+  overlay.style.display = "block";
+  _recState.startedAt = performance.now();
+
+  // Audio meter via AnalyserNode
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const src = ctx.createMediaStreamSource(stream);
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  src.connect(analyser);
+  _recState.audioCtx = ctx;
+  _recState.analyser = analyser;
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+
+  function tick() {
+    if (!_recState.mediaRec || _recState.mediaRec.state !== "recording") return;
+    const ms = performance.now() - _recState.startedAt;
+    const secs = Math.floor(ms / 1000);
+    const m = String(Math.floor(secs / 60)).padStart(2, "0");
+    const s = String(secs % 60).padStart(2, "0");
+    _recState.timerEl.textContent = `${m}:${s}`;
+
+    analyser.getByteFrequencyData(buf);
+    const avg = buf.reduce((a, b) => a + b, 0) / buf.length;
+    _recState.levelBar.style.width = Math.min(100, (avg / 255) * 150) + "%";
+
+    _recState.animFrame = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function stopLiveOverlay() {
+  if (_recState.overlay) _recState.overlay.style.display = "none";
+  if (_recState.animFrame) cancelAnimationFrame(_recState.animFrame);
+  if (_recState.audioCtx) {
+    _recState.audioCtx.close().catch(() => {});
+    _recState.audioCtx = null;
+    _recState.analyser = null;
+  }
+}
+
+function showPostCallResults(p, debriefData) {
+  const m = debriefData?.debrief?.metrics || debriefData?.metrics;
+  if (!m || m.empty) return;
+  const card = document.createElement("div");
+  card.style.cssText = `
+    position:fixed; right:22px; bottom:240px; z-index:90;
+    background:linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    border:1px solid var(--accent-dim); border-radius:8px;
+    padding:18px 20px; font-family:JetBrains Mono,monospace; color:#dcdcdc;
+    box-shadow:0 8px 28px rgba(0,0,0,0.50); width:300px;
+  `;
+
+  const close = document.createElement("button");
+  close.type = "button";
+  close.textContent = "✕";
+  close.style.cssText = "position:absolute; top:8px; right:10px; background:none; border:none; color:#7a6f5f; cursor:pointer; font-size:14px";
+  close.addEventListener("click", () => card.remove());
+  card.appendChild(close);
+
+  const head = document.createElement("div");
+  head.style.cssText = "font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:10px";
+  head.textContent = "Post-call snapshot · " + p.company;
+  card.appendChild(head);
+
+  const stats = [
+    { l: "Words spoken",     v: m.total_words ?? "—" },
+    { l: "Questions asked",  v: m.questions ?? "—" },
+    { l: "Filler words",     v: m.filler_count ?? 0, warn: (m.filler_count || 0) >= 6 },
+    { l: "Hedge phrases",    v: m.hedge_count ?? 0,  warn: (m.hedge_count || 0) >= 4 },
+    { l: "Avg sentence len", v: m.avg_sentence_words ?? "—" },
+  ];
+  stats.forEach(s => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid rgba(245,232,216,0.06); font-size:12px";
+    const a = document.createElement("span"); a.textContent = s.l; a.style.color = "#a39888";
+    const b = document.createElement("span"); b.textContent = String(s.v);
+    if (s.warn) b.style.color = "#fbbf24";
+    row.appendChild(a); row.appendChild(b);
+    card.appendChild(row);
+  });
+
+  if (m.coaching_signals && m.coaching_signals.length) {
+    const cs = document.createElement("div");
+    cs.style.cssText = "margin-top:12px; padding-top:10px; border-top:1px solid rgba(251,191,36,0.20); font-size:11.5px; color:#fbbf24; line-height:1.55";
+    m.coaching_signals.forEach(sig => {
+      const p = document.createElement("div");
+      p.style.cssText = "margin-bottom:6px";
+      p.textContent = "▸ " + sig;
+      cs.appendChild(p);
+    });
+    card.appendChild(cs);
+  }
+
+  document.body.appendChild(card);
+  // Auto-fade after 25s if not dismissed
+  setTimeout(() => { card.style.opacity = "0.5"; }, 25000);
+  setTimeout(() => { if (document.body.contains(card)) card.remove(); }, 60000);
+}
 
 async function toggleRecording(p, btn) {
   if (_recState.mediaRec && _recState.mediaRec.state === "recording") {
-    // Stop
     _recState.mediaRec.stop();
     btn.classList.remove("live"); btn.textContent = "⏳ Saving + debriefing…";
+    stopLiveOverlay();
     return;
   }
-  // Start
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     _recState.stream = stream;
     _recState.orgSlug = p.slug;
     _recState.chunks = [];
 
-    // Use audio/webm — browsers support it well; server will accept any audio
     const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
     _recState.mediaRec = mr;
     mr.ondataavailable = e => { if (e.data && e.data.size) _recState.chunks.push(e.data); };
@@ -1346,17 +3576,16 @@ async function toggleRecording(p, btn) {
       stream.getTracks().forEach(t => t.stop());
       const blob = new Blob(_recState.chunks, { type: "audio/webm" });
       try {
-        const r = await fetch(API_BASE + "/api/upload-call?org=" + encodeURIComponent(p.slug) + "&debrief=1", {
+        const rep = encodeURIComponent(window.CURRENT_REP || "self");
+        const r = await fetch(API_BASE + "/api/upload-call?org=" + encodeURIComponent(p.slug) + "&debrief=1&rep=" + rep, {
           method: "POST", headers: { "Content-Type": "audio/webm" }, body: blob,
         });
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || "HTTP " + r.status);
         btn.textContent = "✓ Recorded · " + (data.debrief?.created_people?.length || 0) + " new contact(s)";
-        // Refresh the org graph so People/Calls/Deals show new data
+        showPostCallResults(p, data);
         const refresh = await fetch(API_BASE + "/api/organizations/" + p.slug);
-        if (refresh.ok) {
-          ORG_GRAPH[p.slug] = await refresh.json();
-        }
+        if (refresh.ok) ORG_GRAPH[p.slug] = await refresh.json();
         setTimeout(() => { btn.textContent = "🔴 Record a call"; }, 4000);
       } catch (e) {
         btn.textContent = "× " + e.message;
@@ -1364,6 +3593,7 @@ async function toggleRecording(p, btn) {
       }
     };
     mr.start();
+    startLiveOverlay(stream);
     btn.classList.add("live"); btn.textContent = "⏹ Stop recording";
   } catch (e) {
     btn.textContent = "× mic blocked: " + e.message;
@@ -1450,6 +3680,9 @@ function buildStatusPanel(p) {
     save.classList.add("saved"); save.textContent = "✓ Saved";
     setTimeout(() => { save.classList.remove("saved"); save.textContent = "Save"; }, 1200);
     _dirty = false;
+    // Status changes re-rank the call queue — refresh it so the next
+    // recommendation reflects the new pipeline state.
+    if (typeof window.refreshTopQueue === "function") window.refreshTopQueue();
   });
   sr.appendChild(save);
   wrap.appendChild(sr);
@@ -1614,16 +3847,45 @@ function showServerDownPlaceholder() {
   document.body.appendChild(overlay);
 }
 
-(async function boot() {
+async function loadProspectsFromServer() {
   const orgs = await fetchOrgs();
-  if (orgs.length === 0) {
-    showServerDownPlaceholder();
-    return;
-  }
+  if (orgs.length === 0) return false;
   ORG_GRAPH = Object.fromEntries(orgs.map(o => [o.slug, o]));
   PROSPECTS = orgs.map(orgToProspect);
+  return true;
+}
+
+/* Called from the ingest drawer after a successful upload to walk new
+   characters onto the floor without a full page reload. */
+window.refreshProspects = async function() {
+  const ok = await loadProspectsFromServer();
+  if (ok && typeof layoutAgents === "function") layoutAgents();
+  if (typeof window.refreshTopQueue === "function") window.refreshTopQueue();
+};
+
+/* Poll the team claims so the floor canvas can draw owner-initial flags
+   above claimed characters. Cheap GET every 10s; on dossier open we also
+   refresh in case someone else claimed mid-session. */
+window.CLAIMS_BY_SLUG = {};
+async function refreshClaims() {
+  try {
+    const r = await fetch(API_BASE + "/api/team/claims");
+    const d = await r.json();
+    const next = {};
+    for (const c of (d.claims || [])) next[c.prospect_slug] = c;
+    window.CLAIMS_BY_SLUG = next;
+  } catch (_) { /* host might be offline — leave previous cache */ }
+}
+window.refreshClaims = refreshClaims;
+
+(async function boot() {
+  const ok = await loadProspectsFromServer();
+  if (!ok) { showServerDownPlaceholder(); return; }
   resize();
   requestAnimationFrame(draw);
+  if (typeof window.refreshTopQueue === "function") window.refreshTopQueue();
+  refreshClaims();
+  setInterval(refreshClaims, 10000);
 })();
 </script>
 </body>

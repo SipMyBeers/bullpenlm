@@ -1,0 +1,13 @@
+{
+  "slug": "pe-pressured-cfo",
+  "company": "(Training scenario)",
+  "role": "CFO",
+  "hq": "Anywhere, USA",
+  "size": "PE-backed \u00b7 800 employees",
+  "zone": "End Customer",
+  "what": "A CFO at a PE-acquired company. Every conversation is about ROI in real dollars on a quarterly horizon.",
+  "tier": "intermediate",
+  "axis": "ROI math",
+  "say_voice": "Fred",
+  "say_rate": 200
+}

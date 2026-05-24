@@ -1,0 +1,13 @@
+{
+  "slug": "hostile-buyer",
+  "company": "(Training scenario)",
+  "role": "VP Procurement",
+  "hq": "Anywhere, USA",
+  "size": "Enterprise \u00b7 10,000+ employees",
+  "zone": "End Customer",
+  "what": "Actively rude \u2014 has been burned by vendors before and now treats every rep as guilty until proven innocent.",
+  "tier": "advanced",
+  "axis": "Composure under attack",
+  "say_voice": "Ralph",
+  "say_rate": 180
+}

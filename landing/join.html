@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Join the Bullpen · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Enter your invite code to join a hosted BullpenLM.">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-0:#1a1208; --bg-1:#2a1d10; --bg-2:#3d2c1a;
+  --text:#f5e8d8; --muted:#a89a87; --dim:#806a4f;
+  --accent:#34d399; --accent-2:#6ee7b7; --accent-dim:#064e3b;
+  --gold:#fbbf24; --danger:#f87171;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif;
+}
+*{box-sizing:border-box}
+body{margin:0; background:radial-gradient(ellipse at 50% 0%, var(--bg-2) 0%, var(--bg-1) 50%, var(--bg-0) 100%);
+  color:var(--text); font-family:var(--sans); font-size:16px; line-height:1.6;
+  min-height:100vh; display:flex; align-items:center; justify-content:center; padding:36px 20px}
+
+.card{max-width:500px; width:100%; background:rgba(42,29,16,0.65);
+  border:1px solid rgba(245,232,216,0.10); border-radius:10px;
+  padding:42px 38px; backdrop-filter:blur(8px);
+  box-shadow:0 30px 80px -10px rgba(0,0,0,0.6)}
+
+.brand{font-family:var(--display); font-size:24px; text-transform:uppercase;
+  letter-spacing:-.015em; text-decoration:none;
+  display:inline-flex; align-items:baseline; margin-bottom:24px}
+.brand .b{color:var(--gold)} .brand .lm{color:var(--accent)}
+
+.eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.28em;
+  text-transform:uppercase; color:var(--gold); margin:0 0 12px}
+.eyebrow::before{content:"●  "}
+
+h1{font-family:var(--serif); font-weight:700; font-size:38px;
+  letter-spacing:-.025em; line-height:1.05; margin:0 0 14px; color:#fff}
+h1 em{font-style:italic; font-weight:500; color:var(--accent-2)}
+
+.lede{margin:0 0 28px; color:var(--text); font-size:15px; line-height:1.6}
+
+label{display:block; font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.20em; text-transform:uppercase; color:var(--muted); margin-bottom:8px}
+
+input[type=text]{display:block; width:100%; padding:18px 20px;
+  background:rgba(8,5,3,0.65); border:1px solid rgba(245,232,216,0.15);
+  border-radius:6px; color:#fff;
+  font-family:var(--mono); font-size:20px; letter-spacing:.05em; text-align:center;
+  text-transform:uppercase; transition:border-color .15s}
+input[type=text]:focus{outline:none; border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(52,211,153,0.10)}
+input[type=text]::placeholder{color:#5a4830; letter-spacing:.04em}
+
+.go{display:block; width:100%; margin-top:18px; padding:18px;
+  background:var(--accent); color:var(--bg-0); border:none; border-radius:6px;
+  font-family:var(--mono); font-size:14px; letter-spacing:.18em; text-transform:uppercase;
+  font-weight:700; cursor:pointer; transition:background .15s, transform .15s}
+.go:hover{background:var(--accent-2); transform:translateY(-1px)}
+.go:disabled{opacity:0.5; cursor:wait; transform:none}
+
+.status{margin-top:18px; padding:12px 14px; border-radius:5px;
+  font-family:var(--mono); font-size:12px; line-height:1.55; display:none}
+.status.ok{display:block; background:rgba(52,211,153,0.10);
+  border:1px solid var(--accent-dim); color:var(--accent-2)}
+.status.err{display:block; background:rgba(248,113,113,0.10);
+  border:1px solid rgba(248,113,113,0.30); color:#fda4a4}
+
+.hint{margin-top:24px; padding-top:20px; border-top:1px solid rgba(245,232,216,0.06);
+  font-family:var(--mono); font-size:11px; letter-spacing:.10em; color:var(--muted);
+  line-height:1.6}
+.hint strong{color:var(--text); display:block; margin-bottom:6px}
+.hint a{color:var(--accent); text-decoration:none}
+.hint a:hover{text-decoration:underline}
+
+@media (max-width:480px){
+  .card{padding:30px 22px}
+  h1{font-size:28px}
+  input[type=text]{font-size:16px; padding:14px 16px}
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <a href="https://bullpenlm.com" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+
+  <p class="eyebrow">You've been invited</p>
+  <h1>Enter your<br><em>invite code.</em></h1>
+  <p class="lede">Your host sent you a code that looks like <code style="font-family:var(--mono); background:rgba(8,5,3,.5); padding:2px 7px; border-radius:3px; color:var(--accent)">BULL-XXXXXXXX</code>. Paste it below and you're in.</p>
+
+  <form id="redeemForm" autocomplete="off">
+    <label for="codeInput">Invite code</label>
+    <input type="text" id="codeInput" placeholder="BULL-XXXXXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+    <button type="submit" class="go" id="goBtn">Enter the bullpen →</button>
+  </form>
+
+  <div class="status" id="status"></div>
+
+  <div class="hint">
+    <strong>How this works</strong>
+    Your host gave you a URL (this page) + a one-time code. Redeeming it
+    locks your rep name to the code's owner — your calls, badges, and
+    claims all get tagged under that name automatically.
+    No password to remember. No account to create.<br><br>
+    If the code says "already used" or "invalid," ask your host for a
+    fresh one. Codes are single-use on purpose.
+  </div>
+</div>
+
+<script>
+// Auto-fill code from ?code=... URL parameter so the host can share a
+// one-click link like https://your-tunnel.trycloudflare.com/join?code=BULL-XX9K
+const params = new URLSearchParams(window.location.search);
+const initialCode = (params.get("code") || "").toUpperCase().trim();
+const codeInput = document.getElementById("codeInput");
+const goBtn = document.getElementById("goBtn");
+const status = document.getElementById("status");
+const form = document.getElementById("redeemForm");
+
+if (initialCode) {
+  codeInput.value = initialCode;
+}
+
+// The redeem POST goes to THIS origin since /join.html and /api are served
+// from the same host (the tunnel). Same-origin → cookie gets set properly.
+const REDEEM_URL = "/api/invite/redeem";
+const FLOOR_URL  = "/floor/index.html";
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const code = codeInput.value.trim().toUpperCase();
+  if (!code) return;
+
+  goBtn.disabled = true;
+  goBtn.textContent = "Verifying…";
+  status.className = "status";
+  status.textContent = "";
+
+  try {
+    const r = await fetch(REDEEM_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+      credentials: "include",
+    });
+    const d = await r.json();
+    if (!r.ok || !d.ok) {
+      status.className = "status err";
+      const msg = {
+        invalid_code:  "Invalid code. Double-check the spelling — they look like BULL-XX9K7QPM.",
+        already_used:  "This code has already been used. Ask your host for a fresh one.",
+        corrupt_code:  "Code file is corrupted. Ask your host to regenerate.",
+      }[d.error] || ("× " + (d.error || "Unknown error"));
+      status.textContent = msg;
+      goBtn.disabled = false;
+      goBtn.textContent = "Enter the bullpen →";
+      return;
+    }
+    status.className = "status ok";
+    status.textContent = "✓ You're in as " + d.rep + ". Opening the floor…";
+    // Persist the rep name so the floor picks it up
+    localStorage.setItem("bullpen-rep", d.rep);
+    setTimeout(() => { window.location.href = FLOOR_URL; }, 800);
+  } catch (err) {
+    status.className = "status err";
+    status.textContent = "× Could not reach the host. Make sure you're using the URL your host gave you.";
+    goBtn.disabled = false;
+    goBtn.textContent = "Enter the bullpen →";
+  }
+});
+
+// Focus the input on load (or after autofill from URL)
+window.addEventListener("load", () => {
+  if (initialCode) form.requestSubmit();   // Auto-redeem if code is in URL
+  else codeInput.focus();
+});
+</script>
+</body>
+</html>

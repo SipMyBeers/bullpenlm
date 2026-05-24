@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Deals · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-0:#1a1208; --bg-1:#2a1d10; --bg-2:#3d2c1a;
+  --text:#f5e8d8; --muted:#a89a87; --dim:#806a4f;
+  --accent:#34d399; --accent-2:#6ee7b7; --accent-dim:#064e3b;
+  --gold:#fbbf24; --danger:#f87171;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%, var(--bg-2) 0%, var(--bg-1) 50%, var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;min-height:100vh}
+
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}
+.crumb a:hover{color:var(--text)}
+.crumb .sep{margin:0 8px;color:var(--dim)}
+.crumb .here{color:var(--accent)}
+
+.fc-strip{margin-left:auto;display:flex;gap:24px;font-family:var(--mono);font-size:11px;letter-spacing:.10em;color:var(--muted)}
+.fc-strip .v{display:block;font-family:var(--serif);font-style:italic;font-size:22px;color:var(--accent-2);font-weight:600;line-height:1.1}
+.fc-strip .v.gold{color:var(--gold)}
+.fc-strip .v.dim{color:var(--muted);font-style:normal;font-weight:400}
+
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,1fr);gap:14px;padding:22px 28px;overflow-x:auto;min-height:calc(100vh - 80px)}
+
+.col{display:flex;flex-direction:column;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:8px;padding:14px;min-height:300px;transition:background .15s,border-color .15s}
+.col.drop-over{background:rgba(52,211,153,0.10);border-color:var(--accent)}
+.col-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(245,232,216,0.10)}
+.col-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.col-name{flex:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:#dcdcdc}
+.col-prob{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.col-count{font-family:var(--mono);font-size:10px;background:rgba(245,232,216,0.10);color:var(--text);padding:2px 7px;border-radius:8px;letter-spacing:.06em}
+.col-amount{font-family:var(--mono);font-size:10px;color:var(--accent-2);margin-left:8px}
+
+.deals-list{display:flex;flex-direction:column;gap:8px;flex:1;min-height:30px}
+
+.deal{padding:11px 13px;background:rgba(42,29,16,0.85);border:1px solid rgba(245,232,216,0.10);border-radius:5px;cursor:grab;transition:border-color .12s,transform .12s,opacity .12s}
+.deal:hover{border-color:var(--accent-dim);transform:translateY(-1px)}
+.deal.dragging{opacity:.4;cursor:grabbing}
+.deal .prospect{font-family:var(--serif);font-weight:600;font-size:14.5px;color:#f0e4cf;line-height:1.25;margin-bottom:4px}
+.deal .amount{font-family:var(--mono);font-size:11.5px;color:var(--gold);letter-spacing:.04em}
+.deal .meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.04em}
+.deal .owner{color:var(--accent-2)}
+.deal.terminal-won{border-left:3px solid var(--accent)}
+.deal.terminal-lost{border-left:3px solid var(--danger);opacity:.6}
+
+.new-deal-btn{margin-top:10px;padding:9px;background:transparent;color:var(--muted);border:1px dashed rgba(245,232,216,0.20);border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;transition:color .12s,border-color .12s,background .12s}
+.new-deal-btn:hover{color:var(--accent);border-color:var(--accent-dim);background:rgba(52,211,153,0.05)}
+
+.empty-state{padding:24px;text-align:center;color:var(--dim);font-size:12px;font-family:var(--mono);letter-spacing:.06em}
+
+/* Modal for new-deal creation */
+.modal-bg{position:fixed;inset:0;z-index:80;background:rgba(8,5,3,0.86);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:24px}
+.modal-bg.open{display:flex}
+.modal{width:min(440px,100%);background:linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);border:1px solid rgba(245,232,216,0.12);border-radius:8px;padding:28px}
+.modal h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:0 0 18px;color:#fff}
+.modal label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.modal input,.modal select,.modal textarea{width:100%;padding:11px 14px;background:rgba(8,5,3,0.50);color:#fff;border:1px solid rgba(245,232,216,0.14);border-radius:4px;font-family:var(--mono);font-size:13px}
+.modal input:focus,.modal select:focus,.modal textarea:focus{outline:none;border-color:var(--accent)}
+.modal-actions{display:flex;gap:10px;margin-top:22px}
+.modal-actions button{padding:11px 18px;border:none;border-radius:4px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;cursor:pointer}
+.btn-primary{background:var(--accent);color:var(--bg-0);flex:1}
+.btn-primary:hover{background:var(--accent-2)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.14)}
+.btn-ghost:hover{color:var(--text)}
+
+@media (max-width:760px){
+  .top{padding:10px 16px;flex-wrap:wrap}
+  .fc-strip{order:99;width:100%;justify-content:space-between}
+  .board{grid-auto-columns:minmax(240px,80vw);padding:14px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/floor/index.html" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/floor/index.html">Floor</a>
+    <span class="sep">/</span>
+    <span class="here" id="bullpenName">killsesh</span>
+    <span class="sep">/</span>
+    <span class="here">Deals</span>
+  </nav>
+  <div class="fc-strip">
+    <div><span class="v gold" id="fcOpen">$0</span>Open pipeline</div>
+    <div><span class="v" id="fcWeighted">$0</span>Weighted forecast</div>
+    <div><span class="v dim" id="fcWon">$0 won</span>This bullpen</div>
+  </div>
+</header>
+
+<main class="board" id="board"></main>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2>New deal</h2>
+    <label>Prospect (org slug)</label>
+    <input type="text" id="newProspect" placeholder="e.g. allstate, bank-of-america" autocomplete="off">
+    <label>Amount (USD)</label>
+    <input type="number" id="newAmount" placeholder="15000" min="0" step="500" value="15000">
+    <label>Starting stage</label>
+    <select id="newStage"></select>
+    <label>Notes (optional)</label>
+    <textarea id="newNotes" rows="2" placeholder="Anything you want to remember about this deal"></textarea>
+    <div class="modal-actions">
+      <button class="btn-primary" id="newCreate">Create deal</button>
+      <button class="btn-ghost" id="newCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BULLPEN = new URLSearchParams(location.search).get("b") || "killsesh";
+const REP = localStorage.getItem("bullpen-rep") || "self";
+
+document.getElementById("bullpenName").textContent = BULLPEN;
+
+let pipeline = null;
+let deals = [];
+
+async function load() {
+  const [p, d, f] = await Promise.all([
+    fetch(`/api/b/${BULLPEN}/pipeline/default`).then(r => r.json()),
+    fetch(`/api/b/${BULLPEN}/deals`).then(r => r.json()),
+    fetch(`/api/b/${BULLPEN}/forecast`).then(r => r.json()),
+  ]);
+  pipeline = p;
+  deals = d.deals || [];
+  renderBoard();
+  renderForecast(f);
+}
+
+function renderForecast(f) {
+  const fmt = n => "$" + (n || 0).toLocaleString();
+  document.getElementById("fcOpen").textContent = fmt(f.total_pipeline);
+  document.getElementById("fcWeighted").textContent = fmt(f.total_weighted);
+  document.getElementById("fcWon").textContent = fmt(f.closed_won) + " won";
+}
+
+function renderBoard() {
+  const board = document.getElementById("board");
+  board.replaceChildren();
+  // Populate the new-deal stage select with non-terminal stages
+  const sel = document.getElementById("newStage");
+  sel.replaceChildren();
+  pipeline.stages.forEach(s => {
+    if (s.terminal) return;
+    const opt = document.createElement("option");
+    opt.value = s.id; opt.textContent = s.name; sel.appendChild(opt);
+  });
+
+  pipeline.stages.forEach(stage => {
+    const col = document.createElement("div");
+    col.className = "col"; col.dataset.stage = stage.id;
+    const head = document.createElement("div"); head.className = "col-head";
+    const dot = document.createElement("span"); dot.className = "col-dot"; dot.style.background = stage.color || "var(--muted)";
+    const name = document.createElement("span"); name.className = "col-name"; name.textContent = stage.name;
+    const prob = document.createElement("span"); prob.className = "col-prob"; prob.textContent = Math.round(stage.probability * 100) + "%";
+    const count = document.createElement("span"); count.className = "col-count";
+    head.append(dot, name, prob, count);
+
+    const stageDeals = deals.filter(d => d.stage === stage.id);
+    count.textContent = stageDeals.length;
+    if (stageDeals.length) {
+      const amt = document.createElement("span"); amt.className = "col-amount";
+      amt.textContent = "$" + stageDeals.reduce((s,d) => s + (d.amount || 0), 0).toLocaleString();
+      head.appendChild(amt);
+    }
+    col.appendChild(head);
+
+    const list = document.createElement("div"); list.className = "deals-list";
+    if (stageDeals.length === 0) {
+      const e = document.createElement("div"); e.className = "empty-state";
+      e.textContent = stage.terminal ? "—" : "Drop deals here";
+      list.appendChild(e);
+    } else {
+      stageDeals.forEach(d => list.appendChild(buildDealCard(d, stage)));
+    }
+    col.appendChild(list);
+
+    if (!stage.terminal) {
+      const btn = document.createElement("button"); btn.className = "new-deal-btn";
+      btn.textContent = "+ New deal in " + stage.name;
+      btn.addEventListener("click", () => openModal(stage.id));
+      col.appendChild(btn);
+    }
+
+    // Drop targets
+    col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("drop-over"); });
+    col.addEventListener("dragleave", () => col.classList.remove("drop-over"));
+    col.addEventListener("drop", async e => {
+      e.preventDefault(); col.classList.remove("drop-over");
+      const dealId = e.dataTransfer.getData("text/deal-id");
+      if (!dealId) return;
+      await moveDeal(dealId, stage.id);
+    });
+
+    board.appendChild(col);
+  });
+}
+
+function buildDealCard(deal, stage) {
+  const card = document.createElement("div");
+  card.className = "deal" + (stage.terminal ? (deal.closed_won ? " terminal-won" : " terminal-lost") : "");
+  card.draggable = !stage.terminal;
+  card.dataset.id = deal.id;
+  card.addEventListener("dragstart", e => {
+    e.dataTransfer.setData("text/deal-id", deal.id);
+    e.dataTransfer.effectAllowed = "move";
+    card.classList.add("dragging");
+  });
+  card.addEventListener("dragend", () => card.classList.remove("dragging"));
+
+  const pr = document.createElement("div"); pr.className = "prospect"; pr.textContent = deal.prospect_slug;
+  const am = document.createElement("div"); am.className = "amount"; am.textContent = "$" + (deal.amount || 0).toLocaleString();
+  const meta = document.createElement("div"); meta.className = "meta";
+  const owner = document.createElement("span"); owner.className = "owner"; owner.textContent = deal.owner_rep;
+  const age = document.createElement("span");
+  age.textContent = relAge(deal.opened_at);
+  meta.append(owner, age);
+  card.append(pr, am, meta);
+  return card;
+}
+
+function relAge(iso) {
+  if (!iso) return "—";
+  const sec = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (sec < 60) return "just now";
+  if (sec < 3600) return Math.floor(sec / 60) + "m";
+  if (sec < 86400) return Math.floor(sec / 3600) + "h";
+  return Math.floor(sec / 86400) + "d";
+}
+
+async function moveDeal(dealId, newStage) {
+  await fetch(`/api/b/${BULLPEN}/deals/${dealId}/stage`, {
+    method: "POST", headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({stage: newStage, rep: REP}),
+  });
+  await load();
+}
+
+// New-deal modal
+const modal = document.getElementById("modalBg");
+function openModal(stageId) {
+  document.getElementById("newStage").value = stageId;
+  document.getElementById("newProspect").value = "";
+  document.getElementById("newNotes").value = "";
+  modal.classList.add("open");
+  setTimeout(() => document.getElementById("newProspect").focus(), 60);
+}
+function closeModal() { modal.classList.remove("open"); }
+modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+document.getElementById("newCancel").addEventListener("click", closeModal);
+document.getElementById("newCreate").addEventListener("click", async () => {
+  const prospect = document.getElementById("newProspect").value.trim();
+  const amount = parseFloat(document.getElementById("newAmount").value) || 0;
+  const stage = document.getElementById("newStage").value;
+  const notes = document.getElementById("newNotes").value.trim();
+  if (!prospect) return alert("Prospect slug required.");
+  const r = await fetch(`/api/b/${BULLPEN}/deals`, {
+    method: "POST", headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({prospect_slug: prospect, owner_rep: REP, amount, stage, notes}),
+  });
+  if (!r.ok) return alert("Create failed.");
+  closeModal();
+  await load();
+});
+
+load();
+setInterval(load, 30000);   // poll every 30s so teammates' moves show up
+</script>
+</body>
+</html>

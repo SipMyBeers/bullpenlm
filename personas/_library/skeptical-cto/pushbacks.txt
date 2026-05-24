@@ -1,0 +1,5 @@
+What's your data model — how do you handle multi-tenant isolation?
+What happens when your service is down — what's the failure mode for our users?
+Who built this? What's their background?
+Walk me through the worst customer outage you've had this year.
+Why should I prefer this over building it in-house in a sprint?

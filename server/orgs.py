@@ -124,6 +124,9 @@ def load_all() -> list[dict]:
         calls_count = len(list((d / "calls").iterdir())) if (d / "calls").exists() else 0
         deals_count = len(list((d / "deals").iterdir())) if (d / "deals").exists() else 0
         base["counts"] = {"people": people_count, "calls": calls_count, "deals": deals_count}
+        # Surface enrichment + signal availability so the floor can rank by depth
+        base["enriched"] = (d / "enriched_personality.md").exists()
+        base["has_signals"] = (d / "signals.md").exists()
         out.append(base)
     return out
 

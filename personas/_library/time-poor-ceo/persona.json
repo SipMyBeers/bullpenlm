@@ -1,0 +1,13 @@
+{
+  "slug": "time-poor-ceo",
+  "company": "(Training scenario)",
+  "role": "CEO",
+  "hq": "Anywhere, USA",
+  "size": "Founder-led \u00b7 ~80 employees",
+  "zone": "End Customer",
+  "what": "A founder-CEO. You have 60 seconds, maximum. After that you're either intrigued or hanging up.",
+  "tier": "intermediate",
+  "axis": "60-second hook",
+  "say_voice": "Albert",
+  "say_rate": 195
+}

@@ -1,0 +1,59 @@
+# Hosted BullpenLM — one trainer, many reps.
+#
+# Bring up:    docker compose up -d
+# Logs:        docker compose logs -f
+# Stop:        docker compose down
+# Rebuild:     docker compose up -d --build
+#
+# Persistent volumes are bound to host directories so your team's data
+# survives container rebuilds and is editable from the host.
+#
+# Networking:
+#   * Default: bound to 0.0.0.0:7878 — anyone on your LAN or Tailscale
+#     network can reach the server at <your-host>:7878 from their browser.
+#   * For VPS/public hosting, put nginx or Cloudflare Tunnel in front and
+#     change the port mapping to "127.0.0.1:7878:7878" so it isn't
+#     world-readable.
+
+services:
+  bullpenlm:
+    build: .
+    image: bullpenlm:latest
+    container_name: bullpenlm
+    restart: unless-stopped
+    ports:
+      # Change to "127.0.0.1:7878:7878" if fronting with a reverse proxy.
+      - "7878:7878"
+    volumes:
+      - ./organizations:/app/organizations
+      - ./training-runs:/app/training-runs
+      - ./team:/app/team
+      - ./personas:/app/personas
+    environment:
+      # When set, the server can route LLM calls to an Ollama instance
+      # running on the host (or a remote one). Defaults to localhost,
+      # which inside Docker means the container itself — set this to
+      # host.docker.internal for Mac/Windows hosts running Ollama natively.
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+    extra_hosts:
+      # Lets the container reach the host's Ollama on Mac and Windows.
+      - "host.docker.internal:host-gateway"
+
+  # ── Cloudflare Tunnel — gives you a public HTTPS URL to share with friends
+  #    so they don't need Tailscale. They visit https://<random>.trycloudflare.com,
+  #    redeem an invite code, and they're in. To disable, set
+  #    `docker compose --profile noproxy up -d` and skip this service.
+  #
+  # First run prints a URL like:
+  #    INF Your quick tunnel URL: https://wandering-spider-42.trycloudflare.com
+  # Save that URL — that's what you send to friends + put in invite links.
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: bullpenlm-tunnel
+    restart: unless-stopped
+    depends_on:
+      - bullpenlm
+    command: tunnel --no-autoupdate --url http://bullpenlm:7878
+    profiles:
+      - default
+      - tunnel
