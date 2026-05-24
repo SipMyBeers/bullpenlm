@@ -330,5 +330,21 @@ $('du-start').onclick = async () => {
 })();
 </script>
 
+
+<script>
+(function(){
+  const PAGE = "pvp";
+  const params  = new URLSearchParams(location.search);
+  const BP = params.get('b') || 'killsesh';
+  const RP = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+  function beat(){
+    fetch('/api/b/' + encodeURIComponent(BP) + '/presence/beat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: RP, page: PAGE})
+    }).catch(()=>{});
+  }
+  beat(); setInterval(beat, 20000);
+})();
+</script>
 </body>
 </html>

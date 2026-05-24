@@ -168,18 +168,31 @@ def invalidate(bullpen: str) -> None:
 
 
 def _compute(bullpen: str) -> dict[str, dict]:
+    # Cache squad bonus per actor — squad membership doesn't change inside
+    # a single projection pass, and looking it up per-event is a file read.
+    try:
+        from parties import squad_xp_bonus
+    except Exception:
+        def squad_xp_bonus(_b, _r): return 1.0
+    bonus_cache: dict[str, float] = {}
+
     by_rep: dict[str, dict] = {}
     for event in audit_iter_all(bullpen):
         actor = event.get("actor") or "self"
         slot = by_rep.setdefault(actor, {"xp": 0, "ledger": []})
+        if actor not in bonus_cache:
+            try: bonus_cache[actor] = squad_xp_bonus(bullpen, actor)
+            except Exception: bonus_cache[actor] = 1.0
+        mult = bonus_cache[actor]
         for hit in xp_for_event(event):
-            slot["xp"] += hit["xp"]
+            scored = int(round(hit["xp"] * mult))
+            slot["xp"] += scored
             slot["ledger"].append({
                 "ts": event.get("ts"),
                 "kind": event.get("kind"),
                 "target_id": event.get("target_id"),
-                "xp": hit["xp"],
-                "reason": hit["reason"],
+                "xp": scored,
+                "reason": hit["reason"] + (f" (squad ×{mult:.2f})" if mult > 1.0 else ""),
             })
     return by_rep
 

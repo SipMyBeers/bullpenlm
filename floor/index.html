@@ -721,6 +721,7 @@
     const navRow = document.createElement("div");
     navRow.style.cssText = "display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px";
     const pages = [
+      ["🎮 Arena",       "/app/arena.html"],
       ["📈 Deals",       "/app/deals.html"],
       ["💰 Forecast",    "/app/forecast.html"],
       ["⚔ Rep card",     "/app/profile.html"],
@@ -3973,6 +3974,96 @@ window.refreshClaims = refreshClaims;
   if (typeof window.refreshTopQueue === "function") window.refreshTopQueue();
   refreshClaims();
   setInterval(refreshClaims, 10000);
+})();
+</script>
+
+<!-- ── Global multiplayer wiring: heartbeat + SSE bell on close-won ── -->
+<style>
+.mp-bell{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,rgba(251,191,36,0.35),rgba(0,0,0,0.85));
+  pointer-events:none}
+.mp-bell.show{display:flex;animation:mpBellFade 4s ease-out forwards}
+@keyframes mpBellFade{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0}}
+.mp-bell .card{padding:48px 64px;background:linear-gradient(135deg,#fbbf24,#f59e0b);
+  border-radius:18px;border:4px solid #0a1a14;box-shadow:0 20px 80px rgba(0,0,0,0.6);
+  text-align:center;animation:mpBellSlam .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes mpBellSlam{0%{transform:scale(.3) rotate(-12deg)}100%{transform:scale(1) rotate(0)}}
+.mp-bell .card .emoji{font-size:56px;line-height:1;margin-bottom:6px}
+.mp-bell .card .who{font-family:Tanker,serif;font-size:56px;color:#0a1a14;
+  text-transform:uppercase;letter-spacing:-.02em;line-height:1}
+.mp-bell .card .what{font-family:Tanker,serif;font-size:38px;color:#0a1a14;margin-top:6px;
+  letter-spacing:-.01em;text-transform:uppercase}
+.mp-bell .card .amt{font-family:Tanker,serif;font-size:80px;color:#0a1a14;margin-top:12px;
+  letter-spacing:-.03em;line-height:1}
+</style>
+<div class="mp-bell" id="mp-bell">
+  <div class="card">
+    <div class="emoji">🔔</div>
+    <div class="who" id="mp-bell-who">—</div>
+    <div class="what">CLOSED</div>
+    <div class="amt" id="mp-bell-amt">$0</div>
+  </div>
+</div>
+<script>
+(function(){
+  const BP = (new URLSearchParams(location.search)).get('b') || 'killsesh';
+  const RP = (new URLSearchParams(location.search)).get('rep') ||
+             localStorage.getItem('bullpen-rep') || (typeof REP !== 'undefined' ? REP : 'beers');
+
+  // Presence heartbeat — every 20s while the floor is open
+  function beat(){
+    fetch('/api/b/' + encodeURIComponent(BP) + '/presence/beat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: RP, page: 'floor'})
+    }).catch(()=>{});
+  }
+  beat(); setInterval(beat, 20000);
+
+  // SSE bell
+  function fmtMoney(n){ return '$' + Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0}); }
+  function ringBell(actor, amount){
+    document.getElementById('mp-bell-who').textContent = (actor || '?').toUpperCase();
+    document.getElementById('mp-bell-amt').textContent = fmtMoney(amount);
+    const b = document.getElementById('mp-bell');
+    b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type='sine'; o.frequency.value=880;
+      g.gain.setValueAtTime(0.4, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
+      o.start(); o.stop(ctx.currentTime + 0.9);
+    } catch(_){}
+    setTimeout(() => b.classList.remove('show'), 4200);
+  }
+
+  // Dedupe — page load replays the last 20 events from SSE, don't ring on
+  // those historical close-wons.
+  const seenAtStartup = new Set();
+  let startupGracePassed = false;
+  setTimeout(() => { startupGracePassed = true; }, 1500);
+
+  let sse = null;
+  function connect(){
+    try {
+      sse = new EventSource('/api/b/' + encodeURIComponent(BP) + '/stream');
+      sse.onmessage = (msg) => {
+        try {
+          const e = JSON.parse(msg.data);
+          if (!startupGracePassed) { seenAtStartup.add(e.id); return; }
+          if (seenAtStartup.has(e.id)) return;
+          if (e.kind === 'deal_closed_won') {
+            ringBell(e.actor, (e.payload||{}).amount);
+          }
+        } catch(_){}
+      };
+      sse.onerror = () => { try { sse.close(); } catch(_){} setTimeout(connect, 3000); };
+    } catch(_){
+      setTimeout(connect, 3000);
+    }
+  }
+  connect();
 })();
 </script>
 </body>

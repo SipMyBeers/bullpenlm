@@ -99,6 +99,16 @@ def append(bullpen: str, actor_rep: str, kind: str,
     entry["hash"] = hashlib.sha256(_canonical(entry)).hexdigest()
     with _audit_path(bullpen).open("a") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+    # Fan out to live SSE subscribers so every connected client sees this
+    # event in real-time. Import inline to avoid a circular dependency at
+    # module load (events.py is allowed to depend on audit, not vice versa).
+    try:
+        from events import publish as _events_publish
+        _events_publish(bullpen, entry)
+    except Exception:
+        pass
+
     return entry
 
 

@@ -1981,6 +1981,98 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Presence roster (who's online) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/presence(?:$|\?)", self.path)
+        if m:
+            try:
+                from presence import roster
+                self._send_json(200, {"online": roster(m.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Squads ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/squads(?:$|\?)", self.path)
+        if m:
+            try:
+                from parties import list_squads
+                self._send_json(200, {"squads": list_squads(m.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Raid party state ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/raids/([a-zA-Z0-9_\-]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from parties import raid_party_progress
+                from pathlib import Path as _P
+                bullpen, raid_id = m.group(1), m.group(2)
+                rp = _P(__file__).parent.parent / "bullpens" / bullpen / "quests" / "raids" / f"{raid_id}.json"
+                if not rp.exists():
+                    self._send_json(404, {"error": "raid_not_found"}); return
+                raid = json.loads(rp.read_text())
+                prog = raid_party_progress(bullpen, raid_id, raid)
+                self._send_json(200, {"raid": raid, "progress": prog})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Reaction counts for a set of events (POST-style body via ?ids=) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/reactions(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from reactions import counts_for_events
+                qs = parse_qs(urlparse(self.path).query)
+                ids = (qs.get("ids") or [""])[0].split(",")
+                ids = [i for i in ids if i]
+                self._send_json(200, {"counts": counts_for_events(m.group(1), ids)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── SSE event stream (text/event-stream) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/stream(?:$|\?)", self.path)
+        if m:
+            try:
+                from events import subscribe, unsubscribe
+                from audit import tail as audit_tail
+                bullpen = m.group(1)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream")
+                self.send_header("Cache-Control", "no-cache, no-transform")
+                self.send_header("Connection", "keep-alive")
+                self.send_header("X-Accel-Buffering", "no")
+                self._cors()
+                self.end_headers()
+                # Replay the last 20 events so a freshly-opened tab has context
+                try:
+                    for e in audit_tail(bullpen, n=20):
+                        self.wfile.write(b"data: " + json.dumps(e, default=str).encode() + b"\n\n")
+                    self.wfile.flush()
+                except Exception:
+                    pass
+                q = subscribe(bullpen)
+                try:
+                    while True:
+                        try:
+                            payload = q.get(timeout=15)
+                            self.wfile.write(b"data: " + payload.encode() + b"\n\n")
+                        except Exception:
+                            # 15s idle → send a comment as keepalive
+                            self.wfile.write(b": keepalive\n\n")
+                        self.wfile.flush()
+                except (BrokenPipeError, ConnectionResetError, OSError):
+                    pass
+                finally:
+                    unsubscribe(bullpen, q)
+            except Exception:
+                # Headers already sent — just close
+                try: self.wfile.flush()
+                except Exception: pass
+            return
+
         if self.path == "/api/team/roster":
             try:
                 from team import get_roster
@@ -2321,6 +2413,107 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 from trophies import backfill
                 new = backfill(m.group(1))
                 self._send_json(200, {"count": len(new), "new": new})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Presence heartbeat ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/presence/beat$", self.path)
+        if m:
+            try:
+                from presence import beat
+                req2 = json.loads(raw) if raw else {}
+                rec = beat(m.group(1),
+                           rep=(req2.get("rep") or self._current_rep() or "self").strip(),
+                           page=req2.get("page"),
+                           status=req2.get("status"),
+                           color=req2.get("color"))
+                self._send_json(200, rec)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Squads ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/squads$", self.path)
+        if m:
+            try:
+                from parties import create_squad
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                s = create_squad(m.group(1),
+                                 name=(req2.get("name") or "").strip(),
+                                 founder=rep,
+                                 members=req2.get("members") or [],
+                                 color=req2.get("color"))
+                # Squad XP bonus invalidates cached projections
+                try: __import__("xp").invalidate(m.group(1))
+                except Exception: pass
+                self._send_json(200, s)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/squads/([a-z0-9_\-]+)/(join|leave)$", self.path)
+        if m:
+            try:
+                from parties import join_squad, leave_squad
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                fn = join_squad if m.group(3) == "join" else leave_squad
+                s = fn(m.group(1), m.group(2), rep)
+                try: __import__("xp").invalidate(m.group(1))
+                except Exception: pass
+                self._send_json(200, s)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Raid party (join / leave / claim) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/raids/([a-zA-Z0-9_\-]+)/(join|leave|claim)$", self.path)
+        if m:
+            try:
+                from parties import join_raid, leave_raid, claim_raid_rewards
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                bullpen, raid_id, action = m.group(1), m.group(2), m.group(3)
+                if action == "join":
+                    self._send_json(200, join_raid(bullpen, raid_id, rep))
+                elif action == "leave":
+                    self._send_json(200, leave_raid(bullpen, raid_id, rep))
+                else:
+                    # Claim — need to load the raid file from quests
+                    from pathlib import Path as _P
+                    rp = _P(__file__).parent.parent / "bullpens" / bullpen / "quests" / "raids" / f"{raid_id}.json"
+                    if not rp.exists():
+                        self._send_json(404, {"error": "raid_not_found"}); return
+                    raid = json.loads(rp.read_text())
+                    claim = claim_raid_rewards(bullpen, raid_id, raid, rep)
+                    if not claim:
+                        self._send_json(400, {"error": "not_eligible_or_already_claimed"}); return
+                    try: __import__("xp").invalidate(bullpen)
+                    except Exception: pass
+                    self._send_json(200, claim)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── React to an event ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/react$", self.path)
+        if m:
+            try:
+                from reactions import react
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                r = react(m.group(1),
+                          event_id=(req2.get("event_id") or "").strip(),
+                          rep=rep, emoji=(req2.get("emoji") or "").strip())
+                self._send_json(200, r)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
