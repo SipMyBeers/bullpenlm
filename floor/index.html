@@ -575,6 +575,12 @@
   .feed-event .feed-kind.call{color:var(--accent-2); background:rgba(52,211,153,0.08)}
   .feed-event .feed-kind.claim{color:#fbbf24; background:rgba(251,191,36,0.08)}
   .feed-event .feed-kind.release{color:#f87171; background:rgba(248,113,113,0.08)}
+  .feed-event .feed-kind.xp{color:#fbbf24; background:rgba(251,191,36,0.12)}
+  .feed-event .feed-kind.lvl{color:#0d0d0d; background:#fbbf24; font-weight:700}
+  .feed-event .feed-kind.ach{color:#0d0d0d; background:#a78bfa; font-weight:700}
+  .feed-event .feed-kind.ach.legendary{background:#fbbf24}
+  .feed-event .feed-kind.deal{color:var(--accent-2); background:rgba(52,211,153,0.12)}
+  .feed-event .feed-kind.quest{color:#c4b5fd; background:rgba(167,139,250,0.10)}
 
   /* Claim button in the dossier */
   .claim-row{margin:14px 0; padding:11px 14px; background:rgba(251,191,36,0.05);
@@ -608,6 +614,11 @@
   const overlay = document.getElementById("teamOverlay");
   const body    = document.getElementById("teamBody");
   let pollHandle = null;
+  const GAME_KINDS = new Set([
+    "achievement_unlocked", "deal_closed_won", "deal_closed_lost",
+    "deal_stage_moved", "deal_created", "class_picked",
+    "quest_completed", "raid_authored", "level_up",
+  ]);
 
   fab.addEventListener("click", () => {
     overlay.classList.add("open");
@@ -656,11 +667,20 @@
 
   async function refresh() {
     try {
-      const [lb, fd] = await Promise.all([
+      const [lb, fd, audit] = await Promise.all([
         fetch(API_BASE + "/api/team/leaderboard").then(r => r.json()),
         fetch(API_BASE + "/api/team/feed?limit=20").then(r => r.json()),
+        fetch(API_BASE + "/api/b/killsesh/audit?limit=40").then(r => r.json()).catch(() => ({events: []})),
       ]);
-      render(lb.leaderboard || [], fd.events || []);
+      // Merge audit events (XP/level/achievement/deal) into the feed, sorted newest first
+      const gameEvents = (audit.events || []).filter(e => GAME_KINDS.has(e.kind)).map(e => ({
+        ts: e.ts, rep: e.actor, kind: "game:" + e.kind, payload: e.payload || {},
+        target_id: e.target_id,
+      }));
+      const merged = [...(fd.events || []), ...gameEvents]
+        .sort((a, b) => (b.ts || "").localeCompare(a.ts || ""))
+        .slice(0, 30);
+      render(lb.leaderboard || [], merged);
     } catch (e) {
       body.replaceChildren();
       const p = document.createElement("p");
@@ -754,13 +774,56 @@
         const ts = document.createElement("span"); ts.className = "feed-ts";
         ts.textContent = (e.ts || "").slice(11, 19);
         const kind = document.createElement("span"); kind.className = "feed-kind " + (e.kind || "");
-        kind.textContent = e.kind || "?";
         const rep = document.createElement("span"); rep.className = "feed-rep"; rep.textContent = e.rep || "?";
         const desc = document.createElement("span"); desc.style.color = "#a39888";
-        if (e.kind === "claim")        desc.textContent = "claimed " + (e.prospect || "");
-        else if (e.kind === "release") desc.textContent = "released " + (e.prospect || "");
-        else if (e.kind === "call")    desc.textContent = (e.call_kind === "real" ? "recorded real call with " : "practiced ") + (e.prospect || "");
-        else                            desc.textContent = e.prospect || "";
+
+        const ek = e.kind || "?";
+        if (ek.startsWith("game:")) {
+          const gk = ek.slice(5);
+          const p = e.payload || {};
+          if (gk === "achievement_unlocked") {
+            const rarity = p.rarity || "common";
+            kind.className = "feed-kind ach " + rarity;
+            kind.textContent = rarity === "legendary" ? "LEGENDARY" : "UNLOCK";
+            desc.textContent = "earned " + (p.name || e.target_id || "an achievement");
+            desc.style.color = rarity === "legendary" ? "#fbbf24" : "#c4b5fd";
+          } else if (gk === "deal_closed_won") {
+            kind.className = "feed-kind deal"; kind.textContent = "WON";
+            const amt = Number(p.amount || 0).toLocaleString();
+            desc.textContent = "closed " + (p.prospect || e.target_id || "deal") + " for $" + amt;
+            desc.style.color = "#6ee7b7";
+          } else if (gk === "deal_closed_lost") {
+            kind.className = "feed-kind deal"; kind.textContent = "LOST";
+            desc.textContent = "lost " + (p.prospect || e.target_id || "deal");
+            desc.style.color = "#fda4a4";
+          } else if (gk === "deal_stage_moved") {
+            kind.className = "feed-kind deal"; kind.textContent = "STAGE";
+            desc.textContent = "moved " + (p.prospect || e.target_id || "deal") + " → " + (p.to || "?");
+          } else if (gk === "deal_created") {
+            kind.className = "feed-kind deal"; kind.textContent = "NEW DEAL";
+            desc.textContent = "opened " + (p.prospect || e.target_id || "deal");
+          } else if (gk === "class_picked") {
+            kind.className = "feed-kind lvl"; kind.textContent = "CLASS";
+            desc.textContent = "picked " + (p.class || "a class");
+            desc.style.color = "#fbbf24";
+          } else if (gk === "quest_completed") {
+            kind.className = "feed-kind quest"; kind.textContent = "QUEST";
+            desc.textContent = "finished " + (p.quest_name || e.target_id) + " (+" + (p.xp_reward || 0) + " XP)";
+          } else if (gk === "raid_authored") {
+            kind.className = "feed-kind quest"; kind.textContent = "RAID";
+            desc.textContent = "called raid: " + (p.name || e.target_id);
+          } else {
+            kind.textContent = gk;
+            desc.textContent = e.target_id || "";
+          }
+        } else {
+          kind.textContent = ek;
+          if (ek === "claim")        desc.textContent = "claimed " + (e.prospect || "");
+          else if (ek === "release") desc.textContent = "released " + (e.prospect || "");
+          else if (ek === "call")    desc.textContent = (e.call_kind === "real" ? "recorded real call with " : "practiced ") + (e.prospect || "");
+          else                       desc.textContent = e.prospect || "";
+        }
+
         [ts, kind, rep, desc].forEach(el => row.appendChild(el));
         list.appendChild(row);
       });

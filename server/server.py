@@ -1764,6 +1764,82 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── XP / Levels ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/xp(?:/([a-z0-9_\-\.]+))?(?:$|\?)", self.path)
+        if m:
+            try:
+                from xp import get as xp_get
+                bullpen, rep = m.group(1), m.group(2)
+                self._send_json(200, xp_get(bullpen, rep))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Achievements: catalog + per-rep awards + force evaluate ──
+        if self.path == "/api/achievements/catalog":
+            try:
+                from achievements import catalog
+                self._send_json(200, {"catalog": catalog()})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/achievements/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from achievements import awards_for
+                bullpen, rep = m.group(1), m.group(2)
+                self._send_json(200, {"awards": awards_for(bullpen, rep)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Classes catalog ──
+        if self.path == "/api/classes":
+            try:
+                from classes import list_classes
+                self._send_json(200, {"classes": list_classes()})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Quests: active list + per-rep progress ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/quests(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from quests import list_active, progress
+                bullpen = m.group(1)
+                qs = parse_qs(urlparse(self.path).query)
+                rep = (qs.get("rep") or [None])[0]
+                if rep:
+                    self._send_json(200, progress(bullpen, rep))
+                else:
+                    self._send_json(200, list_active(bullpen))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Member profile ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/members/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from bullpens import get_member, write_member
+                from xp import get as xp_get
+                from achievements import awards_for
+                bullpen, rep = m.group(1), m.group(2)
+                member = get_member(bullpen, rep) or write_member(bullpen, rep)
+                xp_data = xp_get(bullpen, rep)
+                awards = awards_for(bullpen, rep)
+                self._send_json(200, {
+                    "member": member,
+                    "xp": xp_data,
+                    "achievements": awards,
+                })
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         m = re.match(r"^/api/b/([a-z0-9\-]+)/audit(?:$|\?)", self.path)
         if m:
             try:
@@ -1854,6 +1930,26 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 }
             self._send_json(200, {"personas": slim, "model": get_model()})
             return
+
+        # ── Static fallback: serve /app/<page>.html from floor/app/ ──
+        m = re.match(r"^/app/([a-z0-9_\-]+\.html)(?:$|\?)", self.path)
+        if m:
+            page = m.group(1)
+            from pathlib import Path as _P
+            f = _P(__file__).parent.parent / "floor" / "app" / page
+            try:
+                body = f.read_bytes()
+            except Exception:
+                self._send_json(404, {"error": "page not found"})
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self._cors()
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
         self._send_json(404, {"error": "not found"})
 
     def do_POST(self):
@@ -1915,6 +2011,90 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(200, {"text": text})
             except subprocess.CalledProcessError as e:
                 self._send_json(500, {"error": "whisper failed", "stderr": e.stderr.decode(errors="ignore")[:400]})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Class selection ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/members/([a-z0-9_\-\.]+)/class$", self.path)
+        if m:
+            try:
+                from bullpens import get_member, write_member, _bullpen_dir as bd
+                from classes import can_pick
+                from xp import get as xp_get
+                from audit import append as audit_append
+                bullpen, rep = m.group(1), m.group(2)
+                req2 = json.loads(raw) if raw else {}
+                class_id = (req2.get("class") or "").strip()
+                member = get_member(bullpen, rep) or write_member(bullpen, rep)
+                # Sync the member's level from the live XP projection
+                # (the stored level in members/<rep>.json can drift)
+                live_level = xp_get(bullpen, rep).get("level", 1)
+                member["level"] = live_level
+                ok, reason = can_pick(member, class_id)
+                if not ok:
+                    self._send_json(400, {"error": reason, "current_level": live_level,
+                                          "required": __import__("classes").CLASSES.get(class_id, {}).get("min_level")}); return
+                member["class"] = class_id
+                (bd(bullpen) / "members" / f"{rep}.json").write_text(
+                    json.dumps(member, indent=2) + "\n")
+                audit_append(bullpen, rep, "class_picked",
+                             target_type="member", target_id=rep,
+                             payload={"class": class_id})
+                self._send_json(200, {"ok": True, "member": member})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Claim quest rewards ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/quests/claim$", self.path)
+        if m:
+            try:
+                from quests import claim_rewards
+                from xp import invalidate as xp_invalidate
+                bullpen = m.group(1)
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or "").strip() or "self"
+                claimed = claim_rewards(bullpen, rep)
+                xp_invalidate(bullpen)
+                self._send_json(200, {"claimed": claimed, "count": len(claimed)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Force re-evaluate achievements (manual trigger / cron) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/achievements/evaluate$", self.path)
+        if m:
+            try:
+                from achievements import evaluate
+                from xp import invalidate as xp_invalidate
+                bullpen = m.group(1)
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or "").strip() or None
+                new = evaluate(bullpen, rep)
+                xp_invalidate(bullpen)
+                self._send_json(200, {"new_awards": new, "count": len(new)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Create a raid quest (Strategist/Founder authored) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/quests/raid$", self.path)
+        if m:
+            try:
+                from quests import create_raid
+                bullpen = m.group(1)
+                req2 = json.loads(raw) if raw else {}
+                raid = create_raid(
+                    bullpen,
+                    authored_by=(req2.get("rep") or "self").strip(),
+                    name=(req2.get("name") or "").strip(),
+                    predicate=req2.get("predicate") or {},
+                    xp_reward=int(req2.get("xp_reward") or 200),
+                    expires_in_days=int(req2.get("expires_in_days") or 7),
+                    party_size=int(req2.get("party_size") or 2),
+                )
+                self._send_json(200, raid)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

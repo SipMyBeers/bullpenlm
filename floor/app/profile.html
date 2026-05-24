@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rep Card · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-0:#1a1208; --bg-1:#2a1d10; --bg-2:#3d2c1a;
+  --text:#f5e8d8; --muted:#a89a87; --dim:#806a4f;
+  --accent:#34d399; --accent-2:#6ee7b7; --accent-dim:#064e3b;
+  --gold:#fbbf24; --danger:#f87171; --purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%, var(--bg-2) 0%, var(--bg-1) 50%, var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;min-height:100vh}
+
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}
+.crumb a:hover{color:var(--text)}
+.crumb .sep{margin:0 8px;color:var(--dim)}
+.crumb .here{color:var(--accent)}
+
+.wrap{max-width:1080px;margin:0 auto;padding:28px}
+
+.hero{display:grid;grid-template-columns:160px 1fr auto;gap:28px;align-items:center;padding:32px;background:linear-gradient(180deg, rgba(42,29,16,0.85), rgba(26,18,8,0.85));border:1px solid rgba(245,232,216,0.10);border-radius:14px;margin-bottom:24px}
+.avatar{width:160px;height:160px;border-radius:50%;background:radial-gradient(circle at 35% 35%, var(--accent-2), var(--accent-dim));display:grid;place-items:center;font-family:var(--display);font-size:64px;color:#0a1a14;letter-spacing:-.03em;text-shadow:0 2px 0 rgba(0,0,0,0.15);border:4px solid rgba(245,232,216,0.06)}
+.hero-info{display:flex;flex-direction:column;gap:6px;min-width:0}
+.rep-name{font-family:var(--display);font-size:54px;color:var(--text);letter-spacing:-.02em;text-transform:uppercase;line-height:1}
+.rep-class-row{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.cls-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;background:rgba(245,232,216,0.06);border:1px solid rgba(245,232,216,0.10)}
+.cls-chip .dot{width:8px;height:8px;border-radius:50%}
+.cls-chip.hunter{color:#fca5a5;border-color:rgba(248,113,113,0.30)}.cls-chip.hunter .dot{background:#f87171}
+.cls-chip.closer{color:var(--accent-2);border-color:rgba(52,211,153,0.30)}.cls-chip.closer .dot{background:var(--accent)}
+.cls-chip.strategist{color:#fcd34d;border-color:rgba(251,191,36,0.30)}.cls-chip.strategist .dot{background:var(--gold)}
+.cls-chip.mentor{color:#c4b5fd;border-color:rgba(167,139,250,0.30)}.cls-chip.mentor .dot{background:var(--purple)}
+.cls-chip.none{color:var(--dim)}.cls-chip.none .dot{background:var(--dim)}
+
+.lvl-block{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.lvl-label{font-family:var(--mono);font-size:10px;letter-spacing:.20em;color:var(--muted);text-transform:uppercase}
+.lvl-num{font-family:var(--display);font-size:88px;color:var(--gold);line-height:1;text-shadow:0 4px 0 rgba(0,0,0,0.30)}
+.lvl-xp{font-family:var(--mono);font-size:11px;color:var(--accent-2)}
+
+.xp-row{margin:18px 0 28px;padding:18px 22px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:10px}
+.xp-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:.10em;color:var(--muted);margin-bottom:9px}
+.xp-meta .next{color:var(--accent-2)}
+.xp-bar{height:14px;background:rgba(0,0,0,0.40);border-radius:8px;overflow:hidden;border:1px solid rgba(245,232,216,0.06)}
+.xp-fill{height:100%;background:linear-gradient(90deg, var(--accent-dim) 0%, var(--accent) 60%, var(--accent-2) 100%);border-radius:8px;transition:width .6s ease-out;box-shadow:inset 0 1px 0 rgba(255,255,255,0.15)}
+
+.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px}
+@media (max-width:880px){.grid{grid-template-columns:1fr}.hero{grid-template-columns:120px 1fr;gap:18px;padding:22px}.avatar{width:120px;height:120px;font-size:48px}.rep-name{font-size:38px}.lvl-block{grid-column:1 / -1;flex-direction:row;justify-content:space-between;align-items:center;border-top:1px solid rgba(245,232,216,0.08);padding-top:14px;margin-top:6px}.lvl-num{font-size:54px}}
+
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:10px;padding:20px}
+.panel h3{font-family:var(--mono);font-size:11px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid rgba(245,232,216,0.08);display:flex;align-items:center;justify-content:space-between}
+.panel h3 .ct{color:var(--gold)}
+
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(76px, 1fr));gap:10px}
+.ach{aspect-ratio:1;display:grid;place-items:center;padding:8px;background:rgba(42,29,16,0.85);border:1px solid rgba(245,232,216,0.08);border-radius:8px;cursor:default;transition:transform .12s,border-color .12s;position:relative}
+.ach:hover{transform:translateY(-2px);border-color:var(--accent-dim)}
+.ach.common{border-color:rgba(168,154,135,0.25)}
+.ach.rare{border-color:rgba(110,231,183,0.40);background:linear-gradient(180deg, rgba(52,211,153,0.10), rgba(42,29,16,0.85))}
+.ach.epic{border-color:rgba(167,139,250,0.50);background:linear-gradient(180deg, rgba(167,139,250,0.14), rgba(42,29,16,0.85))}
+.ach.legendary{border-color:rgba(251,191,36,0.65);background:linear-gradient(180deg, rgba(251,191,36,0.20), rgba(42,29,16,0.85));box-shadow:0 0 18px rgba(251,191,36,0.20)}
+.ach .icon{font-size:28px;line-height:1;margin-bottom:4px}
+.ach .nm{font-family:var(--mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.15;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ach.legendary .nm{color:var(--gold)}
+.ach.locked{opacity:0.18;filter:grayscale(0.7)}
+
+.legend{display:flex;gap:14px;font-family:var(--mono);font-size:9.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--dim);margin-top:14px;flex-wrap:wrap}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.legend .common i{background:rgba(168,154,135,0.40)}
+.legend .rare i{background:var(--accent)}
+.legend .epic i{background:var(--purple)}
+.legend .legendary i{background:var(--gold)}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:6px;font-size:13px}
+.row .k{font-family:var(--serif);color:var(--text)}
+.row .v{font-family:var(--mono);font-size:11px;color:var(--accent-2);letter-spacing:.04em}
+.row .v.gold{color:var(--gold)}
+.row .v.dim{color:var(--muted)}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:18px;letter-spacing:.08em}
+
+.streak-card{display:flex;align-items:center;gap:14px;padding:14px;background:linear-gradient(135deg, rgba(248,113,113,0.10), rgba(251,191,36,0.10));border:1px solid rgba(251,191,36,0.25);border-radius:8px;margin-bottom:14px}
+.streak-flame{font-size:32px;line-height:1}
+.streak-info{display:flex;flex-direction:column}
+.streak-n{font-family:var(--display);font-size:28px;color:var(--gold);line-height:1}
+.streak-l{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+
+.class-picker{margin:20px 0;padding:20px;background:linear-gradient(135deg, rgba(251,191,36,0.10), rgba(52,211,153,0.10));border:1px solid rgba(251,191,36,0.30);border-radius:10px}
+.class-picker h2{font-family:var(--display);font-size:24px;color:var(--gold);margin:0 0 6px;text-transform:uppercase;letter-spacing:-.01em}
+.class-picker p{font-family:var(--serif);font-style:italic;color:var(--muted);margin:0 0 14px;font-size:14px}
+.cls-options{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px}
+.cls-opt{padding:14px;background:rgba(26,18,8,0.85);border:1px solid rgba(245,232,216,0.10);border-radius:8px;cursor:pointer;transition:border-color .12s,transform .12s}
+.cls-opt:hover{transform:translateY(-2px)}
+.cls-opt.hunter:hover{border-color:#f87171}
+.cls-opt.closer:hover{border-color:var(--accent)}
+.cls-opt.strategist:hover{border-color:var(--gold)}
+.cls-opt.mentor:hover{border-color:var(--purple)}
+.cls-opt .h{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.01em;margin-bottom:4px}
+.cls-opt.hunter .h{color:#fca5a5}.cls-opt.closer .h{color:var(--accent-2)}.cls-opt.strategist .h{color:#fcd34d}.cls-opt.mentor .h{color:#c4b5fd}
+.cls-opt .t{font-family:var(--serif);font-style:italic;font-size:12px;color:var(--muted)}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <a id="bp-link" href="/">Bullpen</a><span class="sep">/</span>
+    <span class="here">Rep Card</span>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <div class="avatar" id="avatar">?</div>
+    <div class="hero-info">
+      <h1 class="rep-name" id="rep-name">…</h1>
+      <div class="rep-class-row">
+        <span class="cls-chip none" id="cls-chip">
+          <span class="dot"></span><span id="cls-name">No class</span>
+        </span>
+        <span id="role">—</span>
+      </div>
+    </div>
+    <div class="lvl-block">
+      <div class="lvl-label">Level</div>
+      <div class="lvl-num" id="lvl-num">1</div>
+      <div class="lvl-xp" id="lvl-xp">0 XP</div>
+    </div>
+  </section>
+
+  <section class="xp-row">
+    <div class="xp-meta">
+      <span><span id="xp-into">0</span> / <span id="xp-span">250</span> XP</span>
+      <span class="next">Lvl <span id="next-lvl">2</span> · <span id="xp-pct">0</span>%</span>
+    </div>
+    <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+  </section>
+
+  <section id="class-picker-section"></section>
+
+  <section class="grid">
+    <div class="panel">
+      <h3>Achievements <span class="ct" id="ach-ct">0 / 62</span></h3>
+      <div class="ach-grid" id="ach-grid"></div>
+      <div class="legend">
+        <span class="common"><i></i>Common</span>
+        <span class="rare"><i></i>Rare</span>
+        <span class="epic"><i></i>Epic</span>
+        <span class="legendary"><i></i>Legendary</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="streak-card" id="streak-card" style="display:none">
+        <div class="streak-flame">🔥</div>
+        <div class="streak-info">
+          <div class="streak-n" id="streak-n">0</div>
+          <div class="streak-l">Day streak</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:18px">
+        <h3>Signed Documents</h3>
+        <div class="list" id="signed-list"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Recent XP</h3>
+        <div class="list" id="ledger-list"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const BULLPEN = params.get('b') || 'killsesh';
+const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+
+document.getElementById('bp-link').href = '/?b=' + encodeURIComponent(BULLPEN);
+
+let CATALOG_BY_ID = {};
+
+function el(tag, cls, text){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function clear(node){ while (node.firstChild) node.removeChild(node.firstChild); }
+
+function toast(msg, isError){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast' + (isError ? ' error' : ''), 2400);
+}
+
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts || {});
+  if (!r.ok){
+    let msg = r.statusText;
+    try { msg = (await r.json()).error || msg; } catch(_){}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+function initials(name){ return (name || '?').slice(0,2).toUpperCase(); }
+function fmtXP(n){ return (n || 0).toLocaleString(); }
+
+function paintMember(m){
+  const repName = m.rep || REP;
+  document.title = `${repName} · BullpenLM`;
+  document.getElementById('rep-name').textContent = repName.toUpperCase();
+  document.getElementById('avatar').textContent = initials(repName);
+  document.getElementById('role').textContent = (m.role || 'member').toUpperCase();
+  const cls = m.class;
+  const chip = document.getElementById('cls-chip');
+  chip.className = 'cls-chip ' + (cls || 'none');
+  document.getElementById('cls-name').textContent = cls
+    ? cls.charAt(0).toUpperCase() + cls.slice(1)
+    : 'No class — pick at Lvl 5';
+}
+
+function paintXP(xp){
+  document.getElementById('lvl-num').textContent = xp.level;
+  document.getElementById('lvl-xp').textContent = fmtXP(xp.xp) + ' XP';
+  document.getElementById('xp-into').textContent = fmtXP(xp.xp_into_level);
+  document.getElementById('xp-span').textContent = fmtXP(xp.xp_for_next_level);
+  document.getElementById('next-lvl').textContent = xp.level + 1;
+  const pct = Math.round((xp.pct_to_next || 0) * 100);
+  document.getElementById('xp-pct').textContent = pct;
+  setTimeout(() => document.getElementById('xp-fill').style.width = pct + '%', 60);
+}
+
+function makeAchTile(a, locked){
+  const tile = el('div', 'ach ' + (a.rarity || 'common') + (locked ? ' locked' : ''));
+  tile.title = (locked ? 'LOCKED — ' : '') + a.name + (a.description ? ' — ' + a.description : '');
+  tile.appendChild(el('div', 'icon', a.icon || '★'));
+  tile.appendChild(el('div', 'nm', a.name));
+  return tile;
+}
+
+function paintAchievements(awards){
+  const earnedIds = new Set(awards.map(a => a.id));
+  const rank = { legendary: 0, epic: 1, rare: 2, common: 3 };
+  const all = Object.values(CATALOG_BY_ID).sort((a,b) => {
+    if (rank[a.rarity] !== rank[b.rarity]) return (rank[a.rarity] ?? 9) - (rank[b.rarity] ?? 9);
+    return a.name.localeCompare(b.name);
+  });
+
+  const grid = document.getElementById('ach-grid');
+  clear(grid);
+  let shown = 0;
+  for (const a of all){
+    if (!earnedIds.has(a.id)) continue;
+    grid.appendChild(makeAchTile(a, false));
+    shown++;
+  }
+  for (const a of all){
+    if (earnedIds.has(a.id)) continue;
+    grid.appendChild(makeAchTile(a, true));
+  }
+  document.getElementById('ach-ct').textContent = `${shown} / ${all.length}`;
+}
+
+function paintSignedDocs(member){
+  const list = document.getElementById('signed-list');
+  clear(list);
+  const docs = member.signed_docs || [];
+  if (!docs.length){
+    list.appendChild(el('div', 'empty', 'No documents signed yet'));
+    return;
+  }
+  for (const d of docs){
+    const row = el('div', 'row');
+    const docName = (typeof d === 'string') ? d : (d.doc || 'signature');
+    const when = (typeof d === 'object' && d.signed_at) ? d.signed_at.slice(0,10) : 'signed';
+    row.appendChild(el('span', 'k', docName));
+    row.appendChild(el('span', 'v dim', when));
+    list.appendChild(row);
+  }
+}
+
+function paintRecentLedger(xp){
+  const list = document.getElementById('ledger-list');
+  clear(list);
+  const items = (xp.ledger || []).slice(0, 12);
+  if (!items.length){
+    list.appendChild(el('div', 'empty', 'No activity yet'));
+    return;
+  }
+  for (const e of items){
+    const row = el('div', 'row');
+    row.appendChild(el('span', 'k', e.reason || e.kind));
+    row.appendChild(el('span', 'v gold', '+' + e.xp + ' XP'));
+    list.appendChild(row);
+  }
+}
+
+function computeStreak(xp){
+  const ledger = xp.ledger || [];
+  if (!ledger.length) return 0;
+  const days = new Set(ledger.map(e => (e.ts || '').slice(0,10)).filter(Boolean));
+  let streak = 0;
+  let cur = new Date();
+  for (;;){
+    const key = cur.toISOString().slice(0,10);
+    if (days.has(key)){ streak++; cur.setDate(cur.getDate() - 1); }
+    else break;
+  }
+  return streak;
+}
+
+function paintStreak(n){
+  if (!n) return;
+  document.getElementById('streak-n').textContent = n;
+  document.getElementById('streak-card').style.display = 'flex';
+}
+
+function renderClassPicker(member, xp, classes){
+  const section = document.getElementById('class-picker-section');
+  clear(section);
+  if ((xp.level || 1) < 5 || member.class) return;
+
+  const card = el('div', 'class-picker');
+  card.appendChild(el('h2', null, '⚔ Pick your class'));
+  card.appendChild(el('p',  null, 'You hit Level 5. Pick the path that matches how you play.'));
+  const opts = el('div', 'cls-options');
+  for (const c of classes){
+    const o = el('div', 'cls-opt ' + c.id);
+    o.appendChild(el('div', 'h', c.name));
+    o.appendChild(el('div', 't', c.tagline));
+    o.onclick = async () => {
+      try {
+        await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/members/${encodeURIComponent(REP)}/class`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({class: c.id})
+        });
+        toast('Class chosen — ' + c.name + '!');
+        load();
+      } catch(err){ toast(err.message, true); }
+    };
+    opts.appendChild(o);
+  }
+  card.appendChild(opts);
+  section.appendChild(card);
+}
+
+async function load(){
+  try {
+    const [profile, catalog, classes] = await Promise.all([
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/members/${encodeURIComponent(REP)}`),
+      fetchJSON('/api/achievements/catalog'),
+      fetchJSON('/api/classes'),
+    ]);
+    CATALOG_BY_ID = {};
+    for (const a of catalog.catalog) CATALOG_BY_ID[a.id] = a;
+    paintMember(profile.member);
+    paintXP(profile.xp);
+    paintAchievements(profile.achievements || []);
+    paintSignedDocs(profile.member);
+    paintRecentLedger(profile.xp);
+    paintStreak(computeStreak(profile.xp));
+    renderClassPicker(profile.member, profile.xp, classes.classes);
+  } catch(err){
+    console.error(err);
+    toast('Failed to load profile: ' + err.message, true);
+  }
+}
+
+load();
+setInterval(load, 45000);
+</script>
+
+</body>
+</html>
