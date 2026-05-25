@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@300,400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#0d0a06;--bg-1:#1a1208;--bg-2:#2a1d10;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.5;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px}
+
+.wrap{max-width:780px;width:100%}
+
+.brand{font-family:var(--display);font-size:36px;text-transform:uppercase;letter-spacing:-.02em;text-align:center;margin:0 0 8px}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.tag{text-align:center;font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;margin:0 0 46px;line-height:1.5}
+
+.picker{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:36px}
+@media(max-width:680px){.picker{grid-template-columns:1fr}}
+
+.card{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:30px 28px;cursor:pointer;transition:transform .12s,border-color .12s,background .12s;text-align:left}
+.card:hover{border-color:rgba(52,211,153,0.40);transform:translateY(-2px);background:rgba(26,18,8,0.75)}
+.card .em{font-size:32px;line-height:1;margin-bottom:14px;display:block}
+.card h2{font-family:var(--display);font-size:28px;text-transform:uppercase;letter-spacing:-.015em;margin:0 0 8px;color:var(--text)}
+.card .desc{font-family:var(--serif);font-size:14.5px;color:var(--muted);line-height:1.55;margin:0 0 18px}
+.card .cta{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent-2)}
+
+.card.gold{background:linear-gradient(135deg,rgba(251,191,36,0.05),rgba(26,18,8,0.55))}
+.card.gold:hover{border-color:rgba(251,191,36,0.40)}
+.card.gold h2{color:var(--gold)}
+
+.footer{font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;color:var(--dim);text-align:center;line-height:1.7}
+.footer a{color:var(--muted);text-decoration:none;border-bottom:1px solid rgba(168,154,135,0.20)}
+.footer a:hover{color:var(--accent-2)}
+
+.modal{position:fixed;inset:0;background:rgba(13,10,6,0.92);display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
+.modal.show{display:flex}
+.modal .panel{max-width:520px;width:100%;background:rgba(42,29,16,0.95);border:1px solid rgba(245,232,216,0.15);border-radius:14px;padding:32px 32px;box-shadow:0 40px 100px -10px rgba(0,0,0,0.7)}
+.modal .panel h3{font-family:var(--display);font-size:32px;text-transform:uppercase;letter-spacing:-.02em;margin:0 0 8px;color:var(--text)}
+.modal .panel .sub{font-family:var(--serif);font-style:italic;color:var(--muted);margin:0 0 22px;font-size:15px;line-height:1.5}
+.modal .panel label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.modal .panel input{width:100%;padding:14px 16px;background:rgba(0,0,0,0.40);border:1px solid rgba(245,232,216,0.15);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:15px;letter-spacing:.06em;outline:none}
+.modal .panel input:focus{border-color:var(--accent)}
+.modal .panel .hint{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:6px;letter-spacing:.04em;line-height:1.55}
+.modal .panel .actions{display:flex;gap:10px;margin-top:24px;justify-content:flex-end}
+.modal .panel .btn{padding:12px 24px;border-radius:7px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;border:none;cursor:pointer;transition:transform .12s}
+.modal .panel .btn:hover{transform:translateY(-1px)}
+.modal .panel .btn.cancel{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.modal .panel .btn.primary{background:var(--accent);color:#0a1a14}
+.modal .panel .btn.gold{background:var(--gold);color:#0a1a14}
+.modal .panel .btn:disabled{opacity:.5;cursor:not-allowed}
+
+.loading{display:none;text-align:center;padding:60px 24px}
+.loading.show{display:block}
+.loading .spinner{display:inline-block;width:48px;height:48px;border:4px solid rgba(52,211,153,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:24px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading h2{font-family:var(--display);font-size:28px;text-transform:uppercase;letter-spacing:-.015em;color:var(--text);margin:0 0 8px}
+.loading .sub{font-family:var(--mono);font-size:11px;letter-spacing:.10em;color:var(--muted)}
+
+.error{display:none;background:rgba(248,113,113,0.10);border:1px solid rgba(248,113,113,0.30);border-radius:10px;padding:18px 22px;margin-top:16px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--danger);line-height:1.6}
+.error.show{display:block}
+.error strong{color:#fff;display:block;margin-bottom:6px;font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<main class="wrap" id="pickerWrap">
+  <h1 class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></h1>
+  <p class="tag">Multiplayer sales CRM. Run your own floor. Train against AI buyers. Compete on a live leaderboard.</p>
+
+  <div class="picker">
+    <div class="card gold" id="hostCard">
+      <span class="em">🚀</span>
+      <h2>Start a bullpen</h2>
+      <p class="desc">You're the operator. The app runs the server on your machine — closers connect to you. Generates a public link automatically.</p>
+      <span class="cta">Host the floor →</span>
+    </div>
+
+    <div class="card" id="joinCard">
+      <span class="em">✅</span>
+      <h2>Join a bullpen</h2>
+      <p class="desc">You've got an invite link or code from an operator. Paste it and you're on their floor in seconds.</p>
+      <span class="cta">Connect with code →</span>
+    </div>
+  </div>
+
+  <div class="error" id="errBox">
+    <strong>Couldn't start</strong>
+    <span id="errMsg"></span>
+  </div>
+
+  <p class="footer">
+    Open source · MIT · <a href="#" id="ghLink">github.com/SipMyBeers/bullpenlm</a>
+  </p>
+</main>
+
+<div class="loading" id="loadingWrap">
+  <div class="spinner"></div>
+  <h2 id="loadingTitle">Starting your floor…</h2>
+  <p class="sub" id="loadingSub">Spinning up the local server. First boot can take a few seconds.</p>
+</div>
+
+<!-- Join modal -->
+<div class="modal" id="joinModal">
+  <div class="panel">
+    <h3>Join a bullpen</h3>
+    <p class="sub">Paste the link or code your operator sent you.</p>
+    <label for="joinInput">Invite link or code</label>
+    <input id="joinInput" type="text" placeholder="https://…trycloudflare.com/app/join.html?code=BULL-… or BULL-XXXXXXXX" spellcheck="false" autocomplete="off">
+    <p class="hint">If you only have a code (BULL-XXXXXXXX), you'll also need the operator's tunnel URL. Easier: ask them to send the full link.</p>
+    <div class="actions">
+      <button class="btn cancel" id="joinCancel">Cancel</button>
+      <button class="btn primary" id="joinGo">Connect →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const invoke = window.__TAURI__?.core?.invoke;
+const openExternal = window.__TAURI__?.opener?.openUrl;
+
+function showErr(msg) {
+  const box = document.getElementById("errBox");
+  document.getElementById("errMsg").textContent = msg;
+  box.classList.add("show");
+}
+
+function showLoading(title, sub) {
+  document.getElementById("pickerWrap").style.display = "none";
+  document.getElementById("loadingTitle").textContent = title;
+  document.getElementById("loadingSub").textContent = sub || "";
+  document.getElementById("loadingWrap").classList.add("show");
+}
+
+document.getElementById("ghLink").addEventListener("click", async (e) => {
+  e.preventDefault();
+  if (openExternal) {
+    try { await openExternal("https://github.com/SipMyBeers/bullpenlm"); }
+    catch { /* fallback below */ }
+    return;
+  }
+});
+
+// ── HOST ──────────────────────────────────────────────────────────
+document.getElementById("hostCard").addEventListener("click", async () => {
+  if (!invoke) { showErr("Tauri API not loaded — try restarting the app."); return; }
+  showLoading("Starting your floor…",
+              "Spinning up the local server (first boot can take a few seconds).");
+  try {
+    const r = await invoke("start_host");
+    if (!r.ok) {
+      throw new Error(r.error || "unknown");
+    }
+    // Now hand the window over to the actual floor UI.
+    await invoke("open_floor", { url: r.url + "/app/today.html" });
+  } catch (e) {
+    document.getElementById("loadingWrap").classList.remove("show");
+    document.getElementById("pickerWrap").style.display = "block";
+    showErr(typeof e === "string" ? e : (e.error || e.message || "Unknown error"));
+  }
+});
+
+// ── JOIN ──────────────────────────────────────────────────────────
+const joinModal = document.getElementById("joinModal");
+document.getElementById("joinCard").addEventListener("click", () => {
+  joinModal.classList.add("show");
+  document.getElementById("joinInput").focus();
+});
+document.getElementById("joinCancel").addEventListener("click", () => {
+  joinModal.classList.remove("show");
+});
+
+document.getElementById("joinInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); document.getElementById("joinGo").click(); }
+});
+
+document.getElementById("joinGo").addEventListener("click", async () => {
+  const raw = document.getElementById("joinInput").value.trim();
+  if (!raw) { return; }
+  let url;
+  if (raw.toLowerCase().startsWith("http://") || raw.toLowerCase().startsWith("https://")) {
+    url = raw;
+  } else if (/^BULL-[A-Z0-9]+$/i.test(raw)) {
+    // Bare code — we don't know the operator's tunnel URL.
+    showErr("Bare codes need an operator URL too. Ask your operator for the full link.");
+    joinModal.classList.remove("show");
+    return;
+  } else {
+    showErr("That doesn't look like an invite link.");
+    joinModal.classList.remove("show");
+    return;
+  }
+  joinModal.classList.remove("show");
+  showLoading("Connecting to the floor…", "Talking to your operator's host.");
+  try {
+    await invoke("open_floor", { url });
+  } catch (e) {
+    document.getElementById("loadingWrap").classList.remove("show");
+    document.getElementById("pickerWrap").style.display = "block";
+    showErr(typeof e === "string" ? e : (e.message || "Couldn't navigate."));
+  }
+});
+</script>
+</body>
+</html>
