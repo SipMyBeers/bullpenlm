@@ -160,11 +160,25 @@ form.addEventListener("submit", async (e) => {
       goBtn.textContent = "Enter the bullpen →";
       return;
     }
-    status.className = "status ok";
-    status.textContent = "✓ You're in as " + d.rep + ". Opening the floor…";
     // Persist the rep name so the floor picks it up
     localStorage.setItem("bullpen-rep", d.rep);
-    setTimeout(() => { window.location.href = FLOOR_URL; }, 800);
+    const bullpen = d.bullpen || "killsesh";
+
+    // Check if onboarding is complete. If not, route to the wizard.
+    let onboarded = false;
+    try {
+      const ob = await fetch(
+        "/api/b/" + encodeURIComponent(bullpen) + "/onboarding/" + encodeURIComponent(d.rep)
+      ).then(r => r.json());
+      onboarded = !!ob.is_complete;
+    } catch (_) {}
+
+    status.className = "status ok";
+    const dest = onboarded
+      ? ("/app/today.html?b=" + encodeURIComponent(bullpen) + "&rep=" + encodeURIComponent(d.rep))
+      : ("/app/welcome.html?b=" + encodeURIComponent(bullpen) + "&rep=" + encodeURIComponent(d.rep));
+    status.textContent = "✓ You're in as " + d.rep + ". " + (onboarded ? "Opening Today…" : "Finish setup…");
+    setTimeout(() => { window.location.href = dest; }, 800);
   } catch (err) {
     status.className = "status err";
     status.textContent = "× Could not reach the host. Make sure you're using the URL your host gave you.";

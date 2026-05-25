@@ -149,6 +149,28 @@ def write_member(bullpen: str, rep: str, role: str = "rep") -> dict:
     return data
 
 
+def set_profile(bullpen: str, rep: str, display_name: Optional[str] = None,
+                avatar: Optional[str] = None, title: Optional[str] = None) -> Optional[dict]:
+    """Update the public-facing profile fields on a member record."""
+    m_path = _bullpen_dir(bullpen) / "members" / f"{rep}.json"
+    if not m_path.exists():
+        return None
+    try:
+        data = json.loads(m_path.read_text())
+    except Exception:
+        return None
+    if display_name is not None:
+        data["display_name"] = display_name.strip()[:48]
+    if avatar is not None:
+        # Cap to one grapheme-ish — emoji can be 1-4 chars; we just trim hard.
+        data["avatar"] = avatar.strip()[:8]
+    if title is not None:
+        data["title"] = title.strip()[:48]
+    data["profile_updated_at"] = datetime.datetime.now().isoformat(timespec="seconds")
+    m_path.write_text(json.dumps(data, indent=2) + "\n")
+    return data
+
+
 def get_member(bullpen: str, rep: str) -> Optional[dict]:
     p = _bullpen_dir(bullpen) / "members" / f"{rep}.json"
     if not p.exists():

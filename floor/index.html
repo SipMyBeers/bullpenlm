@@ -746,34 +746,66 @@
     // Navigation chips → app sub-pages
     const navRow = document.createElement("div");
     navRow.style.cssText = "display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px";
-    const pages = [
+    // 6 essentials always visible — the daily-driver pages reps need
+    const essentials = [
       ["☀ Today",        "/app/today.html"],
       ["📖 Briefing",    "/app/briefing.html"],
-      ["📺 Wallboard",   "/app/wallboard.html"],
-      ["✉ Outbox",       "/app/outbox.html"],
+      ["📈 Deals",       "/app/deals.html"],
       ["📋 Plays",       "/app/tcs.html"],
-      ["🎖 Top Pack",    "/app/training.html"],
       ["🎯 Pop Drills",  "/app/spotcheck.html"],
       ["🎮 Arena",       "/app/arena.html"],
+    ];
+    // Everything else collapsed into a "More" dropdown — power-user surfaces
+    const more = [
+      ["🎖 Top Pack",    "/app/training.html"],
       ["🥊 Practice 1v1","/app/lobby.html"],
-      ["📈 Deals",       "/app/deals.html"],
-      ["💰 Forecast",    "/app/forecast.html"],
       ["⚔ Rep card",     "/app/profile.html"],
+      ["💰 Forecast",    "/app/forecast.html"],
       ["🥊 PvP",         "/app/pvp.html"],
+      ["📺 Wallboard",   "/app/wallboard.html"],
+      ["✉ Outbox",       "/app/outbox.html"],
       ["📜 Legal",       "/app/legal.html"],
       ["🧾 Commissions", "/app/commissions.html"],
       ["🔍 Audit log",   "/app/audit.html"],
     ];
-    pages.forEach(([label, href]) => {
+    const chipStyle = "padding:7px 13px; background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.25); border-radius:4px; color:var(--accent-2); text-decoration:none; font-family:JetBrains Mono,monospace; font-size:11px; letter-spacing:.08em; transition:background .12s, transform .12s; cursor:pointer; display:inline-block";
+    function makeChip(label, href){
       const a = document.createElement("a");
-      a.href = href + "?b=killsesh";
+      a.href = href + "?b=killsesh&rep=" + encodeURIComponent(window.CURRENT_REP || localStorage.getItem("bullpen-rep") || "self");
       a.textContent = label;
       a.target = "_blank";
-      a.style.cssText = "padding:7px 13px; background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.25); border-radius:4px; color:var(--accent-2); text-decoration:none; font-family:JetBrains Mono,monospace; font-size:11px; letter-spacing:.08em; transition:background .12s, transform .12s";
+      a.style.cssText = chipStyle;
       a.addEventListener("mouseenter", () => { a.style.background = "rgba(52,211,153,0.18)"; a.style.transform = "translateY(-1px)"; });
       a.addEventListener("mouseleave", () => { a.style.background = "rgba(52,211,153,0.08)"; a.style.transform = "translateY(0)"; });
-      navRow.appendChild(a);
+      return a;
+    }
+    essentials.forEach(([label, href]) => navRow.appendChild(makeChip(label, href)));
+
+    // "More" dropdown
+    const moreWrap = document.createElement("div");
+    moreWrap.style.cssText = "position:relative; display:inline-block";
+    const moreBtn = document.createElement("button");
+    moreBtn.type = "button";
+    moreBtn.textContent = "▾ More (" + more.length + ")";
+    moreBtn.style.cssText = chipStyle + "; background:rgba(251,191,36,0.10); border-color:rgba(251,191,36,0.30); color:var(--gold); cursor:pointer";
+    const moreMenu = document.createElement("div");
+    moreMenu.style.cssText = "display:none; position:absolute; top:34px; left:0; z-index:50; background:rgba(20,14,7,0.98); border:1px solid rgba(245,232,216,0.10); border-radius:5px; padding:6px; min-width:200px; box-shadow:0 8px 24px rgba(0,0,0,0.5); flex-direction:column; gap:4px";
+    more.forEach(([label, href]) => {
+      const item = makeChip(label, href);
+      item.style.cssText = "padding:7px 11px; color:var(--text); text-decoration:none; font-family:JetBrains Mono,monospace; font-size:11px; letter-spacing:.08em; border-radius:3px; display:block; transition:background .12s";
+      item.addEventListener("mouseenter", () => { item.style.background = "rgba(52,211,153,0.12)"; });
+      item.addEventListener("mouseleave", () => { item.style.background = "transparent"; });
+      moreMenu.appendChild(item);
     });
+    moreBtn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      moreMenu.style.display = moreMenu.style.display === "flex" ? "none" : "flex";
+    });
+    document.addEventListener("click", () => { moreMenu.style.display = "none"; });
+    moreWrap.appendChild(moreBtn);
+    moreWrap.appendChild(moreMenu);
+    navRow.appendChild(moreWrap);
+
     body.appendChild(navRow);
 
     // Leaderboard
@@ -4011,7 +4043,24 @@ window.refreshClaims = refreshClaims;
 })();
 </script>
 
-<!-- ── Global multiplayer wiring: heartbeat + SSE bell on close-won ── -->
+<!-- ── Global multiplayer wiring: setup banner + heartbeat + SSE bell ── -->
+<style>
+.setup-banner{position:fixed;top:0;left:0;right:0;z-index:9000;padding:11px 22px;
+  background:linear-gradient(90deg,rgba(251,191,36,0.95),rgba(245,158,11,0.95));
+  color:#0a1a14;font-family:JetBrains Mono,monospace;font-size:11.5px;letter-spacing:.08em;
+  display:none;align-items:center;justify-content:space-between;gap:14px;
+  box-shadow:0 4px 18px rgba(0,0,0,0.25)}
+.setup-banner.show{display:flex}
+.setup-banner .msg{font-weight:600}
+.setup-banner .cta{padding:7px 14px;background:#0a1a14;color:#fbbf24;text-decoration:none;
+  border-radius:5px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;
+  white-space:nowrap}
+.setup-banner.show ~ header{margin-top:42px}
+</style>
+<div class="setup-banner" id="setup-banner">
+  <div class="msg" id="setup-msg">Loading…</div>
+  <a class="cta" id="setup-cta" href="#">Finish setup →</a>
+</div>
 <style>
 .mp-bell{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
   background:radial-gradient(ellipse at center,rgba(251,191,36,0.35),rgba(0,0,0,0.85));
@@ -4043,6 +4092,26 @@ window.refreshClaims = refreshClaims;
   const BP = (new URLSearchParams(location.search)).get('b') || 'killsesh';
   const RP = (new URLSearchParams(location.search)).get('rep') ||
              localStorage.getItem('bullpen-rep') || (typeof REP !== 'undefined' ? REP : 'beers');
+
+  // ── Setup banner: prompt if onboarding incomplete ──
+  (async function(){
+    try {
+      const ob = await fetch('/api/b/' + encodeURIComponent(BP) + '/onboarding/' + encodeURIComponent(RP))
+        .then(r => r.ok ? r.json() : null);
+      if(!ob || ob.is_complete) return;
+      const done = (ob.steps_done || []).length;
+      const total = (ob.steps_required || []).length;
+      const remain = (ob.steps_required || []).filter(s => !(ob.steps_done||[]).includes(s));
+      const next = remain[0] || ob.next_step;
+      const stepName = ({identity:'identity', briefing:'briefing', agreement:'sign the agreement'})[next] || next;
+      const banner = document.getElementById('setup-banner');
+      const msg = document.getElementById('setup-msg');
+      const cta = document.getElementById('setup-cta');
+      msg.textContent = '⚠ Finish setup — ' + done + ' of ' + total + ' steps done · next: ' + stepName;
+      cta.href = '/app/welcome.html?b=' + encodeURIComponent(BP) + '&rep=' + encodeURIComponent(RP);
+      banner.classList.add('show');
+    } catch(_){}
+  })();
 
   // ── Bullpen switcher ──
   document.getElementById('bp-current').textContent = BP;

@@ -84,6 +84,20 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 </head>
 <body>
 
+<style>
+.setup-banner{padding:11px 18px;background:linear-gradient(90deg,rgba(251,191,36,0.92),rgba(245,158,11,0.92));
+  color:#0a1a14;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
+  display:none;align-items:center;justify-content:space-between;gap:14px;
+  border-radius:0;font-weight:600}
+.setup-banner.show{display:flex}
+.setup-banner .cta{padding:6px 12px;background:#0a1a14;color:#fbbf24;text-decoration:none;
+  border-radius:5px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+</style>
+<div class="setup-banner" id="setup-banner">
+  <div id="setup-msg">Loading…</div>
+  <a class="cta" id="setup-cta" href="#">Finish setup →</a>
+</div>
+
 <header class="top">
   <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
   <nav class="crumb">
@@ -425,6 +439,22 @@ $('qa-title').addEventListener('keydown', e => { if(e.key === 'Enter') $('qa-add
 
 load();
 setInterval(load, 30000);
+
+// Setup-incomplete banner
+(async function(){
+  try {
+    const ob = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/onboarding/${encodeURIComponent(REP)}`);
+    if(ob.is_complete) return;
+    const done = (ob.steps_done||[]).length;
+    const total = (ob.steps_required||[]).length;
+    const remain = (ob.steps_required||[]).filter(s => !(ob.steps_done||[]).includes(s));
+    const nextLabel = ({identity:'set your display name', briefing:'read the briefing',
+                       agreement:'sign the commission agreement'})[remain[0]] || remain[0];
+    $('setup-msg').textContent = '⚠ Finish setup — ' + done + ' of ' + total + ' steps done · next: ' + nextLabel;
+    $('setup-cta').href = '/app/welcome.html?b=' + encodeURIComponent(BULLPEN) + '&rep=' + encodeURIComponent(REP);
+    $('setup-banner').classList.add('show');
+  } catch(_){}
+})();
 </script>
 
 </body>

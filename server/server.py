@@ -2105,6 +2105,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Onboarding state ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/onboarding/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from onboarding import get_state
+                self._send_json(200, get_state(m.group(1), m.group(2)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── TCS library ──
         m = re.match(r"^/api/b/([a-z0-9\-]+)/tcs(?:$|\?)", self.path)
         if m:
@@ -2530,6 +2540,41 @@ class Handler(http.server.BaseHTTPRequestHandler):
                              target_type="member", target_id=rep,
                              payload={"class": class_id})
                 self._send_json(200, {"ok": True, "member": member})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Profile patch (display_name, avatar, title) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/members/([a-z0-9_\-\.]+)/profile$", self.path)
+        if m:
+            try:
+                from bullpens import set_profile, write_member, get_member
+                req2 = json.loads(raw) if raw else {}
+                bullpen, rep = m.group(1), m.group(2)
+                if not get_member(bullpen, rep):
+                    write_member(bullpen, rep)
+                rec = set_profile(bullpen, rep,
+                                  display_name=req2.get("display_name"),
+                                  avatar=req2.get("avatar"),
+                                  title=req2.get("title"))
+                if rec is None:
+                    self._send_json(404, {"error": "member_not_found"}); return
+                self._send_json(200, rec)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Onboarding: mark a step done ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/onboarding/([a-z0-9_\-\.]+)/step$", self.path)
+        if m:
+            try:
+                from onboarding import mark_step_done
+                req2 = json.loads(raw) if raw else {}
+                step = (req2.get("step") or "").strip()
+                rec = mark_step_done(m.group(1), m.group(2), step)
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
