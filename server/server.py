@@ -2475,6 +2475,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 except Exception: pass
             return
 
+        # ── Live calls: list active for a bullpen (for the coach lobby) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/calls/active(?:$|\?)", self.path)
+        if m:
+            try:
+                from calls import list_active_calls
+                self._send_json(200, {"calls": list_active_calls(m.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Live calls: full session for one call (replay or refresh) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/call/([a-zA-Z0-9\-]+)$", self.path)
+        if m:
+            try:
+                from calls import get_call
+                d = get_call(m.group(1), m.group(2))
+                if not d:
+                    self._send_json(404, {"error": "call_not_found"}); return
+                self._send_json(200, d)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         if self.path == "/api/team/roster":
             try:
                 from team import get_roster
@@ -2822,6 +2845,76 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 })
             except ValueError as e:
                 self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Live calls (auth required: only members of the bullpen) ──
+        # NB: the chunk endpoint accepts raw opus/webm bytes (not JSON);
+        # all other call endpoints take JSON. Routing first because the
+        # generic auth gate below still applies.
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/call/start$", self.path)
+        if m:
+            if not self._require_auth():
+                return self._deny_auth()
+            try:
+                from calls import start_call
+                bullpen = m.group(1)
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                rec = start_call(bullpen, rep,
+                                 prospect=req2.get("prospect", ""),
+                                 deal_id=req2.get("deal_id", ""))
+                self._send_json(200, rec)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/call/([a-zA-Z0-9\-]+)/chunk$", self.path)
+        if m:
+            if not self._require_auth():
+                return self._deny_auth()
+            try:
+                from calls import transcribe_chunk, add_transcript_chunk
+                bullpen, call_id = m.group(1), m.group(2)
+                # raw body is the opus/webm blob from MediaRecorder
+                r = transcribe_chunk(raw)
+                if not r.get("ok"):
+                    self._send_json(502, r); return
+                if r.get("skipped"):
+                    self._send_json(200, {"ok": True, "skipped": r["skipped"]}); return
+                if not (r.get("text") or "").strip():
+                    self._send_json(200, {"ok": True, "skipped": "empty_transcript"}); return
+                add_transcript_chunk(bullpen, call_id, r["text"],
+                                      chunk_seconds=r.get("chunk_seconds", 0))
+                self._send_json(200, {"ok": True, "text": r["text"]})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/call/([a-zA-Z0-9\-]+)/coach$", self.path)
+        if m:
+            if not self._require_auth():
+                return self._deny_auth()
+            try:
+                from calls import add_coach_message
+                bullpen, call_id = m.group(1), m.group(2)
+                req2 = json.loads(raw) if raw else {}
+                coach = (req2.get("coach") or self._current_rep() or "anon").strip()
+                r = add_coach_message(bullpen, call_id, coach,
+                                       req2.get("message", ""))
+                self._send_json(200 if r.get("ok") else 400, r)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/call/([a-zA-Z0-9\-]+)/end$", self.path)
+        if m:
+            if not self._require_auth():
+                return self._deny_auth()
+            try:
+                from calls import end_call
+                self._send_json(200, end_call(m.group(1), m.group(2)))
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

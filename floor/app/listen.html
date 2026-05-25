@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Coach call · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@300,400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#0d0a06;--bg-1:#1a1208;--bg-2:#2a1d10;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.5;min-height:100vh;display:flex;flex-direction:column}
+
+.wrap{max-width:1080px;margin:0 auto;padding:24px 24px 0;width:100%}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid rgba(245,232,216,0.10);margin-bottom:18px}
+.brand{font-family:var(--display);font-size:22px;text-transform:uppercase;letter-spacing:-.02em;text-decoration:none}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.status{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.status .dot{width:10px;height:10px;border-radius:50%;background:var(--danger);box-shadow:0 0 8px var(--danger);animation:pulse 1.4s infinite}
+.status.ended .dot{background:var(--dim);animation:none;box-shadow:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.hero{margin-bottom:18px}
+.hero h1{font-family:var(--display);font-size:36px;text-transform:uppercase;letter-spacing:-.02em;margin:0 0 6px;line-height:1.1}
+.hero .meta{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.hero .meta strong{color:var(--accent-2)}
+
+main.grid{display:grid;grid-template-columns:1fr;gap:20px;flex:1;margin-bottom:24px}
+
+.transcript-box{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:22px 26px;height:62vh;overflow-y:auto;font-family:var(--serif);font-size:17px;line-height:1.55}
+.transcript-box .line{margin-bottom:14px;padding-left:18px;border-left:2px solid rgba(52,211,153,0.35)}
+.transcript-box .line .ts{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.06em;display:block;margin-bottom:4px}
+.transcript-box .line.coach-line{border-left-color:var(--gold);background:rgba(251,191,36,0.04);padding:8px 14px 8px 18px;border-radius:0 8px 8px 0}
+.transcript-box .line.coach-line .who{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px;display:block}
+.transcript-box .line.coach-line .body{font-style:italic;color:var(--accent-2)}
+.transcript-box .empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:40px 0;letter-spacing:.06em}
+
+.composer{position:sticky;bottom:0;background:linear-gradient(180deg,transparent 0,var(--bg-0) 30%);padding:18px 24px 24px;margin:0 -24px;display:flex;gap:10px;align-items:flex-end}
+.composer textarea{flex:1;min-height:54px;max-height:160px;padding:14px 16px;background:rgba(0,0,0,0.40);border:1px solid rgba(251,191,36,0.30);border-radius:10px;color:var(--text);font-family:var(--serif);font-size:16px;resize:vertical;outline:none}
+.composer textarea:focus{border-color:var(--gold)}
+.composer .send{padding:14px 28px;background:var(--gold);color:#0a1a14;border:none;border-radius:10px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.composer .send:disabled{opacity:.5;cursor:not-allowed}
+.composer .hint{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.04em;margin-top:6px}
+.composer-wrap{display:flex;flex-direction:column;gap:4px;flex:1}
+
+.toast{position:fixed;bottom:90px;right:24px;padding:12px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(40px);opacity:0;transition:all .25s;z-index:201}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+
+input.coachname{padding:9px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;letter-spacing:.04em;outline:none;width:160px}
+input.coachname:focus{border-color:var(--accent)}
+
+#missingParam{display:none;text-align:center;padding:60px 24px;font-family:var(--mono);color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div id="missingParam">Missing ?call=&lt;id&gt; param. Get the link from the closer.</div>
+
+<div class="wrap" id="mainWrap">
+  <header class="topbar">
+    <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+    <div>
+      <input id="coachname" class="coachname" placeholder="Your handle" maxlength="40">
+    </div>
+    <div class="status" id="status">
+      <span class="dot"></span>
+      <span id="statusLabel">Live</span>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1 id="callTitle">Call</h1>
+    <div class="meta">
+      Closer <strong id="repName">@…</strong>
+      <span id="prospectLine"></span>
+    </div>
+  </section>
+
+  <main class="grid">
+    <section class="transcript-box" id="transcriptBox">
+      <div class="empty" id="transcriptEmpty">Waiting for the first transcript chunk…</div>
+      <div id="transcriptLines"></div>
+    </section>
+  </main>
+</div>
+
+<div class="composer" id="composer">
+  <div class="composer-wrap">
+    <textarea id="msg" placeholder="Type advice — closer sees this as a popup. Cmd/Ctrl+Enter to send."></textarea>
+    <span class="hint">They'll see "Coach · @<span id="hintName">you</span>" + your message. Keep it short — they're on a call.</span>
+  </div>
+  <button id="sendBtn" class="send">Send →</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+
+const params = new URLSearchParams(window.location.search);
+const BULLPEN = (params.get("b") || "killsesh").trim().toLowerCase();
+const CALL_ID = (params.get("call") || "").trim();
+
+if (!CALL_ID) {
+  $("#missingParam").style.display = "block";
+  $("#mainWrap").style.display = "none";
+  $("#composer").style.display = "none";
+}
+
+// Persist the coach's handle locally
+const STORE_KEY = "bullpenlm-coach-handle";
+if (CALL_ID) {
+  $("#coachname").value = localStorage.getItem(STORE_KEY) || "";
+  $("#hintName").textContent = $("#coachname").value || "you";
+  $("#coachname").addEventListener("input", () => {
+    localStorage.setItem(STORE_KEY, $("#coachname").value.trim());
+    $("#hintName").textContent = $("#coachname").value.trim() || "you";
+  });
+}
+
+function toast(msg, err) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.toggle("error", !!err);
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+function appendTranscript(text, atIso) {
+  $("#transcriptEmpty").style.display = "none";
+  const wrap = document.createElement("div");
+  wrap.className = "line";
+  const ts = document.createElement("span");
+  ts.className = "ts";
+  ts.textContent = (atIso || "").slice(11, 19);
+  const body = document.createElement("div");
+  body.textContent = text;
+  wrap.appendChild(ts);
+  wrap.appendChild(body);
+  $("#transcriptLines").appendChild(wrap);
+  scrollToBottom();
+}
+
+function appendCoachLine(coach, text, atIso) {
+  $("#transcriptEmpty").style.display = "none";
+  const wrap = document.createElement("div");
+  wrap.className = "line coach-line";
+  const ts = document.createElement("span");
+  ts.className = "ts";
+  ts.textContent = (atIso || "").slice(11, 19);
+  const who = document.createElement("span");
+  who.className = "who";
+  who.textContent = "Coach · @" + coach;
+  const body = document.createElement("div");
+  body.className = "body";
+  body.textContent = text;
+  wrap.appendChild(ts);
+  wrap.appendChild(who);
+  wrap.appendChild(body);
+  $("#transcriptLines").appendChild(wrap);
+  scrollToBottom();
+}
+
+function scrollToBottom() {
+  const box = $("#transcriptBox");
+  if (box.scrollHeight - box.scrollTop - box.clientHeight < 200) {
+    box.scrollTop = box.scrollHeight;
+  }
+}
+
+function markEnded() {
+  $("#status").classList.add("ended");
+  $("#statusLabel").textContent = "Ended";
+  $("#sendBtn").disabled = true;
+}
+
+async function loadInitial() {
+  try {
+    const r = await fetch("/api/b/" + encodeURIComponent(BULLPEN) +
+                          "/call/" + encodeURIComponent(CALL_ID));
+    if (!r.ok) {
+      if (r.status === 404) {
+        $("#callTitle").textContent = "Call not found.";
+        $("#statusLabel").textContent = "Missing";
+        $("#sendBtn").disabled = true;
+      }
+      return;
+    }
+    const d = await r.json();
+    $("#callTitle").textContent = (d.prospect ? "Calling " + d.prospect : "Live call");
+    $("#repName").textContent = "@" + (d.rep || "unknown");
+    if (d.prospect) {
+      $("#prospectLine").textContent = "  ·  Prospect: " + d.prospect;
+    }
+    for (const t of (d.transcript || [])) appendTranscript(t.text, t.at);
+    for (const c of (d.coach_messages || [])) appendCoachLine(c.coach || "anon", c.message, c.at);
+    if (!d.active) markEnded();
+  } catch (e) {}
+}
+
+function openSSE() {
+  const sse = new EventSource("/api/b/" + encodeURIComponent(BULLPEN) + "/stream");
+  sse.onmessage = (e) => {
+    let ev;
+    try { ev = JSON.parse(e.data); } catch { return; }
+    if (!ev || ev.call_id !== CALL_ID) return;
+    if (ev.kind === "call_transcript") {
+      appendTranscript(ev.text, ev.at);
+    } else if (ev.kind === "call_coach") {
+      appendCoachLine(ev.coach || "anon", ev.message || "", ev.at);
+    } else if (ev.kind === "call_ended") {
+      markEnded();
+      toast("Call ended.");
+    }
+  };
+}
+
+async function send() {
+  const text = $("#msg").value.trim();
+  if (!text) return;
+  const coach = $("#coachname").value.trim() || "anon";
+  $("#sendBtn").disabled = true;
+  try {
+    const r = await fetch("/api/b/" + encodeURIComponent(BULLPEN) +
+                          "/call/" + encodeURIComponent(CALL_ID) + "/coach", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coach, message: text }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      $("#msg").value = "";
+      toast("Sent.");
+    } else if (d.error === "call_ended") {
+      markEnded();
+      toast("Call already ended.", true);
+    } else {
+      toast("Failed: " + (d.error || "unknown"), true);
+    }
+  } catch (e) {
+    toast("Network error.", true);
+  } finally {
+    $("#sendBtn").disabled = false;
+  }
+}
+
+if (CALL_ID) {
+  $("#sendBtn").addEventListener("click", send);
+  $("#msg").addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault(); send();
+    }
+  });
+  loadInitial();
+  openSSE();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Live call · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@300,400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#0d0a06;--bg-1:#1a1208;--bg-2:#2a1d10;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.5;min-height:100vh}
+
+.wrap{max-width:980px;margin:0 auto;padding:30px 24px 200px;min-height:100vh}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid rgba(245,232,216,0.10)}
+.brand{font-family:var(--display);font-size:22px;text-transform:uppercase;letter-spacing:-.02em;text-decoration:none}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.who{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.who strong{color:var(--text)}
+
+.status-card{background:rgba(26,18,8,0.65);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:24px 28px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.status-card .ind{display:flex;align-items:center;gap:14px}
+.status-card .dot{width:14px;height:14px;border-radius:50%;background:var(--dim);transition:background .2s}
+.status-card.recording .dot{background:var(--danger);box-shadow:0 0 14px var(--danger);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.94)}}
+.status-card .label{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:-.01em;color:var(--text)}
+.status-card .timer{font-family:var(--mono);font-size:13px;color:var(--gold);letter-spacing:.12em;margin-left:10px}
+.status-card .counts{font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;color:var(--muted);text-align:right}
+.status-card .counts strong{color:var(--accent-2)}
+
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;border-radius:8px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:transform .12s;border:none}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn.danger{background:var(--danger);color:#0a1a14}
+.btn.accent{background:var(--accent);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.20)}
+.btn.ghost:hover{color:var(--text);border-color:var(--text)}
+
+.setup{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:12px;padding:20px 24px;margin-bottom:18px}
+.setup label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.setup input{width:100%;padding:11px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:16px;outline:none}
+.setup input:focus{border-color:var(--accent)}
+.setup .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.setup .row2{grid-template-columns:1fr}}
+
+.transcript-box{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:22px 26px;min-height:300px;max-height:560px;overflow-y:auto}
+.transcript-box .header{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;display:flex;justify-content:space-between;align-items:center}
+.transcript-box .header .listeners{color:var(--accent-2)}
+.transcript-box .line{font-family:var(--serif);font-size:17px;line-height:1.55;color:var(--text);margin-bottom:14px;padding-left:18px;border-left:2px solid rgba(52,211,153,0.35)}
+.transcript-box .line .ts{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.06em;display:block;margin-bottom:4px}
+.transcript-box .empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:40px 0;letter-spacing:.06em}
+
+/* Coach toast overlay */
+.coach-stack{position:fixed;bottom:0;right:0;left:0;display:flex;flex-direction:column;align-items:center;gap:14px;padding:24px;pointer-events:none;z-index:200}
+.coach-msg{pointer-events:auto;max-width:680px;width:100%;background:linear-gradient(135deg,rgba(251,191,36,0.18),rgba(42,29,16,0.95));border:2px solid var(--gold);border-radius:14px;padding:20px 26px;box-shadow:0 20px 60px -10px rgba(0,0,0,0.6),0 0 30px rgba(251,191,36,0.20);animation:slideUp .35s cubic-bezier(.2,.7,.3,1.2)}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.coach-msg .header{font-family:var(--mono);font-size:10.5px;letter-spacing:.20em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.coach-msg .header .who{color:var(--gold)}
+.coach-msg .header .dismiss{background:transparent;border:none;color:var(--gold);cursor:pointer;font-family:var(--mono);font-size:14px;padding:0;opacity:.7}
+.coach-msg .header .dismiss:hover{opacity:1}
+.coach-msg .body{font-family:var(--serif);font-size:19px;line-height:1.4;color:var(--text)}
+
+.toast{position:fixed;bottom:24px;left:24px;padding:12px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(80px);opacity:0;transition:all .25s;z-index:201}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+
+.shareline{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:14px;letter-spacing:.04em;text-align:center}
+.shareline code{background:rgba(0,0,0,0.30);padding:2px 8px;border-radius:4px;color:var(--accent-2)}
+.shareline .copyl{background:transparent;border:1px solid rgba(245,232,216,0.20);color:var(--muted);padding:4px 10px;border-radius:5px;font-family:var(--mono);font-size:9.5px;letter-spacing:.10em;cursor:pointer;margin-left:8px;text-transform:uppercase}
+.shareline .copyl:hover{color:var(--text);border-color:var(--text)}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <header class="topbar">
+    <a href="/app/today.html" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+    <div class="who">Live call · <strong id="repTag">@…</strong></div>
+  </header>
+
+  <section class="setup" id="setupPanel">
+    <div class="row2">
+      <div>
+        <label>Prospect / org</label>
+        <input id="prospect" type="text" placeholder="Bank of America" maxlength="120">
+      </div>
+      <div>
+        <label>Deal ID (optional)</label>
+        <input id="dealId" type="text" placeholder="" maxlength="80">
+      </div>
+    </div>
+  </section>
+
+  <section class="status-card" id="statusCard">
+    <div class="ind">
+      <div class="dot"></div>
+      <div>
+        <div class="label" id="statusLabel">Ready</div>
+        <div class="timer" id="timer">00:00</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button id="startBtn" class="btn danger">● Start call</button>
+      <button id="endBtn" class="btn ghost" style="display:none">End call</button>
+    </div>
+    <div class="counts">
+      Chunks: <strong id="chunkCount">0</strong><br>
+      Coaches in: <strong id="coachCount">0</strong>
+    </div>
+  </section>
+
+  <p class="shareline" id="shareLine" style="display:none">
+    Share with a coach: <code id="shareUrl">—</code>
+    <button class="copyl" id="copyShareBtn">Copy</button>
+  </p>
+
+  <section class="transcript-box" id="transcriptBox">
+    <div class="header">
+      <span>Live transcript</span>
+      <span class="listeners">whisper.cpp local · 5s chunks</span>
+    </div>
+    <div class="empty" id="transcriptEmpty">Hit “Start call” to begin. Audio gets transcribed locally — never leaves your machine until a coach subscribes.</div>
+    <div id="transcriptLines"></div>
+  </section>
+</main>
+
+<div class="coach-stack" id="coachStack"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+
+const params = new URLSearchParams(window.location.search);
+const BULLPEN = (params.get("b") || "killsesh").trim().toLowerCase();
+const REP = (params.get("rep") || "self").trim();
+$("#repTag").textContent = "@" + REP;
+
+let mediaRecorder = null;
+let stream = null;
+let callId = null;
+let chunkCount = 0;
+let startedAt = null;
+let timerId = null;
+let coaches = new Set();
+let sse = null;
+
+function toast(msg, err) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.toggle("error", !!err);
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2400);
+}
+
+function fmtTimer(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  return String(m).padStart(2,"0") + ":" + String(s % 60).padStart(2,"0");
+}
+
+function tickTimer() {
+  $("#timer").textContent = fmtTimer(Date.now() - startedAt);
+}
+
+function appendTranscript(text, atIso) {
+  $("#transcriptEmpty").style.display = "none";
+  const wrap = document.createElement("div");
+  wrap.className = "line";
+  const ts = document.createElement("span");
+  ts.className = "ts";
+  ts.textContent = (atIso || "").slice(11, 19);
+  const body = document.createElement("div");
+  body.textContent = text;
+  wrap.appendChild(ts);
+  wrap.appendChild(body);
+  $("#transcriptLines").appendChild(wrap);
+  $("#transcriptBox").scrollTop = $("#transcriptBox").scrollHeight;
+}
+
+function showCoachToast(coach, message) {
+  const card = document.createElement("div");
+  card.className = "coach-msg";
+  const head = document.createElement("div");
+  head.className = "header";
+  const who = document.createElement("span");
+  who.className = "who";
+  who.textContent = "Coach · @" + coach;
+  const dismiss = document.createElement("button");
+  dismiss.className = "dismiss";
+  dismiss.textContent = "✕";
+  dismiss.addEventListener("click", () => card.remove());
+  head.appendChild(who);
+  head.appendChild(dismiss);
+  const body = document.createElement("div");
+  body.className = "body";
+  body.textContent = message;
+  card.appendChild(head);
+  card.appendChild(body);
+  $("#coachStack").appendChild(card);
+  // Auto-dismiss after 16s
+  setTimeout(() => card.remove(), 16000);
+
+  coaches.add(coach);
+  $("#coachCount").textContent = String(coaches.size);
+}
+
+function openSSE() {
+  if (sse) try { sse.close(); } catch {}
+  sse = new EventSource("/api/b/" + encodeURIComponent(BULLPEN) + "/stream");
+  sse.onmessage = (e) => {
+    let ev;
+    try { ev = JSON.parse(e.data); } catch { return; }
+    if (!ev || ev.call_id !== callId) return;
+    if (ev.kind === "call_transcript") {
+      appendTranscript(ev.text, ev.at);
+    } else if (ev.kind === "call_coach") {
+      showCoachToast(ev.coach || "anon", ev.message || "");
+    } else if (ev.kind === "call_ended") {
+      handleRemoteEnd();
+    }
+  };
+  sse.onerror = () => { /* keepalive lapse — EventSource auto-reconnects */ };
+}
+
+async function uploadChunk(blob) {
+  if (!callId) return;
+  try {
+    const r = await fetch("/api/b/" + encodeURIComponent(BULLPEN) +
+                          "/call/" + encodeURIComponent(callId) + "/chunk", {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: blob,
+    });
+    const d = await r.json();
+    if (d.ok) {
+      chunkCount += 1;
+      $("#chunkCount").textContent = String(chunkCount);
+      if (d.skipped) {
+        // silent skip — too short or empty transcript
+      }
+    }
+  } catch (e) {
+    // swallow — next chunk retries
+  }
+}
+
+async function startCall() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+    }});
+  } catch (e) {
+    toast("Mic permission denied: " + e.message, true);
+    return;
+  }
+
+  // Open the session server-side
+  try {
+    const r = await fetch("/api/b/" + encodeURIComponent(BULLPEN) + "/call/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rep: REP,
+                              prospect: $("#prospect").value.trim(),
+                              deal_id: $("#dealId").value.trim() }),
+    });
+    const d = await r.json();
+    if (!d.call_id) throw new Error("no_call_id");
+    callId = d.call_id;
+  } catch (e) {
+    toast("Couldn't start call session.", true);
+    stream.getTracks().forEach(t => t.stop());
+    return;
+  }
+
+  // Pick the best supported MIME
+  const candidates = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/ogg;codecs=opus",
+  ];
+  const mimeType = candidates.find(m => MediaRecorder.isTypeSupported(m)) || "";
+  try {
+    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+  } catch (e) {
+    toast("MediaRecorder not supported: " + e.message, true);
+    stream.getTracks().forEach(t => t.stop());
+    return;
+  }
+  mediaRecorder.ondataavailable = (e) => {
+    if (e.data && e.data.size > 0) uploadChunk(e.data);
+  };
+  mediaRecorder.start(5000); // emit a chunk every 5s
+
+  startedAt = Date.now();
+  timerId = setInterval(tickTimer, 1000);
+  $("#statusCard").classList.add("recording");
+  $("#statusLabel").textContent = "Recording";
+  $("#startBtn").style.display = "none";
+  $("#endBtn").style.display = "inline-flex";
+  $("#shareLine").style.display = "block";
+  const shareUrl = location.origin + "/app/listen.html?b=" + encodeURIComponent(BULLPEN) + "&call=" + encodeURIComponent(callId);
+  $("#shareUrl").textContent = shareUrl;
+  $("#copyShareBtn").onclick = async () => {
+    try { await navigator.clipboard.writeText(shareUrl); toast("Link copied — send to a coach."); }
+    catch { toast("Copy failed", true); }
+  };
+  openSSE();
+}
+
+async function endCall() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+  }
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (timerId) { clearInterval(timerId); timerId = null; }
+
+  if (callId) {
+    try {
+      await fetch("/api/b/" + encodeURIComponent(BULLPEN) +
+                   "/call/" + encodeURIComponent(callId) + "/end", { method: "POST" });
+    } catch {}
+  }
+  $("#statusCard").classList.remove("recording");
+  $("#statusLabel").textContent = "Ended";
+  $("#endBtn").style.display = "none";
+  toast("Call ended.");
+}
+
+function handleRemoteEnd() {
+  // Server marked it ended (e.g., a coach hit end via API)
+  if (timerId) { clearInterval(timerId); timerId = null; }
+  $("#statusCard").classList.remove("recording");
+  $("#statusLabel").textContent = "Ended";
+  $("#endBtn").style.display = "none";
+}
+
+$("#startBtn").addEventListener("click", startCall);
+$("#endBtn").addEventListener("click", endCall);
+
+window.addEventListener("beforeunload", () => {
+  if (callId && mediaRecorder && mediaRecorder.state !== "inactive") {
+    // Best-effort end on navigation
+    navigator.sendBeacon &&
+      navigator.sendBeacon("/api/b/" + encodeURIComponent(BULLPEN) +
+                            "/call/" + encodeURIComponent(callId) + "/end");
+  }
+});
+</script>
+</body>
+</html>
