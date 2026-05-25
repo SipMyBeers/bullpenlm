@@ -2934,6 +2934,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not self._require_auth():
             return self._deny_auth()
 
+        # /api/transcribe-opus takes binary opus/webm (MediaRecorder default
+        # on Chrome/Firefox/Safari-Tech-Preview). Used by spotcheck.html and
+        # any other "record once, get text" UI. Reuses calls.transcribe_chunk
+        # so the ffmpeg + whisper pipeline is the same path as live calls.
+        if self.path == "/api/transcribe-opus":
+            try:
+                from calls import transcribe_chunk
+                r = transcribe_chunk(raw, min_seconds=0.5)
+                if not r.get("ok"):
+                    self._send_json(502, r); return
+                self._send_json(200, {"text": r.get("text", ""),
+                                       "chunk_seconds": r.get("chunk_seconds")})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # /api/transcribe takes binary WAV — skip JSON parsing for that path.
         if self.path == "/api/transcribe":
             try:

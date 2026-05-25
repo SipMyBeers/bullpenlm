@@ -147,11 +147,60 @@ function renderCard(sc){
   if(sc.target === REP && sc.status === 'open'){
     const cw = el('div', 'compose');
     const ta = document.createElement('textarea');
-    ta.placeholder = 'Type your response — every word you would say. Auto-graded by keyword check.';
+    ta.placeholder = 'Type your response — every word you would say. Or hit ⏺ Record to speak it. Auto-graded by keyword check.';
     cw.appendChild(ta);
     const row = el('div', 'row');
     const t = el('div', 'timer', '');
     row.appendChild(t);
+
+    // Audio recording button — captures opus, transcribes via whisper, fills textarea
+    const recBtn = el('button', 'submit', '⏺ Record');
+    recBtn.style.background = '#f87171';
+    recBtn.style.color = '#0a1a14';
+    let rec = null, recStream = null, recChunks = [];
+    recBtn.onclick = async () => {
+      if (rec && rec.state === 'recording') {
+        rec.stop();
+        return;
+      }
+      try {
+        recStream = await navigator.mediaDevices.getUserMedia({audio:{
+          echoCancellation:true, noiseSuppression:true, autoGainControl:true}});
+      } catch(e){ toast('Mic permission denied: ' + e.message, true); return; }
+      const mime = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus']
+        .find(m => MediaRecorder.isTypeSupported(m)) || '';
+      try { rec = new MediaRecorder(recStream, mime ? {mimeType: mime} : undefined); }
+      catch(e){ toast('Recorder not supported: '+e.message, true); return; }
+      recChunks = [];
+      rec.ondataavailable = e => { if(e.data && e.data.size>0) recChunks.push(e.data); };
+      rec.onstop = async () => {
+        recStream.getTracks().forEach(t => t.stop());
+        recBtn.textContent = '⏺ Record';
+        recBtn.disabled = true;
+        toast('Transcribing…');
+        const blob = new Blob(recChunks, {type: rec.mimeType || 'audio/webm'});
+        try {
+          const r = await fetch('/api/transcribe-opus', {
+            method:'POST',
+            headers:{'Content-Type':'application/octet-stream'},
+            body: blob
+          });
+          const d = await r.json();
+          if (r.ok && d.text) {
+            ta.value = (ta.value ? ta.value + ' ' : '') + d.text;
+            toast('✓ Transcribed — review + submit');
+          } else {
+            toast('Transcription failed: ' + (d.error || ('HTTP '+r.status)), true);
+          }
+        } catch(e){ toast('Network error: '+e.message, true); }
+        recBtn.disabled = false;
+      };
+      rec.start();
+      recBtn.textContent = '⏹ Stop';
+      toast('Recording — hit Stop when done');
+    };
+    row.appendChild(recBtn);
+
     const btn = el('button', 'submit', '▶ Submit response');
     btn.onclick = async () => {
       const response = ta.value.trim();
