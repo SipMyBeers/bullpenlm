@@ -1074,13 +1074,13 @@
   <div class="mp-steps">
     <div class="mp-card">
       <div class="mp-num">①</div>
-      <h3>One host</h3>
-      <p>You run BullpenLM on your Mac Mini (or a $10 VPS). One <code>docker compose up</code>. The container handles everything: the AI buyers, the recording, the metrics, the leaderboard.</p>
+      <h3>One host downloads</h3>
+      <p>The operator double-clicks the app, picks <em>Start a bullpen</em>, and the floor is live on their machine. No Docker, no Tailscale, no terminal. The CRM, AI buyers, leaderboard, and live transcripts all run locally.</p>
     </div>
     <div class="mp-card">
       <div class="mp-num">②</div>
-      <h3>Invite the team</h3>
-      <p>Tailscale-invite your friends. They open the floor in their browser, type their rep name, and they're in. No installs, no accounts, no SaaS bill. Just trusted-network access.</p>
+      <h3>Closers join with one click</h3>
+      <p>The app generates a Cloudflare-backed invite link automatically. The operator sends it. Closers download the same app, paste the link, and they're on the floor in seconds.</p>
     </div>
     <div class="mp-card">
       <div class="mp-num">③</div>
@@ -1120,9 +1120,11 @@
     </div>
   </div>
 
-  <pre class="mp-shell"><span class="mp-prompt">$</span> docker compose up -d
-<span class="mp-comment"># Tailscale-invite your team → they open</span>
-<span class="mp-prompt">→</span> http://&lt;your-tailscale-ip&gt;:7878/</pre>
+  <pre class="mp-shell"><span class="mp-comment"># 1. Download BullpenLM for Mac · Windows · Linux</span>
+<span class="mp-prompt">↓</span> bullpenlm.com/app
+<span class="mp-comment"># 2. Open the app → click "Start a bullpen"</span>
+<span class="mp-comment"># 3. App generates a Cloudflare link automatically</span>
+<span class="mp-prompt">→</span> https://&lt;your-floor&gt;.trycloudflare.com</pre>
 </section>
 
 <style>
