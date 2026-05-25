@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Start a bullpen · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh}
+
+.wrap{max-width:780px;margin:0 auto;padding:40px 28px}
+
+.brand{font-family:var(--display);font-size:28px;text-transform:uppercase;letter-spacing:-.02em;display:inline-flex;align-items:baseline;text-decoration:none;margin-bottom:18px}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+
+.progress{display:flex;gap:10px;margin-bottom:30px}
+.progress .seg{flex:1;height:6px;background:rgba(245,232,216,0.08);border-radius:3px;overflow:hidden;position:relative}
+.progress .seg .fill{height:100%;background:var(--accent);width:0%;transition:width .4s}
+.progress .seg.done .fill{width:100%}
+.progress .seg.active .fill{width:50%}
+.progress .seg .label{position:absolute;top:14px;left:0;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.progress .seg.done .label{color:var(--accent-2)}
+.progress .seg.active .label{color:var(--gold)}
+
+.step{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:34px 38px;margin-top:36px}
+.step h1{font-family:var(--display);font-size:38px;color:var(--text);margin:0 0 6px;text-transform:uppercase;letter-spacing:-.02em;line-height:1.05}
+.step .sub{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--muted);margin:0 0 26px;line-height:1.5}
+
+.field{margin-bottom:20px}
+.field label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:13px 16px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:17px;outline:none;transition:border-color .12s}
+.field textarea{font-size:15px;resize:vertical;min-height:80px;line-height:1.5}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field .hint{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:5px;letter-spacing:.04em}
+.field .err{font-family:var(--mono);font-size:11px;color:var(--danger);margin-top:6px;letter-spacing:.02em;display:none}
+.field.error input,.field.error select,.field.error textarea{border-color:var(--danger)}
+.field.error .err{display:block}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.row2{grid-template-columns:1fr}}
+
+.access-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+@media(max-width:560px){.access-grid{grid-template-columns:1fr}}
+.access-tile{padding:16px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:10px;cursor:pointer;transition:border-color .12s,transform .12s,background .12s}
+.access-tile:hover{border-color:var(--accent-dim);transform:translateY(-1px)}
+.access-tile.active{background:rgba(52,211,153,0.10);border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 18px rgba(52,211,153,0.15)}
+.access-tile .top{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.01em;color:var(--accent-2)}
+.access-tile .desc{font-family:var(--serif);font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+
+.review{background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.10);border-radius:10px;padding:22px 26px;margin-top:8px}
+.review .rv-row{display:grid;grid-template-columns:160px 1fr;gap:14px;padding:11px 0;border-bottom:1px solid rgba(245,232,216,0.06);align-items:baseline}
+.review .rv-row:last-child{border-bottom:none}
+.review .rv-key{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.review .rv-val{font-family:var(--serif);font-size:16px;color:var(--text);word-break:break-word}
+.review .rv-val.muted{color:var(--dim);font-style:italic}
+
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:30px;padding-top:24px;border-top:1px solid rgba(245,232,216,0.08)}
+.actions .back{padding:10px 18px;background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15);border-radius:6px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.actions .back:hover{color:var(--text)}
+.actions .next{padding:13px 28px;background:var(--accent);color:#0a1a14;border:none;border-radius:7px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:transform .12s}
+.actions .next:hover{transform:translateY(-1px)}
+.actions .next:disabled{background:rgba(168,154,135,0.20);color:var(--muted);cursor:not-allowed;transform:none}
+.actions .next.gold{background:var(--gold)}
+
+.final{text-align:center;padding:50px 30px}
+.final .check{font-size:64px;line-height:1;margin-bottom:14px}
+.final h1{font-family:var(--display);font-size:54px;color:var(--accent);text-transform:uppercase;letter-spacing:-.02em;margin:0 0 12px;line-height:1}
+.final .you{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--muted);margin:0 auto 26px;max-width:50ch;line-height:1.55}
+.final .link-box{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;background:rgba(0,0,0,0.40);border:1px solid rgba(52,211,153,0.40);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--accent-2);margin-bottom:26px}
+.final .link-box button{background:var(--accent);color:#0a1a14;border:none;padding:6px 12px;border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.final .go{padding:16px 36px;background:var(--gold);color:#0a1a14;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;letter-spacing:.20em;text-transform:uppercase;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+.final .next-steps{margin-top:32px;text-align:left;padding:22px 26px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.25);border-radius:10px}
+.final .next-steps h3{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin:0 0 14px}
+.final .next-steps ol{margin:0;padding-left:22px;font-family:var(--serif);font-size:14.5px;line-height:1.75;color:var(--text)}
+.final .next-steps ol li{margin-bottom:6px}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+
+  <div class="progress" id="progress">
+    <div class="seg" data-step="0"><div class="fill"></div><div class="label">1 · You</div></div>
+    <div class="seg" data-step="1"><div class="fill"></div><div class="label">2 · The bullpen</div></div>
+    <div class="seg" data-step="2"><div class="fill"></div><div class="label">3 · Economics</div></div>
+    <div class="seg" data-step="3"><div class="fill"></div><div class="label">4 · Launch</div></div>
+  </div>
+
+  <!-- STEP 0 — YOU -->
+  <section class="step" data-panel="0">
+    <h1>Step 1. Who are you?</h1>
+    <p class="sub">The name your closers will see on the leaderboard. The handle that owns this bullpen.</p>
+
+    <div class="field" id="f-founder-display">
+      <label>Your name</label>
+      <input id="founder_display_name" type="text" placeholder="Dylan Beers" maxlength="48" autocomplete="name">
+      <div class="hint">Shown to your closers and on the floor.</div>
+      <div class="err">Tell us what to call you.</div>
+    </div>
+
+    <div class="field" id="f-founder-rep">
+      <label>Your handle</label>
+      <input id="founder_rep" type="text" placeholder="beers" maxlength="40">
+      <div class="hint">Lowercase. Letters, numbers, dashes. This is your rep slug.</div>
+      <div class="err">Handle must be 3–40 chars: lowercase letters, numbers, dashes.</div>
+    </div>
+
+    <div class="actions">
+      <span></span>
+      <button class="next" data-go="1">Next →</button>
+    </div>
+  </section>
+
+  <!-- STEP 1 — THE BULLPEN -->
+  <section class="step" data-panel="1" hidden>
+    <h1>Step 2. The bullpen.</h1>
+    <p class="sub">Name your floor and tell the world what you're moving.</p>
+
+    <div class="field" id="f-name">
+      <label>Bullpen name</label>
+      <input id="name" type="text" placeholder="KillSesh" maxlength="80">
+      <div class="hint">What you call your operation.</div>
+      <div class="err">Give your bullpen a name.</div>
+    </div>
+
+    <div class="field" id="f-slug">
+      <label>URL slug</label>
+      <input id="slug" type="text" placeholder="killsesh" maxlength="40">
+      <div class="hint">Lowercase, dashes only. This becomes <code>bullpenlm.com/b/&lt;slug&gt;</code>.</div>
+      <div class="err">Slug must be 3–40 chars: lowercase, numbers, dashes.</div>
+    </div>
+
+    <div class="field" id="f-product">
+      <label>What you sell</label>
+      <input id="product" type="text" placeholder="COBOL modernization for Fortune-500 BFSI" maxlength="120">
+      <div class="hint">One line. Be specific.</div>
+      <div class="err">Tell us what you're selling.</div>
+    </div>
+
+    <div class="field" id="f-tagline">
+      <label>Tagline (optional)</label>
+      <textarea id="tagline" maxlength="240" placeholder="Learn how to sell anything by selling to your friends."></textarea>
+      <div class="hint">One sentence pitch. Used on the public bullpen page.</div>
+    </div>
+
+    <div class="actions">
+      <button class="back" data-go="0">← Back</button>
+      <button class="next" data-go="2">Next →</button>
+    </div>
+  </section>
+
+  <!-- STEP 2 — ECONOMICS -->
+  <section class="step" data-panel="2" hidden>
+    <h1>Step 3. The economics.</h1>
+    <p class="sub">What closers earn. How they get in. Set the rules of your floor.</p>
+
+    <div class="row2">
+      <div class="field" id="f-rate">
+        <label>Commission rate</label>
+        <input id="commission_rate" type="text" placeholder="50% of first-year revenue" maxlength="80">
+        <div class="hint">Plain language. "50/50 split", "20% of MRR", whatever.</div>
+        <div class="err">Tell closers what they earn.</div>
+      </div>
+
+      <div class="field" id="f-seats">
+        <label>Seats open</label>
+        <input id="seats_open" type="number" min="1" max="500" placeholder="5">
+        <div class="hint">How many closers you'll take.</div>
+      </div>
+    </div>
+
+    <div class="field" id="f-access">
+      <label>Access mode</label>
+      <div class="access-grid">
+        <div class="access-tile" data-access="public">
+          <div class="top">Public</div>
+          <div class="desc">Anyone can join. No vetting. Best for high-volume.</div>
+        </div>
+        <div class="access-tile active" data-access="invite_only">
+          <div class="top">Invite-only</div>
+          <div class="desc">Closers apply. You vet. Recommended default.</div>
+        </div>
+        <div class="access-tile" data-access="paid">
+          <div class="top">Paid</div>
+          <div class="desc">Closers pay to join. Skin in the game.</div>
+        </div>
+      </div>
+      <div class="err">Pick an access mode.</div>
+    </div>
+
+    <div class="field" id="f-price" hidden>
+      <label>Price (USD)</label>
+      <input id="price_usd" type="number" min="1" step="1" placeholder="99">
+      <div class="hint">One-time entry fee for closers.</div>
+      <div class="err">Set a price above 0.</div>
+    </div>
+
+    <div class="field" id="f-discord">
+      <label>Discord invite (optional)</label>
+      <input id="discord_invite" type="url" placeholder="https://discord.gg/yourcrew" maxlength="200">
+      <div class="hint">Where your bullpen chats. Skip if you don't have one yet.</div>
+    </div>
+
+    <div class="actions">
+      <button class="back" data-go="1">← Back</button>
+      <button class="next" data-go="3">Next →</button>
+    </div>
+  </section>
+
+  <!-- STEP 3 — LAUNCH -->
+  <section class="step" data-panel="3" hidden>
+    <h1>Step 4. Launch it.</h1>
+    <p class="sub">Last look. Then we go live.</p>
+
+    <div class="review" id="review"></div>
+
+    <div class="actions">
+      <button class="back" data-go="2">← Back</button>
+      <button class="next gold" id="launchBtn">Launch bullpen →</button>
+    </div>
+  </section>
+
+  <!-- DONE -->
+  <section class="step" data-panel="done" hidden>
+    <div class="final">
+      <div class="check">🚀</div>
+      <h1>Your floor is live.</h1>
+      <p class="you" id="successLine">Your bullpen is up. The CRM, leaderboard, kanban, and scripts are wired. Time to fill the seats.</p>
+
+      <div class="link-box">
+        <span id="shareLink">https://bullpenlm.com/b/your-slug</span>
+        <button id="copyBtn">Copy</button>
+      </div>
+
+      <div><a class="go" id="enterBtn" href="#">Enter the floor →</a></div>
+
+      <div class="next-steps">
+        <h3>What now</h3>
+        <ol>
+          <li>Post in <strong>#showcase</strong> in the BullpenLM Discord with your link. Closers will reply.</li>
+          <li>React 🚀 on <strong>#start-here</strong> so the floor knows you're an Operator.</li>
+          <li>Walk into your floor, drop your scripts, set your house accounts.</li>
+          <li>Pick up the phone. ✅</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const state = {
+  step: 0,
+  founder_display_name: "",
+  founder_rep: "",
+  slug: "",
+  name: "",
+  product: "",
+  tagline: "",
+  commission_rate: "",
+  seats_open: "",
+  access_mode: "invite_only",
+  price_usd: "",
+  discord_invite: "",
+};
+
+const SLUG_RE = /^[a-z0-9][a-z0-9\-]{1,38}[a-z0-9]$/;
+const REP_RE  = /^[a-z0-9][a-z0-9\-]{1,38}[a-z0-9]$/;
+
+const $ = (s, root) => (root || document).querySelector(s);
+const $$ = (s, root) => Array.from((root || document).querySelectorAll(s));
+
+function showStep(n) {
+  $$("section.step").forEach(p => p.hidden = (String(p.dataset.panel) !== String(n)));
+  $$("#progress .seg").forEach(s => {
+    s.classList.remove("active","done");
+    const idx = Number(s.dataset.step);
+    if (n === "done") { s.classList.add("done"); return; }
+    if (idx < n) s.classList.add("done");
+    else if (idx === n) s.classList.add("active");
+  });
+  state.step = n;
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function toast(msg, err) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.toggle("error", !!err);
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2400);
+}
+
+function readField(id) {
+  const el = $("#" + id);
+  return el ? (el.value || "").trim() : "";
+}
+
+function setError(fieldId, on) {
+  const f = $("#" + fieldId);
+  if (!f) return;
+  f.classList.toggle("error", !!on);
+}
+
+function syncSlugFromName() {
+  if (state.slug) return;
+  const v = readField("name").toLowerCase()
+            .replace(/[^a-z0-9\-\s]/g,"")
+            .trim().replace(/\s+/g,"-")
+            .replace(/--+/g,"-")
+            .replace(/^-|-$/g,"")
+            .slice(0,40);
+  if (v) $("#slug").value = v;
+}
+
+function validateStep(n) {
+  let ok = true;
+  if (n === 0) {
+    state.founder_display_name = readField("founder_display_name");
+    state.founder_rep = readField("founder_rep").toLowerCase();
+    setError("f-founder-display", !state.founder_display_name);
+    setError("f-founder-rep", !REP_RE.test(state.founder_rep));
+    ok = !!state.founder_display_name && REP_RE.test(state.founder_rep);
+  }
+  if (n === 1) {
+    state.name = readField("name");
+    state.slug = readField("slug").toLowerCase();
+    state.product = readField("product");
+    state.tagline = readField("tagline");
+    setError("f-name", !state.name);
+    setError("f-slug", !SLUG_RE.test(state.slug));
+    setError("f-product", !state.product);
+    ok = !!state.name && SLUG_RE.test(state.slug) && !!state.product;
+  }
+  if (n === 2) {
+    state.commission_rate = readField("commission_rate");
+    state.seats_open = readField("seats_open");
+    state.discord_invite = readField("discord_invite");
+    setError("f-rate", !state.commission_rate);
+    if (state.access_mode === "paid") {
+      state.price_usd = readField("price_usd");
+      setError("f-price", !state.price_usd || Number(state.price_usd) <= 0);
+      ok = !!state.commission_rate && Number(state.price_usd) > 0;
+    } else {
+      state.price_usd = "";
+      setError("f-price", false);
+      ok = !!state.commission_rate;
+    }
+  }
+  return ok;
+}
+
+function buildReview() {
+  const accessLabels = {
+    public: "Public — anyone joins",
+    invite_only: "Invite-only — you vet",
+    paid: "Paid — $" + state.price_usd + " entry",
+  };
+  const rows = [
+    ["Founder",       state.founder_display_name + " (@" + state.founder_rep + ")"],
+    ["Bullpen",       state.name + "  ·  bullpenlm.com/b/" + state.slug],
+    ["Selling",       state.product],
+    ["Tagline",       state.tagline || "—"],
+    ["Commission",    state.commission_rate],
+    ["Seats open",    state.seats_open || "—"],
+    ["Access",        accessLabels[state.access_mode]],
+    ["Discord",       state.discord_invite || "—"],
+  ];
+  const root = $("#review");
+  while (root.firstChild) root.removeChild(root.firstChild);
+  for (const [k, v] of rows) {
+    const row = document.createElement("div");
+    row.className = "rv-row";
+    const key = document.createElement("div");
+    key.className = "rv-key";
+    key.textContent = k;
+    const val = document.createElement("div");
+    val.className = "rv-val" + (v === "—" ? " muted" : "");
+    val.textContent = v;
+    row.appendChild(key);
+    row.appendChild(val);
+    root.appendChild(row);
+  }
+}
+
+async function launch() {
+  const btn = $("#launchBtn");
+  btn.disabled = true;
+  btn.textContent = "Launching…";
+  const payload = {
+    slug: state.slug,
+    name: state.name,
+    founder_rep: state.founder_rep,
+    founder_display_name: state.founder_display_name,
+    product: state.product,
+    tagline: state.tagline,
+    commission_rate: state.commission_rate,
+    seats_open: state.seats_open ? Number(state.seats_open) : null,
+    access_mode: state.access_mode,
+    price_usd: state.access_mode === "paid" ? Number(state.price_usd) : null,
+    discord_invite: state.discord_invite,
+  };
+  try {
+    const r = await fetch("/api/bullpens", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) {
+      btn.disabled = false;
+      btn.textContent = "Launch bullpen →";
+      const err = (data && data.error) || ("HTTP " + r.status);
+      if (err === "bullpen_slug_taken") {
+        toast("That slug is taken. Pick another.", true);
+        showStep(1);
+        setError("f-slug", true);
+      } else {
+        toast("Launch failed: " + err, true);
+      }
+      return;
+    }
+    const baseHost = location.host.endsWith("bullpenlm.com")
+      ? "https://bullpenlm.com"
+      : location.origin;
+    const shareUrl = baseHost + (data.share_url || "/b/" + data.slug);
+    $("#shareLink").textContent = shareUrl;
+    $("#enterBtn").href = data.app_url || ("/app/today.html?b=" + data.slug + "&rep=" + data.founder_rep);
+    $("#successLine").textContent =
+      data.name + " is live. The CRM, leaderboard, kanban, and scripts are wired. Time to fill the seats.";
+    showStep("done");
+    $("#copyBtn").onclick = async () => {
+      try { await navigator.clipboard.writeText(shareUrl); toast("Link copied. Now post it."); }
+      catch { toast("Copy failed", true); }
+    };
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "Launch bullpen →";
+    toast("Network error. Try again.", true);
+  }
+}
+
+$$('[data-go]').forEach(btn => {
+  btn.addEventListener("click", () => {
+    const target = btn.dataset.go;
+    if (target === "done") return;
+    const nextN = Number(target);
+    if (nextN > state.step) {
+      if (!validateStep(state.step)) {
+        toast("Fill the highlighted fields.", true);
+        return;
+      }
+    }
+    if (state.step === 1 && nextN === 2) syncSlugFromName();
+    if (nextN === 3) buildReview();
+    showStep(nextN);
+  });
+});
+$("#launchBtn").addEventListener("click", launch);
+
+$$('.access-tile').forEach(tile => {
+  tile.addEventListener("click", () => {
+    $$('.access-tile').forEach(t => t.classList.remove("active"));
+    tile.classList.add("active");
+    state.access_mode = tile.dataset.access;
+    $("#f-price").hidden = state.access_mode !== "paid";
+  });
+});
+
+$("#name") && $("#name").addEventListener("blur", () => {
+  if (!$("#slug").value) syncSlugFromName();
+});
+
+$("#founder_display_name") && $("#founder_display_name").addEventListener("blur", () => {
+  if (!$("#founder_rep").value) {
+    const v = readField("founder_display_name").toLowerCase()
+              .replace(/[^a-z0-9\-\s]/g,"")
+              .trim().replace(/\s+/g,"-")
+              .slice(0,40);
+    if (v) $("#founder_rep").value = v;
+  }
+});
+
+showStep(0);
+</script>
+</body>
+</html>

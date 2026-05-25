@@ -153,7 +153,8 @@ def set_bullpen_config(bullpen: str, updates: dict) -> Optional[dict]:
     """Patch the bullpen.json with founder-controlled settings.
     Only allow-listed fields are writable."""
     ALLOWED = {"name", "product", "public_url", "discord_invite",
-               "access_mode", "price_usd", "tagline", "brand"}
+               "access_mode", "price_usd", "tagline", "brand",
+               "commission_rate", "seats_open", "founder_display_name"}
     VALID_ACCESS = {"public", "invite_only", "paid"}
     p = _bullpen_json(bullpen)
     if not p.exists():
