@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Plays · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}.crumb .sep{margin:0 8px;color:var(--dim)}.crumb .here{color:var(--accent)}
+
+.wrap{max-width:1280px;margin:0 auto;padding:24px 28px;display:grid;grid-template-columns:340px 1fr;gap:22px}
+@media(max-width:960px){.wrap{grid-template-columns:1fr}}
+
+.hero{padding:24px 26px;background:linear-gradient(135deg,rgba(167,139,250,0.10),rgba(42,29,16,0.55));border:1px solid rgba(167,139,250,0.30);border-radius:12px;margin-bottom:20px}
+.hero h1{font-family:var(--display);font-size:42px;color:#c4b5fd;margin:0 0 4px;letter-spacing:-.02em;text-transform:uppercase;line-height:1}
+.hero .sub{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);margin:0 0 12px;line-height:1.5}
+.hero .glossary{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;padding-top:14px;border-top:1px solid rgba(167,139,250,0.20)}
+.hero .glossary .k{color:#c4b5fd;text-transform:uppercase;letter-spacing:.14em}
+.hero .glossary .v{color:var(--muted)}
+
+/* List sidebar */
+.list{display:flex;flex-direction:column;gap:6px}
+.play-tile{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:11px 14px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:8px;cursor:pointer;transition:border-color .12s,transform .12s}
+.play-tile:hover{border-color:var(--accent-dim);transform:translateY(-1px)}
+.play-tile.active{border-color:var(--accent);background:rgba(52,211,153,0.08)}
+.play-tile .ph{font-family:var(--display);font-size:18px;color:var(--gold);text-align:center;line-height:1}
+.play-tile .name{font-family:var(--serif);font-size:14px;font-weight:600;color:var(--text);line-height:1.25}
+.play-tile .meta{font-family:var(--mono);font-size:9px;letter-spacing:.10em;color:var(--muted);margin-top:2px;text-transform:uppercase}
+.play-tile .badge{padding:3px 8px;border-radius:3px;font-family:var(--mono);font-size:9px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;text-align:center}
+.play-tile .badge.go{background:var(--accent);color:#0a1a14}
+.play-tile .badge.nogo{background:rgba(168,154,135,0.10);color:var(--muted)}
+
+/* TCS detail */
+.tcs-card{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:12px;padding:30px 34px}
+.tcs-hdr{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:start;padding-bottom:18px;border-bottom:1px solid rgba(245,232,216,0.08);margin-bottom:22px}
+.tcs-hdr .phase{font-family:var(--display);font-size:48px;color:var(--gold);line-height:1;letter-spacing:-.02em}
+.tcs-hdr .info h1{font-family:var(--display);font-size:32px;color:var(--text);margin:0 0 4px;letter-spacing:-.01em;text-transform:uppercase;line-height:1.1}
+.tcs-hdr .info .id{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.05em}
+.tcs-hdr .qual-badge{padding:8px 14px;border-radius:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;text-align:center;align-self:center}
+.tcs-hdr .qual-badge.go{background:var(--accent);color:#0a1a14}
+.tcs-hdr .qual-badge.nogo{background:rgba(168,154,135,0.10);color:var(--muted);border:1px solid rgba(245,232,216,0.10)}
+
+.block{margin-bottom:22px}
+.block h3{font-family:var(--mono);font-size:11px;letter-spacing:.20em;text-transform:uppercase;margin:0 0 4px;color:var(--gold)}
+.block .sub{font-family:var(--serif);font-style:italic;font-size:11.5px;color:var(--muted);margin:0 0 10px;letter-spacing:0}
+.block .body{font-family:var(--serif);font-size:15.5px;color:#e5d8c4;line-height:1.65;max-width:75ch}
+.block.task h3{color:var(--accent-2)}
+.block.standards h3{color:var(--accent)}
+.block.conditions h3{color:#c4b5fd}
+.block.steps h3{color:var(--gold)}
+
+.steps ol{padding-left:0;margin:0;list-style:none;counter-reset:step}
+.steps li{padding:11px 14px 11px 56px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:8px;margin-bottom:6px;position:relative;font-family:var(--serif);font-size:14.5px;line-height:1.55}
+.steps li::before{counter-increment:step;content:counter(step);position:absolute;left:14px;top:11px;width:28px;height:28px;border-radius:50%;background:rgba(251,191,36,0.15);color:var(--gold);font-family:var(--display);font-size:14px;display:grid;place-items:center;border:1px solid rgba(251,191,36,0.30)}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;padding-top:18px;border-top:1px solid rgba(245,232,216,0.08)}
+.actions button{padding:11px 18px;border:none;border-radius:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.actions .check-self{background:var(--accent);color:#0a1a14}
+.actions .check-teammate{background:var(--purple);color:#0a0a1a}
+.actions .self-drill{background:rgba(251,191,36,0.10);color:var(--gold);border:1px solid rgba(251,191,36,0.30)}
+
+.keywords{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+.keywords .kw{padding:3px 9px;background:rgba(110,231,183,0.10);border:1px solid rgba(110,231,183,0.30);color:var(--accent-2);font-family:var(--mono);font-size:10px;letter-spacing:.05em;border-radius:999px}
+.keywords .label{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-right:8px;align-self:center}
+
+.history{margin-top:24px;padding-top:18px;border-top:1px solid rgba(245,232,216,0.08)}
+.history h3{font-family:var(--mono);font-size:11px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.attempt{display:grid;grid-template-columns:auto 1fr auto;gap:12px;padding:9px 12px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:6px;margin-bottom:5px}
+.attempt .res{padding:3px 9px;border-radius:3px;font-family:var(--mono);font-size:9.5px;letter-spacing:.10em;font-weight:700;align-self:center}
+.attempt .res.GO{background:var(--accent);color:#0a1a14}
+.attempt .res.NO_GO{background:rgba(248,113,113,0.20);color:var(--danger)}
+.attempt .who{font-family:var(--serif);font-size:13px;color:var(--text)}
+.attempt .meta{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.04em;margin-top:2px}
+.attempt .ts{font-family:var(--mono);font-size:10px;color:var(--dim);align-self:center}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.78);display:none;align-items:center;justify-content:center;z-index:100}
+.modal.open{display:flex}
+.modal-card{background:var(--bg-1);border:1px solid rgba(245,232,216,0.20);border-radius:12px;padding:28px;max-width:600px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.7)}
+.modal-card h2{font-family:var(--display);font-size:26px;color:var(--gold);margin:0 0 6px;text-transform:uppercase;letter-spacing:-.01em}
+.modal-card .modal-prompt{font-family:var(--serif);font-size:14.5px;color:var(--muted);font-style:italic;line-height:1.55;margin-bottom:16px}
+.modal-card label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:12px 0 5px}
+.modal-card input,.modal-card select,.modal-card textarea{width:100%;padding:10px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:12px}
+.modal-card textarea{font-family:var(--serif);font-size:14.5px;min-height:160px;resize:vertical;line-height:1.5}
+.modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.modal-actions button{padding:10px 20px;border-radius:5px;border:none;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.modal-actions .cancel{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.modal-actions .fire{background:var(--purple);color:#0a0a1a}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:18px;letter-spacing:.06em}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <span class="here">Plays · TCS Library</span>
+  </nav>
+</header>
+
+<main class="wrap">
+  <aside>
+    <div class="hero">
+      <h1>The Plays</h1>
+      <p class="sub">Every call has a play. Each one's a Task, Conditions, Standards card. Drill it cold so on the phone you don't think — you execute.</p>
+      <div class="glossary">
+        <span class="k">Task</span><span class="v">What you're doing</span>
+        <span class="k">Conditions</span><span class="v">What you're working with</span>
+        <span class="k">Standards</span><span class="v">What counts as a win</span>
+        <span class="k">Steps</span><span class="v">Run them in order, every time</span>
+        <span class="k">Spot check</span><span class="v">Surprise drill — pass to qualify</span>
+        <span class="k">GO / NO-GO</span><span class="v">Cleared or not cleared yet</span>
+      </div>
+    </div>
+    <div class="list" id="play-list"><div class="empty">Loading…</div></div>
+  </aside>
+
+  <section>
+    <div class="tcs-card" id="tcs-card"><div class="empty">Pick a play on the left</div></div>
+  </section>
+</main>
+
+<div class="modal" id="modal">
+  <div class="modal-card" id="modal-card"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b')    || 'killsesh';
+const REP     = params.get('rep')  || localStorage.getItem('bullpen-rep') || 'beers';
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' error':''); setTimeout(()=>t.className='toast'+(err?' error':''),2600); }
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if(!r.ok){ let m=r.statusText; try{m=(await r.json()).error||m;}catch(_){} throw new Error(m); }
+  return r.json();
+}
+function $(id){ return document.getElementById(id); }
+
+let LIBRARY = [];
+let TOP_PACK = null;
+let ACTIVE = null;
+
+async function load(){
+  try {
+    const [lib, tp] = await Promise.all([
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/tcs`),
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/toppack/${encodeURIComponent(REP)}`),
+    ]);
+    LIBRARY = lib.tcs || [];
+    TOP_PACK = tp;
+    paintList();
+    if(!ACTIVE && LIBRARY.length) showPlay(LIBRARY[0].id);
+    else if(ACTIVE) showPlay(ACTIVE);
+  } catch(e){
+    $('play-list').textContent = 'Failed: ' + e.message;
+  }
+}
+
+function isCleared(tcsId){
+  return TOP_PACK?.cleared?.some(c => c.id === tcsId);
+}
+
+function paintList(){
+  const root = $('play-list'); clear(root);
+  for(const p of LIBRARY){
+    const tile = el('div', 'play-tile' + (ACTIVE === p.id ? ' active' : ''));
+    tile.appendChild(el('div', 'ph', 'P' + (p.phase_tier || '?')));
+    const info = el('div');
+    info.appendChild(el('div', 'name', p.name));
+    info.appendChild(el('div', 'meta', p.id));
+    tile.appendChild(info);
+    const cleared = isCleared(p.id);
+    tile.appendChild(el('div', 'badge ' + (cleared ? 'go' : 'nogo'),
+                       cleared ? '✓ GO' : 'NO-GO'));
+    tile.onclick = () => showPlay(p.id);
+    root.appendChild(tile);
+  }
+}
+
+async function showPlay(tcsId){
+  ACTIVE = tcsId;
+  paintList();
+  const card = $('tcs-card'); clear(card);
+  card.appendChild(el('div', 'empty', 'Loading…'));
+  try {
+    const t = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/tcs/${encodeURIComponent(tcsId)}`);
+    const attempts = (TOP_PACK?.attempts || []).filter(a => a.tcs_id === tcsId);
+    clear(card);
+
+    // Header
+    const hdr = el('div', 'tcs-hdr');
+    hdr.appendChild(el('div', 'phase', 'P' + (t.phase_tier || '?')));
+    const info = el('div', 'info');
+    info.appendChild(el('h1', null, t.name));
+    info.appendChild(el('div', 'id', 'tcs/' + t.id + ' · phase tier ' + (t.phase_tier || '?')));
+    hdr.appendChild(info);
+    const cleared = isCleared(t.id);
+    hdr.appendChild(el('div', 'qual-badge ' + (cleared ? 'go' : 'nogo'),
+                       cleared ? '✓ GO' : 'NO-GO'));
+    card.appendChild(hdr);
+
+    // Task
+    const taskBlock = el('div', 'block task');
+    taskBlock.appendChild(el('h3', null, 'TASK'));
+    taskBlock.appendChild(el('div', 'sub', "What you're doing"));
+    taskBlock.appendChild(el('div', 'body', t.task));
+    card.appendChild(taskBlock);
+
+    // Conditions
+    const condBlock = el('div', 'block conditions');
+    condBlock.appendChild(el('h3', null, 'CONDITIONS'));
+    condBlock.appendChild(el('div', 'sub', "What you're working with"));
+    condBlock.appendChild(el('div', 'body', t.conditions));
+    card.appendChild(condBlock);
+
+    // Standards
+    const stdBlock = el('div', 'block standards');
+    stdBlock.appendChild(el('h3', null, 'STANDARDS'));
+    stdBlock.appendChild(el('div', 'sub', "What counts as a win"));
+    stdBlock.appendChild(el('div', 'body', t.standards));
+    card.appendChild(stdBlock);
+
+    // Performance steps
+    const stepsBlock = el('div', 'block steps');
+    stepsBlock.appendChild(el('h3', null, 'PERFORMANCE STEPS'));
+    stepsBlock.appendChild(el('div', 'sub', 'Run them in order, every time. Don\'t freelance.'));
+    const stepsBody = el('div', 'steps');
+    const ol = document.createElement('ol');
+    for(const s of (t.performance_steps || [])){
+      const li = document.createElement('li');
+      li.textContent = s.replace(/^\d+\.\s*/, '');   // strip prefixed number, the counter prints it
+      ol.appendChild(li);
+    }
+    stepsBody.appendChild(ol);
+    stepsBlock.appendChild(stepsBody);
+    card.appendChild(stepsBlock);
+
+    // Auto-grade keywords (transparent — reps see what the grader looks for)
+    if(t.auto_grade_keywords?.length){
+      const kw = el('div', 'keywords');
+      kw.appendChild(el('span', 'label', 'AUTO-GRADER LOOKS FOR:'));
+      for(const k of t.auto_grade_keywords){
+        kw.appendChild(el('span', 'kw', k));
+      }
+      kw.appendChild(el('span', 'label', '· need ' + (t.auto_grade_min_hits || 2) + ' hits'));
+      card.appendChild(kw);
+    }
+
+    // Actions
+    const actions = el('div', 'actions');
+    const self = el('button', 'self-drill', '⚔ Self-drill (auto-graded)');
+    self.onclick = () => openFireModal(t, REP);
+    actions.appendChild(self);
+
+    const team = el('button', 'check-teammate', '🎯 Spot-check a teammate');
+    team.onclick = () => openFireModal(t, null);
+    actions.appendChild(team);
+    card.appendChild(actions);
+
+    // Attempt history
+    if(attempts.length){
+      const hist = el('div', 'history');
+      hist.appendChild(el('h3', null, 'YOUR ATTEMPTS ON THIS PLAY'));
+      for(const a of attempts.slice(0, 10)){
+        const row = el('div', 'attempt');
+        row.appendChild(el('div', 'res ' + a.result, a.result === 'GO' ? '✓ GO' : '✗ NO-GO'));
+        const mid = el('div');
+        mid.appendChild(el('div', 'who', a.checker + ' graded · ' + (a.source||'')));
+        if(a.feedback) mid.appendChild(el('div', 'meta', a.feedback));
+        row.appendChild(mid);
+        row.appendChild(el('div', 'ts', (a.ts||'').replace('T',' ').slice(0,16)));
+        hist.appendChild(row);
+      }
+      card.appendChild(hist);
+    }
+  } catch(e){
+    clear(card); card.appendChild(el('div', 'empty', 'Failed: ' + e.message));
+  }
+}
+
+// ── Fire modal ──
+function openFireModal(tcs, fixedTarget){
+  const c = $('modal-card'); clear(c);
+  c.appendChild(el('h2', null, fixedTarget ? '⚔ Self-drill' : '🎯 Spot check'));
+  c.appendChild(el('div', 'modal-prompt',
+    fixedTarget
+      ? 'Demonstrate the play. Auto-graded by the keyword check above. Pass = GO, your Top Pack updates, +50–200 XP.'
+      : 'Pick a teammate. They get pinged immediately, have ' + (tcs.spot_check_seconds||90)
+        + ' seconds to respond. You grade GO/NO-GO when their response comes back.'));
+
+  c.appendChild(el('label', null, 'TARGET'));
+  const tgt = document.createElement('input'); tgt.id = 'tgt';
+  tgt.value = fixedTarget || ''; tgt.placeholder = 'teammate rep name';
+  if(fixedTarget) tgt.readOnly = true;
+  c.appendChild(tgt);
+
+  if(fixedTarget){
+    c.appendChild(el('label', null, 'YOUR RESPONSE — type what you would say'));
+    const resp = document.createElement('textarea'); resp.id = 'resp';
+    resp.placeholder = tcs.spot_check_prompt;
+    c.appendChild(resp);
+  }
+
+  const actions = el('div', 'modal-actions');
+  const cancel = el('button', 'cancel', 'Cancel');
+  cancel.onclick = () => $('modal').classList.remove('open');
+  actions.appendChild(cancel);
+
+  const fire = el('button', 'fire', fixedTarget ? 'Submit + auto-grade' : 'Fire spot check');
+  fire.onclick = async () => {
+    const target = tgt.value.trim();
+    if(!target){ toast('Pick a target', true); return; }
+    try {
+      const sc = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/spotchecks`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({rep: REP, target, tcs_id: tcs.id})
+      });
+      if(fixedTarget){
+        // Submit the response right away
+        const response = $('resp').value.trim();
+        if(!response){ toast('Type your response', true); return; }
+        const graded = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/spotchecks/${encodeURIComponent(sc.id)}/respond`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({rep: REP, response})
+        });
+        if(graded.result === 'GO'){
+          toast('✓ GO — Top Pack updated, +XP credited');
+        } else {
+          toast('NO-GO — ' + (graded.feedback || 'Run it back, watch the keywords'), true);
+        }
+      } else {
+        toast('Spot check fired at ' + target);
+      }
+      $('modal').classList.remove('open');
+      load();
+    } catch(e){ toast(e.message, true); }
+  };
+  actions.appendChild(fire);
+  c.appendChild(actions);
+  $('modal').classList.add('open');
+  setTimeout(() => (fixedTarget ? $('resp') : tgt).focus(), 50);
+}
+$('modal').onclick = (e) => { if(e.target.id === 'modal') $('modal').classList.remove('open'); };
+
+// Presence
+(function(){
+  function beat(){
+    fetch(`/api/b/${encodeURIComponent(BULLPEN)}/presence/beat`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: REP, page: 'plays', status: 'studying the plays'}),
+    }).catch(()=>{});
+  }
+  beat(); setInterval(beat, 20000);
+})();
+
+load();
+</script>
+
+</body>
+</html>

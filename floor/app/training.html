@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Top Pack · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.55;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}.crumb .sep{margin:0 8px;color:var(--dim)}.crumb .here{color:var(--accent)}
+
+.wrap{max-width:1100px;margin:0 auto;padding:24px 28px}
+
+.hero{padding:30px 36px;background:linear-gradient(135deg,rgba(52,211,153,0.10),rgba(167,139,250,0.05));border:1px solid rgba(52,211,153,0.30);border-radius:14px;margin-bottom:22px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+.hero .info .label{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-2);margin-bottom:5px}
+.hero .info h1{font-family:var(--display);font-size:54px;color:var(--text);margin:0 0 4px;letter-spacing:-.02em;text-transform:uppercase;line-height:1}
+.hero .info .sub{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--muted);margin:0;max-width:55ch;line-height:1.45}
+.hero .pct{text-align:center;padding:18px 28px;background:rgba(0,0,0,0.30);border-radius:14px;border:1px solid rgba(245,232,216,0.10);min-width:170px}
+.hero .pct .v{font-family:var(--display);font-size:64px;color:var(--gold);line-height:1;letter-spacing:-.02em}
+.hero .pct .v.full{color:var(--accent)}
+.hero .pct .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+
+.section{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:12px;padding:24px;margin-bottom:18px}
+.section h2{font-family:var(--mono);font-size:11px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid rgba(245,232,216,0.08);display:flex;justify-content:space-between;align-items:center}
+.section h2 .ct{color:var(--gold);font-family:var(--display);font-size:24px;line-height:1}
+.section.cleared h2 .ct{color:var(--accent)}
+
+.q-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.q-tile{padding:14px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:10px;text-decoration:none;color:inherit;transition:border-color .12s,transform .12s;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.q-tile:hover{border-color:var(--accent-dim);transform:translateY(-1px)}
+.q-tile.cleared{background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(42,29,16,0.55));border-color:rgba(52,211,153,0.25)}
+.q-tile .phase{font-family:var(--display);font-size:24px;color:var(--gold);line-height:1;width:38px;text-align:center}
+.q-tile .info .name{font-family:var(--serif);font-size:14.5px;font-weight:600;color:var(--text);line-height:1.25}
+.q-tile .info .when{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:3px;letter-spacing:.05em}
+.q-tile.cleared .info .when{color:var(--accent-2)}
+.q-tile .drill{padding:6px 12px;background:var(--accent);color:#0a1a14;border:none;border-radius:4px;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.q-tile .badge{padding:4px 9px;border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.10em;font-weight:700;text-transform:uppercase;background:var(--accent);color:#0a1a14}
+
+/* Recent attempts */
+.attempt{display:grid;grid-template-columns:auto 1fr auto;gap:12px;padding:10px 14px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:6px;margin-bottom:6px}
+.attempt .res{padding:4px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;font-weight:700;align-self:center;min-width:60px;text-align:center}
+.attempt .res.GO{background:var(--accent);color:#0a1a14}
+.attempt .res.NO_GO{background:rgba(248,113,113,0.20);color:var(--danger)}
+.attempt .info .name{font-family:var(--serif);font-size:13.5px;color:var(--text);font-weight:600}
+.attempt .info .meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.04em}
+.attempt .info .feedback{font-family:var(--serif);font-style:italic;font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+.attempt .ts{font-family:var(--mono);font-size:10px;color:var(--dim);align-self:center;text-align:right;min-width:70px}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:24px;letter-spacing:.06em}
+
+/* Self-drill modal — borrowed from tcs.html */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.78);display:none;align-items:center;justify-content:center;z-index:100}
+.modal.open{display:flex}
+.modal-card{background:var(--bg-1);border:1px solid rgba(245,232,216,0.20);border-radius:12px;padding:28px;max-width:600px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.7)}
+.modal-card h2{font-family:var(--display);font-size:26px;color:var(--gold);margin:0 0 6px;text-transform:uppercase;letter-spacing:-.01em}
+.modal-card .modal-prompt{font-family:var(--serif);font-size:14.5px;color:var(--muted);font-style:italic;line-height:1.55;margin-bottom:16px}
+.modal-card textarea{width:100%;padding:10px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:5px;color:var(--text);font-family:var(--serif);font-size:14.5px;min-height:200px;resize:vertical;line-height:1.5}
+.modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.modal-actions button{padding:10px 20px;border-radius:5px;border:none;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.modal-actions .cancel{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.modal-actions .fire{background:var(--accent);color:#0a1a14}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <a href="/app/tcs.html" id="back-plays">Plays</a><span class="sep">/</span>
+    <span class="here">Top Pack</span>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="hero" id="hero">
+    <div class="info">
+      <div class="label">TOP PACK · YOUR QUALIFICATION CARD</div>
+      <h1 id="rep-name">…</h1>
+      <p class="sub" id="hero-sub">Loading…</p>
+    </div>
+    <div class="pct">
+      <div class="v" id="pct">—</div>
+      <div class="l">qualified</div>
+    </div>
+  </section>
+
+  <section class="section cleared">
+    <h2>Cleared <span class="ct" id="ct-cleared">0</span></h2>
+    <div class="q-grid" id="cleared-grid"></div>
+  </section>
+
+  <section class="section">
+    <h2>Needs work <span class="ct" id="ct-pending">0</span></h2>
+    <div class="q-grid" id="pending-grid"></div>
+  </section>
+
+  <section class="section">
+    <h2>Recent attempts</h2>
+    <div id="attempts"></div>
+  </section>
+</main>
+
+<div class="modal" id="modal">
+  <div class="modal-card" id="modal-card"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b')   || 'killsesh';
+const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+
+document.getElementById('back-plays').href = '/app/tcs.html?b=' + encodeURIComponent(BULLPEN) + '&rep=' + encodeURIComponent(REP);
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' error':''); setTimeout(()=>t.className='toast'+(err?' error':''),2600); }
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if(!r.ok){ let m=r.statusText; try{m=(await r.json()).error||m;}catch(_){} throw new Error(m); }
+  return r.json();
+}
+function $(id){ return document.getElementById(id); }
+
+async function load(){
+  try {
+    const tp = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/toppack/${encodeURIComponent(REP)}`);
+    $('rep-name').textContent = tp.rep.toUpperCase();
+    document.title = tp.rep + ' · Top Pack · BullpenLM';
+    const sub = tp.cleared_count === 0
+      ? 'Get on the drills. Self-drill any play below for a quick GO/NO-GO.'
+      : tp.cleared_count === tp.total
+        ? 'Fully qualified. The whole library is GO. You\'re ready for the floor.'
+        : 'Cleared on ' + tp.cleared_count + ' of ' + tp.total + ' plays. Drill the rest until they\'re reflex.';
+    $('hero-sub').textContent = sub;
+    $('pct').textContent = tp.pct_cleared + '%';
+    $('pct').classList.toggle('full', tp.pct_cleared === 100);
+
+    // Cleared
+    $('ct-cleared').textContent = tp.cleared_count;
+    const cg = $('cleared-grid'); clear(cg);
+    if(!tp.cleared.length){
+      cg.appendChild(el('div', 'empty', 'No plays cleared yet — drill below'));
+    } else {
+      for(const c of tp.cleared){
+        const tile = el('a', 'q-tile cleared');
+        tile.href = '/app/tcs.html?b=' + encodeURIComponent(BULLPEN) + '&rep=' + encodeURIComponent(REP) + '#' + c.id;
+        tile.appendChild(el('div', 'phase', 'P' + (c.phase_tier || '?')));
+        const info = el('div', 'info');
+        info.appendChild(el('div', 'name', c.name));
+        info.appendChild(el('div', 'when', '✓ cleared ' + (c.qualified_at||'').slice(0,10)
+          + (c.qualified_by ? ' · by ' + c.qualified_by : '')));
+        tile.appendChild(info);
+        tile.appendChild(el('div', 'badge', 'GO'));
+        cg.appendChild(tile);
+      }
+    }
+
+    // Pending
+    $('ct-pending').textContent = tp.not_cleared.length;
+    const pg = $('pending-grid'); clear(pg);
+    if(!tp.not_cleared.length){
+      pg.appendChild(el('div', 'empty', 'Nothing pending — you\'re fully qualified.'));
+    } else {
+      for(const n of tp.not_cleared){
+        const tile = el('div', 'q-tile');
+        tile.appendChild(el('div', 'phase', 'P' + (n.phase_tier || '?')));
+        const info = el('div', 'info');
+        info.appendChild(el('div', 'name', n.name));
+        info.appendChild(el('div', 'when', 'Not cleared yet'));
+        tile.appendChild(info);
+        const btn = el('button', 'drill', 'Self-drill →');
+        btn.onclick = () => openSelfDrill(n.id, n.name);
+        tile.appendChild(btn);
+        pg.appendChild(tile);
+      }
+    }
+
+    // Recent attempts
+    const ah = $('attempts'); clear(ah);
+    const attempts = (tp.attempts || []).slice(0, 15);
+    if(!attempts.length){
+      ah.appendChild(el('div', 'empty', 'No attempts yet'));
+    } else {
+      for(const a of attempts){
+        const row = el('div', 'attempt');
+        row.appendChild(el('div', 'res ' + a.result, a.result === 'GO' ? '✓ GO' : '✗ NO-GO'));
+        const info = el('div', 'info');
+        info.appendChild(el('div', 'name', a.tcs_name || a.tcs_id));
+        info.appendChild(el('div', 'meta',
+          a.source.replace(/_/g, ' ') + ' · graded by ' + (a.checker || '?')
+          + (a.score != null ? ' · score ' + a.score : '')));
+        if(a.feedback) info.appendChild(el('div', 'feedback', a.feedback));
+        row.appendChild(info);
+        row.appendChild(el('div', 'ts', (a.ts||'').replace('T',' ').slice(0,16)));
+        ah.appendChild(row);
+      }
+    }
+  } catch(e){
+    toast('Failed: ' + e.message, true);
+  }
+}
+
+async function openSelfDrill(tcsId, tcsName){
+  const c = $('modal-card'); clear(c);
+  let tcs = null;
+  try { tcs = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/tcs/${encodeURIComponent(tcsId)}`); }
+  catch(_){}
+  c.appendChild(el('h2', null, '⚔ Self-drill · ' + tcsName));
+  c.appendChild(el('div', 'modal-prompt',
+    (tcs ? tcs.spot_check_prompt : 'Demonstrate the play.')
+    + ' Auto-graded by keyword check. Pass = GO, +XP, Top Pack updates.'));
+  const ta = document.createElement('textarea'); ta.id = 'resp';
+  ta.placeholder = 'Type your response — every word you\'d say.';
+  c.appendChild(ta);
+  const actions = el('div', 'modal-actions');
+  const cancel = el('button', 'cancel', 'Cancel'); cancel.onclick = () => $('modal').classList.remove('open');
+  actions.appendChild(cancel);
+  const fire = el('button', 'fire', 'Submit + auto-grade');
+  fire.onclick = async () => {
+    const response = ta.value.trim();
+    if(!response){ toast('Type a response', true); return; }
+    try {
+      const sc = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/spotchecks`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({rep: REP, target: REP, tcs_id: tcsId})
+      });
+      const graded = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/spotchecks/${encodeURIComponent(sc.id)}/respond`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({rep: REP, response})
+      });
+      if(graded.result === 'GO'){ toast('✓ GO — added to Top Pack'); }
+      else { toast('NO-GO — ' + (graded.feedback || 'try again'), true); }
+      $('modal').classList.remove('open');
+      load();
+    } catch(e){ toast(e.message, true); }
+  };
+  actions.appendChild(fire);
+  c.appendChild(actions);
+  $('modal').classList.add('open');
+  setTimeout(() => ta.focus(), 50);
+}
+$('modal').onclick = (e) => { if(e.target.id === 'modal') $('modal').classList.remove('open'); };
+
+// Presence + SSE refresh on spotcheck events
+(function(){
+  function beat(){
+    fetch(`/api/b/${encodeURIComponent(BULLPEN)}/presence/beat`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: REP, page: 'training', status: 'in the top pack'}),
+    }).catch(()=>{});
+  }
+  beat(); setInterval(beat, 20000);
+})();
+
+let sse = null;
+function connectSSE(){
+  try {
+    sse = new EventSource(`/api/b/${encodeURIComponent(BULLPEN)}/stream`);
+    sse.onmessage = (msg) => {
+      try {
+        const e = JSON.parse(msg.data);
+        if(e.actor === REP && ['drill_passed','drill_attempt','spotcheck_fired','spotcheck_responded'].includes(e.kind)){
+          load();
+        }
+      } catch(_){}
+    };
+    sse.onerror = () => { try{sse.close()}catch(_){} setTimeout(connectSSE, 3000); };
+  } catch(_){ setTimeout(connectSSE, 3000); }
+}
+
+load();
+connectSSE();
+</script>
+
+</body>
+</html>

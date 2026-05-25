@@ -42,6 +42,8 @@ def for_rep(bullpen: str, rep: str) -> dict:
         "open_raids": [],
         "squad": None,
         "recent_closes": [],
+        "open_spotchecks": [],
+        "top_pack_pct": None,
     }
 
     # ── Follow-ups ──
@@ -143,6 +145,29 @@ def for_rep(bullpen: str, rep: str) -> dict:
     try:
         from parties import squad_for_rep
         out["squad"] = squad_for_rep(bullpen, rep)
+    except Exception: pass
+
+    # ── Open spot-checks waiting on me ──
+    try:
+        from spotcheck import list_open_for_target
+        scs = list_open_for_target(bullpen, rep)
+        for sc in scs:
+            out["open_spotchecks"].append({
+                "id": sc["id"], "tcs_name": sc.get("tcs_name"),
+                "phase_tier": sc.get("phase_tier"),
+                "checker": sc.get("checker"),
+                "fired_at": sc.get("fired_at"),
+                "seconds": sc.get("seconds"),
+            })
+    except Exception: pass
+
+    # ── Top Pack snapshot ──
+    try:
+        from tcs import top_pack
+        tp = top_pack(bullpen, rep)
+        out["top_pack_pct"] = tp.get("pct_cleared")
+        out["top_pack_cleared"] = tp.get("cleared_count")
+        out["top_pack_total"]   = tp.get("total")
     except Exception: pass
 
     # ── Recent close-wons across the bullpen ──

@@ -121,6 +121,11 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
     </div>
   </section>
 
+  <section class="section bad" id="sec-drills" style="display:none">
+    <h2>Pop drills waiting on you <span class="ct" id="ct-drills">0</span></h2>
+    <div id="drills-list"></div>
+  </section>
+
   <div class="cols">
     <section class="section">
       <h2>Stalling deals <span class="ct" id="ct-stale">0</span></h2>
@@ -132,6 +137,14 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
       <div id="mp-list"><div class="empty">Nothing waiting on you</div></div>
     </section>
   </div>
+
+  <section class="section" id="sec-toppack" style="display:none">
+    <h2>Your Top Pack <span class="ct" id="tp-pct"></span></h2>
+    <div id="tp-line" style="display:flex;gap:16px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.05em">
+      <span id="tp-text">—</span>
+      <a id="tp-link" style="margin-left:auto;color:var(--accent-2);text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase">Open Top Pack →</a>
+    </div>
+  </section>
 
   <section class="section">
     <h2>Recent close-wons in the bullpen <span class="ct" id="ct-closes">0</span></h2>
@@ -268,6 +281,8 @@ async function load(){
     stats.appendChild(stat('Open claims',     d.open_claims.length, 'gold'));
     stats.appendChild(stat('Stalling deals',  d.stalling_deals.length, d.stalling_deals.length ? 'bad' : ''));
     stats.appendChild(stat('Open raids',      d.open_raids.length, ''));
+    if(d.top_pack_pct != null) stats.appendChild(stat('Top Pack',
+      d.top_pack_pct + '%', d.top_pack_pct === 100 ? '' : 'gold'));
 
     // Overdue
     if(d.followups_overdue.length){
@@ -281,6 +296,37 @@ async function load(){
     // Due today
     $('ct-due').textContent = String(d.followups_due.length);
     renderFollowups(d.followups_due, $('due-list'), false);
+
+    // Pop drills waiting
+    const drills = d.open_spotchecks || [];
+    if(drills.length){
+      $('sec-drills').style.display = '';
+      $('ct-drills').textContent = String(drills.length);
+      const dl = $('drills-list'); clear(dl);
+      for(const sc of drills){
+        const row = el('a', 'row');
+        row.href = '/app/spotcheck.html?b=' + encodeURIComponent(BULLPEN) + '&rep=' + encodeURIComponent(REP);
+        const left = el('div');
+        left.appendChild(el('div', 't', '🎯 ' + sc.checker + ' fired: ' + sc.tcs_name));
+        left.appendChild(el('div', 'meta', 'P' + (sc.phase_tier || '?') + ' · ' + sc.seconds
+          + 's · fired ' + (sc.fired_at||'').slice(11,16)));
+        row.appendChild(left);
+        row.appendChild(el('div', 'badge purple', 'Respond'));
+        dl.appendChild(row);
+      }
+    } else {
+      $('sec-drills').style.display = 'none';
+    }
+
+    // Top Pack snapshot
+    if(d.top_pack_pct != null){
+      $('sec-toppack').style.display = '';
+      $('tp-pct').textContent = d.top_pack_pct + '%';
+      $('tp-pct').style.color = d.top_pack_pct === 100 ? 'var(--accent)' : 'var(--gold)';
+      $('tp-text').textContent = d.top_pack_cleared + ' of ' + d.top_pack_total + ' plays cleared. '
+        + (d.top_pack_pct === 100 ? 'Fully qualified.' : 'Drill the rest until they\'re reflex.');
+      $('tp-link').href = '/app/training.html?b=' + encodeURIComponent(BULLPEN) + '&rep=' + encodeURIComponent(REP);
+    }
 
     // Stalling deals
     $('ct-stale').textContent = String(d.stalling_deals.length);

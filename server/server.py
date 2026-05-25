@@ -2105,6 +2105,71 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── TCS library ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/tcs(?:$|\?)", self.path)
+        if m:
+            try:
+                from tcs import list_all
+                self._send_json(200, {"tcs": list_all(m.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/tcs/([a-z0-9\-]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from tcs import get as tcs_get
+                t = tcs_get(m.group(1), m.group(2))
+                if not t:
+                    self._send_json(404, {"error": "tcs_not_found"}); return
+                self._send_json(200, t)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Top Pack (rep's qualifications) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/toppack/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from tcs import top_pack, attempts_for_rep
+                bullpen, rep = m.group(1), m.group(2)
+                tp = top_pack(bullpen, rep)
+                tp["attempts"] = attempts_for_rep(bullpen, rep)[:30]
+                self._send_json(200, tp)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Spot checks ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/spotchecks(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from spotcheck import list_for_rep
+                qs = parse_qs(urlparse(self.path).query)
+                rep = (qs.get("rep") or [None])[0]
+                status = (qs.get("status") or [None])[0]
+                role = (qs.get("role") or ["any"])[0]
+                if not rep:
+                    self._send_json(400, {"error": "rep_required"}); return
+                self._send_json(200, {"spotchecks": list_for_rep(m.group(1), rep,
+                                                                  status=status, as_role=role)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/spotchecks/([a-zA-Z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from spotcheck import get as sc_get
+                r = sc_get(m.group(1), m.group(2))
+                if not r:
+                    self._send_json(404, {"error": "spotcheck_not_found"}); return
+                self._send_json(200, r)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Outbox (email drafts) ──
         m = re.match(r"^/api/b/([a-z0-9\-]+)/outbox(?:$|\?)", self.path)
         if m:
@@ -2702,6 +2767,51 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     try: __import__("xp").invalidate(bullpen)
                     except Exception: pass
                     self._send_json(200, claim)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Spot checks: fire / respond / grade ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/spotchecks$", self.path)
+        if m:
+            try:
+                from spotcheck import fire as sc_fire
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                rec = sc_fire(
+                    m.group(1),
+                    checker_rep=rep,
+                    target_rep=(req2.get("target") or "").strip(),
+                    tcs_id=(req2.get("tcs_id") or "").strip(),
+                    seconds=req2.get("seconds"),
+                    prompt_override=req2.get("prompt"),
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/spotchecks/([a-zA-Z0-9_\-\.]+)/(respond|grade)$", self.path)
+        if m:
+            try:
+                from spotcheck import respond as sc_respond, grade as sc_grade
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                bullpen, sc_id, action = m.group(1), m.group(2), m.group(3)
+                if action == "respond":
+                    rec = sc_respond(bullpen, sc_id, rep, req2.get("response") or "")
+                else:
+                    rec = sc_grade(bullpen, sc_id, grader_rep=rep,
+                                   result=req2.get("result"),
+                                   score=req2.get("score"),
+                                   feedback=req2.get("feedback") or "")
+                try: __import__("xp").invalidate(bullpen)
+                except Exception: pass
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
