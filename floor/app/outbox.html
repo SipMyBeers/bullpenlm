@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Outbox · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.55;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}.crumb .sep{margin:0 8px;color:var(--dim)}.crumb .here{color:var(--accent)}
+
+.wrap{max-width:1100px;margin:0 auto;padding:24px 28px}
+
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tabs button{padding:10px 18px;background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.10);border-radius:6px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;cursor:pointer}
+.tabs button:hover{color:var(--text)}
+.tabs button.active{background:rgba(52,211,153,0.10);color:var(--accent-2);border-color:rgba(52,211,153,0.30)}
+.tabs button .ct{margin-left:6px;color:var(--gold);font-family:var(--display);font-size:14px;line-height:1}
+
+.new-btn{margin-left:auto;padding:10px 18px;background:var(--accent);color:#0a1a14;border:none;border-radius:6px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+
+.section{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:12px;padding:18px;margin-bottom:14px}
+.draft{padding:18px 20px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:10px;margin-bottom:12px}
+.draft.ready{border-color:rgba(251,191,36,0.40);background:linear-gradient(135deg,rgba(251,191,36,0.06),rgba(42,29,16,0.55))}
+.draft.sent{border-color:rgba(52,211,153,0.30);background:linear-gradient(135deg,rgba(52,211,153,0.05),rgba(42,29,16,0.55));opacity:.7}
+.draft.rejected{border-color:rgba(248,113,113,0.30);background:rgba(248,113,113,0.04)}
+.draft .hdr{display:flex;gap:14px;align-items:flex-start;margin-bottom:10px}
+.draft .info{flex:1;min-width:0}
+.draft .subj{font-family:var(--serif);font-size:17px;font-weight:600;color:var(--text);line-height:1.3}
+.draft .meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted);margin-top:4px}
+.draft .meta .k{color:var(--accent-2)}
+.draft .status{padding:5px 12px;border-radius:999px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;flex-shrink:0}
+.draft .status.draft{background:rgba(168,154,135,0.15);color:var(--muted)}
+.draft .status.ready{background:var(--gold);color:#0a1a14}
+.draft .status.approved{background:rgba(110,231,183,0.20);color:var(--accent-2)}
+.draft .status.sent{background:var(--accent);color:#0a1a14}
+.draft .status.rejected{background:rgba(248,113,113,0.20);color:var(--danger)}
+.draft .body-preview{font-family:var(--serif);font-size:13.5px;color:var(--muted);line-height:1.55;background:rgba(0,0,0,0.20);padding:11px 14px;border-radius:6px;white-space:pre-wrap;max-height:200px;overflow-y:auto;border-left:2px solid rgba(245,232,216,0.10)}
+.draft .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.draft .actions button{padding:8px 14px;background:rgba(245,232,216,0.06);color:var(--text);border:1px solid rgba(245,232,216,0.12);border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.draft .actions button.copy{background:rgba(110,231,183,0.10);color:var(--accent-2);border-color:rgba(110,231,183,0.30)}
+.draft .actions button.send{background:var(--accent);color:#0a1a14;border:none}
+.draft .actions button.reject{background:transparent;color:var(--danger);border-color:rgba(248,113,113,0.30)}
+.draft .actions button.submit{background:var(--gold);color:#0a1a14;border:none}
+.draft .actions button.edit{background:rgba(167,139,250,0.10);color:#c4b5fd;border-color:rgba(167,139,250,0.30)}
+.draft .rej{margin-top:10px;padding:10px 12px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);border-radius:6px;font-family:var(--mono);font-size:11px;color:#fda4a4}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:24px;letter-spacing:.06em}
+
+/* Compose modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.78);display:none;align-items:center;justify-content:center;z-index:100}
+.modal.open{display:flex}
+.modal-card{background:var(--bg-1);border:1px solid rgba(245,232,216,0.20);border-radius:12px;padding:26px;max-width:680px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.7)}
+.modal-card h2{font-family:var(--display);font-size:26px;color:var(--accent-2);margin:0 0 14px;text-transform:uppercase;letter-spacing:-.01em}
+.modal-card label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:12px 0 5px}
+.modal-card input,.modal-card textarea,.modal-card select{width:100%;padding:10px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:12px}
+.modal-card textarea{font-family:var(--serif);font-size:15px;line-height:1.55;min-height:240px;resize:vertical}
+.modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.modal-actions button{padding:10px 20px;border-radius:5px;border:none;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.modal-actions .cancel{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.modal-actions .save{background:rgba(245,232,216,0.06);color:var(--text);border:1px solid rgba(245,232,216,0.20)}
+.modal-actions .submit{background:var(--gold);color:#0a1a14}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <span class="here">Outbox</span>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div class="tabs">
+    <button data-view="queue" class="active">Founder queue <span class="ct" id="ct-queue">0</span></button>
+    <button data-view="mine">My drafts <span class="ct" id="ct-mine">0</span></button>
+    <button data-view="all">All <span class="ct" id="ct-all">0</span></button>
+    <button class="new-btn" id="new-btn">+ New draft</button>
+  </div>
+
+  <div id="list"><div class="empty">Loading…</div></div>
+</main>
+
+<div class="modal" id="modal">
+  <div class="modal-card" id="modal-card"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b')   || 'killsesh';
+const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' error':''); setTimeout(()=>t.className='toast'+(err?' error':''),2400); }
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if(!r.ok){ let m=r.statusText; try{m=(await r.json()).error||m;}catch(_){} throw new Error(m); }
+  return r.json();
+}
+function $(id){ return document.getElementById(id); }
+function ago(iso){
+  if(!iso) return '';
+  const s = Math.floor((Date.now() - new Date(iso))/1000);
+  if(s < 60) return s + 's ago';
+  if(s < 3600) return Math.floor(s/60) + 'm ago';
+  if(s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+let VIEW = 'queue';
+
+function targetLink(t_type, t_id){
+  if(!t_id || t_type === 'none') return null;
+  if(t_type === 'deal')    return `/app/deal.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&id=${encodeURIComponent(t_id)}`;
+  if(t_type === 'contact'){
+    const [org, slug] = t_id.split('/', 2);
+    return `/app/contact.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&org=${encodeURIComponent(org)}&slug=${encodeURIComponent(slug)}`;
+  }
+  return null;
+}
+
+function renderDraft(d){
+  const card = el('div', 'draft ' + d.status);
+  const hdr = el('div', 'hdr');
+  const info = el('div', 'info');
+  info.appendChild(el('div', 'subj', d.subject));
+  const meta = el('div', 'meta');
+  meta.appendChild(document.createTextNode('to '));
+  meta.appendChild(el('span', 'k', d.to));
+  meta.appendChild(document.createTextNode(' · by '));
+  meta.appendChild(el('span', 'k', d.author_rep));
+  meta.appendChild(document.createTextNode(' · ' + ago(d.updated_at || d.created_at)));
+  const link = targetLink(d.target_type, d.target_id);
+  if(link){
+    meta.appendChild(document.createTextNode(' · '));
+    const a = el('a', null, d.target_type + ': ' + d.target_id);
+    a.href = link; a.style.color = 'var(--accent-2)'; a.style.textDecoration = 'none';
+    meta.appendChild(a);
+  }
+  info.appendChild(meta);
+  hdr.appendChild(info);
+  hdr.appendChild(el('span', 'status ' + d.status, d.status));
+  card.appendChild(hdr);
+
+  card.appendChild(el('div', 'body-preview', d.body));
+
+  if(d.status === 'rejected' && d.rejection_reason){
+    card.appendChild(el('div', 'rej', '✗ Rejected: ' + d.rejection_reason));
+  }
+
+  const actions = el('div', 'actions');
+  const isAuthor = d.author_rep === REP;
+
+  // Copy text (always available — helpful for the founder)
+  const cp = el('button', 'copy', '📋 Copy to clipboard');
+  cp.onclick = async () => {
+    const text = 'To: ' + d.to + '\nSubject: ' + d.subject + '\n\n' + d.body;
+    try { await navigator.clipboard.writeText(text); toast('Copied — paste into your inbox'); }
+    catch(e){ toast('Clipboard blocked: ' + e.message, true); }
+  };
+  actions.appendChild(cp);
+
+  if(d.status === 'draft' && isAuthor){
+    const ed = el('button', 'edit', '✎ Edit'); ed.onclick = () => openCompose(d); actions.appendChild(ed);
+    const sub = el('button', 'submit', '▶ Submit for review'); sub.onclick = () => submitDraft(d); actions.appendChild(sub);
+  }
+  if(d.status === 'rejected' && isAuthor){
+    const ed = el('button', 'edit', '✎ Revise + resubmit'); ed.onclick = () => openCompose(d); actions.appendChild(ed);
+  }
+  if(d.status === 'ready' || d.status === 'approved'){
+    // Founder actions
+    const sent = el('button', 'send', '✓ Mark sent (I sent it from my inbox)');
+    sent.onclick = () => markSent(d);
+    actions.appendChild(sent);
+    const rej = el('button', 'reject', '✗ Reject');
+    rej.onclick = () => rejectDraft(d);
+    actions.appendChild(rej);
+    if(isAuthor){
+      const ed = el('button', 'edit', '✎ Edit'); ed.onclick = () => openCompose(d); actions.appendChild(ed);
+    }
+  }
+  card.appendChild(actions);
+  return card;
+}
+
+async function loadView(){
+  const root = $('list'); clear(root);
+  root.appendChild(el('div', 'empty', 'Loading…'));
+  try {
+    let url;
+    if(VIEW === 'queue') url = `/api/b/${encodeURIComponent(BULLPEN)}/outbox?scope=queue`;
+    else if(VIEW === 'mine') url = `/api/b/${encodeURIComponent(BULLPEN)}/outbox?author=${encodeURIComponent(REP)}`;
+    else url = `/api/b/${encodeURIComponent(BULLPEN)}/outbox`;
+    const r = await fetchJSON(url);
+    const drafts = r.drafts || [];
+    clear(root);
+    if(!drafts.length){
+      const msg = VIEW === 'queue'   ? 'Nothing in the founder queue — reps haven\'t submitted any drafts yet.'
+                 : VIEW === 'mine'   ? 'You haven\'t drafted any emails yet. Click + New draft up top.'
+                 :                     'No drafts yet.';
+      root.appendChild(el('div', 'empty', msg));
+    } else {
+      for(const d of drafts) root.appendChild(renderDraft(d));
+    }
+  } catch(e){
+    clear(root); root.appendChild(el('div', 'empty', 'Failed: ' + e.message));
+  }
+}
+
+async function loadCounts(){
+  try {
+    const [q, mine, all] = await Promise.all([
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/outbox?scope=queue`),
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/outbox?author=${encodeURIComponent(REP)}`),
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/outbox`),
+    ]);
+    $('ct-queue').textContent = String((q.drafts||[]).length);
+    $('ct-mine').textContent  = String((mine.drafts||[]).length);
+    $('ct-all').textContent   = String((all.drafts||[]).length);
+  } catch(_){}
+}
+
+for(const btn of document.querySelectorAll('.tabs button[data-view]')){
+  btn.onclick = () => {
+    VIEW = btn.dataset.view;
+    for(const x of document.querySelectorAll('.tabs button[data-view]')) x.classList.remove('active');
+    btn.classList.add('active');
+    loadView();
+  };
+}
+
+// ── Compose modal ──
+function openCompose(existing){
+  const c = $('modal-card'); clear(c);
+  c.appendChild(el('h2', null, existing ? '✎ Edit draft' : '✉ New email draft'));
+
+  c.appendChild(el('label', null, 'To'));
+  const to = document.createElement('input'); to.id='c-to'; to.value = (existing && existing.to) || '';
+  to.placeholder = 'name@company.com';
+  c.appendChild(to);
+
+  c.appendChild(el('label', null, 'Subject'));
+  const sub = document.createElement('input'); sub.id='c-sub'; sub.value = (existing && existing.subject) || '';
+  sub.placeholder = 'e.g. quick question on mainframe modernization';
+  c.appendChild(sub);
+
+  c.appendChild(el('label', null, 'Body'));
+  const body = document.createElement('textarea'); body.id='c-body'; body.value = (existing && existing.body) || '';
+  body.placeholder = "Hi {first name},\n\nDylan from Beers Labs. Saw you're at...\n\n[your pitch]\n\nWorth a 20-min chat?\n\n— {your name}";
+  c.appendChild(body);
+
+  c.appendChild(el('label', null, 'Attach to (optional)'));
+  const tt = document.createElement('select'); tt.id='c-tt';
+  for(const [v, l] of [['none','— none —'],['deal','Deal'],['contact','Contact'],['org','Org']]){
+    const o = el('option', null, l); o.value = v;
+    if(existing && existing.target_type === v) o.selected = true;
+    tt.appendChild(o);
+  }
+  c.appendChild(tt);
+
+  c.appendChild(el('label', null, 'Target ID (deal_id, org/slug for contact, or org slug)'));
+  const ti = document.createElement('input'); ti.id='c-ti'; ti.value = (existing && existing.target_id) || '';
+  ti.placeholder = 'e.g. 20260524-142600-bank-of-america';
+  c.appendChild(ti);
+
+  const actions = el('div', 'modal-actions');
+  const cancel = el('button', 'cancel', 'Cancel'); cancel.onclick = () => $('modal').classList.remove('open');
+  actions.appendChild(cancel);
+
+  const saveDraft = el('button', 'save', 'Save draft');
+  saveDraft.onclick = async () => { await save(existing, false); };
+  actions.appendChild(saveDraft);
+
+  const submit = el('button', 'submit', '▶ Submit for review');
+  submit.onclick = async () => { await save(existing, true); };
+  actions.appendChild(submit);
+
+  c.appendChild(actions);
+  $('modal').classList.add('open');
+  setTimeout(() => to.focus(), 50);
+}
+
+async function save(existing, submit){
+  const body = {
+    rep: REP,
+    to: $('c-to').value, subject: $('c-sub').value, body: $('c-body').value,
+    target_type: $('c-tt').value, target_id: $('c-ti').value,
+    submit,
+  };
+  try {
+    if(existing && existing.id){
+      await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/outbox/${encodeURIComponent(existing.id)}`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      if(submit){
+        await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/outbox/${encodeURIComponent(existing.id)}/submit`, {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rep: REP})
+        });
+      }
+    } else {
+      await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/outbox`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+    }
+    $('modal').classList.remove('open');
+    toast(submit ? 'Submitted for review' : 'Saved as draft');
+    loadView(); loadCounts();
+  } catch(e){ toast(e.message, true); }
+}
+
+async function submitDraft(d){
+  try {
+    await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/outbox/${encodeURIComponent(d.id)}/submit`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rep: REP})
+    });
+    toast('Submitted'); loadView(); loadCounts();
+  } catch(e){ toast(e.message, true); }
+}
+async function markSent(d){
+  if(!confirm('Mark sent? Make sure you actually emailed it.\nThis logs activity on the timeline + earns the author +6 XP.')) return;
+  try {
+    await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/outbox/${encodeURIComponent(d.id)}/sent`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rep: REP})
+    });
+    toast('Sent + timeline logged'); loadView(); loadCounts();
+  } catch(e){ toast(e.message, true); }
+}
+async function rejectDraft(d){
+  const reason = prompt('Why are you rejecting? (will be shown to the author)');
+  if(reason === null) return;
+  try {
+    await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/outbox/${encodeURIComponent(d.id)}/reject`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rep: REP, reason})
+    });
+    toast('Rejected'); loadView(); loadCounts();
+  } catch(e){ toast(e.message, true); }
+}
+
+$('new-btn').onclick = () => openCompose(null);
+$('modal').onclick = (e) => { if(e.target.id === 'modal') $('modal').classList.remove('open'); };
+
+// Presence
+(function(){
+  function beat(){
+    fetch(`/api/b/${encodeURIComponent(BULLPEN)}/presence/beat`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: REP, page: 'outbox', status: 'in the outbox'}),
+    }).catch(()=>{});
+  }
+  beat(); setInterval(beat, 20000);
+})();
+
+loadView(); loadCounts();
+setInterval(loadView, 15000);
+setInterval(loadCounts, 12000);
+</script>
+
+</body>
+</html>

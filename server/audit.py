@@ -109,6 +109,13 @@ def append(bullpen: str, actor_rep: str, kind: str,
     except Exception:
         pass
 
+    # Discord webhook fan-out (no-op if not configured for the bullpen)
+    try:
+        from discord import notify as _discord_notify
+        _discord_notify(bullpen, entry)
+    except Exception:
+        pass
+
     return entry
 
 

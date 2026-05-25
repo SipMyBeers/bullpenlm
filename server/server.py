@@ -2105,6 +2105,55 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Outbox (email drafts) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/outbox(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from outbox import list_all, queue_for_founder
+                qs = parse_qs(urlparse(self.path).query)
+                if (qs.get("scope") or [""])[0] == "queue":
+                    self._send_json(200, {"drafts": queue_for_founder(m.group(1))})
+                else:
+                    self._send_json(200, {"drafts": list_all(m.group(1),
+                                            status=(qs.get("status") or [None])[0],
+                                            author_rep=(qs.get("author") or [None])[0])})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/outbox/([a-zA-Z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from outbox import get as outbox_get
+                d = outbox_get(m.group(1), m.group(2))
+                if not d:
+                    self._send_json(404, {"error": "draft_not_found"}); return
+                self._send_json(200, d)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Wallboard (composite, TV-mode) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/wallboard(?:$|\?)", self.path)
+        if m:
+            try:
+                from wallboard import today_stats
+                self._send_json(200, today_stats(m.group(1)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Briefing (composite) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/briefing(?:$|\?)", self.path)
+        if m:
+            try:
+                from briefing import for_bullpen
+                self._send_json(200, for_bullpen(m.group(1)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Today (composite) ──
         m = re.match(r"^/api/b/([a-z0-9\-]+)/today/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
         if m:
@@ -2653,6 +2702,68 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     try: __import__("xp").invalidate(bullpen)
                     except Exception: pass
                     self._send_json(200, claim)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Outbox: create / submit / mark-sent / reject / update ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/outbox$", self.path)
+        if m:
+            try:
+                from outbox import create as outbox_create
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                rec = outbox_create(
+                    m.group(1), author_rep=rep,
+                    to=req2.get("to") or "",
+                    subject=req2.get("subject") or "",
+                    body=req2.get("body") or "",
+                    target_type=req2.get("target_type") or "none",
+                    target_id=req2.get("target_id") or "",
+                    contact_slug=req2.get("contact_slug"),
+                    deal_id=req2.get("deal_id"),
+                    org_slug=req2.get("org_slug"),
+                    submit=bool(req2.get("submit")),
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/outbox/([a-zA-Z0-9_\-\.]+)/(submit|sent|reject)$", self.path)
+        if m:
+            try:
+                from outbox import submit as outbox_submit, mark_sent, reject
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                bullpen, did, action = m.group(1), m.group(2), m.group(3)
+                if action == "submit":
+                    rec = outbox_submit(bullpen, did, rep)
+                elif action == "sent":
+                    rec = mark_sent(bullpen, did, rep)
+                    try: __import__("xp").invalidate(bullpen)
+                    except Exception: pass
+                else:
+                    rec = reject(bullpen, did, rep, reason=req2.get("reason") or "")
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/outbox/([a-zA-Z0-9_\-\.]+)$", self.path)
+        if m:
+            try:
+                from outbox import update as outbox_update
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                rec = outbox_update(m.group(1), m.group(2), req2, rep)
+                if not rec:
+                    self._send_json(404, {"error": "draft_not_found"}); return
+                self._send_json(200, rec)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
