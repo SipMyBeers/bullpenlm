@@ -1588,6 +1588,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             return
 
+        # ── /b/<slug> public bullpen poster page → redirect to /app/bullpen.html
+        # This is the URL founders share in #showcase. Closers land here, read
+        # what the operator is moving, and click Apply (or skip straight to
+        # /app/join.html if they were sent an invite code separately).
+        m = re.match(r"^/b/([a-z0-9][a-z0-9\-]{1,38}[a-z0-9])(?:/|$|\?)", self.path)
+        if m:
+            slug = m.group(1)
+            self.send_response(302)
+            self.send_header("Location", f"/app/bullpen.html?b={slug}")
+            self._cors()
+            self.end_headers()
+            return
+
         # ── Host tunnel status (PUBLIC — anyone can check if a host is live) ──
         if self.path == "/api/host/status":
             try:
@@ -2165,7 +2178,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if m:
             try:
                 from bullpens import get_bullpen
-                cfg = get_bullpen(m.group(1)) or {}
+                cfg = get_bullpen(m.group(1))
+                if not cfg:
+                    self._send_json(404, {"error": "bullpen_not_found"}); return
                 # Only expose the public-safe subset
                 pub = {
                     "slug": cfg.get("slug"),
@@ -2173,10 +2188,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     "product": cfg.get("product"),
                     "tagline": cfg.get("tagline"),
                     "founder_rep": cfg.get("founder_rep"),
+                    "founder_display_name": cfg.get("founder_display_name"),
+                    "commission_rate": cfg.get("commission_rate"),
+                    "seats_open": cfg.get("seats_open"),
                     "discord_invite": cfg.get("discord_invite"),
                     "access_mode": cfg.get("access_mode") or "invite_only",
                     "price_usd": cfg.get("price_usd"),
                     "public_url": cfg.get("public_url"),
+                    "created_at": cfg.get("created_at"),
                 }
                 self._send_json(200, pub)
             except Exception as e:

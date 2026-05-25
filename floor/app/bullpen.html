@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bullpen · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@300,400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.6;min-height:100vh}
+
+nav{position:sticky;top:0;z-index:10;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;background:rgba(26,18,8,0.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.06)}
+nav .brand{font-family:var(--display);font-size:22px;text-transform:uppercase;letter-spacing:-.02em;text-decoration:none}
+nav .brand .b{color:var(--gold)}nav .brand .lm{color:var(--accent)}
+nav .links{display:flex;gap:18px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+nav .links a{color:var(--muted);text-decoration:none;transition:color .15s}
+nav .links a:hover{color:var(--text)}
+
+.wrap{max-width:980px;margin:0 auto;padding:60px 28px 80px}
+
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.30em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;display:inline-flex;align-items:center;gap:8px}
+.eyebrow::before{content:"●";color:var(--accent);font-size:14px}
+
+.hero{margin-bottom:46px}
+.bullpen-name{font-family:var(--display);font-size:96px;line-height:.96;letter-spacing:-.03em;text-transform:uppercase;margin:0 0 18px;color:#fff}
+@media(max-width:700px){.bullpen-name{font-size:64px}}
+.tagline{font-family:var(--serif);font-style:italic;font-weight:300;font-size:24px;line-height:1.4;color:var(--accent-2);margin:0 0 28px;max-width:42ch}
+
+.founder-card{display:inline-flex;align-items:center;gap:14px;padding:12px 18px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.10);border-radius:50px;font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+.founder-card .ava{width:32px;height:32px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--accent-2),var(--accent-dim));display:grid;place-items:center;font-family:var(--display);font-size:15px;color:#0a1a14;font-weight:700}
+.founder-card .who{color:var(--text)}
+.founder-card .who strong{color:#fff}
+.founder-card .role{color:var(--gold);text-transform:uppercase;letter-spacing:.16em;font-size:10px}
+
+/* Big stats grid */
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:48px 0 40px}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.stats{grid-template-columns:1fr}}
+.stat{padding:22px 24px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:12px}
+.stat .label{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.stat .value{font-family:var(--display);font-size:36px;line-height:1.05;color:var(--text);letter-spacing:-.015em;text-transform:uppercase}
+.stat .value.accent{color:var(--accent)}
+.stat .value.gold{color:var(--gold)}
+.stat .sub{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted);margin-top:6px;line-height:1.4}
+
+.section{margin-bottom:40px}
+.section h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.section .body{font-family:var(--serif);font-size:18px;line-height:1.6;color:var(--text)}
+
+.product-block{padding:30px 32px;background:linear-gradient(135deg,rgba(52,211,153,0.07),rgba(42,29,16,0.55));border:1px solid rgba(52,211,153,0.30);border-radius:12px;font-family:var(--display);font-size:32px;text-transform:uppercase;letter-spacing:-.015em;line-height:1.15;color:#fff;margin-bottom:18px}
+
+/* CTA section */
+.cta-block{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:36px;padding-top:36px;border-top:1px solid rgba(245,232,216,0.08)}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:16px 32px;border-radius:8px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;cursor:pointer;text-decoration:none;transition:transform .12s,background .12s;border:none}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:var(--accent);color:#0a1a14}
+.btn.primary:hover{background:var(--accent-2)}
+.btn.gold{background:var(--gold);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(245,232,216,0.20)}
+.btn.ghost:hover{border-color:var(--text)}
+
+.access-note{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.05em;margin-top:14px;line-height:1.6;flex-basis:100%}
+
+.not-found{text-align:center;padding:80px 30px;font-family:var(--serif);color:var(--muted)}
+.not-found h1{font-family:var(--display);font-size:64px;color:var(--danger);margin:0 0 16px;text-transform:uppercase;letter-spacing:-.02em}
+.not-found p{font-family:var(--serif);font-size:18px;font-style:italic}
+
+.skeleton{background:linear-gradient(90deg,rgba(245,232,216,0.04),rgba(245,232,216,0.10),rgba(245,232,216,0.04));background-size:200% 100%;animation:shimmer 1.6s linear infinite;border-radius:8px;color:transparent}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <div class="links">
+    <a href="https://bullpenlm.com" target="_blank" rel="noopener">All bullpens</a>
+    <a href="https://discord.gg/jjJrrM2sth" target="_blank" rel="noopener">💬 Discord</a>
+  </div>
+</nav>
+
+<main class="wrap" id="content">
+  <div class="hero">
+    <div class="eyebrow" id="eyebrow">Loading bullpen</div>
+    <h1 class="bullpen-name skeleton" id="bullpenName">&nbsp;</h1>
+    <p class="tagline" id="tagline"></p>
+    <div id="founderCard" style="display:none"></div>
+  </div>
+
+  <div class="stats" id="statsGrid">
+    <div class="stat"><div class="label">Commission</div><div class="value accent" id="statCommission">—</div></div>
+    <div class="stat"><div class="label">Seats open</div><div class="value gold" id="statSeats">—</div></div>
+    <div class="stat"><div class="label">Access</div><div class="value" id="statAccess">—</div><div class="sub" id="statAccessSub"></div></div>
+  </div>
+
+  <section class="section">
+    <h2>What we're selling</h2>
+    <div class="product-block" id="productBlock">—</div>
+  </section>
+
+  <div class="cta-block" id="ctaBlock">
+    <!-- CTAs injected by JS -->
+  </div>
+</main>
+
+<div id="notFound" class="not-found" style="display:none">
+  <h1>Floor closed.</h1>
+  <p>This bullpen isn't on this host. Check the link, or head back to <a href="https://bullpenlm.com" style="color:var(--accent-2)">bullpenlm.com</a>.</p>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const slug = (params.get("b") || "").trim().toLowerCase();
+
+function setText(id, text, opts) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  if (opts && opts.unskeleton) el.classList.remove("skeleton");
+}
+
+function initials(name) {
+  const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+async function render() {
+  if (!slug) { showNotFound(); return; }
+  let data;
+  try {
+    const r = await fetch("/api/b/" + encodeURIComponent(slug) + "/public");
+    if (!r.ok) { showNotFound(); return; }
+    data = await r.json();
+    if (!data || !data.slug) { showNotFound(); return; }
+  } catch (e) { showNotFound(); return; }
+
+  setText("eyebrow", "Recruiting closers");
+  setText("bullpenName", data.name || data.slug, { unskeleton: true });
+  setText("tagline", data.tagline || "");
+  setText("productBlock", data.product || "—");
+
+  // Founder card
+  const founderDisplay = data.founder_display_name || data.founder_rep || "";
+  if (founderDisplay) {
+    const card = document.getElementById("founderCard");
+    card.style.display = "inline-flex";
+    card.className = "founder-card";
+    const ava = document.createElement("div");
+    ava.className = "ava";
+    ava.textContent = initials(founderDisplay);
+    const who = document.createElement("div");
+    who.className = "who";
+    const role = document.createElement("div");
+    role.className = "role";
+    role.textContent = "Operator";
+    const strong = document.createElement("strong");
+    strong.textContent = founderDisplay;
+    who.appendChild(strong);
+    if (data.founder_rep && data.founder_rep !== founderDisplay) {
+      who.appendChild(document.createTextNode(" · @" + data.founder_rep));
+    }
+    card.appendChild(ava);
+    card.appendChild(who);
+    card.appendChild(role);
+  }
+
+  // Stats
+  setText("statCommission", data.commission_rate || "—");
+  setText("statSeats", data.seats_open ? String(data.seats_open) : "—");
+
+  const accessLabels = {
+    public: "Open floor",
+    invite_only: "Invite-only",
+    paid: "Paid",
+  };
+  setText("statAccess", accessLabels[data.access_mode] || "—");
+  const subEl = document.getElementById("statAccessSub");
+  if (data.access_mode === "paid" && data.price_usd) {
+    subEl.textContent = "$" + data.price_usd + " to enter";
+  } else if (data.access_mode === "invite_only") {
+    subEl.textContent = "Operator vets you";
+  } else if (data.access_mode === "public") {
+    subEl.textContent = "No vetting";
+  }
+
+  // CTAs
+  const cta = document.getElementById("ctaBlock");
+  if (data.access_mode === "public") {
+    const a = document.createElement("a");
+    a.className = "btn primary";
+    a.href = "/app/apply.html?b=" + encodeURIComponent(data.slug);
+    a.textContent = "Get in — apply →";
+    cta.appendChild(a);
+  } else if (data.access_mode === "invite_only") {
+    const a = document.createElement("a");
+    a.className = "btn primary";
+    a.href = "/app/apply.html?b=" + encodeURIComponent(data.slug);
+    a.textContent = "Apply for a seat →";
+    cta.appendChild(a);
+    const note = document.createElement("p");
+    note.className = "access-note";
+    note.textContent = "Already got an invite code? Paste it at /app/join.html.";
+    cta.appendChild(note);
+  } else if (data.access_mode === "paid") {
+    const note = document.createElement("p");
+    note.className = "access-note";
+    note.textContent = "Reach out to @" + (data.founder_rep || "the operator") +
+      " for a pay-to-join link. Codes route through Stripe checkout.";
+    cta.appendChild(note);
+  }
+  if (data.discord_invite) {
+    const d = document.createElement("a");
+    d.className = "btn ghost";
+    d.href = data.discord_invite;
+    d.target = "_blank";
+    d.rel = "noopener";
+    d.textContent = "💬 Join the chat";
+    cta.appendChild(d);
+  }
+}
+
+function showNotFound() {
+  document.getElementById("content").style.display = "none";
+  document.getElementById("notFound").style.display = "block";
+}
+
+render();
+</script>
+</body>
+</html>
