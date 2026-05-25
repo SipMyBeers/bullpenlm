@@ -225,6 +225,25 @@ function buildDealCard(deal, stage) {
   });
   card.addEventListener("dragend", () => card.classList.remove("dragging"));
 
+  // Click anywhere outside a drag → open the single-deal page.
+  // Skip on mousedown→drag and on right-click.
+  let downAt = null;
+  card.addEventListener("mousedown", e => { downAt = {x: e.clientX, y: e.clientY}; });
+  card.addEventListener("click", e => {
+    if (e.button !== 0) return;
+    // If user actually dragged, mousedown→mouseup will diverge — keep a small threshold.
+    if (downAt) {
+      const dx = Math.abs(e.clientX - downAt.x);
+      const dy = Math.abs(e.clientY - downAt.y);
+      if (dx > 6 || dy > 6) return;   // treat as drag, don't navigate
+    }
+    const bp = (new URLSearchParams(location.search)).get('b') || 'killsesh';
+    const rp = (new URLSearchParams(location.search)).get('rep')
+      || localStorage.getItem('bullpen-rep') || 'beers';
+    location.href = `/app/deal.html?b=${encodeURIComponent(bp)}&rep=${encodeURIComponent(rp)}&id=${encodeURIComponent(deal.id)}`;
+  });
+  card.style.cursor = stage.terminal ? "pointer" : "grab";
+
   const pr = document.createElement("div"); pr.className = "prospect"; pr.textContent = deal.prospect_slug;
   const am = document.createElement("div"); am.className = "amount"; am.textContent = "$" + (deal.amount || 0).toLocaleString();
   const meta = document.createElement("div"); meta.className = "meta";

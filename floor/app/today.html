@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Today · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.55;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}.crumb .sep{margin:0 8px;color:var(--dim)}.crumb .here{color:var(--accent)}
+
+.wrap{max-width:1080px;margin:0 auto;padding:24px 28px}
+
+.hero{padding:30px 32px;background:linear-gradient(135deg,rgba(251,191,36,0.10),rgba(52,211,153,0.05));border:1px solid rgba(251,191,36,0.30);border-radius:14px;margin-bottom:22px}
+.hero h1{font-family:var(--display);font-size:48px;color:var(--gold);margin:0 0 4px;letter-spacing:-.02em;text-transform:uppercase;line-height:1}
+.hero .sub{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--muted);margin:0;max-width:60ch}
+.hero .stats{display:flex;gap:24px;margin-top:18px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted)}
+.hero .stats .v{display:block;font-family:var(--display);font-size:28px;color:var(--accent-2);line-height:1;margin-top:4px}
+.hero .stats .v.gold{color:var(--gold)}
+.hero .stats .v.bad{color:var(--danger)}
+
+.section{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:12px;padding:22px;margin-bottom:20px}
+.section h2{font-family:var(--mono);font-size:11px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid rgba(245,232,216,0.08);display:flex;justify-content:space-between;align-items:center}
+.section h2 .ct{color:var(--gold);font-family:var(--display);font-size:22px;line-height:1}
+.section.bad h2 .ct{color:var(--danger)}
+
+/* Follow-up rows */
+.fu{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:11px 14px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:8px;margin-bottom:8px;transition:border-color .15s}
+.fu.overdue{border-color:rgba(248,113,113,0.40);background:rgba(248,113,113,0.08)}
+.fu:hover{border-color:var(--accent-dim)}
+.fu .t{font-family:var(--serif);font-size:14.5px;color:var(--text);font-weight:500;line-height:1.3}
+.fu .meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.05em}
+.fu.overdue .meta{color:var(--danger)}
+.fu .meta a{color:var(--accent-2);text-decoration:none}
+.fu .meta a:hover{color:var(--accent)}
+.fu .snooze, .fu .done{padding:6px 12px;border:none;border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;align-self:center}
+.fu .done{background:var(--accent);color:#0a1a14}
+.fu .snooze{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.fu .snooze:hover{background:rgba(245,232,216,0.05)}
+
+/* Stalling deal row */
+.stale{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:10px 14px;background:rgba(42,29,16,0.55);border:1px solid rgba(248,113,113,0.20);border-radius:8px;margin-bottom:6px;text-decoration:none;color:inherit}
+.stale:hover{border-color:rgba(248,113,113,0.40)}
+.stale .ps{font-family:var(--serif);font-size:14px;font-weight:600;color:var(--text)}
+.stale .meta{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--muted);margin-top:3px}
+.stale .amt{font-family:var(--mono);font-size:12px;color:var(--gold);align-self:center;font-weight:600}
+.stale .days{font-family:var(--mono);font-size:10px;color:var(--danger);align-self:center;letter-spacing:.10em;text-transform:uppercase}
+
+/* Quick add follow-up */
+.qadd{display:grid;grid-template-columns:1fr 110px auto;gap:8px;margin-top:14px;padding:10px;background:rgba(0,0,0,0.25);border-radius:8px;border:1px dashed rgba(245,232,216,0.10)}
+.qadd input,.qadd select{padding:8px 11px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.10);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:11.5px}
+.qadd input::placeholder{color:var(--dim)}
+.qadd button{padding:8px 16px;background:var(--gold);color:#0a1a14;border:none;border-radius:5px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+
+/* Simple row used in misc panels */
+.row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:10px 14px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:8px;margin-bottom:6px;text-decoration:none;color:inherit;transition:border-color .12s}
+.row:hover{border-color:var(--accent-dim)}
+.row .t{font-family:var(--serif);font-size:13.5px}
+.row .meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.05em}
+.row .badge{padding:3px 9px;border-radius:4px;font-family:var(--mono);font-size:9.5px;letter-spacing:.10em;text-transform:uppercase;align-self:center}
+.row .badge.gold{background:rgba(251,191,36,0.15);color:var(--gold)}
+.row .badge.purple{background:rgba(167,139,250,0.15);color:#c4b5fd}
+.row .badge.accent{background:rgba(52,211,153,0.15);color:var(--accent-2)}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:14px;letter-spacing:.06em}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:50}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <span class="here">Today</span>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1 id="hero-greet">Good day</h1>
+    <p class="sub" id="hero-sub">Loading…</p>
+    <div class="stats" id="hero-stats"></div>
+  </section>
+
+  <section class="section bad" id="sec-overdue" style="display:none">
+    <h2>Overdue follow-ups <span class="ct" id="ct-overdue">0</span></h2>
+    <div id="overdue-list"></div>
+  </section>
+
+  <section class="section">
+    <h2>Follow-ups due today <span class="ct" id="ct-due">0</span></h2>
+    <div id="due-list"><div class="empty">All caught up</div></div>
+    <div class="qadd">
+      <input id="qa-title" placeholder="What's the next thing? (e.g. 'Call Marcus Chen back')" />
+      <select id="qa-due">
+        <option value="today">Today</option>
+        <option value="+1h">In 1 hour</option>
+        <option value="+4h">In 4 hours</option>
+        <option value="tomorrow" selected>Tomorrow 9am</option>
+        <option value="+3d">+3 days</option>
+        <option value="+7d">+7 days</option>
+      </select>
+      <button id="qa-add">Add</button>
+    </div>
+  </section>
+
+  <div class="cols">
+    <section class="section">
+      <h2>Stalling deals <span class="ct" id="ct-stale">0</span></h2>
+      <div id="stale-list"><div class="empty">Pipeline is moving</div></div>
+    </section>
+
+    <section class="section">
+      <h2>Multiplayer queue <span class="ct" id="ct-mp">0</span></h2>
+      <div id="mp-list"><div class="empty">Nothing waiting on you</div></div>
+    </section>
+  </div>
+
+  <section class="section">
+    <h2>Recent close-wons in the bullpen <span class="ct" id="ct-closes">0</span></h2>
+    <div id="closes-list"><div class="empty">Be the first today</div></div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b')   || 'killsesh';
+const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' error':''); setTimeout(()=>t.className='toast'+(err?' error':''),2400); }
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if(!r.ok){ let m=r.statusText; try{m=(await r.json()).error||m;}catch(_){} throw new Error(m); }
+  return r.json();
+}
+function $(id){ return document.getElementById(id); }
+function fmtMoney(n){ return '$' + Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0}); }
+function relDue(iso){
+  if(!iso) return '';
+  const ms = new Date(iso) - new Date();
+  const m = Math.round(ms/60000);
+  if(m < -60*24) return Math.abs(Math.round(m/(60*24))) + 'd overdue';
+  if(m < -60) return Math.abs(Math.round(m/60)) + 'h overdue';
+  if(m < 0) return Math.abs(m) + 'm overdue';
+  if(m < 60) return 'in ' + m + 'm';
+  if(m < 60*24) return 'in ' + Math.round(m/60) + 'h';
+  return 'in ' + Math.round(m/(60*24)) + 'd';
+}
+function timeStr(iso){ return iso ? iso.slice(11,16) : ''; }
+
+function greetWord(){
+  const h = new Date().getHours();
+  if(h < 6)  return 'You\'re up early,';
+  if(h < 12) return 'Good morning,';
+  if(h < 18) return 'Good afternoon,';
+  return 'Good evening,';
+}
+
+function targetLink(t_type, t_id){
+  if(!t_id || t_type === 'none') return null;
+  if(t_type === 'deal')    return `/app/deal.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&id=${encodeURIComponent(t_id)}`;
+  if(t_type === 'contact') {
+    const [org, slug] = t_id.split('/', 2);
+    return `/app/contact.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&org=${encodeURIComponent(org)}&slug=${encodeURIComponent(slug)}`;
+  }
+  return null;
+}
+
+function renderFollowups(list, host, overdue){
+  clear(host);
+  if(!list.length){
+    host.appendChild(el('div', 'empty', overdue ? '—' : 'All caught up'));
+    return;
+  }
+  for(const fu of list){
+    const row = el('div', 'fu' + (overdue ? ' overdue' : ''));
+    const left = el('div');
+    left.appendChild(el('div', 't', fu.title));
+    const meta = el('div', 'meta');
+    meta.appendChild(document.createTextNode(relDue(fu.due_at) + ' · ' + timeStr(fu.due_at)));
+    const link = targetLink(fu.target_type, fu.target_id);
+    if(link){
+      meta.appendChild(document.createTextNode(' · '));
+      const a = el('a', null, fu.target_type + ': ' + fu.target_id);
+      a.href = link;
+      meta.appendChild(a);
+    }
+    if(fu.notes) {
+      meta.appendChild(document.createTextNode(' · '));
+      meta.appendChild(document.createTextNode(fu.notes.slice(0, 80)));
+    }
+    left.appendChild(meta);
+    row.appendChild(left);
+
+    const sn = el('button', 'snooze', 'Snooze +1d');
+    sn.onclick = async () => {
+      try {
+        await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/followups/${encodeURIComponent(REP)}/${encodeURIComponent(fu.id)}/snooze`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({snooze_to: '+1d'})
+        });
+        toast('Snoozed +1 day');
+        load();
+      } catch(e){ toast(e.message, true); }
+    };
+    row.appendChild(sn);
+
+    const dn = el('button', 'done', '✓ Done');
+    dn.onclick = async () => {
+      try {
+        await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/followups/${encodeURIComponent(REP)}/${encodeURIComponent(fu.id)}/complete`, {
+          method:'POST'
+        });
+        toast('+8 XP — follow-up done');
+        load();
+      } catch(e){ toast(e.message, true); }
+    };
+    row.appendChild(dn);
+
+    host.appendChild(row);
+  }
+}
+
+async function load(){
+  try {
+    const d = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/today/${encodeURIComponent(REP)}`);
+
+    // Hero
+    $('hero-greet').textContent = greetWord() + ' ' + REP + '.';
+    const c = d.followups_due.length + d.followups_overdue.length;
+    const subMsg = c === 0
+      ? 'Nothing on your plate. Take a swing — open a fresh prospect.'
+      : c === 1
+        ? 'One thing on the plate. Knock it out.'
+        : c + ' things on the plate. Top of the list first.';
+    $('hero-sub').textContent = subMsg;
+
+    const stats = $('hero-stats');
+    clear(stats);
+    const stat = (label, val, kls) => {
+      const w = el('div'); w.appendChild(document.createTextNode(label));
+      w.appendChild(el('div', 'v ' + (kls||''), String(val))); return w;
+    };
+    stats.appendChild(stat('Follow-ups due',  d.followups_due.length, ''));
+    stats.appendChild(stat('Overdue',         d.followups_overdue.length, d.followups_overdue.length ? 'bad' : ''));
+    stats.appendChild(stat('Open claims',     d.open_claims.length, 'gold'));
+    stats.appendChild(stat('Stalling deals',  d.stalling_deals.length, d.stalling_deals.length ? 'bad' : ''));
+    stats.appendChild(stat('Open raids',      d.open_raids.length, ''));
+
+    // Overdue
+    if(d.followups_overdue.length){
+      $('sec-overdue').style.display = '';
+      $('ct-overdue').textContent = String(d.followups_overdue.length);
+      renderFollowups(d.followups_overdue, $('overdue-list'), true);
+    } else {
+      $('sec-overdue').style.display = 'none';
+    }
+
+    // Due today
+    $('ct-due').textContent = String(d.followups_due.length);
+    renderFollowups(d.followups_due, $('due-list'), false);
+
+    // Stalling deals
+    $('ct-stale').textContent = String(d.stalling_deals.length);
+    const sl = $('stale-list'); clear(sl);
+    if(!d.stalling_deals.length){
+      sl.appendChild(el('div', 'empty', 'Pipeline is moving'));
+    } else {
+      for(const s of d.stalling_deals){
+        const a = el('a', 'stale');
+        a.href = `/app/deal.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&id=${encodeURIComponent(s.id)}`;
+        const left = el('div');
+        left.appendChild(el('div', 'ps', s.prospect || s.id));
+        left.appendChild(el('div', 'meta', s.stage + ' · last touched ' + (s.last_touch||'?').slice(0,10)));
+        a.appendChild(left);
+        a.appendChild(el('div', 'amt', fmtMoney(s.amount)));
+        a.appendChild(el('div', 'days', (s.days_stalled||'?') + 'd stale'));
+        sl.appendChild(a);
+      }
+    }
+
+    // Multiplayer queue: pending duels + claimable raids
+    const mp = (d.pending_duels || []).length + (d.open_raids.filter(r=>r.claimable).length);
+    $('ct-mp').textContent = String(mp);
+    const ml = $('mp-list'); clear(ml);
+    let mShown = 0;
+    for(const duel of (d.pending_duels || [])){
+      const a = el('a', 'row');
+      a.href = `/app/duo.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&id=${encodeURIComponent(duel.id)}`;
+      const left = el('div');
+      left.appendChild(el('div', 't', '⚔ ' + duel.challenger + ' challenged you to a duo'));
+      left.appendChild(el('div', 'meta', 'prospect: ' + duel.prospect + ' · ' + duel.duration_minutes + ' min'));
+      a.appendChild(left);
+      a.appendChild(el('div', 'badge gold', 'Accept'));
+      ml.appendChild(a); mShown++;
+    }
+    for(const raid of d.open_raids){
+      if(!raid.claimable) continue;
+      const a = el('a', 'row');
+      a.href = `/app/arena.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`;
+      const left = el('div');
+      left.appendChild(el('div', 't', '🐉 ' + raid.name + ' — ready to claim'));
+      left.appendChild(el('div', 'meta', '+' + raid.xp_share + ' XP share'));
+      a.appendChild(left);
+      a.appendChild(el('div', 'badge purple', 'Claim'));
+      ml.appendChild(a); mShown++;
+    }
+    if(!mShown) ml.appendChild(el('div', 'empty', 'Nothing waiting on you'));
+
+    // Recent closes
+    $('ct-closes').textContent = String(d.recent_closes.length);
+    const cl = $('closes-list'); clear(cl);
+    if(!d.recent_closes.length){
+      cl.appendChild(el('div', 'empty', 'Be the first today'));
+    } else {
+      for(const cc of d.recent_closes){
+        const a = el('a', 'row');
+        a.href = `/app/deal.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&id=${encodeURIComponent(cc.deal_id)}`;
+        const left = el('div');
+        left.appendChild(el('div', 't', '🔔 ' + cc.actor + ' closed ' + (cc.prospect || cc.deal_id)));
+        left.appendChild(el('div', 'meta', (cc.ts||'').replace('T',' ').slice(0,16)));
+        a.appendChild(left);
+        a.appendChild(el('div', 'badge accent', fmtMoney(cc.amount)));
+        cl.appendChild(a);
+      }
+    }
+  } catch(e){
+    toast('Failed: ' + e.message, true);
+  }
+}
+
+$('qa-add').onclick = async () => {
+  const title = $('qa-title').value.trim();
+  if(!title){ toast('Type a title', true); return; }
+  try {
+    await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/followups`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: REP, title, due_at: $('qa-due').value}),
+    });
+    $('qa-title').value = '';
+    toast('Added');
+    load();
+  } catch(e){ toast(e.message, true); }
+};
+$('qa-title').addEventListener('keydown', e => { if(e.key === 'Enter') $('qa-add').click(); });
+
+// Heartbeat
+(function(){
+  function beat(){
+    fetch(`/api/b/${encodeURIComponent(BULLPEN)}/presence/beat`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: REP, page: 'today', status: 'planning the day'}),
+    }).catch(()=>{});
+  }
+  beat(); setInterval(beat, 20000);
+})();
+
+load();
+setInterval(load, 30000);
+</script>
+
+</body>
+</html>

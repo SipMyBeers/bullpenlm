@@ -84,6 +84,15 @@ RULES: list[dict] = [
     # ── Quest completions ──
     {"kind": "quest_completed",   "xp": lambda p: int(p.get("xp_reward") or 0),
      "reason": "Quest completed"},
+
+    # ── Follow-up discipline ──
+    {"kind": "followup_done",     "xp": 8,   "reason": "Follow-up done"},
+
+    # ── Activity types beyond raw 'call' ──
+    {"kind": "activity_email",    "xp": 6,   "reason": "Email sent"},
+    {"kind": "activity_meeting",  "xp": 40,  "reason": "Meeting logged"},
+    {"kind": "activity_note",     "xp": 2,   "reason": "Note added"},
+    {"kind": "contact_created",   "xp": 10,  "reason": "New contact added"},
 ]
 
 

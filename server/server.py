@@ -2032,6 +2032,102 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Contacts ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/orgs/([a-z0-9\-]+)/contacts(?:$|\?)", self.path)
+        if m:
+            try:
+                from contacts import list_for_org
+                self._send_json(200, {"contacts": list_for_org(m.group(2))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/orgs/([a-z0-9\-]+)/contacts/([a-z0-9\-]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from contacts import get as contact_get
+                c = contact_get(m.group(2), m.group(3))
+                if not c:
+                    self._send_json(404, {"error": "contact_not_found"}); return
+                self._send_json(200, c)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Activity timeline (per target) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/activity/(deal|contact|org)/([a-zA-Z0-9_\-\.\/]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from activity import for_target
+                self._send_json(200, {"activity": for_target(m.group(1), m.group(2), m.group(3))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # Convenience: full activity timeline rolled up for an org or deal
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/timeline/(org|deal|contact)/([a-zA-Z0-9_\-\.\/]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from activity import for_org, for_deal, for_contact
+                kind, key = m.group(2), m.group(3)
+                if kind == "org":
+                    self._send_json(200, {"activity": for_org(m.group(1), key)})
+                elif kind == "deal":
+                    self._send_json(200, {"activity": for_deal(m.group(1), key)})
+                else:
+                    org, slug = key.split("/", 1)
+                    self._send_json(200, {"activity": for_contact(m.group(1), org, slug)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Follow-ups ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/followups/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from followups import list_for_rep as fu_list
+                qs = parse_qs(urlparse(self.path).query)
+                status = (qs.get("status") or [None])[0]
+                due_before = (qs.get("due_before") or [None])[0]
+                self._send_json(200, {"followups": fu_list(m.group(1), m.group(2),
+                                                            status=status, due_before=due_before)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/followups-for/(deal|contact|org)/([a-zA-Z0-9_\-\.\/]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from followups import for_target
+                self._send_json(200, {"followups": for_target(m.group(1), m.group(2), m.group(3))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Today (composite) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/today/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from today import for_rep as today_for_rep
+                self._send_json(200, today_for_rep(m.group(1), m.group(2)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Single deal (with stage history etc.) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/deals/([a-zA-Z0-9_\-]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from deals import get as deal_get
+                d = deal_get(m.group(1), m.group(2))
+                if not d:
+                    self._send_json(404, {"error": "deal_not_found"}); return
+                self._send_json(200, d)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Buyer cards ──
         m = re.match(r"^/api/b/([a-z0-9\-]+)/cards(?:$|\?)", self.path)
         if m:
@@ -2557,6 +2653,119 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     try: __import__("xp").invalidate(bullpen)
                     except Exception: pass
                     self._send_json(200, claim)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Contacts: create / update ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/orgs/([a-z0-9\-]+)/contacts$", self.path)
+        if m:
+            try:
+                from contacts import create as contact_create
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                rec = contact_create(
+                    m.group(1), m.group(2),
+                    person_name=req2.get("person_name") or req2.get("name") or "",
+                    role=req2.get("role") or "",
+                    email=req2.get("email") or "",
+                    phone=req2.get("phone") or "",
+                    linkedin=req2.get("linkedin") or "",
+                    bio=req2.get("bio") or "",
+                    notes=req2.get("notes") or "",
+                    tags=req2.get("tags") or [],
+                    relationship=req2.get("relationship") or "contact",
+                    created_by=rep,
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/orgs/([a-z0-9\-]+)/contacts/([a-z0-9\-]+)$", self.path)
+        if m:
+            try:
+                from contacts import update as contact_update
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                rec = contact_update(m.group(1), m.group(2), m.group(3),
+                                     updates=req2.get("updates") or req2 or {}, actor=rep)
+                if not rec:
+                    self._send_json(404, {"error": "contact_not_found"}); return
+                self._send_json(200, rec)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Activity logging ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/activity$", self.path)
+        if m:
+            try:
+                from activity import log as activity_log
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                rec = activity_log(
+                    m.group(1), actor=rep,
+                    kind=(req2.get("kind") or "").strip(),
+                    target_type=(req2.get("target_type") or "").strip(),
+                    target_id=(req2.get("target_id") or "").strip(),
+                    summary=req2.get("summary") or "",
+                    notes=req2.get("notes") or "",
+                    outcome=req2.get("outcome") or None,
+                    direction=req2.get("direction") or "outbound",
+                    duration_sec=req2.get("duration_sec"),
+                    contact_slug=req2.get("contact_slug"),
+                    deal_id=req2.get("deal_id"),
+                    org_slug=req2.get("org_slug"),
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Follow-ups: create / complete / snooze ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/followups$", self.path)
+        if m:
+            try:
+                from followups import create as fu_create
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                rec = fu_create(
+                    m.group(1), owner_rep=rep,
+                    title=req2.get("title") or "",
+                    due_at=req2.get("due_at"),
+                    notes=req2.get("notes") or "",
+                    target_type=(req2.get("target_type") or "none").strip(),
+                    target_id=(req2.get("target_id") or "").strip(),
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/followups/([a-z0-9_\-\.]+)/([a-z0-9_\-\.]+)/(complete|snooze)$", self.path)
+        if m:
+            try:
+                from followups import complete as fu_complete, snooze as fu_snooze
+                req2 = json.loads(raw) if raw else {}
+                bullpen, rep, fu_id, action = m.group(1), m.group(2), m.group(3), m.group(4)
+                if action == "complete":
+                    rec = fu_complete(bullpen, rep, fu_id)
+                    try: __import__("xp").invalidate(bullpen)
+                    except Exception: pass
+                else:
+                    rec = fu_snooze(bullpen, rep, fu_id, req2.get("snooze_to") or "+1d")
+                if not rec:
+                    self._send_json(404, {"error": "followup_not_found"}); return
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
