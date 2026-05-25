@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Join the Bullpen · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);
+  color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh;
+  display:flex;align-items:center;justify-content:center;padding:36px 20px}
+
+.card{max-width:520px;width:100%;background:rgba(42,29,16,0.65);
+  border:1px solid rgba(245,232,216,0.10);border-radius:12px;
+  padding:44px 40px;backdrop-filter:blur(8px);
+  box-shadow:0 30px 80px -10px rgba(0,0,0,0.6)}
+
+.brand{font-family:var(--display);font-size:26px;text-transform:uppercase;
+  letter-spacing:-.015em;text-decoration:none;
+  display:inline-flex;align-items:baseline;margin-bottom:24px}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--gold);margin:0 0 12px}
+
+h1{font-family:var(--display);font-size:42px;text-transform:uppercase;
+  letter-spacing:-.02em;line-height:1.05;margin:0 0 14px;color:#fff}
+
+.lede{margin:0 0 28px;color:var(--muted);font-size:14.5px;line-height:1.65}
+
+label{display:block;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+
+input[type=text]{display:block;width:100%;padding:16px 18px;
+  background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);
+  border-radius:8px;color:var(--text);font-family:var(--mono);
+  font-size:18px;letter-spacing:.10em;outline:none;text-transform:uppercase}
+input[type=text]:focus{border-color:var(--accent)}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;
+  background:var(--accent);color:#0a1a14;border:none;border-radius:8px;
+  font-family:var(--mono);font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;font-weight:700;cursor:pointer;
+  transition:transform .12s;margin-top:8px}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{background:rgba(168,154,135,0.20);color:var(--muted);cursor:not-allowed;transform:none}
+
+.msg{margin-top:18px;padding:14px 16px;border-radius:8px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;line-height:1.55}
+.msg.ok{background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);color:var(--accent-2)}
+.msg.err{background:rgba(248,113,113,0.10);border:1px solid rgba(248,113,113,0.30);color:var(--danger)}
+.msg.info{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);color:var(--gold)}
+.msg.hidden{display:none}
+
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(52,211,153,0.3);
+  border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;
+  margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.tip{margin-top:22px;padding-top:18px;border-top:1px solid rgba(245,232,216,0.08);
+  font-family:var(--serif);font-size:13.5px;color:var(--muted);font-style:italic;line-height:1.6}
+.tip strong{color:var(--text);font-style:normal}
+</style>
+</head>
+<body>
+
+<main class="card">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+
+  <p class="eyebrow">● Connect</p>
+  <h1>Join the floor.</h1>
+  <p class="lede">
+    Paste the invite code your operator sent you. Single-use. Hooks you to their bullpen the second you submit.
+  </p>
+
+  <form id="joinForm">
+    <label for="code">Invite code</label>
+    <input id="code" type="text" placeholder="BULL-XXXXXXXX" autocomplete="off" spellcheck="false" maxlength="16">
+    <button class="btn" type="submit" id="submitBtn">Connect →</button>
+  </form>
+
+  <div id="msg" class="msg hidden"></div>
+
+  <p class="tip">
+    Lost the code? <strong>Ask the operator</strong> who runs the bullpen — they generate codes from inside their app.
+  </p>
+</main>
+
+<script>
+const form = document.getElementById("joinForm");
+const codeInput = document.getElementById("code");
+const submitBtn = document.getElementById("submitBtn");
+const msgEl = document.getElementById("msg");
+
+function showMsg(kind, text) {
+  msgEl.className = "msg " + kind;
+  msgEl.textContent = text;
+}
+function showMsgWithSpinner(text) {
+  msgEl.className = "msg info";
+  const sp = document.createElement("span");
+  sp.className = "spinner";
+  msgEl.replaceChildren(sp, document.createTextNode(text));
+}
+
+async function redeem(code) {
+  submitBtn.disabled = true;
+  showMsgWithSpinner(" Connecting to the floor…");
+  try {
+    const r = await fetch("/api/invite/redeem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+      credentials: "same-origin",
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) {
+      submitBtn.disabled = false;
+      const err = (data && data.error) || ("HTTP " + r.status);
+
+      // Paid invite — send them to Stripe Checkout.
+      if (err === "payment_required" && data.checkout_url) {
+        showMsg("info", "Paid bullpen · $" + data.price_usd +
+          ". Routing you to checkout…");
+        setTimeout(() => { window.location.href = data.checkout_url; }, 800);
+        return;
+      }
+
+      const friendly = ({
+        invalid_code: "That code isn't valid. Double-check it.",
+        already_used: "That code's already been redeemed.",
+        corrupt_code: "Something's wrong with that code.",
+      })[err] || ("Couldn't connect: " + err);
+      showMsg("err", friendly);
+      return;
+    }
+    showMsg("ok", "✓ Connected as @" + data.rep + ". Loading the floor…");
+    setTimeout(() => {
+      window.location.href = "/app/today.html?rep=" + encodeURIComponent(data.rep);
+    }, 800);
+  } catch (e) {
+    submitBtn.disabled = false;
+    showMsg("err", "Network error. Try again.");
+  }
+}
+
+async function verifyPaymentThenRedeem(code, sessionId) {
+  submitBtn.disabled = true;
+  showMsgWithSpinner(" Confirming payment with Stripe…");
+  try {
+    const v = await fetch("/api/invite/verify-payment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, session_id: sessionId }),
+    });
+    const vd = await v.json();
+    if (!v.ok || !vd.ok) {
+      submitBtn.disabled = false;
+      showMsg("err", "Payment couldn't be verified: " + (vd.error || ("HTTP " + v.status)));
+      return;
+    }
+    // Payment verified; redeem to set the session cookie.
+    await redeem(code);
+  } catch (e) {
+    submitBtn.disabled = false;
+    showMsg("err", "Network error verifying payment.");
+  }
+}
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const code = codeInput.value.trim().toUpperCase();
+  if (!code) {
+    showMsg("err", "Paste the code first.");
+    return;
+  }
+  redeem(code);
+});
+
+// Auto-flow: arrived from a link.
+//   - ?code=BULL-XYZ                          → free invite, auto-redeem
+//   - ?code=BULL-XYZ&session_id=cs_...        → returning from Stripe success
+//   - ?code=BULL-XYZ&payment=cancelled        → user bailed on checkout
+const params = new URLSearchParams(window.location.search);
+const auto = params.get("code");
+const sessionId = params.get("session_id");
+const paymentStatus = params.get("payment");
+
+if (auto) {
+  const code = auto.toUpperCase();
+  codeInput.value = code;
+  if (sessionId) {
+    verifyPaymentThenRedeem(code, sessionId);
+  } else if (paymentStatus === "cancelled") {
+    showMsg("info", "Checkout cancelled. Paste a fresh code or contact your operator.");
+  } else {
+    redeem(code);
+  }
+}
+</script>
+</body>
+</html>

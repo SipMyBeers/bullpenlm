@@ -57,8 +57,14 @@ def _gen_code() -> str:
     return CODE_PREFIX + secrets.token_urlsafe(8)[:CODE_LEN].upper().replace("_", "X").replace("-", "Y")
 
 
-def create_invite(rep: str, note: str = "") -> dict:
-    """Create a single-use invite code for a named rep."""
+def create_invite(rep: str, note: str = "", price_usd: float = 0,
+                  stripe_session_id: str = "") -> dict:
+    """Create a single-use invite code for a named rep.
+
+    price_usd > 0 marks the invite as requiring Stripe checkout before redeem.
+    stripe_session_id is set later (by the server) once a checkout session is
+    created and attached to this code.
+    """
     rep = (rep or "").strip()
     if not rep:
         raise ValueError("rep name required")
@@ -69,13 +75,67 @@ def create_invite(rep: str, note: str = "") -> dict:
         "note": note,
         "created_at": datetime.datetime.now().isoformat(timespec="seconds"),
         "used_at": None,
+        "price_usd": float(price_usd or 0),
+        "payment_status": "paid" if not price_usd else "pending",
+        "stripe_session_id": stripe_session_id or "",
     }
     (INVITES_DIR / f"{code}.json").write_text(json.dumps(data, indent=2) + "\n")
     return data
 
 
+def attach_stripe_session(code: str, session_id: str, checkout_url: str = "") -> dict:
+    """Attach a Stripe Checkout Session to a pending paid invite."""
+    code = (code or "").strip().upper()
+    p = INVITES_DIR / f"{code}.json"
+    if not p.exists():
+        return {"ok": False, "error": "invalid_code"}
+    try:
+        data = json.loads(p.read_text())
+    except Exception:
+        return {"ok": False, "error": "corrupt_code"}
+    data["stripe_session_id"] = session_id
+    if checkout_url:
+        data["checkout_url"] = checkout_url
+    p.write_text(json.dumps(data, indent=2) + "\n")
+    return {"ok": True, "invite": data}
+
+
+def mark_paid(code: str) -> dict:
+    """Mark a paid invite as payment-confirmed (called after Stripe verification)."""
+    code = (code or "").strip().upper()
+    p = INVITES_DIR / f"{code}.json"
+    if not p.exists():
+        return {"ok": False, "error": "invalid_code"}
+    try:
+        data = json.loads(p.read_text())
+    except Exception:
+        return {"ok": False, "error": "corrupt_code"}
+    data["payment_status"] = "paid"
+    data["paid_at"] = datetime.datetime.now().isoformat(timespec="seconds")
+    p.write_text(json.dumps(data, indent=2) + "\n")
+    return {"ok": True, "invite": data}
+
+
+def get_invite(code: str) -> Optional[dict]:
+    """Return an invite by code (active dir only)."""
+    code = (code or "").strip().upper()
+    if not code.startswith(CODE_PREFIX):
+        code = CODE_PREFIX + code
+    p = INVITES_DIR / f"{code}.json"
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return None
+
+
 def redeem_invite(code: str) -> dict:
-    """Mark an invite as used. Returns {ok, rep, error}."""
+    """Mark an invite as used. Returns {ok, rep, error}.
+
+    Paid invites whose payment hasn't been confirmed return
+    {ok: False, error: 'payment_required', checkout_url, price_usd}.
+    """
     code = (code or "").strip().upper()
     if not code.startswith(CODE_PREFIX):
         code = CODE_PREFIX + code
@@ -88,8 +148,15 @@ def redeem_invite(code: str) -> dict:
         return {"ok": False, "error": "corrupt_code"}
     if data.get("used_at"):
         return {"ok": False, "error": "already_used", "used_at": data["used_at"]}
+    if data.get("price_usd", 0) > 0 and data.get("payment_status") != "paid":
+        return {
+            "ok": False,
+            "error": "payment_required",
+            "price_usd": data["price_usd"],
+            "checkout_url": data.get("checkout_url", ""),
+            "code": code,
+        }
     data["used_at"] = datetime.datetime.now().isoformat(timespec="seconds")
-    # Move to /used/ so the active dir only contains live codes
     (USED_DIR / f"{code}.json").write_text(json.dumps(data, indent=2) + "\n")
     p.unlink()
     return {"ok": True, "rep": data["rep"]}

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Host control · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh}
+
+.wrap{max-width:920px;margin:0 auto;padding:36px 28px 80px}
+
+.brand{font-family:var(--display);font-size:26px;text-transform:uppercase;letter-spacing:-.02em;display:inline-flex;align-items:baseline;text-decoration:none;margin-bottom:22px}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+
+h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spacing:-.02em;margin:0 0 6px;line-height:1.05}
+.sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15.5px;margin:0 0 32px}
+
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:26px 28px;margin-bottom:22px}
+.panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 16px}
+.panel h2 .live{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:8px;vertical-align:middle;box-shadow:0 0 8px var(--accent)}
+.panel h2 .off{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dim);margin-right:8px;vertical-align:middle}
+
+.status-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.status-text{font-family:var(--serif);font-size:18px;color:var(--text)}
+.status-text.dim{color:var(--muted);font-style:italic}
+.url-box{flex:1;min-width:260px;display:inline-flex;align-items:center;gap:10px;padding:11px 14px;background:rgba(0,0,0,0.35);border:1px solid rgba(52,211,153,0.30);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--accent-2);word-break:break-all}
+.url-box .copy{background:var(--accent);color:#0a1a14;border:none;padding:6px 11px;border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer;white-space:nowrap}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:7px;font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:transform .12s;border:none;text-decoration:none}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn.primary{background:var(--accent);color:#0a1a14}
+.btn.gold{background:var(--gold);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.btn.ghost:hover{color:var(--text);border-color:var(--text)}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid rgba(248,113,113,0.40)}
+.btn.danger:hover{background:rgba(248,113,113,0.10)}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field input{width:100%;padding:11px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:16px;outline:none;transition:border-color .12s}
+.field input:focus{border-color:var(--accent)}
+
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:640px){.row{grid-template-columns:1fr}}
+
+.invites-list{display:grid;gap:10px}
+.invite-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.08);border-radius:9px}
+.invite-row .code{font-family:var(--mono);font-size:13px;color:var(--accent-2);letter-spacing:.08em}
+.invite-row .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em}
+.invite-row .meta .rep{color:var(--text)}
+.invite-row .price-tag{display:inline-block;padding:2px 8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.35);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.08em;margin-left:6px}
+.invite-row .used-tag{display:inline-block;padding:2px 8px;background:rgba(168,154,135,0.10);border:1px solid rgba(168,154,135,0.25);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;margin-left:6px}
+.invite-row .actions{display:flex;gap:6px}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:24px;letter-spacing:.06em}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+
+.helper{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:10px;letter-spacing:.04em;line-height:1.7}
+.helper code{background:rgba(0,0,0,0.30);padding:1px 6px;border-radius:3px;color:var(--accent-2);font-size:10.5px}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+
+  <h1>Host control</h1>
+  <p class="sub">Publish your floor to the internet. Generate invite codes. Charge for entry if you want.</p>
+
+  <!-- TUNNEL PANEL -->
+  <section class="panel" id="tunnelPanel">
+    <h2 id="tunnelTitle"><span class="off" id="tunnelDot"></span> Public URL</h2>
+    <div class="status-row" id="tunnelStatus">
+      <span class="status-text dim">Loading…</span>
+    </div>
+    <p class="helper" id="tunnelHelper">
+      Powered by a free Cloudflare Quick Tunnel — no account, no monthly cost. Requires <code>cloudflared</code> installed locally (<code>brew install cloudflared</code>).
+    </p>
+  </section>
+
+  <!-- INVITE CREATE PANEL -->
+  <section class="panel" id="createPanel">
+    <h2><span class="live"></span> Create an invite</h2>
+    <div class="row">
+      <div class="field">
+        <label>Rep name</label>
+        <input id="invRep" type="text" placeholder="dylan" maxlength="40">
+      </div>
+      <div class="field">
+        <label>Note (optional)</label>
+        <input id="invNote" type="text" placeholder="met at gym" maxlength="120">
+      </div>
+      <div class="field">
+        <label>Price USD (optional)</label>
+        <input id="invPrice" type="number" min="0" step="1" placeholder="0 = free">
+      </div>
+    </div>
+    <button class="btn gold" id="createBtn">Generate code →</button>
+    <p class="helper">
+      Free codes work the second you share them. Paid codes route through Stripe Checkout — closer pays you, then gets in.
+    </p>
+  </section>
+
+  <!-- INVITES LIST PANEL -->
+  <section class="panel">
+    <h2><span class="live"></span> Live invites</h2>
+    <div id="invitesList" class="invites-list">
+      <div class="empty">Loading…</div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+
+function toast(msg, err) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.toggle("error", !!err);
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2400);
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast("Copied."); }
+  catch { toast("Copy failed", true); }
+}
+
+// ── TUNNEL ────────────────────────────────────────────────
+async function renderTunnel() {
+  const r = await fetch("/api/host/status");
+  const s = await r.json();
+  const dot = $("#tunnelDot");
+  const status = $("#tunnelStatus");
+  dot.className = s.running ? "live" : "off";
+  status.replaceChildren();
+  if (s.running && s.url) {
+    const urlBox = document.createElement("div");
+    urlBox.className = "url-box";
+    const span = document.createElement("span");
+    span.textContent = s.url;
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "copy";
+    copyBtn.textContent = "Copy";
+    copyBtn.addEventListener("click", () => copyText(s.url));
+    urlBox.appendChild(span);
+    urlBox.appendChild(copyBtn);
+    const stopBtn = document.createElement("button");
+    stopBtn.className = "btn danger";
+    stopBtn.textContent = "Stop hosting";
+    stopBtn.addEventListener("click", stopTunnel);
+    status.appendChild(urlBox);
+    status.appendChild(stopBtn);
+  } else {
+    const txt = document.createElement("span");
+    txt.className = "status-text dim";
+    txt.textContent = "Not hosting. Closers can't reach you yet.";
+    const goBtn = document.createElement("button");
+    goBtn.className = "btn primary";
+    goBtn.textContent = "Go public →";
+    goBtn.addEventListener("click", startTunnel);
+    status.appendChild(txt);
+    status.appendChild(goBtn);
+  }
+}
+
+async function startTunnel(e) {
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  btn.textContent = "Starting…";
+  try {
+    const r = await fetch("/api/host/publish", { method: "POST" });
+    const d = await r.json();
+    if (d.ok) {
+      toast("Tunnel up. Copy your URL.");
+      renderTunnel();
+      renderInvites();
+    } else {
+      const hint = d.hint ? " (" + d.hint + ")" : "";
+      toast("Failed: " + (d.error || "unknown") + hint, true);
+      btn.disabled = false;
+      btn.textContent = "Go public →";
+    }
+  } catch (e) {
+    toast("Network error", true);
+    btn.disabled = false;
+    btn.textContent = "Go public →";
+  }
+}
+
+async function stopTunnel() {
+  if (!confirm("Stop hosting? Closers will lose access until you restart.")) return;
+  await fetch("/api/host/unpublish", { method: "POST" });
+  toast("Tunnel down.");
+  renderTunnel();
+  renderInvites();
+}
+
+// ── INVITES ────────────────────────────────────────────────
+async function renderInvites() {
+  const r = await fetch("/api/invites?include_used=true");
+  const d = await r.json();
+  const list = $("#invitesList");
+  list.replaceChildren();
+  const invs = (d.invites || []).reverse();
+  if (!invs.length) {
+    const e = document.createElement("div");
+    e.className = "empty";
+    e.textContent = "No invites yet. Generate one above.";
+    list.appendChild(e);
+    return;
+  }
+  // Get tunnel URL for building join links
+  const ts = await (await fetch("/api/host/status")).json();
+  const host = (ts.running && ts.url) ? ts.url : window.location.origin;
+
+  for (const inv of invs) {
+    const row = document.createElement("div");
+    row.className = "invite-row";
+
+    const code = document.createElement("div");
+    code.className = "code";
+    code.textContent = inv.code;
+    row.appendChild(code);
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const rep = document.createElement("span");
+    rep.className = "rep";
+    rep.textContent = "@" + inv.rep;
+    meta.appendChild(rep);
+    if (inv.note) {
+      meta.appendChild(document.createTextNode("  ·  " + inv.note));
+    }
+    if (inv.price_usd && inv.price_usd > 0) {
+      const tag = document.createElement("span");
+      tag.className = "price-tag";
+      tag.textContent = "$" + inv.price_usd;
+      meta.appendChild(tag);
+    }
+    if (inv.used_at) {
+      const tag = document.createElement("span");
+      tag.className = "used-tag";
+      tag.textContent = "USED " + inv.used_at.split("T")[0];
+      meta.appendChild(tag);
+    }
+    row.appendChild(meta);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    if (!inv.used_at) {
+      const joinUrl = inv.join_url || (host + "/app/join.html?code=" + inv.code);
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "btn ghost";
+      copyBtn.textContent = "Copy link";
+      copyBtn.addEventListener("click", () => copyText(joinUrl));
+      actions.appendChild(copyBtn);
+    }
+    row.appendChild(actions);
+
+    list.appendChild(row);
+  }
+}
+
+// ── CREATE ────────────────────────────────────────────────
+$("#createBtn").addEventListener("click", async () => {
+  const rep = $("#invRep").value.trim();
+  const note = $("#invNote").value.trim();
+  const price = Number($("#invPrice").value || 0);
+  if (!rep) { toast("Need a rep name.", true); return; }
+  const body = { rep, note };
+  if (price > 0) body.price_usd = price;
+  const r = await fetch("/api/invite/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const d = await r.json();
+  if (!r.ok || d.error) {
+    toast("Failed: " + (d.error || "unknown"), true);
+    return;
+  }
+  $("#invRep").value = "";
+  $("#invNote").value = "";
+  $("#invPrice").value = "";
+  toast("Code " + d.code + " created.");
+  renderInvites();
+  // Auto-copy join URL if tunnel is up
+  if (d.join_url) {
+    setTimeout(() => copyText(d.join_url), 100);
+  }
+});
+
+renderTunnel();
+renderInvites();
+</script>
+</body>
+</html>

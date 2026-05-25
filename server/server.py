@@ -1484,6 +1484,7 @@ _PUBLIC_PATHS = {
 _PUBLIC_PATH_PATTERNS = [
     re.compile(r"^/api/b/[a-z0-9\-]+/apply$"),         # POST a membership application
     re.compile(r"^/api/b/[a-z0-9\-]+/public(?:$|\?)"),  # GET public-facing bullpen info
+    re.compile(r"^/api/bullpens$"),                     # POST: founder onboarding (create bullpen)
 ]
 
 
@@ -1573,6 +1574,50 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._cors()
             self.end_headers()
             self.wfile.write(body)
+            return
+
+        # ── /join?code=XYZ shorthand → redirect to /app/join.html ──
+        # Lets host URLs printed by `invites.py create` use a clean /join path.
+        if self.path.startswith("/join"):
+            q = ""
+            if "?" in self.path:
+                q = "?" + self.path.split("?", 1)[1]
+            self.send_response(302)
+            self.send_header("Location", "/app/join.html" + q)
+            self._cors()
+            self.end_headers()
+            return
+
+        # ── Host tunnel status (PUBLIC — anyone can check if a host is live) ──
+        if self.path == "/api/host/status":
+            try:
+                from tunnel import tunnel_status
+                self._send_json(200, tunnel_status())
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── List invites (localhost-only) ──
+        if self.path.startswith("/api/invites"):
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from invites import list_invites
+                include_used = "include_used=true" in self.path
+                self._send_json(200, {"invites": list_invites(include_used=include_used)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Stripe config status (localhost-only) ──
+        if self.path == "/api/stripe/status":
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from stripe_client import is_configured, mode
+                self._send_json(200, {"configured": is_configured(), "mode": mode()})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
             return
 
         # ── Org graph endpoints ──
@@ -2544,14 +2589,220 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if not _is_localhost(self.client_address):
                 return self._deny_auth()
             try:
-                from invites import create_invite
+                from invites import create_invite, attach_stripe_session
                 req = json.loads(raw) if raw else {}
                 rep = (req.get("rep") or "").strip()
                 if not rep:
                     self._send_json(400, {"error": "rep name required"})
                     return
-                inv = create_invite(rep, note=req.get("note", ""))
+                price_usd = float(req.get("price_usd") or 0)
+                inv = create_invite(rep, note=req.get("note", ""), price_usd=price_usd)
+
+                public_url = None
+                try:
+                    from tunnel import tunnel_status
+                    st = tunnel_status()
+                    if st.get("running") and st.get("url"):
+                        public_url = st["url"]
+                except Exception:
+                    pass
+
+                if price_usd > 0:
+                    from stripe_client import (is_configured as stripe_ok,
+                                                create_checkout_session)
+                    if not stripe_ok():
+                        self._send_json(400, {
+                            "error": "stripe_not_configured",
+                            "hint": "Save your Stripe key via POST /api/stripe/key first.",
+                            "code": inv["code"],
+                        })
+                        return
+                    if not public_url:
+                        self._send_json(400, {
+                            "error": "tunnel_required_for_paid_invites",
+                            "hint": "Publish your floor first — POST /api/host/publish.",
+                            "code": inv["code"],
+                        })
+                        return
+                    success_url = (f"{public_url}/app/join.html?code={inv['code']}"
+                                   f"&session_id={{CHECKOUT_SESSION_ID}}")
+                    cancel_url = f"{public_url}/app/join.html?code={inv['code']}&payment=cancelled"
+                    cs = create_checkout_session(
+                        code=inv["code"],
+                        price_usd=price_usd,
+                        product_name=f"Bullpen access · {rep}",
+                        success_url=success_url,
+                        cancel_url=cancel_url,
+                    )
+                    if not cs.get("ok"):
+                        self._send_json(502, {"error": cs.get("error", "stripe_session_failed"),
+                                              "stripe": cs.get("stripe")})
+                        return
+                    attach_stripe_session(inv["code"], cs["id"], cs["url"])
+                    inv["stripe_session_id"] = cs["id"]
+                    inv["checkout_url"] = cs["url"]
+                    inv["join_url"] = cs["url"]
+                    inv["public_url"] = public_url
+                else:
+                    if public_url:
+                        inv["join_url"] = f"{public_url}/app/join.html?code={inv['code']}"
+                        inv["public_url"] = public_url
+
                 self._send_json(200, inv)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Stripe: save the API key (localhost-only) ──
+        if self.path == "/api/stripe/key":
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from stripe_client import save_config
+                req = json.loads(raw) if raw else {}
+                r = save_config(req.get("key", ""))
+                self._send_json(200, r)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Stripe: verify a checkout session + mark invite paid (PUBLIC) ──
+        # Called by /app/join.html after redirect-back from Stripe success_url.
+        if self.path == "/api/invite/verify-payment":
+            try:
+                from stripe_client import retrieve_checkout_session
+                from invites import get_invite, mark_paid
+                req = json.loads(raw) if raw else {}
+                code = (req.get("code") or "").strip().upper()
+                session_id = (req.get("session_id") or "").strip()
+                if not code or not session_id:
+                    self._send_json(400, {"error": "code_and_session_id_required"}); return
+                inv = get_invite(code)
+                if not inv:
+                    self._send_json(404, {"error": "invalid_code"}); return
+                # Defense: session must match the one we attached when minting.
+                if inv.get("stripe_session_id") and inv["stripe_session_id"] != session_id:
+                    self._send_json(400, {"error": "session_mismatch"}); return
+                cs = retrieve_checkout_session(session_id)
+                if not cs.get("ok"):
+                    self._send_json(502, cs); return
+                if cs.get("payment_status") != "paid":
+                    self._send_json(402, {"error": "payment_not_complete",
+                                          "stripe_status": cs.get("payment_status")})
+                    return
+                # Cross-check that the session was for THIS code.
+                meta = cs.get("metadata") or {}
+                if (meta.get("bullpen_code") or cs.get("client_reference_id")) != code:
+                    self._send_json(400, {"error": "code_session_mismatch"}); return
+                mark_paid(code)
+                self._send_json(200, {"ok": True, "code": code})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Host: publish / unpublish (localhost-only) ──
+        # The founder spawns a Cloudflare Quick Tunnel so closers anywhere on
+        # the internet can hit /app/join.html?code=... on their host.
+        if self.path == "/api/host/publish":
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from tunnel import start_tunnel
+                r = start_tunnel(port=PORT)
+                self._send_json(200 if r.get("ok") else 500, r)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        if self.path == "/api/host/unpublish":
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from tunnel import stop_tunnel
+                self._send_json(200, stop_tunnel())
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Founder onboarding — PUBLIC (no auth) ──
+        # Anyone can spin up a new bullpen on the platform. This is the
+        # entry point promised by the landing page and the #how-to-start
+        # walkthrough in Discord. Self-serve by design.
+        if self.path == "/api/bullpens":
+            try:
+                from bullpens import (create_bullpen, set_bullpen_config,
+                                      set_profile, exists as _bp_exists)
+                req2 = json.loads(raw) if raw else {}
+
+                slug = (req2.get("slug") or "").strip().lower()
+                founder_rep = (req2.get("founder_rep") or "").strip().lower()
+                product = (req2.get("product") or "").strip()[:120]
+                name = (req2.get("name") or "").strip()[:80] or None
+                tagline = (req2.get("tagline") or "").strip()[:240]
+                commission_rate = (req2.get("commission_rate") or "").strip()[:80]
+                seats_open = req2.get("seats_open")
+                access_mode = (req2.get("access_mode") or "invite_only").strip()
+                price_usd = req2.get("price_usd")
+                discord_invite = (req2.get("discord_invite") or "").strip()[:200]
+                founder_display_name = (req2.get("founder_display_name") or "").strip()[:48]
+
+                if not slug or not founder_rep:
+                    self._send_json(400, {"error": "slug and founder_rep required"}); return
+                if _bp_exists(slug):
+                    self._send_json(409, {"error": "bullpen_slug_taken", "slug": slug}); return
+                if access_mode not in {"public", "invite_only", "paid"}:
+                    self._send_json(400, {"error": "invalid_access_mode"}); return
+                if access_mode == "paid":
+                    try:
+                        price_usd = float(price_usd or 0)
+                    except Exception:
+                        self._send_json(400, {"error": "price_usd_required_for_paid"}); return
+                    if price_usd <= 0:
+                        self._send_json(400, {"error": "price_usd_must_be_positive"}); return
+                else:
+                    price_usd = None
+                try:
+                    seats_open_int = int(seats_open) if seats_open not in (None, "") else None
+                except Exception:
+                    seats_open_int = None
+
+                manifest = create_bullpen(slug, founder_rep,
+                                          product=product, name=name)
+                updates = {
+                    "tagline": tagline,
+                    "access_mode": access_mode,
+                    "commission_rate": commission_rate,
+                    "founder_display_name": founder_display_name or founder_rep,
+                }
+                if seats_open_int is not None:
+                    updates["seats_open"] = seats_open_int
+                if price_usd is not None:
+                    updates["price_usd"] = price_usd
+                if discord_invite:
+                    updates["discord_invite"] = discord_invite
+                cfg = set_bullpen_config(slug, updates) or manifest
+
+                if founder_display_name:
+                    try:
+                        set_profile(slug, founder_rep,
+                                    display_name=founder_display_name,
+                                    title="Founder")
+                    except Exception:
+                        pass
+
+                self._send_json(200, {
+                    "ok": True,
+                    "slug": slug,
+                    "name": cfg.get("name") or slug,
+                    "founder_rep": founder_rep,
+                    "app_url": f"/app/today.html?b={slug}&rep={founder_rep}",
+                    "share_url": f"/b/{slug}",
+                    "config": cfg,
+                })
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
@@ -3609,6 +3860,11 @@ def main():
     print(f"  Server:  http://localhost:{PORT}")
     print(f"  Logs:    {TRAINING_DIR}")
     print("─" * 60)
+    try:
+        from discord_roles import start_background as _start_role_sync
+        _start_role_sync()
+    except Exception as _e:
+        print(f"[discord_roles] not started: {_e}")
     with ReusableServer(("127.0.0.1", PORT), Handler) as srv:
         try:
             srv.serve_forever()
