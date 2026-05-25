@@ -2032,6 +2032,66 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Buyer cards ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/cards(?:$|\?)", self.path)
+        if m:
+            try:
+                from buyer_cards import list_available
+                self._send_json(200, {"cards": list_available()})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/cards/([a-z0-9\-]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from buyer_cards import generate as bc_generate
+                from urllib.parse import urlparse, parse_qs
+                qs = parse_qs(urlparse(self.path).query)
+                refresh = (qs.get("refresh") or ["0"])[0] in ("1", "true", "yes")
+                c = bc_generate(m.group(2), bullpen=m.group(1), force_refresh=refresh)
+                if not c:
+                    self._send_json(404, {"error": "card_not_found"}); return
+                self._send_json(200, c)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Duos ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/duos(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from duos import list_for_rep
+                qs = parse_qs(urlparse(self.path).query)
+                rep    = (qs.get("rep") or [None])[0]
+                status = (qs.get("status") or [None])[0]
+                self._send_json(200, {"duos": list_for_rep(m.group(1), rep, status)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/duos/([a-zA-Z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from duos import get as duo_get
+                d = duo_get(m.group(1), m.group(2))
+                if not d:
+                    self._send_json(404, {"error": "duo_not_found"}); return
+                self._send_json(200, d)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/lobby(?:$|\?)", self.path)
+        if m:
+            try:
+                from duos import lobby_state
+                self._send_json(200, lobby_state(m.group(1)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── SSE event stream (text/event-stream) ──
         m = re.match(r"^/api/b/([a-z0-9\-]+)/stream(?:$|\?)", self.path)
         if m:
@@ -2497,6 +2557,87 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     try: __import__("xp").invalidate(bullpen)
                     except Exception: pass
                     self._send_json(200, claim)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Duos: create / accept / msg / end / lobby join+leave ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/duos$", self.path)
+        if m:
+            try:
+                from duos import create as duo_create
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                duo = duo_create(
+                    m.group(1),
+                    challenger_rep=rep,
+                    opponent_rep=(req2.get("opponent") or "").strip(),
+                    prospect_slug=(req2.get("prospect_slug") or "").strip(),
+                    challenger_role=(req2.get("role") or "seller").strip(),
+                    duration_minutes=int(req2.get("duration_minutes") or 10),
+                )
+                self._send_json(200, duo)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/duos/([a-zA-Z0-9_\-\.]+)/accept$", self.path)
+        if m:
+            try:
+                from duos import accept as duo_accept
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                self._send_json(200, duo_accept(m.group(1), m.group(2), rep))
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/duos/([a-zA-Z0-9_\-\.]+)/msg$", self.path)
+        if m:
+            try:
+                from duos import msg as duo_msg
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                entry = duo_msg(m.group(1), m.group(2), rep, req2.get("text") or "")
+                self._send_json(200, entry)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/duos/([a-zA-Z0-9_\-\.]+)/end$", self.path)
+        if m:
+            try:
+                from duos import end as duo_end
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                self._send_json(200, duo_end(m.group(1), m.group(2), rep))
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/lobby/(join|leave)$", self.path)
+        if m:
+            try:
+                from duos import lobby_join, lobby_leave
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                if m.group(2) == "join":
+                    r = lobby_join(m.group(1), rep,
+                                   role=(req2.get("role") or "seller").strip(),
+                                   prospect_slug=(req2.get("prospect_slug") or "").strip() or None)
+                else:
+                    r = lobby_leave(m.group(1), rep)
+                self._send_json(200, r)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

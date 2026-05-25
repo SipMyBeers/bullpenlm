@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Duo · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}.crumb .sep{margin:0 8px;color:var(--dim)}.crumb .here{color:var(--accent)}
+
+.timer{margin-left:auto;display:inline-flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(251,191,36,0.10);border:1px solid rgba(251,191,36,0.30);border-radius:999px;font-family:var(--mono);font-size:12px;letter-spacing:.10em;color:var(--gold)}
+.timer .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:pulse 1.5s infinite}
+.timer.ended{background:rgba(168,154,135,0.10);border-color:rgba(168,154,135,0.20);color:var(--muted)}
+.timer.ended .dot{background:var(--muted);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.end-btn{padding:6px 14px;background:transparent;color:var(--danger);border:1px solid rgba(248,113,113,0.30);border-radius:5px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;margin-left:8px}
+.end-btn:hover{background:rgba(248,113,113,0.10)}
+
+.wrap{max-width:1400px;margin:0 auto;padding:20px 28px;display:grid;grid-template-columns:360px 1fr;gap:24px}
+@media(max-width:980px){.wrap{grid-template-columns:1fr}}
+
+/* ── Buyer card panel (LEFT) ── */
+.card-panel{background:linear-gradient(135deg,rgba(52,211,153,0.04),rgba(42,29,16,0.55));border:1px solid rgba(245,232,216,0.08);border-radius:12px;padding:22px;height:calc(100vh - 110px);overflow-y:auto}
+.card-panel h2{font-family:var(--display);font-size:26px;color:var(--accent-2);margin:0 0 4px;letter-spacing:-.01em;text-transform:uppercase;line-height:1.05}
+.card-panel .sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.card-panel .persona{padding:14px;background:rgba(0,0,0,0.20);border-radius:8px;margin-bottom:16px;border:1px solid rgba(245,232,216,0.06)}
+.card-panel .persona .name{font-family:var(--display);font-size:22px;color:var(--text);text-transform:uppercase;letter-spacing:-.01em;line-height:1.05}
+.card-panel .persona .role{font-family:var(--mono);font-size:11px;color:var(--accent-2);margin-top:4px;letter-spacing:.05em}
+.card-panel .persona .tone{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted);margin-top:8px;line-height:1.45}
+.card-panel .persona .decision{font-family:var(--serif);font-size:13px;color:var(--accent-2);margin-top:6px}
+
+.card-panel h3{font-family:var(--mono);font-size:10px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;padding-top:14px;border-top:1px solid rgba(245,232,216,0.06)}
+.card-panel h3.hot{color:var(--gold)}
+.card-panel h3.red{color:var(--danger)}
+.card-panel ul{padding-left:18px;margin:0;font-size:13px;line-height:1.55;font-family:var(--serif)}
+.card-panel ul li{margin-bottom:4px;color:#e5d8c4}
+.card-panel ul.hot li::marker{content:"⚡ "}
+.card-panel ul.red li::marker{content:"⚠ "}
+.card-panel ul.obj li::marker{content:"❝ "}
+
+.card-panel.seller .obj,.card-panel.seller .hot,.card-panel.seller .red,
+.card-panel.seller h3.hide-seller{display:none}
+.card-panel.seller .seller-note{padding:12px 14px;background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);border-radius:8px;font-family:var(--mono);font-size:11px;color:var(--accent-2);letter-spacing:.05em;margin-top:14px}
+
+/* ── Chat panel (RIGHT) ── */
+.chat-panel{display:flex;flex-direction:column;height:calc(100vh - 110px)}
+.role-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.10);border-radius:999px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;align-self:flex-start}
+.role-badge.seller{background:rgba(52,211,153,0.15);border-color:rgba(52,211,153,0.40);color:var(--accent-2)}
+.role-badge.buyer{background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.40);color:var(--gold)}
+
+.transcript{flex:1;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:10px;padding:18px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;flex-direction:column;max-width:78%;animation:slideIn .25s ease-out}
+@keyframes slideIn{from{transform:translateY(6px);opacity:0}to{transform:translateY(0);opacity:1}}
+.msg.mine{align-self:flex-end}
+.msg.them{align-self:flex-start}
+.msg .who{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;padding:0 4px}
+.msg.mine .who{text-align:right;color:var(--accent-2)}
+.msg.them .who.buyer{color:var(--gold)}
+.msg.them .who.seller{color:var(--accent-2)}
+.msg .bubble{padding:11px 15px;border-radius:14px;font-family:var(--serif);font-size:14.5px;line-height:1.45;color:var(--text);white-space:pre-wrap;word-wrap:break-word}
+.msg.mine .bubble{background:linear-gradient(135deg,var(--accent-dim),rgba(52,211,153,0.18));border:1px solid rgba(52,211,153,0.30);border-bottom-right-radius:4px}
+.msg.them .bubble{background:rgba(42,29,16,0.85);border:1px solid rgba(245,232,216,0.10);border-bottom-left-radius:4px}
+.msg.them.buyer-msg .bubble{border-left:3px solid var(--gold)}
+.msg.them.seller-msg .bubble{border-left:3px solid var(--accent)}
+.msg .ts{font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px;padding:0 4px}
+
+.compose{margin-top:12px;display:flex;gap:10px;align-items:flex-end;padding:12px;background:rgba(26,18,8,0.85);border:1px solid rgba(245,232,216,0.10);border-radius:10px}
+.compose textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--serif);font-size:14.5px;line-height:1.5;resize:none;min-height:38px;max-height:200px}
+.compose textarea::placeholder{color:var(--dim)}
+.compose button{padding:9px 18px;background:var(--accent);color:#0a1a14;border:none;border-radius:6px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;align-self:stretch}
+.compose button:disabled{opacity:.5;cursor:default}
+
+/* ── Pending state (waiting for opponent) ── */
+.pending-banner{padding:18px 22px;background:linear-gradient(135deg,rgba(251,191,36,0.10),rgba(42,29,16,0.55));border:1px solid rgba(251,191,36,0.30);border-radius:10px;margin-bottom:14px;font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:.05em;text-align:center}
+.pending-banner .opp{font-family:var(--display);color:var(--text);font-size:22px;margin:6px 0 2px;text-transform:uppercase;letter-spacing:-.01em}
+.pending-banner .accept-btn{margin-top:12px;padding:11px 22px;background:var(--gold);color:#0a1a14;border:none;border-radius:6px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;cursor:pointer}
+
+/* ── End-of-duo scorecard ── */
+.scorecard{padding:26px 28px;background:linear-gradient(135deg,rgba(167,139,250,0.10),rgba(42,29,16,0.55));border:1px solid rgba(167,139,250,0.30);border-radius:12px;margin-top:14px}
+.scorecard h3{font-family:var(--display);font-size:24px;color:#c4b5fd;margin:0 0 14px;text-transform:uppercase;letter-spacing:-.01em}
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin-bottom:14px}
+.sc-stat{padding:12px;background:rgba(0,0,0,0.20);border-radius:8px;text-align:center}
+.sc-stat .l{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sc-stat .v{font-family:var(--display);font-size:30px;color:var(--gold);margin-top:4px;line-height:1}
+.sc-stat .v.good{color:var(--accent-2)}.sc-stat .v.bad{color:var(--danger)}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:30px;letter-spacing:.08em}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:50}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <a href="/app/lobby.html" id="lobby-back">Lobby</a><span class="sep">/</span>
+    <span class="here" id="duo-title">Duo</span>
+  </nav>
+  <div class="timer" id="timer"><span class="dot"></span><span id="timer-text">—</span></div>
+  <button class="end-btn" id="end-btn">End</button>
+</header>
+
+<main class="wrap">
+
+  <aside class="card-panel" id="card-panel">
+    <div class="empty">Loading…</div>
+  </aside>
+
+  <section class="chat-panel" id="chat-panel">
+    <div class="empty">Loading…</div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b')   || 'killsesh';
+const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+const DUO_ID  = params.get('id')  || '';
+
+document.getElementById('lobby-back').href = '/app/lobby.html?b=' + encodeURIComponent(BULLPEN);
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' error':''); setTimeout(()=>t.className='toast'+(err?' error':''),2400); }
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if(!r.ok){ let m=r.statusText; try{m=(await r.json()).error||m;}catch(_){} throw new Error(m); }
+  return r.json();
+}
+function $(id){ return document.getElementById(id); }
+
+let DUO = null;
+let CARD = null;
+let MY_ROLE = null;
+let LAST_INDEX = -1;
+let SEEN_TS = new Set();   // dedupe across SSE replay + initial load
+
+function fmtTime(iso){ if(!iso) return ''; return iso.slice(11,19); }
+
+function paintTimer(){
+  if(!DUO || !DUO.ends_at) return;
+  const t = $('timer-text');
+  if(DUO.status === 'ended'){
+    $('timer').classList.add('ended');
+    t.textContent = 'ENDED';
+    return;
+  }
+  if(DUO.status === 'pending'){
+    t.textContent = 'PENDING';
+    return;
+  }
+  const ms = new Date(DUO.ends_at) - new Date();
+  if(ms <= 0){ t.textContent = '00:00'; return; }
+  const s = Math.floor(ms/1000);
+  t.textContent = String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+}
+setInterval(paintTimer, 1000);
+
+function paintCard(){
+  const p = $('card-panel'); clear(p);
+  if(!CARD){ p.appendChild(el('div', 'empty', 'No card data')); return; }
+  p.classList.toggle('seller', MY_ROLE === 'seller');
+  p.classList.toggle('buyer',  MY_ROLE === 'buyer');
+
+  p.appendChild(el('h2', null, CARD.company));
+  p.appendChild(el('div', 'sub', CARD.vertical || CARD.role));
+
+  const pe = el('div', 'persona');
+  pe.appendChild(el('div', 'name', CARD.persona.name));
+  pe.appendChild(el('div', 'role', CARD.role));
+  pe.appendChild(el('div', 'tone', '"' + CARD.persona.tone + '"'));
+  pe.appendChild(el('div', 'decision', '→ ' + CARD.persona.decision_style));
+  p.appendChild(pe);
+
+  if(MY_ROLE === 'seller'){
+    p.appendChild(el('div', 'seller-note',
+      'You\'re the SELLER. Open the call. You can see who they are + the public picture — ' +
+      'but their objections, hot buttons, and red flags are HIDDEN until you trigger them in the call.'));
+  }
+
+  if(CARD.their_world && CARD.their_world.length){
+    p.appendChild(el('h3', null, 'Their world'));
+    const ul = el('ul');
+    for(const w of CARD.their_world) ul.appendChild(el('li', null, w));
+    p.appendChild(ul);
+  }
+
+  if(MY_ROLE === 'buyer'){
+    p.appendChild(el('h3', null, 'Their motivations'));
+    const ul = el('ul');
+    for(const m of (CARD.their_motivations || [])) ul.appendChild(el('li', null, m));
+    p.appendChild(ul);
+
+    p.appendChild(el('h3', 'hot', 'Hot buttons (use these to open up)'));
+    const hb = el('ul', 'hot');
+    for(const h of (CARD.their_hot_buttons || [])) hb.appendChild(el('li', null, h));
+    p.appendChild(hb);
+
+    p.appendChild(el('h3', 'red', 'Red flags (close the door if they say these)'));
+    const rf = el('ul', 'red');
+    for(const r of (CARD.their_red_flags || [])) rf.appendChild(el('li', null, r));
+    p.appendChild(rf);
+
+    p.appendChild(el('h3', null, 'Pushbacks to throw at them'));
+    const obj = el('ul', 'obj');
+    for(const o of (CARD.their_objections || [])) obj.appendChild(el('li', null, o));
+    p.appendChild(obj);
+  }
+}
+
+function paintTranscript(){
+  const root = $('chat-panel'); clear(root);
+  if(!DUO){ root.appendChild(el('div', 'empty', 'No duo loaded')); return; }
+  document.title = `Duo · ${DUO.prospect_slug} · BullpenLM`;
+  $('duo-title').textContent = 'Duo · ' + DUO.prospect_slug;
+
+  // Pending — show accept button to opponent
+  if(DUO.status === 'pending'){
+    const b = el('div', 'pending-banner');
+    if(DUO.opponent === REP){
+      b.appendChild(document.createTextNode('Incoming challenge from'));
+      b.appendChild(el('div', 'opp', DUO.challenger));
+      b.appendChild(document.createTextNode('on ' + DUO.prospect_slug + ' · ' + DUO.duration_minutes + ' min'));
+      const btn = el('button', 'accept-btn', 'Accept the duo');
+      btn.onclick = async () => {
+        try {
+          await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/duos/${encodeURIComponent(DUO_ID)}/accept`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({rep: REP}),
+          });
+          toast('Accepted — game on');
+          loadDuo();
+        } catch(e){ toast(e.message, true); }
+      };
+      b.appendChild(btn);
+    } else {
+      b.appendChild(document.createTextNode('Waiting on'));
+      b.appendChild(el('div', 'opp', DUO.opponent));
+      b.appendChild(document.createTextNode('to accept your challenge'));
+    }
+    root.appendChild(b);
+    return;
+  }
+
+  // Role badge
+  root.appendChild(el('div', 'role-badge ' + MY_ROLE, 'You are the ' + (MY_ROLE||'observer').toUpperCase()));
+
+  // Transcript
+  const t = el('div', 'transcript');
+  for(const m of (DUO.transcript || [])){
+    const wrap = el('div', 'msg ' + (m.rep === REP ? 'mine' : 'them ' + (m.role||'') + '-msg'));
+    wrap.appendChild(el('div', 'who' + (m.rep === REP ? '' : ' ' + m.role), m.rep + ' · ' + (m.role||'')));
+    wrap.appendChild(el('div', 'bubble', m.text));
+    wrap.appendChild(el('div', 'ts', fmtTime(m.ts)));
+    t.appendChild(wrap);
+  }
+  root.appendChild(t);
+  setTimeout(() => t.scrollTop = t.scrollHeight, 30);
+
+  // Compose
+  if(DUO.status === 'active'){
+    const c = el('div', 'compose');
+    const ta = el('textarea');
+    ta.placeholder = MY_ROLE === 'seller'
+      ? "Open the call. Be direct. Don't pitch the product, book the meeting."
+      : "Stay in character. Push back, ask questions, see if they earn it.";
+    ta.rows = 2;
+    ta.onkeydown = (e) => {
+      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); btn.click(); }
+    };
+    const btn = el('button', null, 'Send');
+    btn.onclick = async () => {
+      const text = ta.value.trim();
+      if(!text) return;
+      btn.disabled = true;
+      try {
+        await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/duos/${encodeURIComponent(DUO_ID)}/msg`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({rep: REP, text}),
+        });
+        ta.value = '';
+        loadDuo();
+      } catch(e){ toast(e.message, true); }
+      btn.disabled = false;
+      ta.focus();
+    };
+    c.appendChild(ta); c.appendChild(btn);
+    root.appendChild(c);
+    setTimeout(() => ta.focus(), 100);
+  }
+
+  // Scorecard at end
+  if(DUO.status === 'ended' && DUO.scorecard){
+    const s = DUO.scorecard;
+    const sc = el('div', 'scorecard');
+    sc.appendChild(el('h3', null, '⚔ Scorecard'));
+    const grid = el('div', 'sc-grid');
+    const stat = (label, val, kls) => {
+      const w = el('div', 'sc-stat'); w.appendChild(el('div','l',label));
+      w.appendChild(el('div','v ' + (kls||''), String(val))); return w;
+    };
+    grid.appendChild(stat('Score', s.seller_score + '/120', s.seller_score >= 60 ? 'good' : ''));
+    grid.appendChild(stat('Hot buttons', s.hot_buttons_landed, s.hot_buttons_landed >= 2 ? 'good' : ''));
+    grid.appendChild(stat('Objections handled', s.objections_addressed, s.objections_addressed >= 1 ? 'good' : ''));
+    grid.appendChild(stat('Red flags said', s.red_flags_said, s.red_flags_said === 0 ? 'good' : 'bad'));
+    grid.appendChild(stat('Asked next step', s.asked_for_next_step ? 'Yes' : 'No', s.asked_for_next_step ? 'good' : 'bad'));
+    sc.appendChild(grid);
+    const ag = el('div', 'sub'); ag.style.fontFamily='var(--mono)'; ag.style.fontSize='11px'; ag.style.color='var(--muted)';
+    ag.textContent = (s.seller_score >= 80 ? '🔥 That was a clinic.' :
+                       s.seller_score >= 60 ? '✓ Solid. Could push harder on the next-step ask.' :
+                       s.seller_score >= 40 ? 'Mid. Land more hot buttons and ask for the meeting clearly.' :
+                                              'Run it back. Watch for the buyer\'s hot buttons and use their words.');
+    sc.appendChild(ag);
+    root.appendChild(sc);
+  }
+}
+
+async function loadDuo(){
+  try {
+    DUO = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/duos/${encodeURIComponent(DUO_ID)}`);
+    MY_ROLE = null;
+    for(const [r, owner] of Object.entries(DUO.roles || {})){
+      if(owner === REP) MY_ROLE = r;
+    }
+    paintTimer();
+    paintTranscript();
+    if(!CARD){
+      try { CARD = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/cards/${encodeURIComponent(DUO.prospect_slug)}`); }
+      catch(_){}
+      paintCard();
+    }
+  } catch(e){
+    $('chat-panel').textContent = 'Failed: ' + e.message;
+  }
+}
+
+$('end-btn').onclick = async () => {
+  if(!DUO || DUO.status !== 'active') return;
+  if(!confirm('End the duo now? You\'ll get the scorecard.')) return;
+  try {
+    await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/duos/${encodeURIComponent(DUO_ID)}/end`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: REP}),
+    });
+    loadDuo();
+  } catch(e){ toast(e.message, true); }
+};
+
+// ── SSE: react to opponent messages immediately ──
+let sse = null;
+function connectSSE(){
+  try {
+    sse = new EventSource(`/api/b/${encodeURIComponent(BULLPEN)}/stream`);
+    sse.onmessage = (msg) => {
+      try {
+        const e = JSON.parse(msg.data);
+        // Only refresh on events that affect THIS duo
+        if(e.target_id === DUO_ID || (e.kind === 'duo_accepted' && e.target_id === DUO_ID)){
+          loadDuo();
+        }
+      } catch(_){}
+    };
+    sse.onerror = () => { try{sse.close()}catch(_){} setTimeout(connectSSE, 3000); };
+  } catch(_){ setTimeout(connectSSE, 3000); }
+}
+
+// ── Presence heartbeat ──
+function beat(){
+  fetch(`/api/b/${encodeURIComponent(BULLPEN)}/presence/beat`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({rep: REP, page: 'duo', status: 'in a duo'}),
+  }).catch(()=>{});
+}
+beat(); setInterval(beat, 20000);
+
+if(!DUO_ID){
+  $('chat-panel').textContent = 'Missing duo id. Open this from the lobby.';
+} else {
+  loadDuo();
+  connectSSE();
+}
+</script>
+
+</body>
+</html>

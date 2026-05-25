@@ -246,7 +246,14 @@
 <body>
 
 <header>
-  <div class="brand">KillSesh <span class="accent">·</span> Sales Floor</div>
+  <div class="brand">
+    <span id="bullpen-switcher" class="bp-chip" title="Switch bullpen">
+      <span id="bp-current">KillSesh</span>
+      <span class="bp-caret">▾</span>
+    </span>
+    <span class="accent">·</span> Sales Floor
+  </div>
+  <div class="bp-menu" id="bp-menu"></div>
   <div class="meta">
     <span>2026-05-22 · 24 prospects</span>
     <span class="legend end"><span class="dot"></span>End Customer</span>
@@ -261,6 +268,25 @@
 </header>
 
 <style>
+  /* Bullpen switcher chip */
+  .bp-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;margin-right:6px;
+    background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);border-radius:4px;
+    color:var(--accent-2);font-family:var(--mono);font-size:11px;letter-spacing:.10em;
+    text-transform:uppercase;cursor:pointer;transition:background .12s}
+  .bp-chip:hover{background:rgba(52,211,153,0.18)}
+  .bp-chip .bp-caret{font-size:9px;opacity:.6}
+  .bp-menu{display:none;position:absolute;top:54px;left:18px;z-index:40;
+    background:rgba(20,14,7,0.98);border:1px solid rgba(52,211,153,0.30);border-radius:5px;
+    padding:6px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
+  .bp-menu.open{display:block}
+  .bp-menu .item{display:block;padding:8px 11px;color:var(--text);text-decoration:none;
+    border-radius:3px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;cursor:pointer;
+    transition:background .12s}
+  .bp-menu .item:hover{background:rgba(52,211,153,0.12)}
+  .bp-menu .item.current{background:rgba(52,211,153,0.18);color:var(--accent-2)}
+  .bp-menu .new{border-top:1px solid rgba(245,232,216,0.08);margin-top:4px;padding-top:8px;
+    color:var(--gold)}
+
   .rep-picker{display:inline-flex; align-items:center; gap:8px; padding:3px 10px;
     border:1px solid rgba(245,232,216,0.12); border-radius:3px; background:rgba(8,5,3,0.40)}
   .rep-picker .rep-label{font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
@@ -722,6 +748,7 @@
     navRow.style.cssText = "display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px";
     const pages = [
       ["🎮 Arena",       "/app/arena.html"],
+      ["🎯 Practice 1v1","/app/lobby.html"],
       ["📈 Deals",       "/app/deals.html"],
       ["💰 Forecast",    "/app/forecast.html"],
       ["⚔ Rep card",     "/app/profile.html"],
@@ -4009,6 +4036,44 @@ window.refreshClaims = refreshClaims;
   const BP = (new URLSearchParams(location.search)).get('b') || 'killsesh';
   const RP = (new URLSearchParams(location.search)).get('rep') ||
              localStorage.getItem('bullpen-rep') || (typeof REP !== 'undefined' ? REP : 'beers');
+
+  // ── Bullpen switcher ──
+  document.getElementById('bp-current').textContent = BP;
+  const chip = document.getElementById('bullpen-switcher');
+  const menu = document.getElementById('bp-menu');
+  chip.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    menu.classList.toggle('open');
+    if(menu.classList.contains('open') && !menu.dataset.loaded){
+      try {
+        const r = await fetch('/api/bullpens').then(r => r.json());
+        menu.innerHTML = '';
+        const list = r.bullpens || [{slug: 'killsesh', name: 'KillSesh'}];
+        for(const b of list){
+          const a = document.createElement('a');
+          a.className = 'item' + (b.slug === BP ? ' current' : '');
+          a.href = '?b=' + encodeURIComponent(b.slug);
+          a.textContent = (b.name || b.slug) + (b.slug === BP ? '   ✓' : '');
+          menu.appendChild(a);
+        }
+        const newItem = document.createElement('a');
+        newItem.className = 'item new';
+        newItem.textContent = '+ Start a new bullpen';
+        newItem.onclick = (ev) => {
+          ev.preventDefault();
+          const slug = prompt('New bullpen slug (lowercase, hyphens):');
+          if(!slug) return;
+          fetch('/api/bullpens', {method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({slug: slug.trim(), founder_rep: RP, name: slug.trim()})})
+            .then(r => r.json())
+            .then(d => { if(d.error) alert(d.error); else location.search = '?b=' + encodeURIComponent(d.slug); });
+        };
+        menu.appendChild(newItem);
+        menu.dataset.loaded = '1';
+      } catch(_){}
+    }
+  });
+  document.addEventListener('click', () => menu.classList.remove('open'));
 
   // Presence heartbeat — every 20s while the floor is open
   function beat(){
