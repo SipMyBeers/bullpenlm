@@ -146,7 +146,7 @@ We just shipped the **marketing pivot** and Discord scaffolding.
 **Status of the Discord side:**
 - Beers Bot (client `1500260089880117349`) is now in **6 guilds**
   including the new **Bullpen LM master server** (`1508278033000304700`,
-  invite `https://discord.gg/jjJrrM2sth`).
+  invite `https://discord.gg/pXV4pPA5d5`).
 - The MCP config at `~/.claude.json` was just updated:
   `DISCORD_GUILD_ID` flipped from `1489402067922583642` (Gormers) to
   `1508278033000304700` (Bullpen LM). Backup at

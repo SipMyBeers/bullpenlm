@@ -1,7 +1,7 @@
 # BullpenLM master Discord — channel setup
 
 This is the **master BullpenLM server** (Guild ID `1508278033000304700`,
-invite `https://discord.gg/jjJrrM2sth`). It hosts every bullpen — one
+invite `https://discord.gg/pXV4pPA5d5`). It hosts every bullpen — one
 server, many bullpens. Each bullpen gets its own category cluster as
 they launch. KillSesh is the first.
 
