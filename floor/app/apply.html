@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Apply · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh}
+
+.wrap{max-width:680px;margin:0 auto;padding:40px 28px}
+
+.brand{font-family:var(--display);font-size:28px;text-transform:uppercase;letter-spacing:-.02em;display:inline-flex;align-items:baseline;text-decoration:none;margin-bottom:24px}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+
+.hero{padding:28px 30px;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(52,211,153,0.06));border:1px solid rgba(251,191,36,0.30);border-radius:14px;margin-bottom:24px}
+.hero .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-size:44px;color:var(--text);margin:0 0 6px;letter-spacing:-.02em;text-transform:uppercase;line-height:1.05}
+.hero .sub{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--muted);margin:0;max-width:55ch;line-height:1.5}
+
+.form{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:30px 32px}
+.field{margin-bottom:18px}
+.field label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.field input, .field textarea, .field select{width:100%;padding:12px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:16px;outline:none;transition:border-color .12s}
+.field textarea{font-family:var(--serif);min-height:120px;resize:vertical;line-height:1.55}
+.field select{font-family:var(--mono);font-size:13px}
+.field input:focus, .field textarea:focus, .field select:focus{border-color:var(--accent)}
+.field .hint{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:5px;letter-spacing:.04em}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.row2{grid-template-columns:1fr}}
+
+.submit{width:100%;padding:14px;background:var(--accent);color:#0a1a14;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:transform .12s;margin-top:10px}
+.submit:hover{transform:translateY(-1px)}
+.submit:disabled{background:rgba(168,154,135,0.20);color:var(--muted);cursor:not-allowed;transform:none}
+
+.thanks{padding:36px 28px;background:linear-gradient(135deg,rgba(52,211,153,0.10),rgba(42,29,16,0.55));border:1px solid rgba(52,211,153,0.30);border-radius:14px;text-align:center}
+.thanks .check{font-size:56px;line-height:1;margin-bottom:10px}
+.thanks h2{font-family:var(--display);font-size:36px;color:var(--accent);margin:0 0 12px;text-transform:uppercase;letter-spacing:-.02em;line-height:1}
+.thanks p{font-family:var(--serif);font-size:15px;color:#e5d8c4;margin:0 auto 18px;max-width:48ch;line-height:1.6}
+.thanks .discord-btn{display:inline-block;margin-top:10px;padding:14px 28px;background:#5865F2;color:#fff;border-radius:8px;text-decoration:none;font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;transition:transform .12s}
+.thanks .discord-btn:hover{transform:translateY(-1px)}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+
+  <section class="hero">
+    <div class="tag">Membership application · <span id="bp-name">KillSesh</span></div>
+    <h1 id="hero-h">Get in the bullpen</h1>
+    <p class="sub">90 seconds. The founder reads every one. If you're a fit, you get an invite code + a Discord welcome inside 48 hours.</p>
+  </section>
+
+  <section id="root">
+    <div class="form" id="form-host"></div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b') || 'killsesh';
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' error':''); setTimeout(()=>t.className='toast'+(err?' error':''),2600); }
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if(!r.ok){ let m=r.statusText; try{m=(await r.json()).error||m;}catch(_){} throw new Error(m); }
+  return r.json();
+}
+function $(id){ return document.getElementById(id); }
+
+let PUB = null;
+
+async function loadPub(){
+  try {
+    PUB = await fetchJSON('/api/b/' + encodeURIComponent(BULLPEN) + '/public');
+    $('bp-name').textContent = PUB.name || PUB.slug || BULLPEN;
+    if(PUB.tagline) {
+      $('hero-h').textContent = "Get in the bullpen";
+    }
+  } catch(_){}
+}
+
+function renderForm(){
+  const f = $('form-host'); clear(f);
+
+  const fields = [
+    ['name', 'Your name', 'text', 'First + last', null, true],
+    ['email', 'Email', 'email', 'name@somewhere.com', null, true],
+    ['discord_handle', 'Discord handle (optional)', 'text', 'e.g. mikecallcraft#1234', null, false],
+  ];
+  for(const [id, lbl, type, ph, hint, required] of fields){
+    const w = el('div', 'field');
+    w.appendChild(el('label', null, lbl));
+    const inp = document.createElement('input');
+    inp.id = 'f-' + id; inp.type = type; inp.placeholder = ph;
+    if(required) inp.required = true;
+    w.appendChild(inp);
+    if(hint) w.appendChild(el('div', 'hint', hint));
+    f.appendChild(w);
+  }
+
+  // Sales experience
+  const se = el('div', 'field');
+  se.appendChild(el('label', null, 'Sales experience'));
+  const sel = document.createElement('select'); sel.id = 'f-sales';
+  for(const [v, l] of [
+    ['none', "None — I've never sold a thing (totally fine, this is how we start everyone)"],
+    ['some', "Some — I've sold something before but I'm rusty"],
+    ['pro',  "Pro — I've closed deals professionally and want a new game to play"],
+  ]){
+    const o = el('option', null, l); o.value = v; sel.appendChild(o);
+  }
+  se.appendChild(sel);
+  f.appendChild(se);
+
+  // Why
+  const why = el('div', 'field');
+  why.appendChild(el('label', null, "Why this bullpen? (2-3 sentences)"));
+  const ta = document.createElement('textarea'); ta.id = 'f-why';
+  ta.placeholder = "What pulled you in. What you want to learn. What you'll do with the money. Be honest — Beers reads every one.";
+  why.appendChild(ta);
+  why.appendChild(el('div', 'hint', 'Skip the bullshit. We work better with people who say what they actually want.'));
+  f.appendChild(why);
+
+  // Submit
+  const btn = el('button', 'submit', 'Submit application →');
+  btn.type = 'submit';
+  btn.onclick = submit;
+  f.appendChild(btn);
+}
+
+async function submit(){
+  const name = ($('f-name').value || '').trim();
+  const email = ($('f-email').value || '').trim();
+  const discord_handle = ($('f-discord_handle').value || '').trim();
+  const sales_experience = $('f-sales').value;
+  const why = ($('f-why').value || '').trim();
+
+  if(!name){ toast('Add your name', true); return; }
+  if(!email || !email.includes('@')){ toast('Add a real email', true); return; }
+  if(!why){ toast('Tell us why — even one sentence is fine', true); return; }
+
+  const btn = document.querySelector('.submit');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  try {
+    const r = await fetchJSON('/api/b/' + encodeURIComponent(BULLPEN) + '/apply', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, email, discord_handle, sales_experience, why})
+    });
+    renderThanks(r);
+  } catch(e){
+    toast(e.message, true);
+    btn.disabled = false;
+    btn.textContent = 'Submit application →';
+  }
+}
+
+function renderThanks(r){
+  const root = $('root'); clear(root);
+  const t = el('div', 'thanks');
+  t.appendChild(el('div', 'check', '✓'));
+  t.appendChild(el('h2', null, "Application received"));
+  t.appendChild(el('p', null,
+    "Beers will read it and get back to you inside 48 hours. "
+    + "While you wait — jump in the Discord so you can see the floor live + meet the others."));
+  if(PUB?.discord_invite){
+    const link = document.createElement('a');
+    link.className = 'discord-btn';
+    link.href = PUB.discord_invite;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = '💬 Join the Discord';
+    t.appendChild(link);
+  }
+  root.appendChild(t);
+}
+
+(async () => {
+  await loadPub();
+  renderForm();
+})();
+</script>
+
+</body>
+</html>

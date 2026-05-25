@@ -149,6 +149,31 @@ def write_member(bullpen: str, rep: str, role: str = "rep") -> dict:
     return data
 
 
+def set_bullpen_config(bullpen: str, updates: dict) -> Optional[dict]:
+    """Patch the bullpen.json with founder-controlled settings.
+    Only allow-listed fields are writable."""
+    ALLOWED = {"name", "product", "public_url", "discord_invite",
+               "access_mode", "price_usd", "tagline", "brand"}
+    VALID_ACCESS = {"public", "invite_only", "paid"}
+    p = _bullpen_json(bullpen)
+    if not p.exists():
+        return None
+    try: cfg = json.loads(p.read_text())
+    except Exception: return None
+    for k, v in (updates or {}).items():
+        if k not in ALLOWED:
+            continue
+        if k == "access_mode" and v not in VALID_ACCESS:
+            continue
+        if k == "price_usd":
+            try: v = float(v)
+            except Exception: continue
+        cfg[k] = v
+    cfg["updated_at"] = datetime.datetime.now().isoformat(timespec="seconds")
+    p.write_text(json.dumps(cfg, indent=2) + "\n")
+    return cfg
+
+
 def set_profile(bullpen: str, rep: str, display_name: Optional[str] = None,
                 avatar: Optional[str] = None, title: Optional[str] = None) -> Optional[dict]:
     """Update the public-facing profile fields on a member record."""

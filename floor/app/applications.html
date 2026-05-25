@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Applications · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.55;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;padding:14px 28px;display:flex;align-items:center;gap:20px;background:rgba(26,18,8,0.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.01em;text-decoration:none;display:inline-flex;align-items:baseline}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}.crumb .sep{margin:0 8px;color:var(--dim)}.crumb .here{color:var(--accent)}
+
+.wrap{max-width:980px;margin:0 auto;padding:24px 28px}
+
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tabs button{padding:10px 18px;background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.10);border-radius:6px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;cursor:pointer}
+.tabs button:hover{color:var(--text)}
+.tabs button.active{background:rgba(251,191,36,0.10);color:var(--gold);border-color:rgba(251,191,36,0.30)}
+.tabs button .ct{margin-left:6px;color:var(--gold);font-family:var(--display);font-size:14px;line-height:1}
+.tabs button.active .ct{color:var(--accent-2)}
+
+.app-card{padding:20px 24px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:12px;margin-bottom:14px}
+.app-card.pending{border-color:rgba(251,191,36,0.35);background:linear-gradient(135deg,rgba(251,191,36,0.05),rgba(42,29,16,0.55))}
+.app-card.approved{border-color:rgba(52,211,153,0.30);background:rgba(52,211,153,0.04)}
+.app-card.rejected{border-color:rgba(245,232,216,0.06);opacity:.6}
+
+.app-hdr{display:grid;grid-template-columns:1fr auto;gap:12px;margin-bottom:12px}
+.app-hdr h3{font-family:var(--display);font-size:24px;color:var(--text);margin:0 0 4px;text-transform:uppercase;letter-spacing:-.01em;line-height:1.1}
+.app-hdr .meta{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.app-hdr .meta .k{color:var(--accent-2)}
+.app-hdr .status{padding:5px 11px;border-radius:999px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;align-self:center}
+.app-hdr .status.pending{background:var(--gold);color:#0a1a14}
+.app-hdr .status.approved{background:var(--accent);color:#0a1a14}
+.app-hdr .status.rejected{background:rgba(248,113,113,0.20);color:var(--danger)}
+
+.app-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin-bottom:14px;font-family:var(--mono);font-size:11.5px}
+.app-grid .l{color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.app-grid .v{color:var(--text)}
+.app-grid .v.exp-pro{color:var(--gold)}
+.app-grid .v.exp-some{color:var(--accent-2)}
+.app-grid .v.exp-none{color:var(--purple)}
+
+.why-block{padding:14px 16px;background:rgba(0,0,0,0.25);border-left:3px solid var(--accent);border-radius:6px;font-family:var(--serif);font-size:14.5px;line-height:1.6;color:#e5d8c4;margin-bottom:14px;white-space:pre-wrap}
+
+.invite-row{padding:12px 14px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.30);border-radius:8px;display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:12px;color:var(--accent-2);margin-bottom:14px}
+.invite-row .code{flex:1;font-family:var(--mono);color:var(--text);font-weight:600;letter-spacing:.05em;background:rgba(0,0,0,0.30);padding:8px 12px;border-radius:5px}
+.invite-row button{padding:8px 14px;background:var(--accent);color:#0a1a14;border:none;border-radius:5px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+
+.rej-note{padding:10px 14px;background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.20);border-radius:6px;font-family:var(--mono);font-size:11.5px;color:#fda4a4;margin-bottom:14px}
+
+.actions{display:flex;gap:8px;justify-content:flex-end;padding-top:14px;border-top:1px solid rgba(245,232,216,0.08)}
+.actions button{padding:10px 18px;border:none;border-radius:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.actions .approve{background:var(--accent);color:#0a1a14}
+.actions .reject{background:transparent;color:var(--danger);border:1px solid rgba(248,113,113,0.30)}
+.actions .reject:hover{background:rgba(248,113,113,0.10)}
+
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:34px;letter-spacing:.06em;border:1px dashed rgba(245,232,216,0.08);border-radius:10px}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:rgba(248,113,113,0.95)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
+  <nav class="crumb">
+    <a href="/">Floor</a><span class="sep">/</span>
+    <span class="here">Applications</span>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div class="tabs">
+    <button data-view="pending" class="active">Pending <span class="ct" id="ct-pending">0</span></button>
+    <button data-view="approved">Approved <span class="ct" id="ct-approved">0</span></button>
+    <button data-view="rejected">Rejected <span class="ct" id="ct-rejected">0</span></button>
+    <button data-view="all">All <span class="ct" id="ct-all">0</span></button>
+  </div>
+  <div id="list"><div class="empty">Loading…</div></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const BULLPEN = params.get('b')   || 'killsesh';
+const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' error':''); setTimeout(()=>t.className='toast'+(err?' error':''),2600); }
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if(!r.ok){ let m=r.statusText; try{m=(await r.json()).error||m;}catch(_){} throw new Error(m); }
+  return r.json();
+}
+function $(id){ return document.getElementById(id); }
+function ago(iso){
+  if(!iso) return '';
+  const s = Math.floor((Date.now() - new Date(iso))/1000);
+  if(s < 60) return s + 's ago';
+  if(s < 3600) return Math.floor(s/60) + 'm ago';
+  if(s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+let VIEW = 'pending';
+
+function renderApp(a){
+  const card = el('div', 'app-card ' + a.status);
+  const hdr = el('div', 'app-hdr');
+  const info = el('div');
+  info.appendChild(el('h3', null, a.name));
+  const meta = el('div', 'meta');
+  meta.appendChild(document.createTextNode('submitted '));
+  meta.appendChild(el('span', 'k', ago(a.submitted_at)));
+  meta.appendChild(document.createTextNode(' · '));
+  meta.appendChild(el('span', 'k', a.email));
+  info.appendChild(meta);
+  hdr.appendChild(info);
+  hdr.appendChild(el('span', 'status ' + a.status, a.status));
+  card.appendChild(hdr);
+
+  const grid = el('div', 'app-grid');
+  const addRow = (l, v, kls) => {
+    grid.appendChild(el('span', 'l', l));
+    grid.appendChild(el('span', 'v ' + (kls||''), v));
+  };
+  if(a.discord_handle) addRow('Discord', a.discord_handle);
+  addRow('Experience', a.sales_experience || 'none', 'exp-' + (a.sales_experience || 'none'));
+  if(a.referred_by) addRow('Referred by', a.referred_by);
+  if(a.rep_slug) addRow('Rep slug', a.rep_slug);
+  card.appendChild(grid);
+
+  if(a.why) card.appendChild(el('div', 'why-block', a.why));
+
+  if(a.status === 'approved' && a.invite_code){
+    const ir = el('div', 'invite-row');
+    ir.appendChild(document.createTextNode('Invite URL ready:'));
+    const code = el('div', 'code', location.origin + '/join.html?code=' + a.invite_code);
+    ir.appendChild(code);
+    const cp = el('button', null, '📋 Copy');
+    cp.onclick = async () => {
+      const url = location.origin + '/join.html?code=' + a.invite_code;
+      try { await navigator.clipboard.writeText(url); toast('Copied — DM it to ' + a.name); }
+      catch(e){ toast('Clipboard blocked: ' + e.message, true); }
+    };
+    ir.appendChild(cp);
+    card.appendChild(ir);
+  }
+
+  if(a.status === 'rejected' && a.rejection_reason){
+    card.appendChild(el('div', 'rej-note', '✗ ' + a.rejection_reason));
+  }
+
+  if(a.status === 'pending'){
+    const actions = el('div', 'actions');
+    const rej = el('button', 'reject', '✗ Reject');
+    rej.onclick = async () => {
+      const reason = prompt('Optional note for them (or leave blank):');
+      if(reason === null) return;
+      try {
+        await fetchJSON('/api/b/' + encodeURIComponent(BULLPEN) + '/applications/' + encodeURIComponent(a.id) + '/reject', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({rep: REP, reason})
+        });
+        toast('Rejected'); loadView(); loadCounts();
+      } catch(e){ toast(e.message, true); }
+    };
+    actions.appendChild(rej);
+    const app = el('button', 'approve', '✓ Approve + generate invite');
+    app.onclick = async () => {
+      try {
+        const r = await fetchJSON('/api/b/' + encodeURIComponent(BULLPEN) + '/applications/' + encodeURIComponent(a.id) + '/approve', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({rep: REP})
+        });
+        toast('Approved — invite code: ' + r.invite_code);
+        loadView(); loadCounts();
+      } catch(e){ toast(e.message, true); }
+    };
+    actions.appendChild(app);
+    card.appendChild(actions);
+  }
+
+  return card;
+}
+
+async function loadView(){
+  const root = $('list'); clear(root);
+  root.appendChild(el('div', 'empty', 'Loading…'));
+  try {
+    const url = '/api/b/' + encodeURIComponent(BULLPEN) + '/applications'
+                + (VIEW !== 'all' ? '?status=' + VIEW : '');
+    const r = await fetchJSON(url);
+    const apps = r.applications || [];
+    clear(root);
+    if(!apps.length){
+      const msg = VIEW === 'pending'  ? 'No pending applications right now.'
+                : VIEW === 'approved' ? 'No approved applications yet.'
+                : VIEW === 'rejected' ? 'No rejected applications.'
+                :                       'No applications submitted yet.';
+      root.appendChild(el('div', 'empty', msg));
+    } else {
+      for(const a of apps) root.appendChild(renderApp(a));
+    }
+  } catch(e){
+    clear(root); root.appendChild(el('div', 'empty', 'Failed: ' + e.message));
+  }
+}
+
+async function loadCounts(){
+  try {
+    const r = await fetchJSON('/api/b/' + encodeURIComponent(BULLPEN) + '/applications');
+    const apps = r.applications || [];
+    $('ct-pending').textContent = apps.filter(a => a.status === 'pending').length;
+    $('ct-approved').textContent = apps.filter(a => a.status === 'approved').length;
+    $('ct-rejected').textContent = apps.filter(a => a.status === 'rejected').length;
+    $('ct-all').textContent = apps.length;
+  } catch(_){}
+}
+
+for(const btn of document.querySelectorAll('.tabs button[data-view]')){
+  btn.onclick = () => {
+    VIEW = btn.dataset.view;
+    for(const x of document.querySelectorAll('.tabs button[data-view]')) x.classList.remove('active');
+    btn.classList.add('active');
+    loadView();
+  };
+}
+
+(function(){
+  function beat(){
+    fetch('/api/b/' + encodeURIComponent(BULLPEN) + '/presence/beat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({rep: REP, page: 'applications', status: 'reviewing applications'}),
+    }).catch(()=>{});
+  }
+  beat(); setInterval(beat, 20000);
+})();
+
+loadView(); loadCounts();
+setInterval(loadView, 15000);
+setInterval(loadCounts, 12000);
+</script>
+
+</body>
+</html>

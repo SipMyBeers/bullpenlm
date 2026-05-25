@@ -1479,6 +1479,13 @@ _PUBLIC_PATHS = {
     "/api/health",             # for cloudflared liveness checks
 }
 
+# Regex patterns matched in addition to _PUBLIC_PATHS (for routes with
+# variable bullpen slugs that should be reachable without auth).
+_PUBLIC_PATH_PATTERNS = [
+    re.compile(r"^/api/b/[a-z0-9\-]+/apply$"),         # POST a membership application
+    re.compile(r"^/api/b/[a-z0-9\-]+/public(?:$|\?)"),  # GET public-facing bullpen info
+]
+
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
@@ -1522,6 +1529,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         path_only = urlparse(self.path).path
         if path_only in _PUBLIC_PATHS:
             return True
+        for pat in _PUBLIC_PATH_PATTERNS:
+            if pat.match(path_only):
+                return True
         # Localhost bypass — host machine never needs auth
         if _is_localhost(self.client_address):
             return True
@@ -2105,6 +2115,54 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Public bullpen-facing info (for landing page, no auth) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/public(?:$|\?)", self.path)
+        if m:
+            try:
+                from bullpens import get_bullpen
+                cfg = get_bullpen(m.group(1)) or {}
+                # Only expose the public-safe subset
+                pub = {
+                    "slug": cfg.get("slug"),
+                    "name": cfg.get("name"),
+                    "product": cfg.get("product"),
+                    "tagline": cfg.get("tagline"),
+                    "founder_rep": cfg.get("founder_rep"),
+                    "discord_invite": cfg.get("discord_invite"),
+                    "access_mode": cfg.get("access_mode") or "invite_only",
+                    "price_usd": cfg.get("price_usd"),
+                    "public_url": cfg.get("public_url"),
+                }
+                self._send_json(200, pub)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Applications ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/applications(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from applications import list_all
+                qs = parse_qs(urlparse(self.path).query)
+                status = (qs.get("status") or [None])[0]
+                self._send_json(200, {"applications": list_all(m.group(1), status=status)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/applications/([a-zA-Z0-9_\-\.]+)(?:$|\?)", self.path)
+        if m:
+            try:
+                from applications import get as app_get
+                r = app_get(m.group(1), m.group(2))
+                if not r:
+                    self._send_json(404, {"error": "application_not_found"}); return
+                self._send_json(200, r)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Onboarding state ──
         m = re.match(r"^/api/b/([a-z0-9\-]+)/onboarding/([a-z0-9_\-\.]+)(?:$|\?)", self.path)
         if m:
@@ -2540,6 +2598,71 @@ class Handler(http.server.BaseHTTPRequestHandler):
                              target_type="member", target_id=rep,
                              payload={"class": class_id})
                 self._send_json(200, {"ok": True, "member": member})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Bullpen config patch (founder-only via localhost or auth) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/config$", self.path)
+        if m:
+            try:
+                from bullpens import set_bullpen_config
+                req2 = json.loads(raw) if raw else {}
+                cfg = set_bullpen_config(m.group(1), req2)
+                if cfg is None:
+                    self._send_json(404, {"error": "bullpen_not_found"}); return
+                self._send_json(200, cfg)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Membership application — PUBLIC (no auth) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/apply$", self.path)
+        if m:
+            try:
+                from applications import submit
+                from bullpens import get_bullpen
+                req2 = json.loads(raw) if raw else {}
+                # Don't accept applications when the bullpen is public/paid w/o gates
+                cfg = get_bullpen(m.group(1)) or {}
+                if cfg.get("access_mode") == "public":
+                    self._send_json(400, {"error": "public_bullpen_no_application_needed"}); return
+                rec = submit(
+                    m.group(1),
+                    name=req2.get("name") or "",
+                    email=req2.get("email") or "",
+                    discord_handle=req2.get("discord_handle") or "",
+                    sales_experience=req2.get("sales_experience") or "",
+                    why=req2.get("why") or "",
+                    referred_by=req2.get("referred_by") or "",
+                )
+                # Expose only the safe subset back to the public submitter
+                self._send_json(200, {"ok": True, "id": rec["id"],
+                                      "status": rec["status"],
+                                      "discord_invite": cfg.get("discord_invite")})
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Applications: approve / reject (founder) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/applications/([a-zA-Z0-9_\-\.]+)/(approve|reject)$", self.path)
+        if m:
+            try:
+                from applications import approve as app_approve, reject as app_reject
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "self").strip()
+                bullpen, app_id, action = m.group(1), m.group(2), m.group(3)
+                if action == "approve":
+                    rec = app_approve(bullpen, app_id, founder=rep,
+                                      rep_slug=req2.get("rep_slug"))
+                else:
+                    rec = app_reject(bullpen, app_id, founder=rep,
+                                     reason=req2.get("reason") or "")
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
