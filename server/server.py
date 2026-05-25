@@ -2834,6 +2834,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     except Exception:
                         pass
 
+                # Fire the master #showcase auto-announce (no-op if the
+                # ~/.bullpenlm/showcase-webhook.txt isn't configured on this host).
+                try:
+                    from discord import announce_new_bullpen
+                    from tunnel import tunnel_status as _ts
+                    st = _ts()
+                    pub = st.get("url") if st.get("running") else None
+                    announce_new_bullpen(cfg, public_url=pub)
+                except Exception:
+                    pass
+
                 self._send_json(200, {
                     "ok": True,
                     "slug": slug,

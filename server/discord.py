@@ -17,11 +17,18 @@ by Discord latency.
 """
 from __future__ import annotations
 import json
+import ssl
 import threading
 import urllib.request
 import urllib.error
 from pathlib import Path
 from typing import Optional
+
+try:
+    import certifi
+    _SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+except Exception:
+    _SSL_CTX = ssl.create_default_context()
 
 REPO = Path(__file__).parent.parent
 BULLPENS_ROOT = REPO / "bullpens"
@@ -39,10 +46,12 @@ def _webhook_for(bullpen: str) -> Optional[str]:
 
 def _post(url: str, payload: dict) -> None:
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data,
-                                 headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(url, data=data, headers={
+        "Content-Type": "application/json",
+        "User-Agent": "BullpenLM (https://bullpenlm.com, 0.1)",
+    })
     try:
-        with urllib.request.urlopen(req, timeout=5) as _:
+        with urllib.request.urlopen(req, timeout=5, context=_SSL_CTX) as _:
             pass
     except urllib.error.HTTPError as e:
         if e.code not in (200, 204):
@@ -62,6 +71,69 @@ def _money(n) -> str:
 
 def _send(url: str, content: str) -> None:
     _post_async(url, {"username": BOT_NAME, "content": content})
+
+
+SHOWCASE_WEBHOOK_PATH = Path.home() / ".bullpenlm" / "showcase-webhook.txt"
+
+
+def _showcase_webhook() -> Optional[str]:
+    """The master BullpenLM Discord #showcase webhook. Set per-host so the
+    secret URL doesn't leak in the public repo."""
+    if not SHOWCASE_WEBHOOK_PATH.exists():
+        return None
+    try:
+        return SHOWCASE_WEBHOOK_PATH.read_text().strip() or None
+    except Exception:
+        return None
+
+
+def announce_new_bullpen(bullpen_cfg: dict, public_url: Optional[str] = None) -> None:
+    """Auto-post to the master #showcase when a new bullpen is created via
+    the wizard. No-op if the per-host webhook isn't configured. Follows
+    the BEERS_BOT_SOUL voice + emoji palette."""
+    hook = _showcase_webhook()
+    if not hook:
+        return
+    cfg = bullpen_cfg or {}
+    slug = cfg.get("slug") or "?"
+    name = cfg.get("name") or slug
+    founder = cfg.get("founder_display_name") or cfg.get("founder_rep") or "an operator"
+    product = cfg.get("product") or ""
+    commission = cfg.get("commission_rate") or ""
+    seats = cfg.get("seats_open")
+    access_mode = cfg.get("access_mode") or "invite_only"
+    price = cfg.get("price_usd")
+
+    access_line = {
+        "public": "**Access:** open floor — anyone joins",
+        "invite_only": "**Access:** invite-only — operator vets you",
+        "paid": f"**Access:** paid — ${price} to enter" if price else "**Access:** paid",
+    }.get(access_mode, "**Access:** invite-only")
+
+    lines = [
+        f"🚀 **{name.upper()}** is open.",
+        "",
+        f"**Operator:** {founder}",
+    ]
+    if product:
+        lines.append(f"**Selling:** {product}")
+    if commission:
+        lines.append(f"**Commission:** {commission}")
+    if seats:
+        lines.append(f"**Seats open:** {seats}")
+    lines.append(access_line)
+
+    if public_url:
+        lines.append("")
+        lines.append(f"**See the floor:** {public_url}/b/{slug}")
+
+    lines.append("")
+    lines.append("Closers — reply with your numbers if you want a seat. ✅")
+
+    _post_async(hook, {
+        "username": BOT_NAME,
+        "content": "\n".join(lines),
+    })
 
 
 def notify(bullpen: str, event: dict) -> None:
