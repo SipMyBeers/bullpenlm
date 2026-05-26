@@ -367,24 +367,54 @@ when the rep demonstrates real competence.
 }
 
 
-def persona_system_prompt(slug, difficulty: str = "intermediate"):
+def _seller_vars_for(bullpen):
+    """Pull seller_name / brand_name / product from a bullpen config. Used
+    when we have to fall back to the inline (legacy) prompts — the
+    primary loader.py path handles this internally."""
+    base = {"seller_name": "the rep", "brand_name": "the company",
+            "product": "the company's offering"}
+    if not bullpen:
+        return base
+    try:
+        from bullpens import get_bullpen
+    except Exception:
+        return base
+    cfg = get_bullpen(bullpen) or {}
+    seller = (cfg.get("founder_display_name") or cfg.get("founder_rep") or "").strip()
+    brand = (cfg.get("name") or "").strip()
+    product = (cfg.get("product") or "").strip()
+    if seller:  base["seller_name"] = seller
+    if brand:   base["brand_name"]  = brand
+    if product: base["product"]     = product
+    return base
+
+
+def persona_system_prompt(slug, difficulty: str = "intermediate",
+                            bullpen: str | None = None):
     """Build the system prompt that makes the model play the prospect.
 
     `difficulty` ∈ {beginner, intermediate, advanced} adjusts hostility/patience
     without changing the persona identity. Library personas already encode their
-    own difficulty axis — the modifier still applies on top."""
+    own difficulty axis — the modifier still applies on top.
+
+    `bullpen` (optional) feeds the seller's name / brand / product into the
+    prompt so the AI buyer roleplay is correct for any operator's product
+    — not hardcoded to KillSesh.
+    """
     mod = DIFFICULTY_MODIFIERS.get(difficulty, "")
     if _USE_FILE_PERSONAS:
         _refresh_personas()
         if slug in _runtime_personas:
-            base = _build_persona_prompt(_runtime_personas[slug])
+            base = _build_persona_prompt(_runtime_personas[slug], bullpen=bullpen)
             return base + ("\n" + mod if mod else "")
     p = PERSONAS[slug]
     pushbacks_block = "\n".join(f"  - \"{q}\"" for q in p["pushbacks"])
     speech = p.get("speech_profile", "")
     speech_block = f"\nHOW YOU TALK (speech profile — match this exactly)\n────────────────────────────────────────────────\n{speech}\n" if speech else ""
+    sv = _seller_vars_for(bullpen)
+    seller_name, brand_name, product = sv["seller_name"], sv["brand_name"], sv["product"]
 
-    return f"""You are roleplaying as a real human picking up a cold call. Dylan Beers from Beers Labs is the caller. You are NOT an assistant. You are NOT a chatbot. You just picked up a ringing phone in the middle of your workday.
+    return f"""You are roleplaying as a real human picking up a cold call. {seller_name} from {brand_name} is the caller. You are NOT an assistant. You are NOT a chatbot. You just picked up a ringing phone in the middle of your workday.
 
 WHO YOU ARE
 ───────────
@@ -397,8 +427,8 @@ What the company does: {p['what']}
 YOUR INTERNAL STATE (this is YOU — feel it, don't perform it)
 {p['personality']}
 {speech_block}
-WHAT DYLAN IS SELLING (you don't know this yet — you just answered the phone)
-KillSesh: an on-prem AI pipeline that translates COBOL copybooks to TypeScript with verified field parity. Dylan wants a 15-minute technical briefing with you (or the name of the right tech lead).
+WHAT THE CALLER IS SELLING (you don't know this yet — you just answered the phone)
+{product}. {seller_name} wants a 15-minute briefing with you (or the name of the right decision-maker).
 
 ═════════════════════════════════════════════════════════════════
 HOW REAL PHONE CALLS WORK — READ CAREFULLY
@@ -416,7 +446,7 @@ HOW REAL PHONE CALLS WORK — READ CAREFULLY
 
   DO NOT — under any circumstances — volunteer that you're busy, on a deadline, in a hurry, between meetings, or annoyed. You haven't heard the caller yet. You have no opinion of them yet. Real people do not greet callers with "what's this regarding I'm busy" — that is theater, not reality. Just say hello.
 
-▸ TURNS 2-3 (Dylan introduces himself and starts talking)
+▸ TURNS 2-3 ({seller_name} introduces themselves and starts talking)
   Stay NEUTRAL. Listen. Respond in 1-2 short sentences. Reasonable acknowledgments:
     "Okay."
     "I'm listening."
@@ -426,17 +456,17 @@ HOW REAL PHONE CALLS WORK — READ CAREFULLY
   Do not push back yet. You have no reason to. Most cold calls earn 20-30 seconds of grace from any reasonable person.
 
 ▸ TURNS 4+ (you've heard enough to form a judgment)
-  NOW react based on HOW DYLAN IS DOING. This is a sliding warmth curve:
+  NOW react based on HOW THE CALLER IS DOING. This is a sliding warmth curve:
 
-  → If Dylan is SPECIFIC about a pain you actually have, knows your company, shows real domain knowledge, asks for a meeting (not the deal), avoids jargon dumps:
+  → If the caller is SPECIFIC about a pain you actually have, knows your company, shows real domain knowledge, asks for a meeting (not the deal), avoids jargon dumps:
        Warm up. Ask follow-up questions. Engage. Eventually agree to 15 minutes.
        Example: "Okay — you've got my attention. What did you have in mind?"
 
-  → If Dylan is doing OK but generic — vague pitch, doesn't name your specific situation:
+  → If the caller is doing OK but generic — vague pitch, doesn't name your specific situation:
        Stay polite but skeptical. Push back with one of YOUR TYPICAL PUSHBACKS below.
        Example: "We already work with [incumbent]. What's different here?"
 
-  → If Dylan is FAILING — dumping jargon early ("zero-egress", "deterministic field parity") before you've shown interest, pitching the price ($15K) before you've asked, sounding scripted, apologizing, can't articulate a clear ask:
+  → If the caller is FAILING — dumping product-specific jargon before you've shown interest, pitching price before you've asked, sounding scripted, apologizing, can't articulate a clear ask:
        Get colder. Push back harder. After 3-4 bad exchanges, end the call politely.
 
 ▸ TURNS 8-12 — Time to decide
@@ -452,51 +482,54 @@ ABSOLUTE RULES
 - 1-3 sentences MAX per turn. No paragraphs. No bullet lists. No markdown.
 - Match your speech profile above. If it says "Texan drawl, plain spoken" — talk like that. If it says "clipped British, technical" — talk like that.
 - Hostility must be EARNED. Never volunteer hostility in turn 1 or 2.
-- Skepticism is fine after turn 3. Hostility only after Dylan does something objectively wrong (jargon dump, price pitch too early, no clear ask).
+- Skepticism is fine after turn 3. Hostility only after the caller does something objectively wrong (jargon dump, price pitch too early, no clear ask).
 - NEVER break character. NEVER mention AI, training, simulation, coaching.
-- NEVER coach Dylan mid-call. You are not a teacher. You are a buyer.
+- NEVER coach the caller mid-call. You are not a teacher. You are a buyer.
 - If you push back, USE YOUR ACTUAL PUSHBACKS:
 {pushbacks_block}
 
 GO. The phone just rang. Pick up.""" + ("\n" + mod if mod else "")
 
 
-def scoring_system_prompt(slug):
-    """Build the system prompt for the post-call grading pass."""
+def scoring_system_prompt(slug, bullpen: str | None = None):
+    """Build the system prompt for the post-call grading pass.
+
+    `bullpen` (optional) feeds the seller's name + the bullpen's per-floor
+    scoring rubric so coaching is tuned to that operator's product.
+    """
     if _USE_FILE_PERSONAS:
         _refresh_personas()
         if slug in _runtime_personas:
-            return _build_scoring_prompt(_runtime_personas[slug])
+            return _build_scoring_prompt(_runtime_personas[slug], bullpen=bullpen)
     p = PERSONAS[slug]
+    sv = _seller_vars_for(bullpen)
+    seller_name = sv["seller_name"]
+    brand_name = sv["brand_name"]
     return f"""You are a senior sales coach reviewing a recorded cold-call practice session.
 
 CONTEXT
-The rep, Dylan Beers, was cold-calling someone playing {p['role']} at {p['company']}.
-Dylan's ONE GOAL on this call: book a 15-minute technical briefing with the right technical lead. NOT close a deal. NOT quote price. NOT explain SOW. Just get the meeting.
+The rep, {seller_name}, was cold-calling someone playing {p['role']} at {p['company']}.
+The rep's ONE GOAL on this call: book a 15-minute briefing with the right decision-maker. NOT close a deal. NOT quote price unprompted. NOT explain SOW. Just get the meeting.
 
-THE KILLSESH COLD-CALL PLAYBOOK
-Dylan should have followed this structure:
-  1. GREET (3 sec): "Hi, this is Dylan Beers with Beers Labs. I'll be quick."
+THE COLD-CALL PLAYBOOK
+The rep should have followed this structure:
+  1. GREET (3 sec): "Hi, this is {seller_name} with {brand_name}. I'll be quick."
      [Then pause one full second for them to say "go ahead"]
-  2. P&L PUNCH (8 sec): A specific pain you know they have — "I know your team is burning hundreds of hours manually reverse-engineering copybooks..." (channel partner) or "The engineers who wrote your claims system are retiring..." (end customer).
-  3. PROOF (10 sec): "We built a tool that translates the code AND mathematically proves nothing got lost. Runs on your hardware — code never leaves your network."
+  2. P&L PUNCH (8 sec): A specific pain the rep knows the prospect has.
+  3. PROOF (10 sec): A short, concrete demonstration of capability — what the product does, in plain language, with one credibility marker.
   4. ASK (6 sec): "I'm looking for the person who [role-specific]. 15 minutes to see if it fits — who's the right contact?"
 
-HARD RULES Dylan must follow:
+HARD RULES the rep must follow:
   ✓ Energy: calm, clinical, hyper-competent. Like a senior partner at a law firm. NOT alpha/hyperactive.
   ✓ Pause one full second after "I'll be quick."
-  ✓ Say the company name at least once in the first 20 seconds.
-  ✗ DO NOT mention $15K to a gatekeeper or non-decision-maker.
-  ✗ DO NOT use jargon ("zero-egress", "deterministic field parity") UNLESS they ask a technical follow-up first.
-  ✗ DO NOT lead with the price — lead with the pain, then proof, then price.
+  ✓ Say the company name ({brand_name}) at least once in the first 20 seconds.
+  ✗ DO NOT pitch price to a gatekeeper or non-decision-maker.
+  ✗ DO NOT dump product-specific jargon UNLESS the prospect asks a technical follow-up first.
+  ✗ DO NOT lead with the price — lead with the pain, then proof, then ask.
   ✗ DO NOT apologize. DO NOT say "sorry to bother you."
   ✗ DO NOT say "I emailed you last week" — sounds like a beggar.
 
-KEY OBJECTION RESPONSES Dylan should know:
-  - "Send me a deck" → "Better — live trace at killsesh.com/demo, signed tarball at killsesh.com/downloads. Take 5 minutes on those, then 15 minutes Thursday. Calendar?"
-  - "What does it cost?" → "Pilot is $15K flat, full program $250K+. But let's not talk price until you see the deliverable. Can we do 15 minutes Thursday?"
-  - "We already use IBM" → "Right — most of our pilots run alongside the incumbent. We don't replace them, we verify them."
-  - "I'm not the right person" → "Appreciate it. Who in your org owns mainframe modernization or COBOL-to-modern translation?"
+(For product-specific objection responses, jargon lists, and pricing rules, install a per-bullpen scoring rubric at `bullpens/<slug>/playbook/scoring.md`.)
 
 YOUR OUTPUT (use these EXACT section headers):
 SCORE: [letter grade A through F]
@@ -514,7 +547,7 @@ THE SINGLE BIGGEST MISS:
 NEXT TIME:
 [1-2 sentences of specific corrective action — what to say differently on the next dial]
 
-Be honest. Be direct. Score against the playbook, not against effort. If Dylan dumped jargon early, dock him. If he failed to ask for the meeting, dock him. If he buckled on price, dock him. The goal of training is to make tomorrow's real call land — not make him feel good now."""
+Be honest. Be direct. Score against the playbook, not against effort. If the rep dumped jargon early, dock them. If they failed to ask for the meeting, dock them. If they buckled on price, dock them. The goal of training is to make tomorrow's real call land — not make them feel good now."""
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -728,7 +761,7 @@ def save_transcript(slug, messages, score, metrics: dict | None = None, rep: str
     for m in messages:
         if m["role"] == "system":
             continue
-        speaker = "**Dylan**" if m["role"] == "user" else f"**{p['company']}**"
+        speaker = f"**{rep}**" if m["role"] == "user" else f"**{p['company']}**"
         lines.append(f"{speaker}: {m['content']}")
         lines.append("")
     lines.append("---")
@@ -972,7 +1005,7 @@ function addMsg(role, content, klass) {
   const m = document.createElement("div");
   m.className = "msg " + (klass || role);
   const s = document.createElement("div"); s.className = "speaker";
-  s.textContent = role === "user" ? "Dylan" : (role === "system" ? "system" : (personas[activeSlug]?.company || "prospect"));
+  s.textContent = role === "user" ? "Rep" : (role === "system" ? "system" : (personas[activeSlug]?.company || "prospect"));
   m.appendChild(s);
   const b = document.createElement("div"); b.className = "body"; b.textContent = content;
   m.appendChild(b);
@@ -4189,7 +4222,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if slug not in PERSONAS and slug not in _runtime_personas:
                 self._send_json(400, {"error": "unknown slug"})
                 return
-            sys_prompt = persona_system_prompt(slug, difficulty=difficulty)
+            bullpen_ctx = (req.get("bullpen") or "").strip().lower() or None
+            sys_prompt = persona_system_prompt(slug, difficulty=difficulty,
+                                                 bullpen=bullpen_ctx)
             msgs = [{"role": "system", "content": sys_prompt}] + history
             if opening:
                 msgs.append({
@@ -4200,15 +4235,24 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 reply = ollama_chat(msgs)
                 # Strip any leading stage directions if the model leaks them.
                 reply = re.sub(r"^\s*\*[^*]+\*\s*", "", reply).strip()
-                # Safety net: if Gemma slips out of character and starts pitching
-                # as the rep ("Hi, my name's Dylan / Beers Labs / I'm calling
-                # about..."), kick it back into character with a single in-role
-                # acknowledgement instead of the broken line.
+                # Safety net: if Gemma slips out of character and starts
+                # pitching AS the rep ("Hi, my name's <seller> / <brand> /
+                # I'm calling about..."), kick it back into character with
+                # an in-role acknowledgement instead of the broken line.
                 low = reply.lower()
+                sv = _seller_vars_for(bullpen_ctx)
+                seller_low = sv["seller_name"].lower()
+                brand_low  = sv["brand_name"].lower()
                 rep_hijack = (
-                    "my name's dylan" in low or "my name is dylan" in low
-                    or "beers labs" in low or "i'm calling about" in low
-                    or "i'm with beers" in low or "this is dylan" in low
+                    "i'm calling about" in low
+                    or "this is a sales call" in low
+                    or (seller_low and seller_low not in ("the rep",)
+                          and (f"my name is {seller_low}" in low
+                                or f"my name's {seller_low}" in low
+                                or f"this is {seller_low}" in low))
+                    or (brand_low and brand_low not in ("the company",)
+                          and (f"i'm with {brand_low}" in low
+                                or brand_low in low and "with" in low.split(brand_low)[0][-15:]))
                 )
                 if rep_hijack:
                     reply = "Hello? Sorry — what's this about?"
@@ -4272,17 +4316,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if slug not in PERSONAS and slug not in _runtime_personas:
                 self._send_json(400, {"error": "unknown slug"})
                 return
-            score_sys = scoring_system_prompt(slug)
+            bullpen_ctx = (req.get("bullpen") or "").strip().lower() or None
+            score_sys = scoring_system_prompt(slug, bullpen=bullpen_ctx)
             transcript = []
             if _USE_FILE_PERSONAS and slug in _runtime_personas:
                 company = _runtime_personas[slug].company
             else:
                 company = PERSONAS[slug]["company"]
+            # Speaker label for the rep — pull from the active bullpen so the
+            # transcript reads correctly for any operator's closer, not just "Dylan".
+            seller_label = _seller_vars_for(bullpen_ctx)["seller_name"]
             for m in history:
-                speaker = "Dylan" if m["role"] == "user" else company
+                speaker = seller_label if m["role"] == "user" else company
                 transcript.append(f"{speaker}: {m['content']}")
             user_prompt = (
-                "Here is the full transcript of Dylan's practice cold call. "
+                f"Here is the full transcript of {seller_label}'s practice cold call. "
                 "Grade it against the playbook. Use the exact output format described in your instructions.\n\n"
                 "TRANSCRIPT:\n" + "\n".join(transcript)
             )

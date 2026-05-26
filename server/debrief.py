@@ -71,9 +71,9 @@ def _ollama_extract(prompt: str, schema_hint: str = "", model: str = "gemma2:9b"
 
 EXTRACTION_PROMPT = """You are a senior sales-ops analyst reviewing the transcript of a sales call. Read it carefully and pull out structured intel.
 
-Identify all SPEAKERS in the conversation. One of them is Dylan Beers (the seller). The others are people from the target company.
+Identify all SPEAKERS in the conversation. One of them is the REP (the seller). The others are people from the target company.
 
-For each NON-DYLAN speaker, output:
+For each NON-REP speaker, output:
   name:               Their name if stated, or "(unknown)" if never said
   inferredName:       Best guess at name from context (e.g. "the assistant," "the gatekeeper")
   role:               Their job title if mentioned, or "(unknown)"
@@ -83,11 +83,11 @@ For each NON-DYLAN speaker, output:
   voiceProfile:       1 sentence describing how they talked (warm? hostile? formal? distracted?)
 
 Also extract from the call:
-  commitments:        Array of explicit commitments. Each: { who: "Dylan" or "Them", what: string, by_when: "Thursday" / null }
+  commitments:        Array of explicit commitments. Each: { who: "Rep" or "Them", what: string, by_when: "Thursday" / null }
   newContacts:        Array of names mentioned but not on the call (e.g. "talk to Rajeev, our architect"). Each: { name, role, why }
   dealSignal:         One of: "cold" | "interest" | "warm" | "meeting_booked" | "proposal_requested" | "rejected"
   dealStageChangeReason: 1 sentence explaining the stage signal
-  nextAction:         1 sentence: what Dylan should do next
+  nextAction:         1 sentence: what the rep should do next
   nextActionDate:     ISO date (YYYY-MM-DD) if specified, else null
   meetingTime:        ISO datetime if a meeting was scheduled, else null
   meetingAttendees:   Array of names if a meeting was scheduled, else []
@@ -175,9 +175,10 @@ def debrief_call(org_slug: str, call_id: str) -> dict:
         name = entry.get("name") or entry.get("inferredName")
         if not name or name == "(unknown)":
             continue
-        # Skip Dylan (the caller)
-        if name.lower().startswith("dylan") or "beers" in name.lower():
-            continue
+        # The extraction prompt already tells the LLM to skip the rep
+        # (the seller) — no name-based filter needed here. Doing one would
+        # also wrongly drop a real prospect contact who happens to share a
+        # name with the operator.
         slug = _slugify(name)
         pdir = org_dir / "people" / slug
         if pdir.exists():

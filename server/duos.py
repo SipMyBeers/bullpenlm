@@ -181,7 +181,7 @@ def _score(duo: dict) -> dict:
       + 12 if the seller explicitly asked for the next step
     """
     from buyer_cards import generate as bc_generate
-    card = bc_generate(duo["prospect_slug"]) or {}
+    card = bc_generate(duo["prospect_slug"], bullpen=duo["bullpen"]) or {}
     seller = duo["roles"].get("seller")
     seller_lines = [m["text"].lower() for m in duo["transcript"] if m["rep"] == seller]
     buyer_lines  = [m["text"].lower() for m in duo["transcript"] if m["rep"] != seller]

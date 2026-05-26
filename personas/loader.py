@@ -260,27 +260,109 @@ def load_orgs_as_personas() -> dict[str, Persona]:
 # Prompt builders (consume the Persona object)
 # ─────────────────────────────────────────────────────────────────────────
 
-# Default playbook — KillSesh-specific because that's how the repo was born.
-# Override by loading the markdown file at personas/_playbook/seller.md +
-# personas/_playbook/scoring.md, if they exist. Lets non-KillSesh users
-# replace the playbook without touching code.
-def _read_playbook_seller() -> str:
-    p = PERSONAS_ROOT / "_playbook" / "seller.md"
-    if p.exists():
-        return p.read_text().strip()
-    return ("KillSesh: an on-prem AI pipeline that translates COBOL copybooks to "
-            "TypeScript with verified field parity. Dylan wants a 15-minute "
-            "technical briefing with you (or the name of the right tech lead).")
+# Playbook loader. Lookup tiers, newest first:
+#   1. bullpens/<slug>/playbook/<name>.md   per-bullpen override (founder-edited)
+#   2. templates/playbook/<name>.md         shipped neutral template
+#   3. personas/_playbook/<name>.md         legacy override path
+#   4. inline last-ditch fallback
+#
+# {{var|default}} substitution runs against the bullpen config so the
+# seller name / brand / product show up correctly even when the founder
+# hasn't customized the playbook.
+
+_REPO = PERSONAS_ROOT.parent  # bullpenlm repo root
+_PLAYBOOK_TEMPLATES = _REPO / "templates" / "playbook"
+_PLAYBOOK_LEGACY = PERSONAS_ROOT / "_playbook"
+_BULLPENS_ROOT = _REPO / "bullpens"
 
 
-def build_persona_prompt(p: Persona) -> str:
-    """The system prompt the LLM gets when playing this persona."""
+def _playbook_vars(bullpen: Optional[str]) -> dict:
+    """Pull the variables that show up inside the LLM prompts from the
+    bullpen config. Falls back to neutral placeholders when no bullpen
+    context is available (e.g. legacy hardcoded-personas demo)."""
+    base = {
+        "seller_name":  "the rep",
+        "brand_name":   "the company",
+        "product":      "the company's offering",
+    }
+    if not bullpen:
+        return base
+    cfg_path = _BULLPENS_ROOT / bullpen / "bullpen.json"
+    if not cfg_path.exists():
+        return base
+    try:
+        cfg = json.loads(cfg_path.read_text())
+    except Exception:
+        return base
+    seller = (cfg.get("founder_display_name") or cfg.get("founder_rep") or "").strip()
+    brand = (cfg.get("name") or "").strip()
+    product = (cfg.get("product") or "").strip()
+    if seller:  base["seller_name"]  = seller
+    if brand:   base["brand_name"]   = brand
+    if product: base["product"]      = product
+    return base
+
+
+_VAR_RE = re.compile(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)(?:\s*\|\s*([^}]*?))?\s*\}\}")
+
+
+def _sub_vars(text: str, vars_d: dict) -> str:
+    def repl(m: re.Match) -> str:
+        key = m.group(1)
+        default = m.group(2) or ""
+        val = vars_d.get(key)
+        if val is None or val == "":
+            return default
+        return str(val)
+    return _VAR_RE.sub(repl, text)
+
+
+def _read_playbook(name: str, bullpen: Optional[str] = None,
+                     extra_vars: Optional[dict] = None) -> str:
+    """Resolve and render a playbook by name ('seller' or 'scoring').
+    `extra_vars` merge on top of the bullpen-derived vars (used by the
+    scoring rubric to thread in prospect_role + prospect_company)."""
+    fname = f"{name}.md"
+    candidates = []
+    if bullpen:
+        candidates.append(_BULLPENS_ROOT / bullpen / "playbook" / fname)
+    candidates.append(_PLAYBOOK_TEMPLATES / fname)
+    candidates.append(_PLAYBOOK_LEGACY / fname)
+    vars_d = _playbook_vars(bullpen)
+    if extra_vars:
+        vars_d.update(extra_vars)
+    for p in candidates:
+        if p.exists():
+            return _sub_vars(p.read_text().strip(), vars_d)
+    return ""
+
+
+def _read_playbook_seller(bullpen: Optional[str] = None) -> str:
+    body = _read_playbook("seller", bullpen=bullpen)
+    if body:
+        return body
+    return ("The rep is selling the company's offering. They want a 15-minute "
+            "briefing with the right decision-maker. Not closing the deal "
+            "on this call.")
+
+
+def build_persona_prompt(p: Persona, bullpen: Optional[str] = None) -> str:
+    """The system prompt the LLM gets when playing this persona.
+
+    When `bullpen` is provided, the seller's name + brand + product are
+    pulled from that bullpen's config so the AI buyer roleplay is correct
+    for any operator (not just KillSesh). When no bullpen is provided
+    (legacy hardcoded personas), neutral placeholders are used.
+    """
     pushbacks_block = "\n".join(f"  - \"{q}\"" for q in p.pushbacks)
     speech_block = (
         f"\nHOW YOU TALK (speech profile — match exactly)\n────────────────────────────────────────────\n{p.speech_profile}\n"
         if p.speech_profile else ""
     )
-    seller_pitch = _read_playbook_seller()
+    seller_pitch = _read_playbook_seller(bullpen=bullpen)
+    pv = _playbook_vars(bullpen)
+    seller_name = pv["seller_name"]
+    brand_name  = pv["brand_name"]
 
     # Tier 2: verbatim quotes + transcript excerpts
     tier2_block = ""
@@ -305,11 +387,11 @@ ROLE LOCK — READ THIS FIRST. VIOLATIONS BREAK THE TRAINING.
 ═════════════════════════════════════════════════════════════════
 You are {p.role} at {p.company}.
 You are NOT the caller. You are NOT a salesperson. You are NOT pitching anything.
-You do NOT work at Beers Labs. You do NOT sell products. You ANSWER the phone.
+You do NOT work at {brand_name}. You do NOT sell products. You ANSWER the phone.
 
 If the caller says "Hello?" — they are testing the line. You acknowledge briefly.
 If the caller is silent or unclear — wait for them to speak, or say "Hello? Can I help you?"
-You NEVER introduce yourself by saying "Hi, my name's Dylan" or any other name that isn't your own.
+You NEVER introduce yourself by saying "Hi, my name's {seller_name}" or any other name that isn't your own.
 You NEVER pitch a product, a tool, or a service. You're the buyer.
 
 WHO YOU ARE
@@ -342,7 +424,7 @@ HOW REAL PHONE CALLS WORK — READ CAREFULLY
 
   DO NOT — under any circumstances — volunteer that you're busy, on a deadline, in a hurry, between meetings, or annoyed. You haven't heard the caller yet. You have no opinion of them yet. Real people do not greet callers with "what's this regarding I'm busy" — that is theater, not reality. Just say hello.
 
-▸ TURNS 2-3 (Dylan introduces himself and starts talking)
+▸ TURNS 2-3 ({seller_name} introduces themselves and starts talking)
   Stay NEUTRAL. Listen. Respond in 1-2 short sentences. Reasonable acknowledgments:
     "Okay."
     "I'm listening."
@@ -352,15 +434,15 @@ HOW REAL PHONE CALLS WORK — READ CAREFULLY
   Do not push back yet. You have no reason to. Most cold calls earn 20-30 seconds of grace from any reasonable person.
 
 ▸ TURNS 4+ (you've heard enough to form a judgment)
-  NOW react based on HOW DYLAN IS DOING. Sliding warmth curve:
+  NOW react based on HOW THE CALLER IS DOING. Sliding warmth curve:
 
-  → If Dylan is SPECIFIC about a pain you actually have, knows your company, shows real domain knowledge, asks for a meeting (not the deal), avoids jargon dumps:
+  → If the caller is SPECIFIC about a pain you actually have, knows your company, shows real domain knowledge, asks for a meeting (not the deal), avoids jargon dumps:
        Warm up. Ask follow-up questions. Engage. Eventually agree to 15 minutes.
 
-  → If Dylan is doing OK but generic — vague pitch, doesn't name your specific situation:
+  → If the caller is doing OK but generic — vague pitch, doesn't name your specific situation:
        Stay polite but skeptical. Push back with one of YOUR TYPICAL PUSHBACKS below.
 
-  → If Dylan is FAILING — dumping jargon early ("zero-egress", "deterministic field parity") before you've shown interest, pitching the price ($15K) before you've asked, sounding scripted, apologizing, can't articulate a clear ask:
+  → If the caller is FAILING — dumping product-specific jargon before you've shown interest, pitching price before you've asked, sounding scripted, apologizing, can't articulate a clear ask:
        Get colder. Push back harder. After 3-4 bad exchanges, end the call politely.
 
 ▸ TURNS 8-12 — Time to decide
@@ -376,47 +458,42 @@ ABSOLUTE RULES
 - 1-3 sentences MAX per turn. No paragraphs. No bullet lists. No markdown.
 - Match your speech profile and any verbatim quotes above. Mimic the phrasing, cadence, word choice — not just the content.
 - Hostility must be EARNED. Never volunteer hostility in turn 1 or 2.
-- Skepticism is fine after turn 3. Hostility only after Dylan does something objectively wrong (jargon dump, price pitch too early, no clear ask).
+- Skepticism is fine after turn 3. Hostility only after the caller does something objectively wrong (jargon dump, price pitch too early, no clear ask).
 - NEVER break character. NEVER mention AI, training, simulation, coaching.
-- NEVER coach Dylan mid-call. You are not a teacher. You are a buyer.
+- NEVER coach the caller mid-call. You are not a teacher. You are a buyer.
 - If you push back, USE YOUR ACTUAL PUSHBACKS:
 {pushbacks_block}
 
 GO. The phone just rang. Pick up."""
 
 
-def build_scoring_prompt(p: Persona) -> str:
-    """The system prompt for the post-call grading pass — unchanged across tiers."""
-    return f"""You are a senior sales coach reviewing a recorded cold-call practice session.
+def build_scoring_prompt(p: Persona, bullpen: Optional[str] = None) -> str:
+    """The system prompt for the post-call grading pass.
 
-CONTEXT
-The rep, Dylan Beers, was cold-calling someone playing {p.role} at {p.company}.
-Dylan's ONE GOAL on this call: book a 15-minute technical briefing with the right technical lead. NOT close a deal. NOT quote price. NOT explain SOW. Just get the meeting.
-
-THE KILLSESH COLD-CALL PLAYBOOK
-Dylan should have followed this structure:
-  1. GREET (3 sec): "Hi, this is Dylan Beers with Beers Labs. I'll be quick."
-     [Then pause one full second for them to say "go ahead"]
-  2. P&L PUNCH (8 sec): A specific pain you know they have.
-  3. PROOF (10 sec): "We built a tool that translates the code AND mathematically proves nothing got lost. Runs on your hardware — code never leaves your network."
-  4. ASK (6 sec): "I'm looking for the person who [role-specific]. 15 minutes to see if it fits — who's the right contact?"
-
-HARD RULES Dylan must follow:
-  ✓ Energy: calm, clinical, hyper-competent. Like a senior partner at a law firm. NOT alpha/hyperactive.
-  ✓ Pause one full second after "I'll be quick."
-  ✓ Say the company name at least once in the first 20 seconds.
-  ✗ DO NOT mention $15K to a gatekeeper or non-decision-maker.
-  ✗ DO NOT use jargon ("zero-egress", "deterministic field parity") UNLESS they ask a technical follow-up first.
-  ✗ DO NOT lead with the price — lead with the pain, then proof, then price.
-  ✗ DO NOT apologize. DO NOT say "sorry to bother you."
-  ✗ DO NOT say "I emailed you last week" — sounds like a beggar.
-
-KEY OBJECTION RESPONSES Dylan should know:
-  - "Send me a deck" → "Better — live trace at killsesh.com/demo, signed tarball at killsesh.com/downloads. Take 5 minutes on those, then 15 minutes Thursday. Calendar?"
-  - "What does it cost?" → "Pilot is $15K flat, full program $250K+. But let's not talk price until you see the deliverable. Can we do 15 minutes Thursday?"
-  - "We already use IBM" → "Right — most of our pilots run alongside the incumbent. We don't replace them, we verify them."
-  - "I'm not the right person" → "Appreciate it. Who in your org owns mainframe modernization or COBOL-to-modern translation?"
-
+    Loads the bullpen's per-floor scoring rubric (or the shipped template
+    if none) so every operator gets coaching tuned to THEIR product —
+    not hardcoded to KillSesh's COBOL playbook.
+    """
+    pv = _playbook_vars(bullpen)
+    seller_name = pv["seller_name"]
+    rubric = _read_playbook("scoring", bullpen=bullpen,
+                             extra_vars={"prospect_role": p.role,
+                                          "prospect_company": p.company})
+    if not rubric:
+        # Last-ditch generic fallback so the AI still grades something
+        # sane when no rubric is installed and the templates dir is gone.
+        rubric = (
+            f"You are a senior sales coach reviewing a recorded cold call.\n\n"
+            f"CONTEXT: The rep, {seller_name}, was cold-calling someone "
+            f"playing {p.role} at {p.company}. The rep's ONE GOAL was to "
+            f"book a 15-minute briefing with the right decision-maker — "
+            f"not close, not quote price, not explain SOW.\n\n"
+            f"Grade against the standard cold-call playbook: clean branded "
+            f"greet → specific pain → concrete proof → clear meeting ask. "
+            f"Energy should be calm and competent, not hyperactive. The "
+            f"rep should not lead with price or product-specific jargon."
+        )
+    output_block = """
 YOUR OUTPUT (use these EXACT section headers):
 SCORE: [letter grade A through F]
 WOULD THIS BOOK THE MEETING: [YES / MAYBE / NO]
@@ -433,7 +510,9 @@ THE SINGLE BIGGEST MISS:
 NEXT TIME:
 [1-2 sentences of specific corrective action — what to say differently on the next dial]
 
-Be honest. Be direct. Score against the playbook, not against effort. If Dylan dumped jargon early, dock him. If he failed to ask for the meeting, dock him. If he buckled on price, dock him."""
+Be honest. Be direct. Score against the playbook, not against effort. If the rep dumped jargon early, dock them. If they failed to ask for the meeting, dock them. If they buckled on price, dock them.
+"""
+    return rubric + "\n" + output_block
 
 
 if __name__ == "__main__":

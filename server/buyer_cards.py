@@ -187,9 +187,14 @@ def _hot_buttons(motivations: list[str]) -> list[str]:
     return dedup[:5]
 
 
-def generate(prospect_slug: str, bullpen: str = "killsesh",
+def generate(prospect_slug: str, bullpen: str,
              force_refresh: bool = False) -> Optional[dict]:
-    """Build (or load cached) buyer card for one prospect."""
+    """Build (or load cached) buyer card for one prospect.
+
+    `bullpen` is required — buyer cards are cached per-bullpen at
+    bullpens/<slug>/buyer-cards/. There is no platform-wide default; the
+    caller (a /api/b/<slug>/... route) always knows which floor it's on.
+    """
     cache = _bullpen_cards_dir(bullpen) / f"{prospect_slug}.json"
     if cache.exists() and not force_refresh:
         try: return json.loads(cache.read_text())
