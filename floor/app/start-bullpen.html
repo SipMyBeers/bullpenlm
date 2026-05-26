@@ -94,6 +94,9 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 .final .next-steps ol{margin:0;padding-left:22px;font-family:var(--serif);font-size:14.5px;line-height:1.75;color:var(--text)}
 .final .next-steps ol li{margin-bottom:6px}
 
+.compute-banner{max-width:780px;margin:18px auto 0;padding:14px 18px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.30);border-radius:10px;font-family:var(--serif);font-size:14px;line-height:1.55;color:var(--accent-2)}
+.compute-banner strong{color:#fff;font-weight:600}
+
 .toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.error{background:rgba(248,113,113,0.95)}
@@ -110,6 +113,10 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
     <div class="seg" data-step="2"><div class="fill"></div><div class="label">3 · Economics</div></div>
     <div class="seg" data-step="3"><div class="fill"></div><div class="label">4 · Brand</div></div>
     <div class="seg" data-step="4"><div class="fill"></div><div class="label">5 · Launch</div></div>
+  </div>
+
+  <div class="compute-banner">
+    <strong>Your floor runs on your machine.</strong> bullpenlm.com is just the marketing site — once you launch, your bullpen lives on a Cloudflare Quick Tunnel pointed at your laptop. Your data, your compute, your control.
   </div>
 
   <!-- STEP 0 — YOU -->
@@ -152,7 +159,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
     <div class="field" id="f-slug">
       <label>URL slug</label>
       <input id="slug" type="text" placeholder="killsesh" maxlength="40">
-      <div class="hint">Lowercase, dashes only. This becomes <code>bullpenlm.com/b/&lt;slug&gt;</code>.</div>
+      <div class="hint">Lowercase, dashes only. Becomes <code>&lt;your-tunnel&gt;.trycloudflare.com/b/&lt;slug&gt;</code> on your own machine — your floor, your compute, your data.</div>
       <div class="err">Slug must be 3–40 chars: lowercase, numbers, dashes.</div>
     </div>
 
