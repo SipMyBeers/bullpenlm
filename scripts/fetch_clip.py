@@ -34,6 +34,8 @@ VALID_MOODS = {"hype", "greeting", "close", "hard-truth",
 
 
 def _parse_ts(spec: str) -> float:
+    if spec.strip().upper() == "REVIEW":
+        raise ValueError("timestamp is REVIEW — scrub the video and replace with seconds")
     """Accepts '12.4', '12.4s', '1:24', '1:24.5', '1:01:24'. Returns seconds."""
     spec = spec.strip().rstrip("s")
     if not spec:

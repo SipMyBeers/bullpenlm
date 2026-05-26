@@ -1,204 +1,214 @@
 # Bumblebee clip sourcing manifest.
 #
-# Fill in the `url:` for each entry once you've found a YouTube source, then run:
+# URLs are pre-filled. For each entry, the `start:` and `end:` are either:
+#   - Fully set when the YouTube clip is already a dedicated short of that
+#     exact moment (whole clip = whole short, ~3-6s).
+#   - Marked REVIEW when the source is a longer scene/supercut and you
+#     need to scrub the actual second range. The fetcher will skip REVIEW
+#     entries; flip them to numbers when you've found the moment.
+#
+# Run:
 #   python3 scripts/fetch_clip.py --manifest clips/SOURCING.yaml
 #
-# Tips:
-#   - Search YouTube for "wolf of wall street best scenes" / "glengarry glen ross
-#     best of" / "boiler room scenes" — supercuts are gold. One supercut URL can
-#     be reused across many rows (just change the start/end).
-#   - The `start:` and `end:` accept "12.4" (seconds), "1:24" (mm:ss), or
-#     "1:24.5" (mm:ss.fraction).
-#   - The `name:` becomes the filename — keep it kebab-case, descriptive.
-#   - Anything with `url: TODO` is skipped (you'll see it in the run log).
+# Re-run after editing — fetch_clip overwrites existing files of the same
+# name so you can iterate on the trim without re-downloading.
 
-# ── WELCOME MONTAGE (the #start-here intro — render via `bumblebee event welcome`)
+# ════════════════════════════════════════════════════════════════════
+# WELCOME MONTAGE — #start-here intro · `bumblebee event welcome`
+# ════════════════════════════════════════════════════════════════════
 
-- url: TODO   # Wolf of Wall Street boiler room — Belfort yelling
-  start: TODO
-  end:   TODO
-  mood:  hard-truth
-  name:  wolf-pick-up-phone
-  # Belfort training scene, ~1h13m: "PICK UP THE PHONE! Pick up the phone! Pick up the phone!"
-
-- url: TODO   # Wolf of Wall Street — Mark Hanna lunch
-  start: TODO
-  end:   TODO
-  mood:  hype
-  name:  wolf-money-doesnt-sleep
-  # Hanna: "Money doesn't sleep, pal."
-
-- url: TODO   # Wolf of Wall Street — opening narration
-  start: TODO
-  end:   TODO
-  mood:  greeting
-  name:  wolf-name-is-jordan
-  # "My name is Jordan Belfort."
-
-- url: TODO   # Glengarry Glen Ross — Blake's "ABC" speech
-  start: TODO
-  end:   TODO
-  mood:  hard-truth
-  name:  glengarry-abc
-  # "A. B. C. Always be closing."
-
-- url: TODO   # Stock effect or movie sting
-  start: TODO
-  end:   TODO
-  mood:  taps
-  name:  cash-register
-  # Ka-ching SFX
-
-- url: TODO   # Stock — single 80s/90s phone ring
-  start: TODO
-  end:   TODO
+# 1. Single phone trill — leads the montage
+- url: https://www.youtube.com/watch?v=N2jZmXePKV0
+  start: 0
+  end:   0.9
   mood:  taps
   name:  phone-ring-short
-  # Single trill, ~0.8s
+  # Old Ringing Phone Sound Effect — first ring only
 
-- url: TODO   # Wolf of Wall Street — boardroom "name of the game" line
-  start: TODO
-  end:   TODO
+# 2. THE Belfort moment — 22-second dedicated clip of the line
+- url: https://www.youtube.com/watch?v=kvbmlkL6DTs
+  start: REVIEW   # scrub: skip the title card, capture just "PICK UP THE PHONE!"
+  end:   REVIEW   # ~3-4 seconds of the actual yell
+  mood:  hard-truth
+  name:  wolf-pick-up-phone
+
+# 3. Mark Hanna's iconic line — short scene compilation
+- url: https://www.youtube.com/watch?v=6IEiZ0C2U6c
+  start: REVIEW   # listen for "money doesn't sleep, pal" — usually early
+  end:   REVIEW
+  mood:  hype
+  name:  wolf-money-doesnt-sleep
+
+# 4. Opening narration — 4K opening scene
+- url: https://www.youtube.com/watch?v=nNEeskkTy4E
+  start: REVIEW   # first ~30s — "My name is Jordan Belfort"
+  end:   REVIEW
+  mood:  greeting
+  name:  wolf-name-is-jordan
+
+# 5. Blake "Always be closing" — already a YouTube Short (~30s)
+- url: https://www.youtube.com/shorts/mAMH0SwV5AM
+  start: REVIEW   # just "A. B. C. Always be closing." (~2.5s)
+  end:   REVIEW
+  mood:  hard-truth
+  name:  glengarry-abc
+
+# 6. Cash register sting — already a sound-effect clip
+- url: https://www.youtube.com/shorts/oFmp7roBYJ8
+  start: 0
+  end:   1.0
+  mood:  taps
+  name:  cash-register
+
+# 7. Belfort boardroom — inspirational speech
+- url: https://www.youtube.com/watch?v=PQleT6BtCbE
+  start: REVIEW   # find "the name of the game…" or any 1.5s of the climax
+  end:   REVIEW
   mood:  hype
   name:  wolf-name-of-game
-  # "The name of the game…" — cut before he finishes
 
 
-# ── NEW BULLPEN LAUNCH (auto-fires when wizard creates a new bullpen)
+# ════════════════════════════════════════════════════════════════════
+# NEW BULLPEN LAUNCH — auto-fires when wizard creates a new bullpen
+# ════════════════════════════════════════════════════════════════════
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# Floor cheering — Welcome to Stratton Oakmont scene
+- url: https://www.youtube.com/watch?v=YH2_GOuPGlk
+  start: REVIEW
+  end:   REVIEW
   mood:  hype
   name:  wolf-pump-up-crowd
-  # Belfort whipping the floor into a frenzy
 
-- url: TODO
-  start: TODO
-  end:   TODO
+- url: https://www.youtube.com/watch?v=YH2_GOuPGlk
+  start: REVIEW   # find the crowd-cheer moment
+  end:   REVIEW
   mood:  close
   name:  wolf-floor-cheer
-  # Stratton-Oakmont floor cheering after a close
 
 
-# ── CLOSE WON (auto-fires when a deal_closed_won event hits)
+# ════════════════════════════════════════════════════════════════════
+# CLOSE WON — auto-fires when a deal_closed_won event hits
+# ════════════════════════════════════════════════════════════════════
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# Chest beat office — dedicated clip
+- url: https://www.youtube.com/watch?v=gHjronXyeqI
+  start: REVIEW   # ~2-3s of the chant
+  end:   REVIEW
   mood:  close
   name:  wolf-chest-pound
-  # The chest-pound chant
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# "I am a millionaire" — Boiler Room dedicated clip
+- url: https://www.youtube.com/watch?v=2PgwSJryrTE
+  start: REVIEW
+  end:   REVIEW
   mood:  close
   name:  boiler-room-i-am-a-millionaire
-  # Boiler Room: "I'm a millionaire. It's a weird thing to hear, right?"
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# "There is no nobility in poverty"
+- url: https://www.youtube.com/watch?v=DeGtdfxDYSQ
+  start: REVIEW   # find the line itself, ~3s
+  end:   REVIEW
   mood:  hype
   name:  wolf-let-me-tell-you
-  # "Let me tell you something — there's no nobility in poverty."
 
 
-# ── HARD TRUTH (rep needs a reality check)
+# ════════════════════════════════════════════════════════════════════
+# HARD TRUTH — reps need a reality check
+# ════════════════════════════════════════════════════════════════════
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# "Coffee is for closers only"
+- url: https://www.youtube.com/watch?v=baEkHh7qIyE
+  start: REVIEW
+  end:   REVIEW
   mood:  hard-truth
   name:  glengarry-coffee
-  # "Coffee is for closers only."
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# "My watch costs more than your car"
+- url: https://www.youtube.com/watch?v=XxMuiT-oELw
+  start: REVIEW
+  end:   REVIEW
   mood:  hard-truth
   name:  glengarry-watch
-  # "You see this watch? This watch cost more than your car."
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# "The leads are weak? You're weak."
+- url: https://www.youtube.com/watch?v=MCd1T-rWB_M
+  start: REVIEW
+  end:   REVIEW
   mood:  hard-truth
   name:  glengarry-leads-are-weak
-  # "The leads are weak? You're weak."
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# Wolf opening — "Was it legal? Absolutely fucking not."
+- url: https://www.youtube.com/watch?v=nNEeskkTy4E
+  start: REVIEW   # find the "absolutely fucking not" line in the opening
+  end:   REVIEW
   mood:  hard-truth
   name:  wolf-fking-not
-  # "Was all this legal? Absolutely fucking not."
 
 
-# ── OBJECTION (pushback / disbelief)
+# ════════════════════════════════════════════════════════════════════
+# OBJECTION — pushback / disbelief
+# ════════════════════════════════════════════════════════════════════
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# "There's no such thing as a no sale call" — already a YouTube Short
+- url: https://m.youtube.com/shorts/uV3rJ77a7Rg
+  start: REVIEW
+  end:   REVIEW
   mood:  objection
   name:  boiler-room-no-sale
-  # Boiler Room: "There is no such thing as a no sale call."
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# "I'm not leaving!" — already a YouTube Short of just the line
+- url: https://www.youtube.com/shorts/Y_pDvsuYC4M
+  start: REVIEW
+  end:   REVIEW
   mood:  objection
   name:  wolf-im-not-leaving
-  # Belfort: "I'M NOT LEAVING!"
 
 
-# ── RAID (group hype — squad runs, sprints)
+# ════════════════════════════════════════════════════════════════════
+# RAID — group hype (squad runs, sprints, raid quests)
+# ════════════════════════════════════════════════════════════════════
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# The Money Chant scene — floor erupting
+- url: https://www.youtube.com/watch?v=klIbHMw9w2Q
+  start: REVIEW   # grab a 2-3s wall of cheering
+  end:   REVIEW
   mood:  raid
   name:  wolf-crowd-roar
-  # Stratton floor erupting
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# Eye of the Tiger intro riff
+- url: https://www.youtube.com/watch?v=2PkPTq5pP6c
+  start: REVIEW   # first 2 seconds of the riff
+  end:   REVIEW
   mood:  raid
   name:  eye-of-the-tiger-riff
-  # 1-2 sec of the opening riff
 
 
-# ── TAUNT (1v1 duel callouts)
+# ════════════════════════════════════════════════════════════════════
+# TAUNT — 1v1 duel callouts
+# ════════════════════════════════════════════════════════════════════
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# Glengarry "fuck you, that's my name"
+- url: https://www.youtube.com/watch?v=Q4PE2hSqVnk
+  start: REVIEW
+  end:   REVIEW
   mood:  taunt
   name:  glengarry-step-up
-  # "Step up or step off" energy
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# "I'm not leaving" energy can double as a taunt
+- url: https://www.youtube.com/watch?v=lzAwDUoZwfo
+  start: REVIEW
+  end:   REVIEW
   mood:  taunt
   name:  wolf-watch-me
-  # Belfort: "Watch me work."
 
 
-# ── GREETING (general openers)
+# ════════════════════════════════════════════════════════════════════
+# GREETING — general openers
+# ════════════════════════════════════════════════════════════════════
 
-- url: TODO
-  start: TODO
-  end:   TODO
+# Reuse opening narration moment — different cut from same source
+- url: https://www.youtube.com/watch?v=nNEeskkTy4E
+  start: REVIEW
+  end:   REVIEW
   mood:  greeting
   name:  wolf-good-to-see-you
-  # "Good to see you" / "Welcome to the firm" energy
-
-- url: TODO
-  start: TODO
-  end:   TODO
-  mood:  greeting
-  name:  goodfellas-look-who-walked-in
-  # Optional: a Goodfellas / Casino / Wolf greeting
