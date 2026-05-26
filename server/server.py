@@ -2737,6 +2737,23 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
+        # ── /floor and /floor/index.html → the prospect-map sales floor ──
+        # Closers and operators both reach this from deals.html breadcrumb.
+        if self.path in ("/floor", "/floor/", "/floor/index.html") or self.path.startswith("/floor/index.html?"):
+            from pathlib import Path as _P
+            f = _P(__file__).parent.parent / "floor" / "index.html"
+            try:
+                body = f.read_bytes()
+            except Exception:
+                self._send_json(404, {"error": "floor not found"}); return
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self._cors()
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
         self._send_json(404, {"error": "not found"})
 
     def do_POST(self):
