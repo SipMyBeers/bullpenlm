@@ -2874,6 +2874,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 except Exception:
                     seats_open_int = None
 
+                # New optional brand fields (all may be empty strings).
+                brand_domain        = (req2.get("brand_domain") or "").strip()[:120]
+                brand_sending_email = (req2.get("brand_sending_email") or "").strip()[:120]
+                brand_logo_url      = (req2.get("brand_logo_url") or "").strip()[:240]
+                brand_reply_to      = (req2.get("brand_reply_to") or "").strip()[:120]
+                github_repo         = (req2.get("github_repo") or "").strip()[:240]
+
                 manifest = create_bullpen(slug, founder_rep,
                                           product=product, name=name)
                 updates = {
@@ -2888,6 +2895,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     updates["price_usd"] = price_usd
                 if discord_invite:
                     updates["discord_invite"] = discord_invite
+                # Brand fields are optional — only persist non-empty values.
+                for k, v in (
+                    ("brand_domain", brand_domain),
+                    ("brand_sending_email", brand_sending_email),
+                    ("brand_logo_url", brand_logo_url),
+                    ("brand_reply_to", brand_reply_to),
+                    ("github_repo", github_repo),
+                ):
+                    if v:
+                        updates[k] = v
                 cfg = set_bullpen_config(slug, updates) or manifest
 
                 if founder_display_name:
@@ -2898,14 +2915,62 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     except Exception:
                         pass
 
+                # Seed the per-bullpen email-templates dir so the founder can
+                # edit copy inline. No-op if the shipped templates/email/
+                # directory is missing.
+                try:
+                    from email_templates import seed_bullpen_templates
+                    seed_bullpen_templates(slug)
+                except Exception:
+                    pass
+
+                # Auto-publish: spin up (or reuse) the Cloudflare Quick Tunnel
+                # so the founder gets a public URL immediately. Best-effort —
+                # if cloudflared isn't installed, we capture a warning and
+                # return the rest of the artifacts.
+                warnings = []
+                tunnel_url = None
+                if req2.get("publish_tunnel", True):
+                    try:
+                        from tunnel import start_tunnel
+                        t = start_tunnel(port=PORT)
+                        if t.get("ok"):
+                            tunnel_url = t.get("url")
+                        else:
+                            warnings.append(
+                                "Couldn't auto-start the public tunnel — "
+                                + (t.get("error") or "unknown")
+                                + ". Start it later from the host panel."
+                            )
+                    except Exception as e:
+                        warnings.append(f"Tunnel error: {e}")
+
+                # Auto-mint a first invite so the founder has a shareable
+                # link the moment the wizard finishes.
+                invite_link = None
+                if req2.get("create_first_invite", True):
+                    try:
+                        from invites import create_invite
+                        inv = create_invite(rep="first-closer",
+                                             note=f"First invite for {slug}")
+                        if tunnel_url:
+                            invite_link = (f"{tunnel_url}/app/join.html"
+                                            f"?code={inv['code']}")
+                        else:
+                            warnings.append(
+                                "First invite minted (code "
+                                + inv["code"]
+                                + ") but no tunnel URL yet — generate the "
+                                  "full link from /app/host.html after publishing."
+                            )
+                    except Exception as e:
+                        warnings.append(f"Couldn't mint first invite: {e}")
+
                 # Fire the master #showcase auto-announce (no-op if the
                 # ~/.bullpenlm/showcase-webhook.txt isn't configured on this host).
                 try:
                     from discord import announce_new_bullpen
-                    from tunnel import tunnel_status as _ts
-                    st = _ts()
-                    pub = st.get("url") if st.get("running") else None
-                    announce_new_bullpen(cfg, public_url=pub)
+                    announce_new_bullpen(cfg, public_url=tunnel_url)
                 except Exception:
                     pass
 
@@ -2916,6 +2981,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     "founder_rep": founder_rep,
                     "app_url": f"/app/today.html?b={slug}&rep={founder_rep}",
                     "share_url": f"/b/{slug}",
+                    "tunnel_url": tunnel_url,
+                    "invite_link": invite_link,
+                    "warnings": warnings,
                     "config": cfg,
                 })
             except ValueError as e:

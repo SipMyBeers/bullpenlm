@@ -68,6 +68,20 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 .actions .next:disabled{background:rgba(168,154,135,0.20);color:var(--muted);cursor:not-allowed;transform:none}
 .actions .next.gold{background:var(--gold)}
 
+.artifact-card{margin:18px auto;max-width:600px;padding:18px 22px;background:rgba(26,18,8,0.55);border:1px solid rgba(52,211,153,0.30);border-radius:12px;text-align:left}
+.artifact-card.gold{border-color:rgba(251,191,36,0.40);background:linear-gradient(135deg,rgba(251,191,36,0.06),rgba(26,18,8,0.55))}
+.artifact-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent-2);margin-bottom:8px}
+.artifact-label.gold{color:var(--gold)}
+.artifact-card .link-box{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(0,0,0,0.40);border-radius:8px;margin-bottom:6px;border:1px solid rgba(52,211,153,0.20)}
+.artifact-card .link-box.gold{border-color:rgba(251,191,36,0.25)}
+.artifact-card .link-box span{flex:1;font-family:var(--mono);font-size:12.5px;color:var(--accent-2);word-break:break-all}
+.artifact-card .link-box.gold span{color:var(--gold)}
+.artifact-card .copyl{padding:6px 12px;background:var(--accent);color:#0a1a14;border:none;border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer;white-space:nowrap}
+.artifact-card .copyl.gold{background:var(--gold)}
+.artifact-hint{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted);margin-top:4px}
+.warn-box{max-width:600px;margin:24px auto 0;padding:14px 18px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.30);border-radius:10px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--gold);text-align:left;line-height:1.55}
+.warn-box strong{color:#fff;font-weight:700}
+
 .final{text-align:center;padding:50px 30px}
 .final .check{font-size:64px;line-height:1;margin-bottom:14px}
 .final h1{font-family:var(--display);font-size:54px;color:var(--accent);text-transform:uppercase;letter-spacing:-.02em;margin:0 0 12px;line-height:1}
@@ -94,7 +108,8 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
     <div class="seg" data-step="0"><div class="fill"></div><div class="label">1 · You</div></div>
     <div class="seg" data-step="1"><div class="fill"></div><div class="label">2 · The bullpen</div></div>
     <div class="seg" data-step="2"><div class="fill"></div><div class="label">3 · Economics</div></div>
-    <div class="seg" data-step="3"><div class="fill"></div><div class="label">4 · Launch</div></div>
+    <div class="seg" data-step="3"><div class="fill"></div><div class="label">4 · Brand</div></div>
+    <div class="seg" data-step="4"><div class="fill"></div><div class="label">5 · Launch</div></div>
   </div>
 
   <!-- STEP 0 — YOU -->
@@ -218,15 +233,50 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
     </div>
   </section>
 
-  <!-- STEP 3 — LAUNCH -->
+  <!-- STEP 3 — BRAND (optional) -->
   <section class="step" data-panel="3" hidden>
-    <h1>Step 4. Launch it.</h1>
-    <p class="sub">Last look. Then we go live.</p>
+    <h1>Step 4. Brand it.</h1>
+    <p class="sub">Optional. Skip everything and you'll still launch — fill in what you have.</p>
+
+    <div class="field" id="f-brand-domain">
+      <label>Brand domain</label>
+      <input id="brand_domain" type="text" placeholder="killsesh.com" maxlength="120">
+      <div class="hint">The website / email domain your floor lives under. Used in branded outreach later.</div>
+    </div>
+
+    <div class="field" id="f-brand-email">
+      <label>Sending email (must be on this domain)</label>
+      <input id="brand_sending_email" type="email" placeholder="dylan@killsesh.com" maxlength="120">
+      <div class="hint">Outreach emails go out from here. Wire it up later via Cloudflare Email (see <code>email-worker/README.md</code>).</div>
+    </div>
+
+    <div class="field" id="f-brand-logo">
+      <label>Logo URL (optional)</label>
+      <input id="brand_logo_url" type="url" placeholder="https://yourdomain.com/logo.png" maxlength="240">
+      <div class="hint">Used on your public <code>/b/&lt;slug&gt;</code> page.</div>
+    </div>
+
+    <div class="field" id="f-github">
+      <label>GitHub repo (optional)</label>
+      <input id="github_repo" type="url" placeholder="https://github.com/you/your-product" maxlength="240">
+      <div class="hint">Transparency for credibility. Closers like seeing the work behind the pitch.</div>
+    </div>
+
+    <div class="actions">
+      <button class="back" data-go="2">← Back</button>
+      <button class="next" data-go="4">Next →</button>
+    </div>
+  </section>
+
+  <!-- STEP 4 — LAUNCH -->
+  <section class="step" data-panel="4" hidden>
+    <h1>Step 5. Launch it.</h1>
+    <p class="sub">Last look. We'll spin up the public URL + generate your first invite link in one shot.</p>
 
     <div class="review" id="review"></div>
 
     <div class="actions">
-      <button class="back" data-go="2">← Back</button>
+      <button class="back" data-go="3">← Back</button>
       <button class="next gold" id="launchBtn">Launch bullpen →</button>
     </div>
   </section>
@@ -236,11 +286,24 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
     <div class="final">
       <div class="check">🚀</div>
       <h1>Your floor is live.</h1>
-      <p class="you" id="successLine">Your bullpen is up. The CRM, leaderboard, kanban, and scripts are wired. Time to fill the seats.</p>
+      <p class="you" id="successLine">Your bullpen is up. Public URL spun up. First invite link ready to send.</p>
 
-      <div class="link-box">
-        <span id="shareLink">https://bullpenlm.com/b/your-slug</span>
-        <button id="copyBtn">Copy</button>
+      <div class="artifact-card" id="shareCard">
+        <div class="artifact-label">Your floor's public page</div>
+        <div class="link-box">
+          <span id="shareLink">—</span>
+          <button class="copyl" data-copy="shareLink">Copy</button>
+        </div>
+        <div class="artifact-hint">Post this in <strong>#showcase</strong>. Closers click → see what you're selling → apply.</div>
+      </div>
+
+      <div class="artifact-card gold" id="inviteCard">
+        <div class="artifact-label gold">Send to your first closer</div>
+        <div class="link-box gold">
+          <span id="inviteLink">—</span>
+          <button class="copyl gold" data-copy="inviteLink">Copy</button>
+        </div>
+        <div class="artifact-hint">DM this to a friend. They click → they're on your floor in seconds.</div>
       </div>
 
       <div><a class="go" id="enterBtn" href="#">Enter the floor →</a></div>
@@ -248,11 +311,15 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
       <div class="next-steps">
         <h3>What now</h3>
         <ol>
-          <li>Post in <strong>#showcase</strong> in the BullpenLM Discord with your link. Closers will reply.</li>
-          <li>React 🚀 on <strong>#start-here</strong> so the floor knows you're an Operator.</li>
-          <li>Walk into your floor, drop your scripts, set your house accounts.</li>
+          <li><strong>Copy the invite link above</strong> and send it to your first closer.</li>
+          <li><strong>Post your floor page</strong> in <a href="https://discord.gg/pXV4pPA5d5" target="_blank">#showcase</a> to get more applicants.</li>
+          <li><strong>Walk into your floor</strong> — drop your scripts, claim your first prospects.</li>
           <li>Pick up the phone. ✅</li>
         </ol>
+      </div>
+
+      <div class="warn-box" id="warnBox" hidden>
+        <strong>Heads up:</strong> <span id="warnText"></span>
       </div>
     </div>
   </section>
@@ -274,6 +341,10 @@ const state = {
   access_mode: "invite_only",
   price_usd: "",
   discord_invite: "",
+  brand_domain: "",
+  brand_sending_email: "",
+  brand_logo_url: "",
+  github_repo: "",
 };
 
 const SLUG_RE = /^[a-z0-9][a-z0-9\-]{1,38}[a-z0-9]$/;
@@ -359,6 +430,14 @@ function validateStep(n) {
       ok = !!state.commission_rate;
     }
   }
+  if (n === 3) {
+    // Brand step — everything optional, no required validation.
+    state.brand_domain        = readField("brand_domain");
+    state.brand_sending_email = readField("brand_sending_email");
+    state.brand_logo_url      = readField("brand_logo_url");
+    state.github_repo         = readField("github_repo");
+    ok = true;
+  }
   return ok;
 }
 
@@ -370,13 +449,17 @@ function buildReview() {
   };
   const rows = [
     ["Founder",       state.founder_display_name + " (@" + state.founder_rep + ")"],
-    ["Bullpen",       state.name + "  ·  bullpenlm.com/b/" + state.slug],
+    ["Bullpen",       state.name + "  ·  /b/" + state.slug],
     ["Selling",       state.product],
     ["Tagline",       state.tagline || "—"],
     ["Commission",    state.commission_rate],
     ["Seats open",    state.seats_open || "—"],
     ["Access",        accessLabels[state.access_mode]],
     ["Discord",       state.discord_invite || "—"],
+    ["Brand domain",  state.brand_domain || "—"],
+    ["Sending email", state.brand_sending_email || "—"],
+    ["Logo URL",      state.brand_logo_url || "—"],
+    ["GitHub",        state.github_repo || "—"],
   ];
   const root = $("#review");
   while (root.firstChild) root.removeChild(root.firstChild);
@@ -411,6 +494,13 @@ async function launch() {
     access_mode: state.access_mode,
     price_usd: state.access_mode === "paid" ? Number(state.price_usd) : null,
     discord_invite: state.discord_invite,
+    brand_domain: state.brand_domain,
+    brand_sending_email: state.brand_sending_email,
+    brand_logo_url: state.brand_logo_url,
+    github_repo: state.github_repo,
+    // Tell the server to also spin up the public tunnel + mint a first invite.
+    publish_tunnel: true,
+    create_first_invite: true,
   };
   try {
     const r = await fetch("/api/bullpens", {
@@ -432,19 +522,44 @@ async function launch() {
       }
       return;
     }
-    const baseHost = location.host.endsWith("bullpenlm.com")
-      ? "https://bullpenlm.com"
-      : location.origin;
-    const shareUrl = baseHost + (data.share_url || "/b/" + data.slug);
+    // Share URL prefers the live tunnel URL when available — that's what
+    // closers will actually use. Falls back to the relative /b/<slug>.
+    const tunnel = data.tunnel_url || "";
+    const shareUrl = tunnel
+      ? tunnel + "/b/" + data.slug
+      : location.origin + (data.share_url || "/b/" + data.slug);
+    const inviteUrl = data.invite_link || "";
+
     $("#shareLink").textContent = shareUrl;
+    if (inviteUrl) {
+      $("#inviteLink").textContent = inviteUrl;
+    } else {
+      // Hide the invite card if we couldn't mint one (no tunnel, etc.)
+      $("#inviteCard").style.display = "none";
+    }
+
     $("#enterBtn").href = data.app_url || ("/app/today.html?b=" + data.slug + "&rep=" + data.founder_rep);
     $("#successLine").textContent =
-      data.name + " is live. The CRM, leaderboard, kanban, and scripts are wired. Time to fill the seats.";
+      data.name + " is live. " +
+      (tunnel ? "Public URL spun up. " : "") +
+      (inviteUrl ? "First invite link ready to send." : "");
+
+    // Surface any warnings (tunnel didn't start, invite couldn't be minted, etc.)
+    if (data.warnings && data.warnings.length) {
+      $("#warnBox").hidden = false;
+      $("#warnText").textContent = data.warnings.join(" · ");
+    }
+
     showStep("done");
-    $("#copyBtn").onclick = async () => {
-      try { await navigator.clipboard.writeText(shareUrl); toast("Link copied. Now post it."); }
-      catch { toast("Copy failed", true); }
-    };
+
+    // Wire copy buttons for both link boxes via [data-copy] attribute.
+    document.querySelectorAll(".copyl[data-copy]").forEach(b => {
+      b.addEventListener("click", async () => {
+        const txt = document.getElementById(b.dataset.copy).textContent;
+        try { await navigator.clipboard.writeText(txt); toast("Link copied."); }
+        catch { toast("Copy failed", true); }
+      });
+    });
   } catch (e) {
     btn.disabled = false;
     btn.textContent = "Launch bullpen →";
@@ -464,7 +579,7 @@ $$('[data-go]').forEach(btn => {
       }
     }
     if (state.step === 1 && nextN === 2) syncSlugFromName();
-    if (nextN === 3) buildReview();
+    if (nextN === 4) buildReview();
     showStep(nextN);
   });
 });
