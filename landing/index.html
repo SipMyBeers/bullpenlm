@@ -85,9 +85,45 @@
   .hero-scanlines{position:absolute; inset:0; z-index:2; pointer-events:none;
     background:repeating-linear-gradient(180deg, transparent 0 2px, rgba(0,0,0,0.10) 2px 3px);
     mix-blend-mode:multiply; opacity:0.35}
-  .hero > .hero-mark, .hero > .hero-poster, .hero > .sub, .hero > .cta-row, .hero > .hero-stamp {
+  .hero > .hero-mark, .hero > .hero-poster, .hero > .sub, .hero > .cta-row,
+  .hero > .hero-stamp, .hero > .steam-badge, .hero > .sub-meta {
     position:relative; z-index:3;
   }
+
+  /* Steam "coming soon" badge — small, premium, sits above the hero headline */
+  .steam-badge{
+    display:inline-flex; align-items:center; gap:10px;
+    padding:8px 16px;
+    margin-bottom:22px;
+    background:rgba(102,192,244,0.08);
+    border:1px solid rgba(102,192,244,0.40);
+    border-radius:999px;
+    font-family:var(--mono); font-size:11px;
+    letter-spacing:.14em; text-transform:uppercase;
+    color:rgba(220,240,255,0.92);
+    backdrop-filter:blur(4px);
+  }
+  .steam-badge strong{color:#66c0f4; font-weight:700; letter-spacing:.08em}
+  .steam-badge a{color:#66c0f4; text-decoration:none; border-bottom:1px solid rgba(102,192,244,0.40); padding-bottom:1px}
+  .steam-badge a:hover{color:#fff; border-bottom-color:#fff}
+  .steam-badge-dot{
+    width:8px; height:8px; border-radius:50%;
+    background:#66c0f4;
+    box-shadow:0 0 8px #66c0f4;
+    animation:steam-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes steam-pulse{
+    0%,100%{opacity:1; transform:scale(1)}
+    50%{opacity:.55; transform:scale(1.2)}
+  }
+
+  /* Footnote under the CTA row */
+  .sub-meta{
+    font-family:var(--mono); font-size:11px;
+    color:var(--muted); letter-spacing:.04em;
+    margin-top:14px; max-width:60ch;
+  }
+  .sub-meta strong{color:var(--text)}
 
   /* Top-left brand mark + film-credit tag */
   .hero-mark{display:flex; align-items:flex-end; gap:18px; margin-bottom:auto}
@@ -464,6 +500,11 @@
     <span class="hero-tag">The pay-to-play sales bullpen</span>
   </div>
 
+  <div class="steam-badge">
+    <span class="steam-badge-dot"></span>
+    Coming soon to <strong>Steam</strong> &mdash; <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener">join the alpha</a> for a free Steam key at launch
+  </div>
+
   <h1 class="hero-poster">
     Learn to sell<br>
     <em>anything &mdash; by selling<br>
@@ -475,10 +516,14 @@
   </p>
 
   <div class="cta-row">
-    <a href="https://github.com/SipMyBeers/bullpenlm#quick-start-host-your-own" target="_blank" rel="noopener" class="btn-primary">🚀 Get the app &rarr;</a>
-    <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener" class="btn-ghost">💬 Join the Discord</a>
+    <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener" class="btn-primary">🚀 Join the alpha &rarr;</a>
+    <a href="https://github.com/SipMyBeers/bullpenlm#quick-start-host-your-own" target="_blank" rel="noopener" class="btn-ghost">Self-host now</a>
     <a href="https://github.com/SipMyBeers/bullpenlm" target="_blank" rel="noopener" class="btn-ghost">View on GitHub</a>
   </div>
+
+  <p class="sub-meta">
+    Free + open source forever &mdash; the Steam build packages the same code for one-click install. Alpha cohort members get a free Steam key at EA launch.
+  </p>
   <p style="margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;max-width:62ch">
     Open source. Self-hosted. One founder runs the floor — friends join with a code.
   </p>

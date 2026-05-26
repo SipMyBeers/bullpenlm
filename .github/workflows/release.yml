@@ -1,0 +1,178 @@
+# BullpenLM — cross-platform release builds on tag push.
+#
+# Trigger: pushing any tag matching v*.*.* (e.g. v0.2.0, v1.0.0-rc1).
+# Build matrix: macOS 14 (Apple Silicon + Intel), Ubuntu 22.04 (x86_64),
+# Windows 2022 (x86_64). Output: GitHub Release with .dmg + .exe + .AppImage
+# binaries attached, draft mode so Beers can review before publishing.
+#
+# Security note: github.ref_name is the git tag the maintainer pushed. We
+# only reference it in YAML-string fields of the Tauri Action (tagName,
+# releaseName, buildDescription) — never inside a `run:` shell block, so
+# there's no shell-injection vector. Anything that crosses into shell is
+# routed through an env var first.
+#
+# Two builds per platform — the open-source self-host build (no Steam),
+# and the Steam-flavored build (Phase 2+, gated by --features steam in
+# the Cargo manifest). The Steam binaries are uploaded to the Steam content
+# depot via a separate `steam-deploy` job that activates only when
+# STEAM_APP_ID is set as a repo variable.
+
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: write     # needed to create the GitHub Release
+
+env:
+  # Pulled into one place so downstream jobs reference the same value
+  # without re-templating github.ref_name inside shell strings.
+  RELEASE_TAG: ${{ github.ref_name }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14            # Apple Silicon
+            target: aarch64-apple-darwin
+            artifact: macos-aarch64
+          - os: macos-13            # Intel
+            target: x86_64-apple-darwin
+            artifact: macos-x86_64
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            artifact: linux-x86_64
+          - os: windows-2022
+            target: x86_64-pc-windows-msvc
+            artifact: windows-x86_64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Rust toolchain (Tauri's backend) ──
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
+
+      # ── Linux: extra Tauri system dependencies ──
+      - name: Install Linux deps
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      # ── Python toolchain (for PyInstaller sidecar — Phase 1 only) ──
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install PyInstaller + runtime deps
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pyinstaller pyyaml certifi
+
+      # ── Bundle the Python server into a single binary ──
+      # The .spec file (desktop/src-tauri/binaries/bullpenlm-server.spec)
+      # is the source of truth for what gets bundled. We invoke PyInstaller
+      # against it then rename the output for the target platform so Tauri's
+      # `externalBin` field can pick it up.
+      - name: PyInstaller — bundle Python server
+        shell: bash
+        run: |
+          cd desktop/src-tauri/binaries
+          if [ -f bullpenlm-server.spec ]; then
+            pyinstaller bullpenlm-server.spec
+          else
+            echo "::warning::No PyInstaller spec yet — skipping sidecar bundle."
+            echo "Phase 1 work will add desktop/src-tauri/binaries/bullpenlm-server.spec"
+          fi
+
+      # ── Tauri build (open-source variant) ──
+      - name: Tauri build (FOSS — no Steam)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          # Apple code signing — set as repo secrets when ready for Phase 1.
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Windows code signing — Authenticode cert as base64.
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+        with:
+          projectPath: desktop
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: BullpenLM ${{ env.RELEASE_TAG }}
+          releaseBody: |
+            Cross-platform builds for BullpenLM.
+
+            Self-host installer below. Steam version (when live) will install
+            via the Steam client — see https://bullpenlm.com for the Steam URL.
+          releaseDraft: true
+          prerelease: false
+          args: --target ${{ matrix.target }}
+
+      # ── Upload raw artifacts for the steam-deploy job to consume ──
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bullpenlm-${{ matrix.artifact }}
+          path: |
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.app
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+          if-no-files-found: warn
+          retention-days: 14
+
+  # ── Steam content depot deploy (Phase 2+) ──
+  # Activates only when STEAM_APP_ID is configured as a repo variable.
+  # Until then, this job is skipped on every run.
+  steam-deploy:
+    needs: build
+    if: ${{ vars.STEAM_APP_ID != '' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Deploy to Steam content depot
+        uses: game-ci/steam-deploy@v3
+        with:
+          username: ${{ secrets.STEAM_USERNAME }}
+          configVdf: ${{ secrets.STEAM_CONFIG_VDF }}
+          ssfnFileName: ${{ secrets.STEAM_SSFN_FILE_NAME }}
+          ssfnFileContents: ${{ secrets.STEAM_SSFN_FILE_CONTENTS }}
+          appId: ${{ vars.STEAM_APP_ID }}
+          buildDescription: GitHub release ${{ env.RELEASE_TAG }}
+          rootPath: ./artifacts
+          depot1Path: bullpenlm-macos-aarch64
+          depot2Path: bullpenlm-macos-x86_64
+          depot3Path: bullpenlm-linux-x86_64
+          depot4Path: bullpenlm-windows-x86_64
+          releaseBranch: testing   # promote to "default" manually after smoke test

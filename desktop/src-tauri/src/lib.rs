@@ -18,6 +18,12 @@ use tauri::{Emitter, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
 
+// Steam integration is feature-gated. The open-source self-host build
+// (default) doesn't compile this module or pull the steamworks crate.
+// Phase 2 (Steam EA) builds enable it with `tauri build --features steam`.
+#[cfg(feature = "steam")]
+mod steam;
+
 const SERVER_PORT: u16 = 7878;
 const SERVER_READY_MARKER: &str = "BullpenLM · trainer";
 
@@ -203,12 +209,22 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::default())
-        .invoke_handler(tauri::generate_handler![
-            start_host,
-            stop_host,
-            host_status,
-            open_floor,
-        ])
+        .invoke_handler({
+            // Open-source self-host handlers are always wired. Steam-only
+            // commands are registered in a feature-gated branch so the
+            // FOSS build's handler table doesn't reference missing fns.
+            #[cfg(not(feature = "steam"))]
+            { tauri::generate_handler![start_host, stop_host, host_status, open_floor] }
+            #[cfg(feature = "steam")]
+            { tauri::generate_handler![
+                start_host, stop_host, host_status, open_floor,
+                steam::steam_init,
+                steam::steam_unlock,
+                steam::steam_cloud_push,
+                steam::steam_cloud_pull,
+                steam::steam_invite_friend,
+            ] }
+        })
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {

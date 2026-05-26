@@ -15,6 +15,13 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [build-dependencies]
 tauri-build = { version = "2.5.6", features = [] }
 
+[features]
+# Default = the open-source self-host build. Steam-specific code is gated
+# behind the `steam` feature, which is OFF by default. To produce the
+# Steam-ready binary: `tauri build --features steam`.
+default = []
+steam = ["dep:steamworks"]
+
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
@@ -25,3 +32,9 @@ tauri = { version = "2.10.3", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-shell = "2"
 tauri-plugin-opener = "2"
+
+# Optional — wired into src/steam.rs, only compiled with --features steam.
+# Until Steam Direct approves our app ID, this stays unbuilt by default.
+# Pinned to the latest stable release; bump cautiously since Steamworks
+# SDK breaking changes have happened mid-version in the past.
+steamworks = { version = "0.11", optional = true }
