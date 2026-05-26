@@ -61,9 +61,20 @@ AUDIO_EXTS = (".mp3", ".m4a", ".wav", ".ogg", ".aiff", ".aac")
 # Curated stitch recipes per event. Each is a list of tag tokens — they're
 # stitched in order. Use the same tag twice for emphasis.
 EVENT_RECIPES = {
-    "welcome":     ["greeting", "hype", "hard-truth", "taps"],
+    # Canonical welcome — see clips/WELCOME_SCRIPT.md for the exact sequence.
+    # Order matters; missing clips silently fall back to a random pick from
+    # the same tag so the recipe still renders during library buildout.
+    "welcome": [
+        ("clips/taps/phone-ring-short.mp3",       "taps"),
+        ("clips/hard-truth/wolf-pick-up-phone.mp3", "hard-truth"),
+        ("clips/hype/wolf-money-doesnt-sleep.mp3",  "hype"),
+        ("clips/greeting/wolf-name-is-jordan.mp3",  "greeting"),
+        ("clips/hard-truth/glengarry-abc.mp3",      "hard-truth"),
+        ("clips/taps/cash-register.mp3",            "taps"),
+        ("clips/hype/wolf-name-of-game.mp3",        "hype"),
+    ],
     "new-bullpen": ["hype", "hype", "close", "taps"],
-    "close-won":   ["close", "close", "hype"],
+    "close-won":   ["close", "close", "hype", "taps"],
     "raid-start":  ["raid", "hype", "taunt"],
     "duel":        ["taunt", "taps"],
     "sprint":      ["hype", "hype", "raid"],
@@ -84,13 +95,26 @@ def list_library() -> dict[str, list[str]]:
     return out
 
 
-def _resolve_clip(spec: str) -> Optional[Path]:
+def _resolve_clip(spec) -> Optional[Path]:
     """Resolve a stitch token. Accepts:
-      - 'hype'                    → random clip from clips/hype/
-      - 'clips/hype/foo.mp3'      → exact path
-      - 'hype/foo.mp3'            → exact path
+      - 'hype'                       → random clip from clips/hype/
+      - 'clips/hype/foo.mp3'         → exact path
+      - 'hype/foo.mp3'               → exact path
+      - ('clips/hype/foo.mp3', 'hype') → try explicit path; fall back to random
+                                         clip from the tag if the file doesn't
+                                         exist yet (used by EVENT_RECIPES so
+                                         the welcome montage degrades gracefully
+                                         while clips are still being populated)
     """
-    spec = spec.strip()
+    # Tuple form: (preferred_path, fallback_tag)
+    if isinstance(spec, tuple) and len(spec) == 2:
+        preferred, fallback_tag = spec
+        explicit = _resolve_clip(preferred)
+        if explicit is not None:
+            return explicit
+        return _resolve_clip(fallback_tag)
+
+    spec = (spec or "").strip()
     if not spec:
         return None
     # Tag-only
@@ -184,14 +208,21 @@ def _webhook(channel: str) -> Optional[str]:
         return None
 
 
-def post_audio_to_discord(audio_path: Path, channel: str,
-                           caption: str = "") -> dict:
+def post_audio_to_discord(audio_path: Path, channel: Optional[str] = None,
+                           caption: str = "",
+                           webhook_url: Optional[str] = None) -> dict:
     """POST a stitched audio file to a Discord webhook as a multipart upload.
-    Discord renders MP3 attachments with an inline audio player."""
-    hook = _webhook(channel)
+    Discord renders MP3 attachments with an inline audio player.
+
+    Either `channel` (looked up in DISCORD_WEBHOOK_PATHS) or `webhook_url`
+    (raw URL — used by per-bullpen close-won posts where the URL lives in
+    the bullpen's bullpen.json) must be set.
+    """
+    hook = webhook_url or (_webhook(channel) if channel else None)
     if not hook:
-        return {"ok": False, "error": f"no_webhook_for_{channel}",
-                "hint": f"Put the webhook URL in {DISCORD_WEBHOOK_PATHS.get(channel)}"}
+        return {"ok": False, "error": f"no_webhook_for_{channel or 'unspecified'}",
+                "hint": f"Put the webhook URL in {DISCORD_WEBHOOK_PATHS.get(channel)}"
+                         if channel else "Pass webhook_url= or set a channel"}
     if not audio_path.exists():
         return {"ok": False, "error": "audio_missing", "path": str(audio_path)}
 

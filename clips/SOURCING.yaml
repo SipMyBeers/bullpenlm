@@ -1,0 +1,204 @@
+# Bumblebee clip sourcing manifest.
+#
+# Fill in the `url:` for each entry once you've found a YouTube source, then run:
+#   python3 scripts/fetch_clip.py --manifest clips/SOURCING.yaml
+#
+# Tips:
+#   - Search YouTube for "wolf of wall street best scenes" / "glengarry glen ross
+#     best of" / "boiler room scenes" — supercuts are gold. One supercut URL can
+#     be reused across many rows (just change the start/end).
+#   - The `start:` and `end:` accept "12.4" (seconds), "1:24" (mm:ss), or
+#     "1:24.5" (mm:ss.fraction).
+#   - The `name:` becomes the filename — keep it kebab-case, descriptive.
+#   - Anything with `url: TODO` is skipped (you'll see it in the run log).
+
+# ── WELCOME MONTAGE (the #start-here intro — render via `bumblebee event welcome`)
+
+- url: TODO   # Wolf of Wall Street boiler room — Belfort yelling
+  start: TODO
+  end:   TODO
+  mood:  hard-truth
+  name:  wolf-pick-up-phone
+  # Belfort training scene, ~1h13m: "PICK UP THE PHONE! Pick up the phone! Pick up the phone!"
+
+- url: TODO   # Wolf of Wall Street — Mark Hanna lunch
+  start: TODO
+  end:   TODO
+  mood:  hype
+  name:  wolf-money-doesnt-sleep
+  # Hanna: "Money doesn't sleep, pal."
+
+- url: TODO   # Wolf of Wall Street — opening narration
+  start: TODO
+  end:   TODO
+  mood:  greeting
+  name:  wolf-name-is-jordan
+  # "My name is Jordan Belfort."
+
+- url: TODO   # Glengarry Glen Ross — Blake's "ABC" speech
+  start: TODO
+  end:   TODO
+  mood:  hard-truth
+  name:  glengarry-abc
+  # "A. B. C. Always be closing."
+
+- url: TODO   # Stock effect or movie sting
+  start: TODO
+  end:   TODO
+  mood:  taps
+  name:  cash-register
+  # Ka-ching SFX
+
+- url: TODO   # Stock — single 80s/90s phone ring
+  start: TODO
+  end:   TODO
+  mood:  taps
+  name:  phone-ring-short
+  # Single trill, ~0.8s
+
+- url: TODO   # Wolf of Wall Street — boardroom "name of the game" line
+  start: TODO
+  end:   TODO
+  mood:  hype
+  name:  wolf-name-of-game
+  # "The name of the game…" — cut before he finishes
+
+
+# ── NEW BULLPEN LAUNCH (auto-fires when wizard creates a new bullpen)
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  hype
+  name:  wolf-pump-up-crowd
+  # Belfort whipping the floor into a frenzy
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  close
+  name:  wolf-floor-cheer
+  # Stratton-Oakmont floor cheering after a close
+
+
+# ── CLOSE WON (auto-fires when a deal_closed_won event hits)
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  close
+  name:  wolf-chest-pound
+  # The chest-pound chant
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  close
+  name:  boiler-room-i-am-a-millionaire
+  # Boiler Room: "I'm a millionaire. It's a weird thing to hear, right?"
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  hype
+  name:  wolf-let-me-tell-you
+  # "Let me tell you something — there's no nobility in poverty."
+
+
+# ── HARD TRUTH (rep needs a reality check)
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  hard-truth
+  name:  glengarry-coffee
+  # "Coffee is for closers only."
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  hard-truth
+  name:  glengarry-watch
+  # "You see this watch? This watch cost more than your car."
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  hard-truth
+  name:  glengarry-leads-are-weak
+  # "The leads are weak? You're weak."
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  hard-truth
+  name:  wolf-fking-not
+  # "Was all this legal? Absolutely fucking not."
+
+
+# ── OBJECTION (pushback / disbelief)
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  objection
+  name:  boiler-room-no-sale
+  # Boiler Room: "There is no such thing as a no sale call."
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  objection
+  name:  wolf-im-not-leaving
+  # Belfort: "I'M NOT LEAVING!"
+
+
+# ── RAID (group hype — squad runs, sprints)
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  raid
+  name:  wolf-crowd-roar
+  # Stratton floor erupting
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  raid
+  name:  eye-of-the-tiger-riff
+  # 1-2 sec of the opening riff
+
+
+# ── TAUNT (1v1 duel callouts)
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  taunt
+  name:  glengarry-step-up
+  # "Step up or step off" energy
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  taunt
+  name:  wolf-watch-me
+  # Belfort: "Watch me work."
+
+
+# ── GREETING (general openers)
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  greeting
+  name:  wolf-good-to-see-you
+  # "Good to see you" / "Welcome to the firm" energy
+
+- url: TODO
+  start: TODO
+  end:   TODO
+  mood:  greeting
+  name:  goodfellas-look-who-walked-in
+  # Optional: a Goodfellas / Casino / Wolf greeting

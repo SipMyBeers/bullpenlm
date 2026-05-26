@@ -76,6 +76,31 @@ def _send(url: str, content: str) -> None:
 SHOWCASE_WEBHOOK_PATH = Path.home() / ".bullpenlm" / "showcase-webhook.txt"
 
 
+def _fire_bumblebee_event(event: str, channel: Optional[str] = None,
+                            webhook_url: Optional[str] = None,
+                            caption: str = "") -> None:
+    """Best-effort Bumblebee stitch+post. Silently no-ops if the clip
+    library is empty, the webhook isn't configured, or ffmpeg trips.
+    Runs on a background thread so the caller doesn't block on audio
+    rendering. Either `channel` (master-server webhook lookup) or
+    `webhook_url` (per-bullpen webhook from bullpen.json) wins."""
+    def _go():
+        try:
+            from bumblebee import stitch_event, post_audio_to_discord
+            try:
+                audio_path = stitch_event(event)
+            except Exception as e:
+                print(f"[bumblebee] skipping {event}: {e}")
+                return
+            r = post_audio_to_discord(audio_path, channel=channel,
+                                       webhook_url=webhook_url, caption=caption)
+            if not r.get("ok"):
+                print(f"[bumblebee] post {event} failed: {r}")
+        except Exception as e:
+            print(f"[bumblebee] {event} crashed: {e}")
+    threading.Thread(target=_go, daemon=True).start()
+
+
 def _showcase_webhook() -> Optional[str]:
     """The master BullpenLM Discord #showcase webhook. Set per-host so the
     secret URL doesn't leak in the public repo."""
@@ -135,6 +160,11 @@ def announce_new_bullpen(bullpen_cfg: dict, public_url: Optional[str] = None) ->
         "content": "\n".join(lines),
     })
 
+    # Beers Bot also speaks (Bumblebee-style) if the clip library has
+    # enough material to render the recipe. No-op when clips are missing.
+    _fire_bumblebee_event("new-bullpen", channel="showcase",
+                            caption=f"🚀 **{name.upper()}** just opened.")
+
 
 def notify(bullpen: str, event: dict) -> None:
     """Called from audit.append's fan-out. Inspect `event`, decide if it's
@@ -153,6 +183,8 @@ def notify(bullpen: str, event: dict) -> None:
         _send(url,
               f"🚀 **{actor}** just closed **{prospect}** — **{amount}**. "
               f"That's how it's done. ✅")
+        _fire_bumblebee_event("close-won", webhook_url=url,
+                                caption=f"🚀 **{actor}** just closed **{prospect}**.")
         return
 
     if kind == "achievement_unlocked" and (p.get("rarity") in ("epic", "legendary")):
@@ -162,6 +194,9 @@ def notify(bullpen: str, event: dict) -> None:
         _send(url,
               f"{marker} **{actor}** just hit **{name}**. "
               f"That's **{rarity.upper()}**. Tip of the cap.")
+        if rarity == "legendary":
+            _fire_bumblebee_event("close-won", webhook_url=url,
+                                    caption=f"{marker} **{actor}** unlocked **{name}**.")
         return
 
     if kind == "quest_completed" and (p.get("scope") in ("raid",)):
@@ -171,6 +206,8 @@ def notify(bullpen: str, event: dict) -> None:
         _send(url,
               f"✅ **{actor}** dragged a party of **{size}** over the line on "
               f"**{name}**. **+{xp} XP**. Crew's eating tonight.")
+        _fire_bumblebee_event("raid-start", webhook_url=url,
+                                caption=f"✅ Raid down — **{name}**.")
         return
 
     if kind == "sprint_started":
@@ -178,6 +215,8 @@ def notify(bullpen: str, event: dict) -> None:
         _send(url,
               f"❗ Sprint live — **{name}**. Started by **{actor}**. "
               f"Pick up the phone. Pick up the phone. Pick up the phone.")
+        _fire_bumblebee_event("sprint", webhook_url=url,
+                                caption=f"❗ Sprint live — **{name}**.")
         return
 
     if kind == "duo_challenged":
@@ -187,4 +226,6 @@ def notify(bullpen: str, event: dict) -> None:
         _send(url,
               f"❗ **{actor}** just called out **{opp}**{tail}. "
               f"Step up or step off.")
+        _fire_bumblebee_event("duel", webhook_url=url,
+                                caption=f"❗ **{actor}** → **{opp}**.")
         return
