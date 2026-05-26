@@ -21,6 +21,7 @@ import socketserver
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 import urllib.request
 import datetime
 import re
@@ -2475,6 +2476,69 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 except Exception: pass
             return
 
+        # ── Business docs: list (visibility-filtered by viewer rep) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/docs(?:$|\?)", self.path)
+        if m:
+            try:
+                from docs import list_docs
+                bullpen = m.group(1)
+                rep = self._current_rep()
+                self._send_json(200, {"docs": list_docs(bullpen, rep)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Business docs: fetch one ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/docs/([A-Za-z0-9_\-\.\(\) ]+)$", self.path)
+        if m:
+            try:
+                from docs import get_doc
+                bullpen, fn = m.group(1), m.group(2)
+                rep = self._current_rep()
+                hit = get_doc(bullpen, fn, rep)
+                if not hit:
+                    self._send_json(404, {"error": "doc_not_found_or_hidden"}); return
+                body, ctype, _entry = hit
+                self.send_response(200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Content-Disposition", f'inline; filename="{fn}"')
+                self._cors()
+                self.end_headers()
+                self.wfile.write(body)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Email templates: list available for a bullpen ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/email/templates(?:$|\?)", self.path)
+        if m:
+            try:
+                from email_templates import list_available
+                self._send_json(200, {"templates": list_available(m.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Email template render preview (founder-only via localhost) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/email/preview/([a-z0-9\-]+)(?:$|\?)",
+                      self.path)
+        if m:
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from email_templates import render
+                bullpen, name = m.group(1), m.group(2)
+                # Query string vars: ?first_name=Brad&deal_name=Cigna
+                qs = urllib.parse.parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
+                vars_d = {k: v[0] for k, v in qs.items()}
+                self._send_json(200, render(name, vars=vars_d, bullpen=bullpen))
+            except FileNotFoundError as e:
+                self._send_json(404, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Live calls: list active for a bullpen (for the coach lobby) ──
         m = re.match(r"^/api/b/([a-z0-9\-]+)/calls/active(?:$|\?)", self.path)
         if m:
@@ -2854,6 +2918,61 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     "share_url": f"/b/{slug}",
                     "config": cfg,
                 })
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Branded email send (founder-only via localhost) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/email/send$", self.path)
+        if m:
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from email_send import send_template, send_raw
+                bullpen = m.group(1)
+                req2 = json.loads(raw) if raw else {}
+                actor = (req2.get("actor") or self._current_rep() or "founder").strip()
+                to = req2.get("to")
+                if not to:
+                    self._send_json(400, {"error": "to_required"}); return
+                if req2.get("template"):
+                    r = send_template(bullpen, req2["template"], to,
+                                       vars=req2.get("vars") or {},
+                                       actor=actor)
+                else:
+                    if not (req2.get("subject") and (req2.get("html") or req2.get("text"))):
+                        self._send_json(400, {"error": "subject_and_body_required"}); return
+                    r = send_raw(bullpen, to,
+                                  subject=req2["subject"],
+                                  html=req2.get("html", ""),
+                                  text=req2.get("text", ""),
+                                  actor=actor)
+                self._send_json(200 if r.get("ok") else 502, r)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Business docs upload (founder-only via localhost; raw bytes body) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/docs/([A-Za-z0-9_\-\.\(\) ]+)$", self.path)
+        if m:
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from docs import put_doc
+                bullpen, fn = m.group(1), m.group(2)
+                rep = self._current_rep() or "founder"
+                # Optional metadata via query string: ?visibility=members&title=...
+                qs = urllib.parse.parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
+                visibility = (qs.get("visibility", ["members"]) or ["members"])[0]
+                title = (qs.get("title", [""]) or [""])[0]
+                entry = put_doc(bullpen, fn, raw, title=title,
+                                 visibility=visibility,
+                                 uploaded_by=rep, viewer_rep=rep)
+                self._send_json(200, {"ok": True, "entry": entry})
+            except PermissionError as e:
+                self._send_json(403, {"error": str(e)})
             except ValueError as e:
                 self._send_json(400, {"error": str(e)})
             except Exception as e:

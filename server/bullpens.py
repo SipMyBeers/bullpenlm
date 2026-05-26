@@ -154,7 +154,9 @@ def set_bullpen_config(bullpen: str, updates: dict) -> Optional[dict]:
     Only allow-listed fields are writable."""
     ALLOWED = {"name", "product", "public_url", "discord_invite",
                "access_mode", "price_usd", "tagline", "brand",
-               "commission_rate", "seats_open", "founder_display_name"}
+               "commission_rate", "seats_open", "founder_display_name",
+               "github_repo", "brand_domain", "brand_sending_email",
+               "brand_reply_to", "brand_logo_url"}
     VALID_ACCESS = {"public", "invite_only", "paid"}
     p = _bullpen_json(bullpen)
     if not p.exists():

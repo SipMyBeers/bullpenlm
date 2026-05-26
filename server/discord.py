@@ -185,6 +185,21 @@ def notify(bullpen: str, event: dict) -> None:
               f"That's how it's done. ✅")
         _fire_bumblebee_event("close-won", webhook_url=url,
                                 caption=f"🚀 **{actor}** just closed **{prospect}**.")
+        # Auto-send the branded close-won-thanks email if a client email is
+        # attached to the deal AND the Cloudflare Email Worker is configured.
+        # No-op cleanly when either piece is missing.
+        client_email = p.get("client_email") or p.get("prospect_email")
+        if client_email:
+            try:
+                from email_send import send_template
+                threading.Thread(target=send_template, args=(bullpen, "close-won-thanks", client_email),
+                                  kwargs={"vars": {"first_name": p.get("client_first_name", ""),
+                                                    "deal_name": prospect,
+                                                    "deal_amount": amount},
+                                          "actor": actor},
+                                  daemon=True).start()
+            except Exception as e:
+                print(f"[email] close-won-thanks send failed: {e}")
         return
 
     if kind == "achievement_unlocked" and (p.get("rarity") in ("epic", "legendary")):

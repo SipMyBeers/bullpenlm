@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bullpenlm-email",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-25",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Cloudflare Email Service binding. The `from` domain in every send()
+  // call must be onboarded via:
+  //   npx wrangler email sending enable yourdomain.com
+  // before the first send will succeed. See README.md.
+  "send_email": [
+    { "name": "EMAIL" }
+  ],
+
+  // Shared secret the BullpenLM host uses to authenticate calls into this
+  // Worker. Set with: npx wrangler secret put BULLPENLM_SHARED_SECRET
+  // Then put the same value in ~/.bullpenlm/email-worker.json on the host.
+  "vars": {
+    // Public, non-sensitive config.
+    "DEFAULT_REPLY_TO": ""
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}
