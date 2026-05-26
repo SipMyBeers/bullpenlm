@@ -2880,6 +2880,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 brand_logo_url      = (req2.get("brand_logo_url") or "").strip()[:240]
                 brand_reply_to      = (req2.get("brand_reply_to") or "").strip()[:120]
                 github_repo         = (req2.get("github_repo") or "").strip()[:240]
+                commission_tiers    = (req2.get("commission_tiers") or "").strip()[:2000]
+                host_location       = (req2.get("host_location") or "this_device").strip()
 
                 manifest = create_bullpen(slug, founder_rep,
                                           product=product, name=name)
@@ -2902,10 +2904,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     ("brand_logo_url", brand_logo_url),
                     ("brand_reply_to", brand_reply_to),
                     ("github_repo", github_repo),
+                    ("commission_tiers", commission_tiers),
+                    ("host_location", host_location),
                 ):
                     if v:
                         updates[k] = v
                 cfg = set_bullpen_config(slug, updates) or manifest
+
+                # Re-render the legal docs now that the config is final so
+                # bullpens/<slug>/legal/referral-agreement.md reflects the
+                # operator's commission_rate / tiers / brand from this wizard.
+                try:
+                    from bullpens import render_legal_docs
+                    render_legal_docs(slug)
+                except Exception:
+                    pass
 
                 if founder_display_name:
                     try:

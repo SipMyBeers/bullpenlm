@@ -1,12 +1,12 @@
-# SALES COMMISSION AGREEMENT
+# SALES COMMISSION AGREEMENT — {{brand_name|YOUR BULLPEN}}
 
 **Effective date:** _________________ ("Effective Date")
 
 **Between:**
 
-**Beers Labs LLC** ("Company"), an Oregon limited liability company with
-principal address at _________________, represented by Dylan Beers,
-Member-Manager.
+**{{company_display|YOU}}** ("Company"),
+{{company_entity_type|operating in the United States}}, represented by
+**{{founder_display_name|YOU}}**.
 
 **AND**
 
@@ -18,9 +18,10 @@ _________________.
 ## 1. What the Rep does
 
 The Rep identifies, contacts, qualifies, and pitches prospective customers
-for KillSesh — primarily through cold calls, voicemails, and email — and
-will hand qualified opportunities to the Company for closing, OR close them
-directly with the Company's standard pilot terms.
+for **{{product|the Company's offering}}** — primarily through cold calls,
+voicemails, and email — and will hand qualified opportunities to the
+Company for closing, OR close them directly with the Company's standard
+pilot terms.
 
 The Rep operates as an independent contractor, sets their own hours, and
 uses their own tools. The Rep is **not** an employee, agent, or partner of
@@ -36,15 +37,14 @@ represent themselves as an employee or officer of the Company.
 The Rep earns commission on **collected revenue** (cash actually received by
 the Company) from accounts the Rep originates:
 
-| Revenue type                                  | Commission rate |
-|-----------------------------------------------|-----------------|
-| Pilot revenue (first signed agreement)        | **25 %**        |
-| Expansion revenue (additional modules / scope) | **15 %**        |
-| Renewal revenue (year 2 and beyond)           | **10 %**        |
+**Standard rate: {{commission_rate|to be set by the Company}}**
 
-**Commission window per account: 24 months** from the date of the first
-signed pilot. After 24 months, the account is considered a Company account
-and no further commission accrues to the Rep.
+{{commission_tiers_section|}}
+
+**Commission window per account: {{commission_window_months|24}} months**
+from the date of the first signed agreement. After this window, the account
+is considered a Company account and no further commission accrues to the
+Rep.
 
 ---
 
@@ -75,7 +75,7 @@ refresh this list in writing whenever it changes.
 ## 4. Payment terms
 
 Commissions are paid by the Company to the Rep once per month, by the 15th
-of the month following collection, via bank transfer or check.
+of the month following collection, via bank transfer.
 
 ---
 
@@ -96,7 +96,7 @@ This agreement is at-will and can be terminated by either party with
 - Commissions on accounts in active sales cycles continue to accrue to the
   Rep for **120 days** past termination.
 - Commissions on closed customers continue for the full remaining
-  **24-month window** after termination.
+  {{commission_window_months|24}}-month window after termination.
 - The Rep returns or destroys any Company-confidential materials.
 
 ---
@@ -106,7 +106,7 @@ This agreement is at-will and can be terminated by either party with
 The Rep agrees not to disclose to any third party without the Company's
 written consent: customer information, pricing beyond the Company's
 publicly stated pricing, product roadmap, or any non-public technical
-detail of **KillSesh** or **BullpenLM**.
+detail of **{{product|the Company's offering}}**.
 
 This obligation survives termination indefinitely for customer
 information, and for 3 years for pricing and roadmap.
@@ -116,8 +116,7 @@ information, and for 3 years for pricing and roadmap.
 ## 8. No exclusivity, no non-compete
 
 The Rep is free to take other contract work, provided that work does not
-involve directly competing products (other COBOL-to-modern-stack
-translation tools). The Company reserves the same freedom.
+involve directly competing products. The Company reserves the same freedom.
 
 ---
 
@@ -140,9 +139,11 @@ this agreement is capped at the total commissions paid to the Rep in the
 
 ## 11. Governing law
 
-This agreement is governed by the laws of the State of Oregon, USA. Any
-disputes shall be resolved in the state or federal courts located in
-Multnomah County, Oregon, and both parties consent to that venue.
+This agreement is governed by the laws of the **State of
+{{jurisdiction_state|[FILL IN: your state]}}, USA**. Any disputes shall be
+resolved in the state or federal courts located in
+**{{jurisdiction_county|[FILL IN: your county]}}**, and both parties
+consent to that venue.
 
 ---
 
@@ -156,13 +157,13 @@ amendment must be in writing and signed by both parties.
 
 ## Signatures
 
-**BEERS LABS LLC**
+**{{company_display|YOU}}**
 
 Signature: _________________________________________
 
-Name: **Dylan Beers**
+Name: **{{founder_display_name|YOU}}**
 
-Title: **Member-Manager**
+Title: **{{founder_title|Operator}}**
 
 Date: ______________
 
@@ -179,3 +180,11 @@ Address: _________________________________________
 Email: _________________________________________
 
 Date: ______________
+
+---
+
+> **Note from the Company:** This is the default sales-commission agreement
+> shipped by BullpenLM. Before sending it to your first Rep, review the
+> bracketed `[FILL IN: …]` sections and the company-entity details for
+> accuracy. Consider having a lawyer eyeball it for your jurisdiction.
+> BullpenLM and Beers Labs LLC are not your lawyers.

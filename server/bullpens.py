@@ -86,12 +86,40 @@ def create_bullpen(slug: str, founder_rep: str, product: str = "",
                 "commissions", "legal", "signatures", "trophies"):
         (d / sub).mkdir(parents=True, exist_ok=True)
 
-    # Seed legal docs from the master template at sales/
+    # Seed legal docs from the master template at sales/.
+    # As of v0.2 these are *rendered* through the same {{var}} engine as
+    # the email templates so the resulting agreement reflects this bullpen's
+    # brand_name / commission_rate / founder. Founders still need to fill
+    # in `[FILL IN: …]` markers for jurisdiction/entity-specific info.
     template_version = "0"
     if seed_legal and SALES_TEMPLATE.exists():
+        try:
+            from email_templates import _sub as _render_vars  # type: ignore
+        except Exception:
+            _render_vars = None
+        # Variables passed into the legal-template renderer below. Pulled
+        # again from the manifest we're about to write so the very first
+        # render reflects the just-constructed manifest.
+        render_vars = {
+            "brand_name": name or slug,
+            "product": product,
+            "founder_display_name": "",  # populated by set_bullpen_config later
+            "commission_rate": "",
+            "commission_tiers_section": "",
+            "commission_window_months": "24",
+            "company_entity": "",
+            "company_entity_type": "",
+            "founder_title": "Operator",
+            "jurisdiction_state": "",
+            "jurisdiction_county": "",
+        }
         for md in SALES_TEMPLATE.glob("*.md"):
-            shutil.copy2(md, d / "legal" / md.name)
-        # Snapshot the template version as the source manifest's hash
+            raw = md.read_text()
+            if _render_vars:
+                rendered = _render_vars(raw, render_vars)
+            else:
+                rendered = raw
+            (d / "legal" / md.name).write_text(rendered)
         sha = __import__("hashlib").sha256()
         for md in sorted(SALES_TEMPLATE.glob("*.md")):
             sha.update(md.read_bytes())
@@ -127,6 +155,66 @@ def create_bullpen(slug: str, founder_rep: str, product: str = "",
     return manifest
 
 
+def render_legal_docs(slug: str) -> int:
+    """Re-render every legal .md in bullpens/<slug>/legal/ from the master
+    template at sales/, substituting variables from the current bullpen
+    config. Called after set_bullpen_config so the rendered agreement
+    reflects the operator's final commission/brand/founder details.
+    Returns the number of files rendered.
+    """
+    if not SALES_TEMPLATE.exists():
+        return 0
+    cfg = get_bullpen(slug) or {}
+    try:
+        from email_templates import _sub as _render_vars
+    except Exception:
+        return 0
+
+    # Build commission_tiers_section block from the tier rules string if present
+    tier_rules = (cfg.get("commission_tiers") or "").strip()
+    tiers_section = ""
+    if tier_rules:
+        tiers_section = ("\n**Tiered commission structure**\n\n"
+                          + tier_rules.replace("\n", "\n\n")
+                          + "\n\nThe Rep advances through tiers automatically as the"
+                            " Rep's recorded XP and closes on the Company's CRM hit"
+                            " each tier threshold. The Company's CRM record is the"
+                            " source of truth for tier eligibility.\n")
+
+    founder_name = (cfg.get("founder_display_name")
+                    or cfg.get("founder_rep") or "").strip()
+    company_entity = (cfg.get("company_entity") or "").strip()
+    # company_display: legal-entity name if set, else "Founder Name (sole proprietor)"
+    if company_entity:
+        company_display = company_entity
+    elif founder_name:
+        company_display = f"{founder_name} (sole proprietor)"
+    else:
+        company_display = "YOU"
+    vars_d = {
+        "brand_name": cfg.get("name") or slug,
+        "product": cfg.get("product") or "",
+        "founder_display_name": founder_name,
+        "founder_title": "Operator",
+        "commission_rate": cfg.get("commission_rate") or "",
+        "commission_tiers_section": tiers_section,
+        "commission_window_months": str(cfg.get("commission_window_months") or "24"),
+        "company_entity": company_entity,
+        "company_display": company_display,
+        "company_entity_type": cfg.get("company_entity_type") or "",
+        "jurisdiction_state": cfg.get("jurisdiction_state") or "",
+        "jurisdiction_county": cfg.get("jurisdiction_county") or "",
+    }
+    legal_dir = _bullpen_dir(slug) / "legal"
+    legal_dir.mkdir(parents=True, exist_ok=True)
+    n = 0
+    for md in SALES_TEMPLATE.glob("*.md"):
+        rendered = _render_vars(md.read_text(), vars_d)
+        (legal_dir / md.name).write_text(rendered)
+        n += 1
+    return n
+
+
 def write_member(bullpen: str, rep: str, role: str = "rep") -> dict:
     """Idempotently create/update a member record for a rep in a bullpen."""
     m_path = _bullpen_dir(bullpen) / "members" / f"{rep}.json"
@@ -156,7 +244,10 @@ def set_bullpen_config(bullpen: str, updates: dict) -> Optional[dict]:
                "access_mode", "price_usd", "tagline", "brand",
                "commission_rate", "seats_open", "founder_display_name",
                "github_repo", "brand_domain", "brand_sending_email",
-               "brand_reply_to", "brand_logo_url"}
+               "brand_reply_to", "brand_logo_url",
+               "commission_tiers", "company_entity", "company_entity_type",
+               "jurisdiction_state", "jurisdiction_county",
+               "host_location"}
     VALID_ACCESS = {"public", "invite_only", "paid"}
     p = _bullpen_json(bullpen)
     if not p.exists():

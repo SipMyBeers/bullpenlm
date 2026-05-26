@@ -45,6 +45,28 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:560px){.row2{grid-template-columns:1fr}}
 
+.advanced{margin:8px 0 18px;padding:0;border:1px solid rgba(245,232,216,0.08);border-radius:9px;background:rgba(0,0,0,0.18)}
+.advanced[open]{padding:10px 14px}
+.advanced summary{padding:11px 14px;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.10em;color:var(--accent-2);list-style:none;text-transform:uppercase}
+.advanced summary::-webkit-details-marker{display:none}
+.advanced summary:hover{color:var(--text)}
+.advanced[open] summary{padding:0 0 10px;border-bottom:1px solid rgba(245,232,216,0.08);margin-bottom:14px}
+.advanced .field{margin-bottom:0}
+
+.host-grid{grid-template-columns:repeat(3,1fr)}
+@media(max-width:560px){.host-grid{grid-template-columns:1fr}}
+
+.host-card{margin:14px 0 22px;padding:18px 22px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.25);border-radius:11px;font-family:var(--serif);font-size:14.5px;line-height:1.55;color:var(--text)}
+.host-card-title{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-2);margin-bottom:10px}
+.host-card pre{background:rgba(0,0,0,0.40);padding:12px 14px;border-radius:7px;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--text);overflow-x:auto;margin:10px 0}
+.host-card code{font-family:var(--mono);font-size:12px;color:var(--accent-2)}
+
+.vps-links{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+@media(max-width:560px){.vps-links{grid-template-columns:1fr}}
+.vps-link{padding:14px 16px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.30);border-radius:9px;text-decoration:none;color:var(--gold);font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.02em;transition:transform .12s,border-color .12s;line-height:1.4}
+.vps-link span{font-family:var(--serif);font-weight:400;font-size:12px;color:var(--muted);font-style:italic}
+.vps-link:hover{transform:translateY(-1px);border-color:var(--gold);color:#fff}
+
 .access-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
 @media(max-width:560px){.access-grid{grid-template-columns:1fr}}
 .access-tile{padding:16px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:10px;cursor:pointer;transition:border-color .12s,transform .12s,background .12s}
@@ -159,7 +181,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
     <div class="field" id="f-slug">
       <label>URL slug</label>
       <input id="slug" type="text" placeholder="killsesh" maxlength="40">
-      <div class="hint">Lowercase, dashes only. Becomes <code>&lt;your-tunnel&gt;.trycloudflare.com/b/&lt;slug&gt;</code> on your own machine — your floor, your compute, your data.</div>
+      <div class="hint">Lowercase, dashes only. This is the short ID for your floor — closers reach it via a public link we generate after launch (no domains or DNS for you to wire up).</div>
       <div class="err">Slug must be 3–40 chars: lowercase, numbers, dashes.</div>
     </div>
 
@@ -201,6 +223,18 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
         <div class="hint">How many closers you'll take.</div>
       </div>
     </div>
+
+    <details class="advanced">
+      <summary>▸ Tiered commission (optional — closers earn more as they level up)</summary>
+      <div class="field" id="f-tiers">
+        <label>Tier rules (plain English)</label>
+        <textarea id="commission_tiers" maxlength="1500" placeholder="Level 1–4: 30% of revenue
+Level 5–9: 40%
+Level 10+: 50%
+After 10 closed-won deals: bump everyone +5%"></textarea>
+        <div class="hint">Tiers compound loyalty — closers don't jump to a competitor because they'd lose their level. Stratton Oakmont ran this model. Skip this and the standard rate applies to everyone equally.</div>
+      </div>
+    </details>
 
     <div class="field" id="f-access">
       <label>Access mode</label>
@@ -278,7 +312,52 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
   <!-- STEP 4 — LAUNCH -->
   <section class="step" data-panel="4" hidden>
     <h1>Step 5. Launch it.</h1>
-    <p class="sub">Last look. We'll spin up the public URL + generate your first invite link in one shot.</p>
+    <p class="sub">Where does the bullpen run? Then we go live.</p>
+
+    <div class="field" id="f-host">
+      <label>Where will your bullpen live?</label>
+      <div class="access-grid host-grid">
+        <div class="access-tile active" data-host="this_device">
+          <div class="top">This device</div>
+          <div class="desc">Runs on this Mac. Cloudflare Quick Tunnel gives you a public URL. Free, on the spot.</div>
+        </div>
+        <div class="access-tile" data-host="other_device">
+          <div class="top">Another device I own</div>
+          <div class="desc">Home server, spare Mac Mini, gaming PC. We'll show you the install command before you launch.</div>
+        </div>
+        <div class="access-tile" data-host="rent_vps">
+          <div class="top">Rent a VPS</div>
+          <div class="desc">Hands-off — $5–10/mo. Referral links inside. Best if your laptop sleeps a lot.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inline cards that appear based on host choice -->
+    <div class="host-card" id="hostThisDeviceCard">
+      <div class="host-card-title">✅ Launching on this device</div>
+      <p>The wizard will start your local server, spin up a Cloudflare tunnel, and generate your first invite link — all in about 10 seconds. Your floor goes live the moment you hit Launch.</p>
+    </div>
+
+    <div class="host-card" id="hostOtherDeviceCard" hidden>
+      <div class="host-card-title">🛠 Set up the other device first</div>
+      <p>On the device that will host the bullpen, run:</p>
+      <pre><code>git clone https://github.com/SipMyBeers/bullpenlm.git
+cd bullpenlm
+python3 server/server.py
+# then open localhost:7878/app/start-bullpen.html on that machine</code></pre>
+      <p>Come back to <strong>that</strong> wizard and pick <em>This device</em>. Closes this tab is fine — your progress here isn't saved anyway.</p>
+    </div>
+
+    <div class="host-card" id="hostRentVpsCard" hidden>
+      <div class="host-card-title">☁️ Rent a VPS</div>
+      <p>Pick a provider, sign up (the links below are BullpenLM referral codes — small kickback to us at no cost to you), spin up the cheapest tier ($5–10/mo), SSH in, then install BullpenLM on it:</p>
+      <div class="vps-links">
+        <a href="https://m.do.co/c/bullpenlm" target="_blank" rel="noopener" class="vps-link">DigitalOcean →<br><span>$200 free credit · easiest</span></a>
+        <a href="https://hetzner.cloud/?ref=bullpenlm" target="_blank" rel="noopener" class="vps-link">Hetzner →<br><span>cheapest · €20 credit</span></a>
+        <a href="https://www.vultr.com/?ref=bullpenlm" target="_blank" rel="noopener" class="vps-link">Vultr →<br><span>$100 credit · solid mid-tier</span></a>
+      </div>
+      <p class="hint" style="margin-top:14px">Once your VPS is up: <code>ssh root@your-vps && git clone https://github.com/SipMyBeers/bullpenlm.git && cd bullpenlm && python3 server/server.py</code>. Then run the wizard against <code>http://your-vps-ip:7878</code>.</p>
+    </div>
 
     <div class="review" id="review"></div>
 
@@ -319,6 +398,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
         <h3>What now</h3>
         <ol>
           <li><strong>Copy the invite link above</strong> and send it to your first closer.</li>
+          <li><strong>Review your sales-commission agreement</strong> — auto-generated with your commission rate. <a id="legalLink" href="#" target="_blank">Open it →</a> Look for any <code>[FILL IN: …]</code> markers and complete them before sending to a closer.</li>
           <li><strong>Post your floor page</strong> in <a href="https://discord.gg/pXV4pPA5d5" target="_blank">#showcase</a> to get more applicants.</li>
           <li><strong>Walk into your floor</strong> — drop your scripts, claim your first prospects.</li>
           <li>Pick up the phone. ✅</li>
@@ -352,6 +432,8 @@ const state = {
   brand_sending_email: "",
   brand_logo_url: "",
   github_repo: "",
+  commission_tiers: "",
+  host_location: "this_device",
 };
 
 const SLUG_RE = /^[a-z0-9][a-z0-9\-]{1,38}[a-z0-9]$/;
@@ -426,6 +508,7 @@ function validateStep(n) {
     state.commission_rate = readField("commission_rate");
     state.seats_open = readField("seats_open");
     state.discord_invite = readField("discord_invite");
+    state.commission_tiers = readField("commission_tiers");
     setError("f-rate", !state.commission_rate);
     if (state.access_mode === "paid") {
       state.price_usd = readField("price_usd");
@@ -505,6 +588,8 @@ async function launch() {
     brand_sending_email: state.brand_sending_email,
     brand_logo_url: state.brand_logo_url,
     github_repo: state.github_repo,
+    commission_tiers: state.commission_tiers,
+    host_location: state.host_location,
     // Tell the server to also spin up the public tunnel + mint a first invite.
     publish_tunnel: true,
     create_first_invite: true,
@@ -546,6 +631,9 @@ async function launch() {
     }
 
     $("#enterBtn").href = data.app_url || ("/app/today.html?b=" + data.slug + "&rep=" + data.founder_rep);
+    // Legal agreement link — served via /app/legal.html which reads the
+    // rendered bullpens/<slug>/legal/referral-agreement.md.
+    $("#legalLink").href = "/app/legal.html?b=" + encodeURIComponent(data.slug);
     $("#successLine").textContent =
       data.name + " is live. " +
       (tunnel ? "Public URL spun up. " : "") +
@@ -592,12 +680,33 @@ $$('[data-go]').forEach(btn => {
 });
 $("#launchBtn").addEventListener("click", launch);
 
-$$('.access-tile').forEach(tile => {
+$$('.access-tile[data-access]').forEach(tile => {
   tile.addEventListener("click", () => {
-    $$('.access-tile').forEach(t => t.classList.remove("active"));
+    $$('.access-tile[data-access]').forEach(t => t.classList.remove("active"));
     tile.classList.add("active");
     state.access_mode = tile.dataset.access;
     $("#f-price").hidden = state.access_mode !== "paid";
+  });
+});
+
+// Hosting picker (Launch step). Switches which inline card is visible and
+// disables the Launch button when the user picks a non-local target.
+$$('.access-tile[data-host]').forEach(tile => {
+  tile.addEventListener("click", () => {
+    $$('.access-tile[data-host]').forEach(t => t.classList.remove("active"));
+    tile.classList.add("active");
+    state.host_location = tile.dataset.host;
+    $("#hostThisDeviceCard").hidden  = state.host_location !== "this_device";
+    $("#hostOtherDeviceCard").hidden = state.host_location !== "other_device";
+    $("#hostRentVpsCard").hidden     = state.host_location !== "rent_vps";
+    const launchBtn = $("#launchBtn");
+    if (state.host_location === "this_device") {
+      launchBtn.disabled = false;
+      launchBtn.textContent = "Launch bullpen →";
+    } else {
+      launchBtn.disabled = true;
+      launchBtn.textContent = "Launch from the other device →";
+    }
   });
 });
 
