@@ -62,3 +62,9 @@ bullpenlm-share-*.zip
 # ── Cloudflare wrangler caches ──
 .wrangler/
 node_modules/
+
+# Bumblebee clip library — raw audio stays local (fair-use risk)
+clips/*/*.mp3
+clips/*/*.m4a
+clips/*/*.wav
+clips/*/*.ogg
