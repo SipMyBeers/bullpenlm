@@ -139,9 +139,19 @@ async function redeem(code) {
       showMsg("err", friendly);
       return;
     }
-    showMsg("ok", "✓ Connected as @" + data.rep + ". Loading the floor…");
+    showMsg("ok", "✓ Connected as @" + data.rep + ". Setting you up…");
+    // Always route through the rep onboarding wizard. It auto-detects which
+    // steps the rep has already done and skips them, so returning closers
+    // land back on the floor immediately while fresh closers get the
+    // identity → briefing → agreement sequence before they see the busy
+    // daily-driver page.
     setTimeout(() => {
-      window.location.href = "/app/today.html?rep=" + encodeURIComponent(data.rep);
+      const params = new URLSearchParams();
+      params.set("rep", data.rep);
+      // The active bullpen is also handy for the welcome wizard's API calls.
+      const b = (new URLSearchParams(location.search)).get("b");
+      if (b) params.set("b", b);
+      window.location.href = "/app/welcome.html?" + params.toString();
     }, 800);
   } catch (e) {
     submitBtn.disabled = false;
