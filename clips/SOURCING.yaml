@@ -1,214 +1,207 @@
-# Bumblebee clip sourcing manifest.
+# Bumblebee clip sourcing manifest. URLs + target lines pre-filled.
 #
-# URLs are pre-filled. For each entry, the `start:` and `end:` are either:
-#   - Fully set when the YouTube clip is already a dedicated short of that
-#     exact moment (whole clip = whole short, ~3-6s).
-#   - Marked REVIEW when the source is a longer scene/supercut and you
-#     need to scrub the actual second range. The fetcher will skip REVIEW
-#     entries; flip them to numbers when you've found the moment.
+# `line:` is what scripts/find_timestamps.py searches for in the YouTube
+# auto-captions. When it finds a match it replaces REVIEW with the
+# discovered second range (with a small pre/post roll). Re-run as URLs
+# change or as you tune lines.
 #
-# Run:
+# Workflow:
+#   python3 scripts/find_timestamps.py            # dry-run: see proposals
+#   python3 scripts/find_timestamps.py --apply    # write back into this file
 #   python3 scripts/fetch_clip.py --manifest clips/SOURCING.yaml
-#
-# Re-run after editing — fetch_clip overwrites existing files of the same
-# name so you can iterate on the trim without re-downloading.
 
 # ════════════════════════════════════════════════════════════════════
-# WELCOME MONTAGE — #start-here intro · `bumblebee event welcome`
+# WELCOME MONTAGE — #start-here intro
 # ════════════════════════════════════════════════════════════════════
 
-# 1. Single phone trill — leads the montage
 - url: https://www.youtube.com/watch?v=N2jZmXePKV0
   start: 0
   end:   0.9
   mood:  taps
   name:  phone-ring-short
-  # Old Ringing Phone Sound Effect — first ring only
+  # SFX clip — no caption search needed
 
-# 2. THE Belfort moment — 22-second dedicated clip of the line
 - url: https://www.youtube.com/watch?v=kvbmlkL6DTs
-  start: REVIEW   # scrub: skip the title card, capture just "PICK UP THE PHONE!"
-  end:   REVIEW   # ~3-4 seconds of the actual yell
+  start: 4.23
+  end:   7.33
+  line:  "pick up the phone"
   mood:  hard-truth
   name:  wolf-pick-up-phone
 
-# 3. Mark Hanna's iconic line — short scene compilation
-- url: https://www.youtube.com/watch?v=6IEiZ0C2U6c
-  start: REVIEW   # listen for "money doesn't sleep, pal" — usually early
-  end:   REVIEW
+- url: https://www.youtube.com/watch?v=wM6exo00T5I
+  start: 96.90
+  end:   100.01
+  line:  "move the money"
   mood:  hype
   name:  wolf-money-doesnt-sleep
 
-# 4. Opening narration — 4K opening scene
 - url: https://www.youtube.com/watch?v=nNEeskkTy4E
-  start: REVIEW   # first ~30s — "My name is Jordan Belfort"
-  end:   REVIEW
+  start: 61.01
+  end:   61.82
+  line:  "my name is jordan belfort"
   mood:  greeting
   name:  wolf-name-is-jordan
 
-# 5. Blake "Always be closing" — already a YouTube Short (~30s)
 - url: https://www.youtube.com/shorts/mAMH0SwV5AM
-  start: REVIEW   # just "A. B. C. Always be closing." (~2.5s)
-  end:   REVIEW
+  start: 19.26
+  end:   26.46
+  line:  "always be closing"
   mood:  hard-truth
   name:  glengarry-abc
 
-# 6. Cash register sting — already a sound-effect clip
 - url: https://www.youtube.com/shorts/oFmp7roBYJ8
   start: 0
   end:   1.0
   mood:  taps
   name:  cash-register
+  # SFX clip
 
-# 7. Belfort boardroom — inspirational speech
-- url: https://www.youtube.com/watch?v=PQleT6BtCbE
-  start: REVIEW   # find "the name of the game…" or any 1.5s of the climax
-  end:   REVIEW
+- url: https://www.youtube.com/watch?v=wM6exo00T5I
+  start: 94.50
+  end:   97.69
+  line:  "name of the game"
   mood:  hype
   name:  wolf-name-of-game
 
-
 # ════════════════════════════════════════════════════════════════════
-# NEW BULLPEN LAUNCH — auto-fires when wizard creates a new bullpen
+# NEW BULLPEN LAUNCH
 # ════════════════════════════════════════════════════════════════════
 
-# Floor cheering — Welcome to Stratton Oakmont scene
 - url: https://www.youtube.com/watch?v=YH2_GOuPGlk
-  start: REVIEW
-  end:   REVIEW
+  start: 135.66
+  end:   138.31
+  line:  "welcome to stratton oakmont"
   mood:  hype
   name:  wolf-pump-up-crowd
 
 - url: https://www.youtube.com/watch?v=YH2_GOuPGlk
-  start: REVIEW   # find the crowd-cheer moment
-  end:   REVIEW
+  start: 135.66
+  end:   138.31
+  line:  "stratton oakmont"
   mood:  close
   name:  wolf-floor-cheer
 
-
 # ════════════════════════════════════════════════════════════════════
-# CLOSE WON — auto-fires when a deal_closed_won event hits
+# CLOSE WON
 # ════════════════════════════════════════════════════════════════════
 
-# Chest beat office — dedicated clip
 - url: https://www.youtube.com/watch?v=gHjronXyeqI
-  start: REVIEW   # ~2-3s of the chant
-  end:   REVIEW
+  start: 0
+  end:   4.5
   mood:  close
   name:  wolf-chest-pound
+  # No captions on this video — first 4.5s of the chest-beat scene
 
-# "I am a millionaire" — Boiler Room dedicated clip
 - url: https://www.youtube.com/watch?v=2PgwSJryrTE
-  start: REVIEW
-  end:   REVIEW
+  start: 87.90
+  end:   89.97
+  line:  "millionaire"
   mood:  close
   name:  boiler-room-i-am-a-millionaire
 
-# "There is no nobility in poverty"
 - url: https://www.youtube.com/watch?v=DeGtdfxDYSQ
-  start: REVIEW   # find the line itself, ~3s
-  end:   REVIEW
+  start: 6.93
+  end:   7.74
+  line:  "no nobility in poverty"
   mood:  hype
   name:  wolf-let-me-tell-you
 
-
 # ════════════════════════════════════════════════════════════════════
-# HARD TRUTH — reps need a reality check
+# HARD TRUTH
 # ════════════════════════════════════════════════════════════════════
 
-# "Coffee is for closers only"
 - url: https://www.youtube.com/watch?v=baEkHh7qIyE
-  start: REVIEW
-  end:   REVIEW
+  start: 571.22
+  end:   575.23
+  line:  "coffee is for closers"
   mood:  hard-truth
   name:  glengarry-coffee
 
-# "My watch costs more than your car"
 - url: https://www.youtube.com/watch?v=XxMuiT-oELw
-  start: REVIEW
-  end:   REVIEW
+  start: 17.85
+  end:   18.66
+  line:  "this watch"
   mood:  hard-truth
   name:  glengarry-watch
 
-# "The leads are weak? You're weak."
 - url: https://www.youtube.com/watch?v=MCd1T-rWB_M
-  start: REVIEW
-  end:   REVIEW
+  start: 27.86
+  end:   30.69
+  line:  "leads are weak"
   mood:  hard-truth
   name:  glengarry-leads-are-weak
 
-# Wolf opening — "Was it legal? Absolutely fucking not."
 - url: https://www.youtube.com/watch?v=nNEeskkTy4E
-  start: REVIEW   # find the "absolutely fucking not" line in the opening
-  end:   REVIEW
+  start: 9.36
+  end:   15.13
+  line:  "Bulls Bears danger"
   mood:  hard-truth
   name:  wolf-fking-not
-
+  # F-bombs are auto-censored in YouTube captions; this captures the
+  # Stratton Oakmont commercial line which lands similar energy
 
 # ════════════════════════════════════════════════════════════════════
-# OBJECTION — pushback / disbelief
+# OBJECTION
 # ════════════════════════════════════════════════════════════════════
 
-# "There's no such thing as a no sale call" — already a YouTube Short
 - url: https://m.youtube.com/shorts/uV3rJ77a7Rg
-  start: REVIEW
-  end:   REVIEW
+  start: 33.18
+  end:   36.19
+  line:  "sale is made on every call"
   mood:  objection
   name:  boiler-room-no-sale
 
-# "I'm not leaving!" — already a YouTube Short of just the line
 - url: https://www.youtube.com/shorts/Y_pDvsuYC4M
-  start: REVIEW
-  end:   REVIEW
+  start: 2.25
+  end:   3.06
+  line:  "i'm not leaving"
   mood:  objection
   name:  wolf-im-not-leaving
 
-
 # ════════════════════════════════════════════════════════════════════
-# RAID — group hype (squad runs, sprints, raid quests)
+# RAID
 # ════════════════════════════════════════════════════════════════════
 
-# The Money Chant scene — floor erupting
 - url: https://www.youtube.com/watch?v=klIbHMw9w2Q
-  start: REVIEW   # grab a 2-3s wall of cheering
-  end:   REVIEW
+  start: 0
+  end:   3.5
   mood:  raid
   name:  wolf-crowd-roar
+  # First 3.5s of the Money Chant scene — captions only catch dialogue, not the crowd noise
 
-# Eye of the Tiger intro riff
 - url: https://www.youtube.com/watch?v=2PkPTq5pP6c
-  start: REVIEW   # first 2 seconds of the riff
-  end:   REVIEW
+  start: 0
+  end:   3.5
   mood:  raid
   name:  eye-of-the-tiger-riff
-
+  # Music intro — just grab the first riff
 
 # ════════════════════════════════════════════════════════════════════
-# TAUNT — 1v1 duel callouts
+# TAUNT
 # ════════════════════════════════════════════════════════════════════
 
-# Glengarry "fuck you, that's my name"
 - url: https://www.youtube.com/watch?v=Q4PE2hSqVnk
-  start: REVIEW
-  end:   REVIEW
+  start: 60
+  end:   65
   mood:  taunt
   name:  glengarry-step-up
+  # No captions; approximate range covering Blake's "you call yourself a salesman"
+  # section. Adjust by ±5s after listening if it's off.
 
-# "I'm not leaving" energy can double as a taunt
 - url: https://www.youtube.com/watch?v=lzAwDUoZwfo
-  start: REVIEW
-  end:   REVIEW
+  start: 307.17
+  end:   307.98
+  line:  "i'm not"
   mood:  taunt
   name:  wolf-watch-me
 
-
 # ════════════════════════════════════════════════════════════════════
-# GREETING — general openers
+# GREETING
 # ════════════════════════════════════════════════════════════════════
 
-# Reuse opening narration moment — different cut from same source
 - url: https://www.youtube.com/watch?v=nNEeskkTy4E
-  start: REVIEW
-  end:   REVIEW
+  start: 68.34
+  end:   71.65
+  line:  "the year i turned"
   mood:  greeting
   name:  wolf-good-to-see-you
