@@ -2882,6 +2882,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 github_repo         = (req2.get("github_repo") or "").strip()[:240]
                 commission_tiers    = (req2.get("commission_tiers") or "").strip()[:2000]
                 host_location       = (req2.get("host_location") or "this_device").strip()
+                company_entity      = (req2.get("company_entity") or "").strip()[:120]
+                company_entity_type = (req2.get("company_entity_type") or "").strip()[:80]
+                jurisdiction_state  = (req2.get("jurisdiction_state") or "").strip()[:40]
+                jurisdiction_county = (req2.get("jurisdiction_county") or "").strip()[:60]
+                payout_methods_in   = req2.get("payout_methods") or []
+                if not isinstance(payout_methods_in, list):
+                    payout_methods_in = []
+                payout_methods      = ",".join(
+                    str(m).strip()[:30] for m in payout_methods_in
+                    if isinstance(m, str) and m.strip()
+                )
 
                 manifest = create_bullpen(slug, founder_rep,
                                           product=product, name=name)
@@ -2906,6 +2917,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     ("github_repo", github_repo),
                     ("commission_tiers", commission_tiers),
                     ("host_location", host_location),
+                    ("company_entity", company_entity),
+                    ("company_entity_type", company_entity_type),
+                    ("jurisdiction_state", jurisdiction_state),
+                    ("jurisdiction_county", jurisdiction_county),
+                    ("payout_methods", payout_methods),
                 ):
                     if v:
                         updates[k] = v

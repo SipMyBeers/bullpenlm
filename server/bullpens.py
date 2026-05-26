@@ -191,6 +191,19 @@ def render_legal_docs(slug: str) -> int:
         company_display = f"{founder_name} (sole proprietor)"
     else:
         company_display = "YOU"
+
+    # Human-readable payout list for the legal doc. Stored as a comma-
+    # separated string of short codes; expand into proper labels here.
+    payout_codes = (cfg.get("payout_methods") or "").split(",")
+    payout_label_map = {
+        "stripe":   "Stripe", "paypal": "PayPal", "wise": "Wise",
+        "ach":      "ACH / bank transfer", "venmo": "Venmo",
+        "cashapp":  "Cash App", "usdc": "USDC", "btc": "BTC",
+        "eth":      "ETH", "check": "paper check",
+    }
+    payout_labels = [payout_label_map.get(c.strip(), c.strip())
+                     for c in payout_codes if c.strip()]
+    payout_methods_display = ", ".join(payout_labels) if payout_labels else ""
     vars_d = {
         "brand_name": cfg.get("name") or slug,
         "product": cfg.get("product") or "",
@@ -204,6 +217,7 @@ def render_legal_docs(slug: str) -> int:
         "company_entity_type": cfg.get("company_entity_type") or "",
         "jurisdiction_state": cfg.get("jurisdiction_state") or "",
         "jurisdiction_county": cfg.get("jurisdiction_county") or "",
+        "payout_methods_display": payout_methods_display,
     }
     legal_dir = _bullpen_dir(slug) / "legal"
     legal_dir.mkdir(parents=True, exist_ok=True)
@@ -247,7 +261,7 @@ def set_bullpen_config(bullpen: str, updates: dict) -> Optional[dict]:
                "brand_reply_to", "brand_logo_url",
                "commission_tiers", "company_entity", "company_entity_type",
                "jurisdiction_state", "jurisdiction_county",
-               "host_location"}
+               "host_location", "payout_methods"}
     VALID_ACCESS = {"public", "invite_only", "paid"}
     p = _bullpen_json(bullpen)
     if not p.exists():

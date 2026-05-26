@@ -75,7 +75,14 @@ refresh this list in writing whenever it changes.
 ## 4. Payment terms
 
 Commissions are paid by the Company to the Rep once per month, by the 15th
-of the month following collection, via bank transfer.
+of the month following collection.
+
+**Accepted payout methods: {{payout_methods_display|to be agreed between the parties}}**
+
+The Rep selects their preferred method from the list above at onboarding
+and provides the corresponding handle, account, or wallet address. The
+Company is not responsible for fees the Rep's chosen network charges
+(e.g. on-chain gas, PayPal fees on personal accounts).
 
 ---
 

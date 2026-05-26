@@ -67,6 +67,14 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 .vps-link span{font-family:var(--serif);font-weight:400;font-size:12px;color:var(--muted);font-style:italic}
 .vps-link:hover{transform:translateY(-1px);border-color:var(--gold);color:#fff}
 
+.payout-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+@media(max-width:680px){.payout-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:420px){.payout-grid{grid-template-columns:1fr}}
+.payout-chip{display:flex;align-items:center;gap:9px;padding:10px 14px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:8px;cursor:pointer;transition:border-color .12s,background .12s;font-family:var(--mono);font-size:12px;color:var(--text)}
+.payout-chip:has(input:checked){background:rgba(52,211,153,0.10);border-color:var(--accent)}
+.payout-chip input{accent-color:var(--accent);margin:0}
+.payout-chip span{letter-spacing:.02em}
+
 .access-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
 @media(max-width:560px){.access-grid{grid-template-columns:1fr}}
 .access-tile{padding:16px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:10px;cursor:pointer;transition:border-color .12s,transform .12s,background .12s}
@@ -236,6 +244,23 @@ After 10 closed-won deals: bump everyone +5%"></textarea>
       </div>
     </details>
 
+    <div class="field" id="f-payouts" style="margin-top:8px">
+      <label>Payout methods you'll accept</label>
+      <div class="payout-grid">
+        <label class="payout-chip"><input type="checkbox" name="payout" value="stripe" checked> <span>Stripe</span></label>
+        <label class="payout-chip"><input type="checkbox" name="payout" value="paypal"> <span>PayPal</span></label>
+        <label class="payout-chip"><input type="checkbox" name="payout" value="wise"> <span>Wise (international)</span></label>
+        <label class="payout-chip"><input type="checkbox" name="payout" value="ach"> <span>ACH / bank transfer</span></label>
+        <label class="payout-chip"><input type="checkbox" name="payout" value="venmo"> <span>Venmo (US)</span></label>
+        <label class="payout-chip"><input type="checkbox" name="payout" value="cashapp"> <span>Cash App (US)</span></label>
+        <label class="payout-chip"><input type="checkbox" name="payout" value="usdc"> <span>USDC</span></label>
+        <label class="payout-chip"><input type="checkbox" name="payout" value="btc"> <span>BTC</span></label>
+        <label class="payout-chip"><input type="checkbox" name="payout" value="eth"> <span>ETH</span></label>
+        <label class="payout-chip"><input type="checkbox" name="payout" value="check"> <span>Paper check</span></label>
+      </div>
+      <div class="hint">Closers pick their preferred method at onboarding from what you accept here. Stripe is the most common for US ops; PayPal or Wise for international closers; crypto for closers who want to avoid the banking system.</div>
+    </div>
+
     <div class="field" id="f-access">
       <label>Access mode</label>
       <div class="access-grid">
@@ -302,6 +327,83 @@ After 10 closed-won deals: bump everyone +5%"></textarea>
       <input id="github_repo" type="url" placeholder="https://github.com/you/your-product" maxlength="240">
       <div class="hint">Transparency for credibility. Closers like seeing the work behind the pitch.</div>
     </div>
+
+    <details class="advanced">
+      <summary>▸ Legal entity (LLC / Corp) — recommended before paying commissions</summary>
+
+      <div class="field">
+        <label>Do you have a registered business entity?</label>
+        <div class="access-grid" style="grid-template-columns:1fr 1fr">
+          <div class="access-tile active" data-entity-mode="sole_prop">
+            <div class="top">Not yet</div>
+            <div class="desc">You'll sign as a sole proprietor for now. Form an LLC when you're ready — see the links below.</div>
+          </div>
+          <div class="access-tile" data-entity-mode="has_entity">
+            <div class="top">Yes, I have one</div>
+            <div class="desc">Fill in the entity name + jurisdiction so the agreement carries your real legal info.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="entityFields" hidden>
+        <div class="row2">
+          <div class="field">
+            <label>Legal entity name</label>
+            <input id="company_entity" type="text" placeholder="Beers Labs LLC" maxlength="120">
+            <div class="hint">Exactly as it appears on your formation docs.</div>
+          </div>
+          <div class="field">
+            <label>Entity type</label>
+            <select id="company_entity_type" style="width:100%;padding:13px 16px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:17px;outline:none">
+              <option value="">Pick one…</option>
+              <option value="single-member limited liability company">Single-member LLC</option>
+              <option value="multi-member limited liability company">Multi-member LLC</option>
+              <option value="C corporation">C-corp</option>
+              <option value="S corporation">S-corp</option>
+              <option value="general partnership">Partnership</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>State of formation</label>
+            <input id="jurisdiction_state" type="text" placeholder="Oregon" list="us-states" maxlength="40">
+            <div class="hint">Where your entity is registered.</div>
+          </div>
+          <div class="field">
+            <label>County for disputes</label>
+            <input id="jurisdiction_county" type="text" placeholder="Multnomah" maxlength="60">
+            <div class="hint">Used in the governing-law clause.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="llcFormHelp">
+        <p class="hint" style="margin-bottom:10px">No entity yet? Form one fast — these are BullpenLM referral links (small kickback to us, same price to you):</p>
+        <div class="vps-links">
+          <a href="https://stripe.com/atlas?ref=bullpenlm" target="_blank" rel="noopener" class="vps-link">Stripe Atlas →<br><span>$500 · Delaware C-corp · best for startups</span></a>
+          <a href="https://www.zenbusiness.com/?aff=bullpenlm" target="_blank" rel="noopener" class="vps-link">ZenBusiness →<br><span>$0 + state fee · any state · easiest</span></a>
+          <a href="https://www.incauthority.com/?aff=bullpenlm" target="_blank" rel="noopener" class="vps-link">Inc Authority →<br><span>$0 + state fee · LLC or Corp</span></a>
+        </div>
+      </div>
+    </details>
+
+    <datalist id="us-states">
+      <option value="Alabama"><option value="Alaska"><option value="Arizona"><option value="Arkansas">
+      <option value="California"><option value="Colorado"><option value="Connecticut"><option value="Delaware">
+      <option value="Florida"><option value="Georgia"><option value="Hawaii"><option value="Idaho">
+      <option value="Illinois"><option value="Indiana"><option value="Iowa"><option value="Kansas">
+      <option value="Kentucky"><option value="Louisiana"><option value="Maine"><option value="Maryland">
+      <option value="Massachusetts"><option value="Michigan"><option value="Minnesota"><option value="Mississippi">
+      <option value="Missouri"><option value="Montana"><option value="Nebraska"><option value="Nevada">
+      <option value="New Hampshire"><option value="New Jersey"><option value="New Mexico"><option value="New York">
+      <option value="North Carolina"><option value="North Dakota"><option value="Ohio"><option value="Oklahoma">
+      <option value="Oregon"><option value="Pennsylvania"><option value="Rhode Island"><option value="South Carolina">
+      <option value="South Dakota"><option value="Tennessee"><option value="Texas"><option value="Utah">
+      <option value="Vermont"><option value="Virginia"><option value="Washington"><option value="West Virginia">
+      <option value="Wisconsin"><option value="Wyoming"><option value="District of Columbia">
+    </datalist>
 
     <div class="actions">
       <button class="back" data-go="2">← Back</button>
@@ -434,6 +536,12 @@ const state = {
   github_repo: "",
   commission_tiers: "",
   host_location: "this_device",
+  entity_mode: "sole_prop",         // sole_prop | has_entity
+  company_entity: "",
+  company_entity_type: "",
+  jurisdiction_state: "",
+  jurisdiction_county: "",
+  payout_methods: ["stripe"],       // default — closers can pick any subset on join
 };
 
 const SLUG_RE = /^[a-z0-9][a-z0-9\-]{1,38}[a-z0-9]$/;
@@ -509,6 +617,8 @@ function validateStep(n) {
     state.seats_open = readField("seats_open");
     state.discord_invite = readField("discord_invite");
     state.commission_tiers = readField("commission_tiers");
+    // Payout methods: capture currently-checked chips
+    state.payout_methods = $$('input[name="payout"]:checked').map(el => el.value);
     setError("f-rate", !state.commission_rate);
     if (state.access_mode === "paid") {
       state.price_usd = readField("price_usd");
@@ -526,6 +636,10 @@ function validateStep(n) {
     state.brand_sending_email = readField("brand_sending_email");
     state.brand_logo_url      = readField("brand_logo_url");
     state.github_repo         = readField("github_repo");
+    state.company_entity      = readField("company_entity");
+    state.company_entity_type = readField("company_entity_type");
+    state.jurisdiction_state  = readField("jurisdiction_state");
+    state.jurisdiction_county = readField("jurisdiction_county");
     ok = true;
   }
   return ok;
@@ -550,6 +664,13 @@ function buildReview() {
     ["Sending email", state.brand_sending_email || "—"],
     ["Logo URL",      state.brand_logo_url || "—"],
     ["GitHub",        state.github_repo || "—"],
+    ["Legal entity",  state.entity_mode === "has_entity"
+                        ? (state.company_entity || "(unnamed)") + (state.company_entity_type ? " · " + state.company_entity_type : "")
+                        : "Sole proprietor (no entity yet)"],
+    ["Jurisdiction",  (state.jurisdiction_state || "—") + (state.jurisdiction_county ? " · " + state.jurisdiction_county : "")],
+    ["Payout methods", (state.payout_methods && state.payout_methods.length)
+                        ? state.payout_methods.join(", ")
+                        : "—"],
   ];
   const root = $("#review");
   while (root.firstChild) root.removeChild(root.firstChild);
@@ -590,6 +711,11 @@ async function launch() {
     github_repo: state.github_repo,
     commission_tiers: state.commission_tiers,
     host_location: state.host_location,
+    company_entity: state.entity_mode === "has_entity" ? state.company_entity : "",
+    company_entity_type: state.entity_mode === "has_entity" ? state.company_entity_type : "",
+    jurisdiction_state: state.jurisdiction_state,
+    jurisdiction_county: state.jurisdiction_county,
+    payout_methods: state.payout_methods,
     // Tell the server to also spin up the public tunnel + mint a first invite.
     publish_tunnel: true,
     create_first_invite: true,
@@ -686,6 +812,18 @@ $$('.access-tile[data-access]').forEach(tile => {
     tile.classList.add("active");
     state.access_mode = tile.dataset.access;
     $("#f-price").hidden = state.access_mode !== "paid";
+  });
+});
+
+// Entity-mode picker (Brand step). Shows/hides the entity-fields card +
+// the LLC-formation referral panel depending on the founder's answer.
+$$('.access-tile[data-entity-mode]').forEach(tile => {
+  tile.addEventListener("click", () => {
+    $$('.access-tile[data-entity-mode]').forEach(t => t.classList.remove("active"));
+    tile.classList.add("active");
+    state.entity_mode = tile.dataset.entityMode;
+    $("#entityFields").hidden = state.entity_mode !== "has_entity";
+    $("#llcFormHelp").hidden  = state.entity_mode !== "sole_prop";
   });
 });
 
