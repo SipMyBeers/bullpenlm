@@ -2510,6 +2510,53 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Invoices: list (closer sees own; founder sees all) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/invoices(?:$|\?)", self.path)
+        if m:
+            try:
+                from invoices import list_invoices
+                from bullpens import get_bullpen
+                bullpen = m.group(1)
+                viewer = self._current_rep()
+                cfg = get_bullpen(bullpen) or {}
+                # Closers only see their own. Founder + localhost see all.
+                if viewer == cfg.get("founder_rep") or _is_localhost(self.client_address):
+                    rep_filter = None
+                else:
+                    rep_filter = viewer
+                # Optional ?status= filter
+                status_filter = None
+                if "status=" in self.path:
+                    qs = urllib.parse.parse_qs(self.path.split("?", 1)[1])
+                    status_filter = (qs.get("status") or [None])[0]
+                self._send_json(200, {"invoices":
+                    list_invoices(bullpen, rep=rep_filter, status=status_filter)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Invoices: fetch full (markdown content) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/invoices/([A-Za-z0-9_\-\.]+)$", self.path)
+        if m:
+            try:
+                from invoices import get_invoice
+                from bullpens import get_bullpen
+                bullpen, inv_id = m.group(1), m.group(2)
+                inv = get_invoice(bullpen, inv_id)
+                if not inv:
+                    self._send_json(404, {"error": "invoice_not_found"}); return
+                viewer = self._current_rep()
+                cfg = get_bullpen(bullpen) or {}
+                allowed = (viewer == cfg.get("founder_rep")
+                           or viewer == inv.get("rep")
+                           or _is_localhost(self.client_address))
+                if not allowed:
+                    self._send_json(403, {"error": "not_authorized"}); return
+                self._send_json(200, inv)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Email templates: list available for a bullpen ──
         m = re.match(r"^/api/b/([a-z0-9\-]+)/email/templates(?:$|\?)", self.path)
         if m:
@@ -3017,6 +3064,67 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 })
             except ValueError as e:
                 self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Invoices: generate one (founder-only via localhost) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/invoices/generate$", self.path)
+        if m:
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from invoices import generate_invoice, generate_all_for_period
+                bullpen = m.group(1)
+                req2 = json.loads(raw) if raw else {}
+                period = req2.get("period")
+                if req2.get("rep"):
+                    self._send_json(200, generate_invoice(bullpen, req2["rep"],
+                                                          period=period))
+                else:
+                    # No rep → generate-all for the period (founder bulk)
+                    self._send_json(200, {"invoices":
+                        generate_all_for_period(bullpen, period=period)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Invoices: mark paid (founder-only via localhost) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/invoices/([A-Za-z0-9_\-\.]+)/mark-paid$",
+                      self.path)
+        if m:
+            if not _is_localhost(self.client_address):
+                return self._deny_auth()
+            try:
+                from invoices import mark_paid
+                bullpen, inv_id = m.group(1), m.group(2)
+                req2 = json.loads(raw) if raw else {}
+                r = mark_paid(bullpen, inv_id,
+                              paid_via=req2.get("paid_via", ""),
+                              founder_rep=self._current_rep() or "founder")
+                self._send_json(200 if r.get("ok") else 404, r)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Invoices: closer requests an early payout invoice ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/invoices/request-payout$", self.path)
+        if m:
+            try:
+                from invoices import request_early_payout
+                from bullpens import get_bullpen
+                bullpen = m.group(1)
+                req2 = json.loads(raw) if raw else {}
+                rep = (req2.get("rep") or self._current_rep() or "").strip()
+                if not rep:
+                    self._send_json(400, {"error": "rep_required"}); return
+                # Only that closer (or the founder) may request for that rep.
+                viewer = self._current_rep()
+                cfg = get_bullpen(bullpen) or {}
+                if viewer != rep and viewer != cfg.get("founder_rep") \
+                        and not _is_localhost(self.client_address):
+                    self._send_json(403, {"error": "not_authorized"}); return
+                self._send_json(200, request_early_payout(bullpen, rep))
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
@@ -4207,6 +4315,39 @@ class ReusableServer(socketserver.ThreadingTCPServer):
     daemon_threads = True
 
 
+def _start_monthly_invoice_thread() -> None:
+    """Background thread that wakes every hour and, on the 1st of each
+    month, generates last-month invoices for every bullpen on this host.
+    Idempotent — `maybe_generate_monthly` skips a bullpen if its index
+    already has non-early invoices for that period."""
+    import threading
+    import time
+    def _loop():
+        from invoices import maybe_generate_monthly
+        last_fired_date = None
+        while True:
+            try:
+                today = datetime.date.today()
+                # Fire once on day 1 of the month.
+                if today.day == 1 and last_fired_date != today:
+                    bullpens_root = _REPO / "bullpens"
+                    for d in bullpens_root.iterdir() if bullpens_root.exists() else []:
+                        if d.is_dir() and (d / "bullpen.json").exists():
+                            try:
+                                r = maybe_generate_monthly(d.name)
+                                if r.get("generated_count", 0) > 0:
+                                    print(f"[invoices] {d.name}: generated "
+                                          f"{r['generated_count']} for {r['period']}")
+                            except Exception as e:
+                                print(f"[invoices] {d.name} failed: {e}")
+                    last_fired_date = today
+            except Exception as e:
+                print(f"[invoices] thread tick failed: {e}")
+            time.sleep(3600)  # check every hour
+    threading.Thread(target=_loop, daemon=True, name="invoice-monthly").start()
+    print("[invoices] monthly auto-fire thread armed")
+
+
 def main():
     model = get_model()
     print("─" * 60)
@@ -4220,6 +4361,10 @@ def main():
         _start_role_sync()
     except Exception as _e:
         print(f"[discord_roles] not started: {_e}")
+    try:
+        _start_monthly_invoice_thread()
+    except Exception as _e:
+        print(f"[invoices] monthly thread not started: {_e}")
     with ReusableServer(("127.0.0.1", PORT), Handler) as srv:
         try:
             srv.serve_forever()

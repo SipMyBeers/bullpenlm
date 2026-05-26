@@ -74,8 +74,15 @@ refresh this list in writing whenever it changes.
 
 ## 4. Payment terms
 
-Commissions are paid by the Company to the Rep once per month, by the 15th
-of the month following collection.
+Commissions accrue daily and are **invoiced monthly**. On the 1st of each
+month, the Company's bullpen system auto-generates an invoice summarizing
+every closed-won deal originated by the Rep in the prior month, the
+applicable commission rate from Section 2, and the total commission due.
+
+The Company has **15 days from invoice issuance** to pay. The Rep may
+request a mid-month early-payout invoice at any time (limit one per month);
+no penalty applies to early payouts, but the deals covered are removed
+from the next monthly invoice.
 
 **Accepted payout methods: {{payout_methods_display|to be agreed between the parties}}**
 
@@ -83,6 +90,11 @@ The Rep selects their preferred method from the list above at onboarding
 and provides the corresponding handle, account, or wallet address. The
 Company is not responsible for fees the Rep's chosen network charges
 (e.g. on-chain gas, PayPal fees on personal accounts).
+
+The Company is responsible for the actual transfer of funds. The bullpen
+platform is **not a payment processor** — it generates the invoice and
+the audit trail; the Company pays the Rep directly through the agreed
+method.
 
 ---
 
