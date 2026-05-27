@@ -416,7 +416,7 @@ async function genMagicLink(){
     });
     box.appendChild(copyBtn);
     out.appendChild(box);
-    const dmText = `hey — you're in the BullpenLM alpha. one click + 5 minutes:\n\n${d.magic_link}\n\nwhat happens: reads a quick disclosure, signs an IC agreement, drops a W-9, then you're at the drill floor. real cold calls unlock after you pass a tier-3 drill. ping me if anything's weird.`;
+    const dmText = `yo — i built a sales-training thing and we're starting a practice bullpen. none of us know how to sell yet so we drill against AI buyers + duel each other first. real cold calls unlock once you pass a tier-3 drill.\n\none click + 5 min to join:\n\n${d.magic_link}\n\nreads a short disclosure, signs the IC agreement (we're papering everything now so it's ready when we go live), drops a W-9, then you're at the drill floor with us.`;
     const dmBox = safeEl('div', {style:'margin-top:10px;padding:12px 16px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.30);border-radius:8px;font-family:"Bespoke Serif",Georgia,serif;font-size:13.5px;color:#a89a87;line-height:1.5;white-space:pre-wrap'});
     dmBox.textContent = dmText;
     out.appendChild(safeEl('div', {style:'font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#a89a87;margin:14px 0 6px', text:'SUGGESTED DM:'}));
