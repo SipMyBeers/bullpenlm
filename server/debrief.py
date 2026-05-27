@@ -127,8 +127,16 @@ def transcribe(audio_path: Path) -> str:
     return txt.read_text().strip()
 
 
-def debrief_call(org_slug: str, call_id: str) -> dict:
-    """Run the full debrief pipeline on a single call directory."""
+def debrief_call(org_slug: str, call_id: str, *,
+                  bullpen: str | None = None, rep: str | None = None) -> dict:
+    """Run the full debrief pipeline on a single call directory.
+
+    Phase D compounding loop — when `bullpen` is supplied, the
+    transcript also gets ingested into the buyer's RAG corpus as a
+    `call_transcript` source. Every real call sharpens the AI buyer
+    roleplay + research chat + flashcards/quiz/briefing generators for
+    next time.
+    """
     org_dir = ORGS / org_slug
     if not org_dir.exists():
         raise RuntimeError(f"org not found: {org_dir}")
@@ -161,8 +169,38 @@ def debrief_call(org_slug: str, call_id: str) -> dict:
     if len(transcript) < 80:
         raise RuntimeError(f"transcript too short ({len(transcript)} chars) — was the audio empty?")
 
+    # ── Phase D: ingest the transcript into the buyer's RAG corpus
+    # BEFORE the Gemma extraction step. Extraction can fail (LLM hiccup,
+    # bad prompt template, network) — but the RAG ingest is the
+    # compounding loop and must run reliably.
+    rag_ingested = None
+    if bullpen:
+        try:
+            from rag import ingest_text as rag_ingest
+            source_name = f"call-{call_id}.transcript.txt"
+            actor = rep or "self"
+            rec = rag_ingest(
+                bullpen, org_slug, transcript,
+                source_name=source_name, actor=actor,
+            )
+            rag_ingested = {
+                "source_id": rec.get("source_id"),
+                "chunks": rec.get("chunks"),
+                "source_name": source_name,
+            }
+            print(f"  ▸ RAG: ingested {rec.get('chunks')} chunks → {org_slug} dossier")
+        except Exception as e:
+            print(f"  ⚠ RAG ingest skipped: {e}")
+
     print(f"  ▸ running Gemma extraction (~30s)…")
-    extracted = _ollama_extract(EXTRACTION_PROMPT.format(transcript=transcript[:18000]))
+    # Use safe substitution (replace) — the existing EXTRACTION_PROMPT
+    # template has stray curly braces that crash .format()
+    try:
+        prompt_filled = EXTRACTION_PROMPT.replace("{transcript}", transcript[:18000])
+        extracted = _ollama_extract(prompt_filled)
+    except Exception as e:
+        print(f"  ⚠ extraction failed: {e} — continuing with empty extraction")
+        extracted = {}
 
     extracted_path = call_dir / "extracted.json"
     extracted_path.write_text(json.dumps(extracted, indent=2) + "\n")
@@ -312,6 +350,7 @@ def debrief_call(org_slug: str, call_id: str) -> dict:
         "created_people": created_people,
         "deal_signal": deal_signal,
         "metrics": speech_metrics,
+        "rag_ingested": rag_ingested,
     }
 
 

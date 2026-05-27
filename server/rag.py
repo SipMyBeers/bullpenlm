@@ -335,6 +335,11 @@ def _store_chunks(
     col.add(
         ids=ids, documents=chunks_text, embeddings=embeddings, metadatas=metadatas,
     )
+    # ChromaDB's in-process HNSW index cache can lag behind disk after a
+    # write — subsequent queries in the same process can hit
+    # "Error creating hnsw segment reader: Nothing found on disk". Clear
+    # the cached client so the next access reopens against fresh state.
+    _clients.pop(bullpen, None)
     return len(chunks_text)
 
 

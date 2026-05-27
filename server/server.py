@@ -4768,11 +4768,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 if auto_debrief:
                     try:
                         from debrief import debrief_call
-                        d = debrief_call(org_slug, call_id)
+                        d = debrief_call(org_slug, call_id, bullpen=bullpen, rep=rep)
                         result["debrief"] = {
                             "deal_signal": d.get("deal_signal"),
                             "created_people": d.get("created_people"),
                             "metrics": d.get("metrics"),
+                            "rag_ingested": d.get("rag_ingested"),
                         }
                     except Exception as e:
                         result["debrief_error"] = str(e)
