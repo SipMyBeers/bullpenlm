@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Operator setup · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh}
+.wrap{max-width:920px;margin:0 auto;padding:36px 28px 100px}
+.brand{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:-.02em;display:inline-flex;text-decoration:none;margin-bottom:24px}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spacing:-.02em;margin:0 0 6px;line-height:1.05}
+.lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;margin:0 0 32px}
+.stepper{display:flex;gap:8px;margin:0 0 28px;flex-wrap:wrap}
+.step-pill{padding:7px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.10);border-radius:30px;font-family:var(--mono);font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .15s;cursor:pointer}
+.step-pill .n{width:18px;height:18px;border-radius:50%;background:rgba(245,232,216,0.10);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text)}
+.step-pill.active{background:rgba(52,211,153,0.10);border-color:var(--accent);color:var(--accent-2)}
+.step-pill.active .n{background:var(--accent);color:#0a1a14;font-weight:700}
+.step-pill.done{color:var(--accent-2);border-color:rgba(52,211,153,0.30)}
+.step-pill.done .n{background:rgba(52,211,153,0.20);color:var(--accent)}
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:28px 32px;margin-bottom:20px}
+.panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 18px}
+.panel h3{font-family:var(--display);font-size:22px;text-transform:uppercase;letter-spacing:-.01em;margin:0 0 8px}
+.panel p{margin:0 0 14px;color:var(--muted)}
+.panel p strong{color:var(--text)}
+.field{margin-bottom:14px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:10px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:16px;outline:none;transition:border-color .12s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field .hint{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:5px;letter-spacing:.04em}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.row.two{grid-template-columns:1fr 1fr}
+@media(max-width:640px){.row,.row.two{grid-template-columns:1fr}}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:7px;font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:transform .12s;border:none;text-decoration:none}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn.primary{background:var(--accent);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.q-row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(245,232,216,0.06)}
+.q-row:last-child{border-bottom:none}
+.q-row .prompt{font-family:var(--serif);font-size:15.5px;color:var(--text)}
+.q-row .pill{padding:6px 14px;border-radius:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;cursor:pointer;border:1px solid rgba(245,232,216,0.15);background:transparent;color:var(--muted)}
+.q-row .pill.yes.active{background:rgba(52,211,153,0.15);border-color:var(--accent);color:var(--accent-2)}
+.q-row .pill.no.active{background:rgba(248,113,113,0.10);border-color:var(--danger);color:var(--danger)}
+.verdict-card{padding:18px 22px;border-radius:9px;margin:18px 0 8px;border:1px solid}
+.verdict-card.contractor{background:rgba(52,211,153,0.08);border-color:rgba(52,211,153,0.40)}
+.verdict-card.borderline{background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.40)}
+.verdict-card.employee{background:rgba(248,113,113,0.08);border-color:rgba(248,113,113,0.40)}
+.verdict-card h4{margin:0 0 6px;font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.01em}
+.verdict-card.contractor h4{color:var(--accent-2)}
+.verdict-card.borderline h4{color:var(--gold)}
+.verdict-card.employee h4{color:var(--danger)}
+.toc{padding:14px 18px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.10);border-radius:8px;font-family:var(--serif);font-size:14.5px;color:var(--muted);max-height:400px;overflow-y:auto;white-space:pre-wrap;margin:14px 0}
+.checkbox-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0;cursor:pointer}
+.checkbox-row input{margin-top:3px;width:18px;height:18px;accent-color:var(--accent)}
+.checkbox-row label{flex:1;font-family:var(--serif);font-size:15px;color:var(--text);cursor:pointer}
+.status{padding:10px 14px;border-radius:7px;margin:12px 0;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em}
+.status.ok{background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);color:var(--accent-2)}
+.status.err{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.30);color:var(--danger)}
+.status.info{background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.25);color:var(--purple)}
+.foot-nav{display:flex;justify-content:space-between;gap:12px;margin-top:24px}
+.hide{display:none}
+.warning-box{padding:12px 16px;background:rgba(251,191,36,0.06);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;font-family:var(--serif);font-size:14px;color:var(--muted);margin:14px 0}
+.warning-box strong{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <h1>Operator setup</h1>
+  <p class="lede">Four steps before you can invite a single closer. Skipping isn't an option — every step exists because the platform can't render a legal doc, gate a live claim, or pass counsel review without it.</p>
+
+  <div class="stepper" id="stepper"></div>
+
+  <div id="step-1" class="step-section">
+    <div class="panel">
+      <h2>STEP 1 / 4 — OPERATOR ENTITY</h2>
+      <h3>Who's the legal party?</h3>
+      <p>Every Closer Agreement names <strong>this entity</strong>, not BullpenLM. It's the party closers contract with, the party that pays them, and the party closers sue if something goes wrong.</p>
+      <div class="field"><label>Entity kind</label>
+        <select id="ent-kind">
+          <option value="llc">LLC (single-member or multi-member)</option>
+          <option value="sole_prop">Sole proprietorship</option>
+          <option value="individual">Individual (just me)</option>
+        </select>
+        <div class="hint">Most operators use an LLC for liability separation.</div></div>
+      <div class="field"><label>Legal name</label><input id="ent-name" placeholder="e.g. KillSesh Industries LLC">
+        <div class="hint">Exact name as on your state registration.</div></div>
+      <div class="field"><label>EIN or SSN</label><input id="ent-tin" type="password" autocomplete="off" placeholder="00-0000000 or 000-00-0000">
+        <div class="hint">Hashed locally with a per-bullpen salt. Raw value is NEVER stored on disk.</div></div>
+      <div class="field"><label>Street address</label><input id="ent-street" placeholder="123 Operator Way"></div>
+      <div class="row">
+        <div class="field"><label>City</label><input id="ent-city"></div>
+        <div class="field"><label>State</label><input id="ent-state" maxlength="2" placeholder="OR"></div>
+        <div class="field"><label>ZIP</label><input id="ent-zip"></div>
+      </div>
+      <div class="row two">
+        <div class="field"><label>Contact email</label><input id="ent-email" type="email"></div>
+        <div class="field"><label>Contact phone (optional)</label><input id="ent-phone"></div>
+      </div>
+      <div class="warning-box"><strong>Jurisdiction matters.</strong> Phase 0.5 is US-only. The classification coach uses your state for state-specific warnings (CA AB5, NJ ABC, NY/IL/LA Freelance Isn't Free).</div>
+      <div id="ent-status"></div>
+      <div class="foot-nav">
+        <a href="/" class="btn ghost">← Back to floor</a>
+        <button class="btn primary" onclick="saveEntity()">Save entity & continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="step-2" class="step-section hide">
+    <div class="panel">
+      <h2>STEP 2 / 4 — WORKER CLASSIFICATION COACH</h2>
+      <h3>Are your closers really 1099 contractors?</h3>
+      <p>Answer honestly. If your answers describe an employee, the coach refuses to render a 1099 agreement. That's the firewall protecting you from a state DOL audit.</p>
+      <div class="warning-box"><strong>Not legal advice.</strong> This catches obvious patterns. NOT a substitute for an attorney's classification opinion.</div>
+      <div id="classification-form"></div>
+      <div id="verdict-area"></div>
+      <div id="class-status"></div>
+      <div class="foot-nav">
+        <button class="btn ghost" onclick="showStep(1)">← Edit entity</button>
+        <button class="btn primary" id="class-continue" onclick="saveClassification()">Save classification & continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="step-3" class="step-section hide">
+    <div class="panel">
+      <h2>STEP 3 / 4 — OPERATOR TERMS OF SERVICE</h2>
+      <h3>You are the counterparty. We are not.</h3>
+      <p>Read the TOS in full. Type your operator legal name to accept.</p>
+      <div class="toc" id="tos-text">Loading TOS text…</div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="counsel-yes">
+        <label for="counsel-yes">I have consulted with an attorney about my obligations under these Terms and my Closer Agreement template, <strong>OR</strong> I expressly waive consultation with counsel and acknowledge that I am accepting these obligations and risks without legal review.</label>
+      </div>
+      <div class="field"><label>Type your operator legal name to accept</label>
+        <input id="tos-signature">
+        <div class="hint">Must match the legal name from Step 1 exactly.</div></div>
+      <div id="tos-status"></div>
+      <div class="foot-nav">
+        <button class="btn ghost" onclick="showStep(2)">← Edit classification</button>
+        <button class="btn primary" onclick="acceptTos()">Accept TOS & continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="step-4" class="step-section hide">
+    <div class="panel">
+      <h2>STEP 4 / 4 — DNC LIST IMPORT (OPTIONAL)</h2>
+      <h3>Telemarketing compliance starts here.</h3>
+      <p>Closers cannot claim a real prospect unless the platform scrubs that number against DNC lists.</p>
+      <div class="warning-box"><strong>The platform doesn't download these lists for you.</strong> donotcall.gov is gated behind operator-specific telemarketing subscriptions. Paste numbers below or upload later from the DNC panel.</div>
+      <div class="field"><label>National DNC list</label>
+        <textarea id="dnc-national" rows="4" placeholder="One phone number per line."></textarea></div>
+      <div class="row two">
+        <div class="field"><label>State code (2 letters)</label><input id="dnc-state-code" maxlength="2"></div>
+        <div class="field"><label>State DNC numbers</label><textarea id="dnc-state" rows="3"></textarea></div>
+      </div>
+      <div id="dnc-status"></div>
+      <div class="foot-nav">
+        <button class="btn ghost" onclick="showStep(3)">← Edit TOS</button>
+        <div>
+          <button class="btn ghost" onclick="finishSetup(true)">Skip — I'll import later</button>
+          <button class="btn primary" onclick="finishSetup(false)">Import & finish setup →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="step-done" class="step-section hide">
+    <div class="panel">
+      <h2>SETUP COMPLETE</h2>
+      <h3>You're ready to invite closers.</h3>
+      <p>The Phase 0.5 firewall is active. Every closer who joins is walked through disclosure → agreement → W-9 → DNC ack, and cannot claim a real prospect until cleared + drill-certified.</p>
+      <div class="status info">Counsel review of your specific entity setup + closer agreement template is still recommended before scaling beyond 5 closers. See <code>docs/COMP_AND_LEGAL.md</code>.</div>
+      <div class="foot-nav">
+        <a href="/app/host.html" class="btn ghost">← Back to host control</a>
+        <a href="/app/compliance.html" class="btn primary">Compliance dashboard →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BULLPEN = (new URLSearchParams(window.location.search)).get('b') || 'default';
+const STEPS = [{n:1,key:'entity',label:'Entity'},{n:2,key:'classification',label:'Classification'},{n:3,key:'tos',label:'TOS'},{n:4,key:'dnc',label:'DNC import'}];
+let state = {step:1, entity:null, classification:null, tos:null};
+
+// Safe DOM helpers — never insert untrusted content via innerHTML.
+function el(tag, props, ...kids){
+  const node = document.createElement(tag);
+  if(props){
+    for(const k in props){
+      if(k === 'class') node.className = props[k];
+      else if(k === 'onClick') node.addEventListener('click', props[k]);
+      else if(k === 'text') node.textContent = props[k];
+      else node.setAttribute(k, props[k]);
+    }
+  }
+  for(const kid of kids){
+    if(kid == null) continue;
+    if(typeof kid === 'string') node.appendChild(document.createTextNode(kid));
+    else node.appendChild(kid);
+  }
+  return node;
+}
+function clear(node){ while(node.firstChild) node.removeChild(node.firstChild); }
+
+function showStep(n){
+  document.querySelectorAll('.step-section').forEach(e => e.classList.add('hide'));
+  const id = n === 'done' ? 'step-done' : 'step-'+n;
+  const e2 = document.getElementById(id);
+  if(e2) e2.classList.remove('hide');
+  if(typeof n === 'number') state.step = n;
+  renderStepper();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderStepper(){
+  const wrap = document.getElementById('stepper');
+  clear(wrap);
+  for(const s of STEPS){
+    const cls = 'step-pill ' + (s.n < state.step ? 'done' : (s.n === state.step ? 'active' : ''));
+    const pill = el('a', {href:'#', class:cls, onClick:(ev)=>{ev.preventDefault(); showStep(s.n);}});
+    const dot = el('span', {class:'n'}, s.n < state.step ? '✓' : String(s.n));
+    pill.appendChild(dot);
+    pill.appendChild(document.createTextNode(s.label));
+    wrap.appendChild(pill);
+  }
+}
+
+async function api(method, path, body){
+  const r = await fetch(path, {method, headers:{'content-type':'application/json'}, body: body ? JSON.stringify(body) : undefined});
+  return {ok: r.ok, status: r.status, data: await r.json().catch(()=>({}))};
+}
+
+function setStatus(id, ok, msg){
+  const wrap = document.getElementById(id);
+  clear(wrap);
+  wrap.appendChild(el('div', {class: 'status ' + (ok ? 'ok' : 'err'), text: msg}));
+}
+
+// ── STEP 1 ────────────────────────────────────────────────────────────
+async function saveEntity(){
+  const body = {
+    bullpen: BULLPEN,
+    kind: document.getElementById('ent-kind').value,
+    legal_name: document.getElementById('ent-name').value.trim(),
+    raw_ein_or_ssn: document.getElementById('ent-tin').value.trim(),
+    address: {
+      street: document.getElementById('ent-street').value.trim(),
+      city: document.getElementById('ent-city').value.trim(),
+      state: document.getElementById('ent-state').value.trim().toUpperCase(),
+      postal_code: document.getElementById('ent-zip').value.trim(),
+      country: 'US',
+    },
+    jurisdiction: 'US-' + document.getElementById('ent-state').value.trim().toUpperCase(),
+    contact_email: document.getElementById('ent-email').value.trim(),
+    contact_phone: document.getElementById('ent-phone').value.trim() || null,
+  };
+  if(!body.legal_name || !body.address.street || !body.address.city || !body.address.state || !body.contact_email){
+    return setStatus('ent-status', false, 'Fill all required fields.');
+  }
+  const r = await api('POST', `/api/b/${BULLPEN}/entity`, body);
+  if(!r.ok) return setStatus('ent-status', false, (r.data && r.data.error) || 'Save failed.');
+  state.entity = r.data.entity;
+  setStatus('ent-status', true, '✓ Entity saved. SHA bound to all generated legal docs.');
+  loadClassificationForm();
+  setTimeout(()=>showStep(2), 600);
+}
+
+// ── STEP 2 ────────────────────────────────────────────────────────────
+let CLASSIFICATION_QUESTIONS = [];
+let classAnswers = {};
+
+async function loadClassificationForm(){
+  if(CLASSIFICATION_QUESTIONS.length) return renderClassificationForm();
+  const r = await api('GET', `/api/b/${BULLPEN}/classification/questions`);
+  if(r.ok){
+    CLASSIFICATION_QUESTIONS = (r.data && r.data.questions) || [];
+    renderClassificationForm();
+  }
+}
+
+function renderClassificationForm(){
+  const form = document.getElementById('classification-form');
+  clear(form);
+  const groups = {behavioral:'Behavioral control', financial:'Financial control', relationship:'Type of relationship'};
+  for(const cluster of Object.keys(groups)){
+    form.appendChild(el('h4', {style:'font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px', text: groups[cluster]}));
+    for(const q of CLASSIFICATION_QUESTIONS.filter(qq=>qq.cluster===cluster)){
+      const row = el('div', {class:'q-row', 'data-q': q.id});
+      row.appendChild(el('div', {class:'prompt', text: q.prompt}));
+      const yes = el('button', {class:'pill yes', text:'Yes', onClick:()=>setAnswer(q.id, true)});
+      const no = el('button', {class:'pill no', text:'No', onClick:()=>setAnswer(q.id, false)});
+      row.appendChild(yes); row.appendChild(no);
+      form.appendChild(row);
+    }
+  }
+}
+
+function setAnswer(qId, yes){
+  classAnswers[qId] = yes;
+  const row = document.querySelector(`.q-row[data-q="${qId}"]`);
+  row.querySelector('.pill.yes').classList.toggle('active', yes === true);
+  row.querySelector('.pill.no').classList.toggle('active', yes === false);
+  evaluateVerdict();
+}
+
+async function evaluateVerdict(){
+  const wrap = document.getElementById('verdict-area');
+  clear(wrap);
+  if(Object.keys(classAnswers).length < CLASSIFICATION_QUESTIONS.length) return;
+  const opState = state.entity ? state.entity.address.state : '';
+  const r = await api('POST', `/api/b/${BULLPEN}/classification/preview`, {answers:classAnswers, operator_state:opState});
+  if(!r.ok) return;
+  const v = r.data;
+  const cls = v.verdict;
+  const heading = cls === 'contractor' ? 'Verdict: Independent Contractor ✓'
+                : cls === 'borderline' ? 'Verdict: Borderline — review or consult counsel'
+                : 'Verdict: Employee-leaning — platform will NOT render a 1099 Agreement';
+  const card = el('div', {class:'verdict-card ' + cls});
+  card.appendChild(el('h4', {text: heading}));
+  card.appendChild(el('div', {style:'font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em',
+    text: `Total score: ${v.total_score} · Behavioral ${v.by_cluster.behavioral} · Financial ${v.by_cluster.financial} · Relationship ${v.by_cluster.relationship}`}));
+  if((v.veto_failures||[]).length){
+    card.appendChild(el('p', {style:'margin:6px 0 0;color:var(--danger);font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.10em',
+      text: 'VETO fired: ' + v.veto_failures.join(', ')}));
+  }
+  for(const w of (v.warnings||[])){
+    card.appendChild(el('p', {style:'margin:6px 0 0;font-family:var(--serif);font-size:13.5px', text:w}));
+  }
+  wrap.appendChild(card);
+  document.getElementById('class-continue').disabled = !(cls === 'contractor');
+}
+
+async function saveClassification(){
+  if(Object.keys(classAnswers).length < CLASSIFICATION_QUESTIONS.length) return setStatus('class-status', false, 'Answer every question first.');
+  const r = await api('POST', `/api/b/${BULLPEN}/classification`, {
+    answers: classAnswers,
+    operator_state: state.entity ? state.entity.address.state : null,
+  });
+  if(!r.ok) return setStatus('class-status', false, (r.data && r.data.error) || 'Save failed.');
+  if(r.data.score.verdict !== 'contractor') return setStatus('class-status', false, `Cannot render 1099 templates: verdict is "${r.data.score.verdict}".`);
+  state.classification = r.data;
+  setStatus('class-status', true, '✓ Classification saved as Contractor.');
+  loadTos();
+  setTimeout(()=>showStep(3), 600);
+}
+
+// ── STEP 3 ────────────────────────────────────────────────────────────
+async function loadTos(){
+  const r = await api('GET', `/api/b/${BULLPEN}/legal/preview/operator-tos`);
+  if(r.ok) document.getElementById('tos-text').textContent = (r.data && r.data.body_md) || '(TOS unavailable)';
+}
+
+async function acceptTos(){
+  const sig = document.getElementById('tos-signature').value.trim();
+  const counsel = document.getElementById('counsel-yes').checked;
+  if(!sig) return setStatus('tos-status', false, 'Type your operator legal name.');
+  if(state.entity && sig.toLowerCase() !== state.entity.legal_name.toLowerCase()) return setStatus('tos-status', false, 'Typed name must match operator legal name exactly.');
+  const r = await api('POST', `/api/b/${BULLPEN}/tos/accept`, {
+    operator_legal_name: state.entity.legal_name,
+    typed_signature: sig,
+    counsel_consulted: counsel,
+  });
+  if(!r.ok) return setStatus('tos-status', false, (r.data && r.data.error) || 'Accept failed.');
+  state.tos = r.data;
+  setStatus('tos-status', true, '✓ Operator TOS accepted.');
+  setTimeout(()=>showStep(4), 600);
+}
+
+// ── STEP 4 ────────────────────────────────────────────────────────────
+async function finishSetup(skip){
+  if(!skip){
+    const national = document.getElementById('dnc-national').value.split(/\s+/).filter(Boolean);
+    if(national.length){
+      const r = await api('POST', `/api/b/${BULLPEN}/dnc/import`, {list_name:'national', numbers:national});
+      if(!r.ok) return setStatus('dnc-status', false, (r.data && r.data.error) || 'National DNC import failed.');
+    }
+    const stateCode = document.getElementById('dnc-state-code').value.trim().toUpperCase();
+    const stateNums = document.getElementById('dnc-state').value.split(/\s+/).filter(Boolean);
+    if(stateCode && stateNums.length){
+      const r = await api('POST', `/api/b/${BULLPEN}/dnc/import`, {list_name:'state-'+stateCode, numbers:stateNums});
+      if(!r.ok) return setStatus('dnc-status', false, (r.data && r.data.error) || 'State DNC import failed.');
+    }
+    setStatus('dnc-status', true, '✓ Imported DNC lists.');
+  }
+  setTimeout(()=>showStep('done'), 400);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+async function init(){
+  renderStepper();
+  const r = await api('GET', `/api/b/${BULLPEN}/setup/status`);
+  if(r.ok && r.data){
+    if(r.data.entity){
+      state.entity = r.data.entity;
+      document.getElementById('ent-kind').value = r.data.entity.kind;
+      document.getElementById('ent-name').value = r.data.entity.legal_name;
+      document.getElementById('ent-street').value = r.data.entity.address.street;
+      document.getElementById('ent-city').value = r.data.entity.address.city;
+      document.getElementById('ent-state').value = r.data.entity.address.state;
+      document.getElementById('ent-zip').value = r.data.entity.address.postal_code;
+      document.getElementById('ent-email').value = r.data.entity.contact_email;
+      document.getElementById('ent-phone').value = r.data.entity.contact_phone || '';
+    }
+    if(r.data.classification) state.classification = r.data.classification;
+    if(r.data.tos_accepted) state.tos = r.data.tos_accepted;
+    if(!r.data.entity) showStep(1);
+    else if(!r.data.classification || (r.data.classification.score||{}).verdict !== 'contractor') { loadClassificationForm(); showStep(2); }
+    else if(!r.data.tos_accepted) { loadTos(); showStep(3); }
+    else showStep(4);
+  }
+}
+init();
+</script>
+</body>
+</html>

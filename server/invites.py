@@ -15,6 +15,32 @@ No database. Single-host writer assumed.
 Security: cookies are HMAC-signed with a per-host secret kept in
 ~/.bullpenlm/host-secret. Codes are random 8-char (URL-safe). Sessions
 expire after SESSION_TTL_DAYS.
+
+═══════════════════════════════════════════════════════════════════════
+PHASE 0.5 FIREWALL — INVITES AWARD NO XP
+═══════════════════════════════════════════════════════════════════════
+
+This module does NOT import or call `xp.py`. Creating, sharing, or
+redeeming an invite is structurally incapable of awarding XP to the
+inviter or invitee.
+
+The XP rules table (server/xp.py) defines `invite_closer`,
+`invite_operator`, `closer_joined`, and `operator_joined` events with
+`bucket: "none"` — meaning: if a future caller were to dispatch one of
+those events into the audit log via `xp.xp_for_event(...)`, the XP
+total would still be zero. The audit chain records the attribution
+("Jordan invited Ramos") for social visibility, but never credits
+earnable XP.
+
+This is one of the three structural guarantees against the FTC
+Koscot/Omnitrition pyramid shape:
+
+  1. Money-XP and Clout-XP are separate ledgers (server/xp.py)
+  2. Clout-XP cannot route prospects (server/gates.py:EarningInputs)
+  3. Recruitment events award no XP at all (this module + xp.py)
+
+Removing or weakening any of these three guarantees is a Phase 0.5
+firewall regression. Don't.
 """
 from __future__ import annotations
 import datetime

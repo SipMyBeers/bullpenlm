@@ -80,16 +80,26 @@ def _last_hash(bullpen: str) -> str:
         return _genesis_hash(bullpen)
 
 
-def append(bullpen: str, actor_rep: str, kind: str,
+def append(bullpen: str, actor_rep: Optional[str] = None, kind: Optional[str] = None,
            target_type: str = "", target_id: str = "",
-           payload: Optional[dict] = None) -> dict:
-    """Append an event to the bullpen's audit log. Returns the written entry."""
+           payload: Optional[dict] = None, *,
+           actor: Optional[str] = None) -> dict:
+    """Append an event to the bullpen's audit log. Returns the written entry.
+
+    Both `actor_rep` (legacy positional) and `actor` (keyword) are
+    accepted to allow the Phase 0.5 modules' `audit_append(bullpen,
+    kind=..., actor=..., payload=...)` style alongside the older
+    `audit_append(bullpen, rep, kind, ...)` style.
+    """
+    resolved_actor = actor_rep if actor_rep is not None else actor
+    if resolved_actor is None or kind is None:
+        raise TypeError("append requires bullpen + actor (or actor_rep) + kind")
     prev_hash = _last_hash(bullpen)
     entry = {
         "id": f"{datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')}",
         "ts": datetime.datetime.now().isoformat(timespec="seconds"),
         "bullpen": bullpen,
-        "actor": actor_rep,
+        "actor": resolved_actor,
         "kind": kind,
         "target_type": target_type,
         "target_id": target_id,

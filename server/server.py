@@ -2737,6 +2737,137 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
+        # ══════════════════════════════════════════════════════════════════
+        # Phase 0.5 firewall — operator setup + closer onboarding GET routes
+        # ══════════════════════════════════════════════════════════════════
+
+        # /api/b/<slug>/setup/status — operator setup wizard state
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/setup/status$", self.path)
+        if m:
+            try:
+                from entity import get_entity
+                from classification import get_answers as get_class
+                from disclosures import has_accepted_operator_tos
+                bullpen = m.group(1)
+                self._send_json(200, {
+                    "entity": get_entity(bullpen),
+                    "classification": get_class(bullpen, None),
+                    "tos_accepted": has_accepted_operator_tos(bullpen),
+                })
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/classification/questions
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/classification/questions$", self.path)
+        if m:
+            try:
+                from classification import QUESTIONS
+                self._send_json(200, {"questions": QUESTIONS})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/legal/preview/<template> — render-on-demand for preview
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/legal/preview/([a-z0-9_\-]+)$", self.path)
+        if m:
+            try:
+                from legal import render_from_template
+                doc = render_from_template(m.group(1), template=m.group(2), actor="preview")
+                self._send_json(200, doc)
+            except FileNotFoundError as e:
+                self._send_json(404, {"error": str(e)})
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/gate/<rep> — live-work eligibility check
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/gate/([a-zA-Z0-9_\-\.]+)$", self.path)
+        if m:
+            try:
+                from gates import can_claim_live_prospect
+                check = can_claim_live_prospect(m.group(1), m.group(2))
+                self._send_json(200, {
+                    "ok": check.ok, "missing": check.missing, "details": check.details,
+                })
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/dnc/status
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/dnc/status$", self.path)
+        if m:
+            try:
+                from dnc import dnc_status
+                self._send_json(200, dnc_status(m.group(1)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/compliance — overall posture for the dashboard
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/compliance$", self.path)
+        if m:
+            try:
+                from entity import get_entity, is_setup
+                from classification import get_answers
+                from disclosures import has_accepted_operator_tos
+                from dnc import dnc_status
+                from audit import verify
+                from gates import can_claim_live_prospect
+                bullpen = m.group(1)
+                roster = []
+                try:
+                    from bullpens import get_members
+                    members = get_members(bullpen) or []
+                except Exception:
+                    members = []
+                for member in members:
+                    rep = member.get("rep") if isinstance(member, dict) else member
+                    if not rep:
+                        continue
+                    g = can_claim_live_prospect(bullpen, rep)
+                    roster.append({
+                        "rep": rep,
+                        "gate_ok": g.ok,
+                        "missing": g.missing,
+                    })
+                chain_ok, broken_at = verify(bullpen)
+                self._send_json(200, {
+                    "entity": get_entity(bullpen),
+                    "entity_setup_complete": is_setup(bullpen),
+                    "classification": get_answers(bullpen, None),
+                    "tos_accepted": has_accepted_operator_tos(bullpen),
+                    "dnc": dnc_status(bullpen),
+                    "audit_chain_ok": chain_ok,
+                    "audit_broken_at": broken_at,
+                    "closers": roster,
+                })
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/payouts/1099-csv?year=YYYY — 1099-NEC prep export
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/payouts/1099-csv$", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from payouts import generate_1099_csv
+                qs = _pq(_up(self.path).query)
+                year = int((qs.get("year") or [str(datetime.date.today().year - 1)])[0])
+                csv_body = generate_1099_csv(m.group(1), year)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", f'attachment; filename="1099-prep-{m.group(1)}-{year}.csv"')
+                self.send_header("Content-Length", str(len(csv_body.encode("utf-8"))))
+                self._cors()
+                self.end_headers()
+                self.wfile.write(csv_body.encode("utf-8"))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── /floor and /floor/index.html → the prospect-map sales floor ──
         # Closers and operators both reach this from deals.html breadcrumb.
         if self.path in ("/floor", "/floor/", "/floor/index.html") or self.path.startswith("/floor/index.html?"):
@@ -4369,6 +4500,211 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 except Exception:
                     pass
                 self._send_json(200, {"score": score, "path": path, "metrics": metrics})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ══════════════════════════════════════════════════════════════════
+        # Phase 0.5 firewall — POST routes
+        # ══════════════════════════════════════════════════════════════════
+
+        # /api/b/<slug>/entity — operator entity setup
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/entity$", self.path)
+        if m:
+            try:
+                from entity import set_entity
+                body = json.loads(raw) if raw else {}
+                e = set_entity(
+                    m.group(1),
+                    kind=body.get("kind"),
+                    legal_name=body.get("legal_name"),
+                    raw_ein_or_ssn=body.get("raw_ein_or_ssn"),
+                    address=body.get("address") or {},
+                    jurisdiction=body.get("jurisdiction"),
+                    contact_email=body.get("contact_email"),
+                    contact_phone=body.get("contact_phone"),
+                )
+                self._send_json(200, {"entity": e})
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/classification/preview — score without saving
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/classification/preview$", self.path)
+        if m:
+            try:
+                from classification import score as class_score
+                body = json.loads(raw) if raw else {}
+                self._send_json(200, class_score(body.get("answers") or {}, body.get("operator_state")))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/classification — save answers
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/classification$", self.path)
+        if m:
+            try:
+                from classification import save_answers
+                body = json.loads(raw) if raw else {}
+                rec = save_answers(
+                    m.group(1),
+                    answers=body.get("answers") or {},
+                    operator_state=body.get("operator_state"),
+                    closer=body.get("closer"),
+                )
+                self._send_json(200, rec)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/tos/accept — operator accepts TOS
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/tos/accept$", self.path)
+        if m:
+            try:
+                from disclosures import accept_operator_tos
+                body = json.loads(raw) if raw else {}
+                rec = accept_operator_tos(
+                    m.group(1),
+                    operator_actor="operator",
+                    operator_legal_name=body.get("operator_legal_name") or "",
+                    typed_signature=body.get("typed_signature") or "",
+                    counsel_consulted=bool(body.get("counsel_consulted")),
+                    user_agent=self.headers.get("User-Agent"),
+                    ip=self.client_address[0] if self.client_address else None,
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/disclosure/accept — closer accepts disclosure
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/disclosure/accept$", self.path)
+        if m:
+            try:
+                from disclosures import accept_closer_disclosure
+                body = json.loads(raw) if raw else {}
+                rec = accept_closer_disclosure(
+                    m.group(1),
+                    body.get("closer") or "self",
+                    closer_legal_name=body.get("closer_legal_name") or "",
+                    typed_signature=body.get("typed_signature") or "",
+                    user_agent=self.headers.get("User-Agent"),
+                    ip=self.client_address[0] if self.client_address else None,
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/w9 — closer submits W-9
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/w9$", self.path)
+        if m:
+            try:
+                from disclosures import submit_w9
+                body = json.loads(raw) if raw else {}
+                rec = submit_w9(
+                    m.group(1),
+                    body.get("closer") or "self",
+                    legal_name=body.get("legal_name") or "",
+                    business_name=body.get("business_name"),
+                    federal_tax_classification=body.get("federal_tax_classification") or "individual",
+                    address=body.get("address") or {},
+                    raw_tin=body.get("raw_tin") or "",
+                )
+                self._send_json(200, {"closer": rec["closer"], "submitted_at": rec["submitted_at"]})
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/legal/render/<template> — render + persist (used by closer agreement flow)
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/legal/render/([a-z0-9_\-]+)$", self.path)
+        if m:
+            try:
+                from legal import render_from_template
+                body = json.loads(raw) if raw else {}
+                doc = render_from_template(m.group(1), template=m.group(2), extra_vars=body, actor="render")
+                self._send_json(200, doc)
+            except FileNotFoundError as e:
+                self._send_json(404, {"error": str(e)})
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/legal/sign-closer-agreement — operator + closer dual-sign
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/legal/sign-closer-agreement$", self.path)
+        if m:
+            try:
+                from legal import dual_sign
+                from entity import get_entity
+                body = json.loads(raw) if raw else {}
+                ent = get_entity(m.group(1)) or {}
+                operator_name = ent.get("legal_name") or "operator"
+                rec = dual_sign(
+                    m.group(1),
+                    doc="closer-agreement",
+                    operator_signer="operator",
+                    operator_typed_name=operator_name,
+                    closer_rep=body.get("closer") or "self",
+                    closer_typed_name=body.get("closer_typed_name") or "",
+                    closer_legal_name=body.get("closer_legal_name") or "",
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/legal/sign — single-party sign (DNC ack, code of conduct, etc.)
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/legal/sign$", self.path)
+        if m:
+            try:
+                from legal import sign as legal_sign, render_from_template, get_doc
+                body = json.loads(raw) if raw else {}
+                doc = body.get("doc") or ""
+                # Auto-render the template if no rendered doc exists yet.
+                if not get_doc(m.group(1), doc):
+                    render_from_template(m.group(1), template=doc, actor="auto-render")
+                sig = legal_sign(m.group(1), body.get("rep") or "self", doc, body.get("typed_name") or "")
+                self._send_json(200, sig)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/dnc/import — import a DNC list
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/dnc/import$", self.path)
+        if m:
+            try:
+                from dnc import import_list
+                body = json.loads(raw) if raw else {}
+                rec = import_list(m.group(1), body.get("list_name") or "", body.get("numbers") or [])
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/dnc/optout — manual internal opt-out
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/dnc/optout$", self.path)
+        if m:
+            try:
+                from dnc import add_internal_optout
+                body = json.loads(raw) if raw else {}
+                add_internal_optout(m.group(1), body.get("phone") or "", reason=body.get("reason") or "", actor=body.get("actor") or "operator")
+                self._send_json(200, {"ok": True})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

@@ -215,6 +215,167 @@ def sign(bullpen: str, rep: str, doc: str, typed_name: str) -> dict:
     return sig
 
 
+# ── Template rendering (Phase 0.5) ───────────────────────────────────────
+#
+# Pull a template from templates/legal/, substitute {{vars}} from
+# entity.template_vars(bullpen) + a caller-supplied per-render vars dict,
+# write the rendered Markdown to bullpens/<slug>/legal/<id>.md, and
+# return the {id, sha256, body_md, ...} record so the renderer can chain
+# into the signing flow.
+#
+# Substitution is Mustache-style {{var}} or {{var|default}}.
+# Unresolved {{var}} stays literal so failures are visible in the
+# rendered doc (better than silently dropping the var).
+
+_VAR_RX = re.compile(r"\{\{\s*([a-zA-Z0-9_]+)(?:\s*\|\s*([^}]*?))?\s*\}\}")
+
+TEMPLATE_DIR = REPO / "templates" / "legal"
+
+
+def _substitute(text: str, vars_dict: dict) -> str:
+    """{{var}} or {{var|default}} substitution. Unknown vars stay literal."""
+    def repl(m: re.Match) -> str:
+        key = m.group(1)
+        default = m.group(2)
+        if key in vars_dict and vars_dict[key] not in (None, ""):
+            return str(vars_dict[key])
+        if default is not None:
+            return default.strip()
+        return m.group(0)   # keep literal so missing vars are visible
+    return _VAR_RX.sub(repl, text)
+
+
+def render_from_template(
+    bullpen: str,
+    *,
+    template: str,
+    extra_vars: Optional[dict] = None,
+    actor: str = "operator",
+) -> dict:
+    """Render templates/legal/<template>.md to bullpens/<slug>/legal/<template>.md
+    with operator + caller-supplied substitutions applied.
+
+    Raises if the operator entity isn't set up (no vars to substitute).
+    Returns the same shape as get_doc().
+    """
+    from entity import template_vars as _entity_vars, is_setup as _entity_is_setup
+
+    if not _entity_is_setup(bullpen):
+        raise ValueError("operator_entity_not_set_up — set up entity before rendering legal docs")
+
+    src = TEMPLATE_DIR / f"{template}.md"
+    if not src.exists():
+        raise FileNotFoundError(f"template not found: {template}.md")
+
+    raw = src.read_text(encoding="utf-8")
+    vars_dict = dict(_entity_vars(bullpen))
+    if extra_vars:
+        vars_dict.update(extra_vars)
+    # The `{{document_sha256}}` placeholder is intentionally NOT
+    # substituted at render time — the SHA of the rendered body is
+    # what the signature record binds to, and the live SHA changes
+    # every time we'd substitute the SHA back in. The placeholder
+    # stays literal in the rendered doc; the signature record holds
+    # the canonical SHA. This avoids the chicken-and-egg cycle.
+    body = _substitute(raw, vars_dict)
+    body_sha = _sha256(body)
+
+    out = _doc_path(bullpen, template)
+    out.write_text(body, encoding="utf-8")
+
+    audit_append(bullpen, actor, "doc_rendered",
+                 target_type="legal_doc", target_id=template,
+                 payload={"template": template, "doc_sha256": body_sha})
+
+    return get_doc(bullpen, template)
+
+
+# ── Member-signature surface (Phase 0.5 gate hook) ───────────────────────
+
+def get_member_signatures(bullpen: str, rep: str) -> dict[str, dict]:
+    """Return {doc_id: {version, signed_at, doc_sha256, current}} for
+    every doc the rep has ever signed. `current` is True iff doc_sha256
+    still matches the live template — used by gates.can_claim_live_prospect.
+
+    Defensive: returns {} if there's no signature dir or the dir is empty.
+    """
+    out: dict[str, dict] = {}
+    d = _sig_dir(bullpen, rep)
+    if not d.exists():
+        return out
+
+    for f in sorted(d.glob("*.json")):
+        try:
+            sig = json.loads(f.read_text())
+        except Exception:
+            continue
+        doc_id = sig.get("doc")
+        if not doc_id:
+            continue
+        # Keep the most recent version per doc_id.
+        prior = out.get(doc_id)
+        if prior and prior.get("version", 0) >= sig.get("version", 0):
+            continue
+        live = get_doc(bullpen, doc_id)
+        current = bool(live and live.get("sha256") == sig.get("doc_sha256"))
+        out[doc_id] = {
+            "doc": doc_id,
+            "version": sig.get("version"),
+            "signed_at": sig.get("signed_at"),
+            "doc_sha256": sig.get("doc_sha256"),
+            "typed_name": sig.get("typed_name"),
+            "current": current,
+        }
+    return out
+
+
+# ── Dual-signing (operator + closer both sign) ───────────────────────────
+
+def dual_sign(
+    bullpen: str,
+    *,
+    doc: str,
+    operator_signer: str,
+    operator_typed_name: str,
+    closer_rep: str,
+    closer_typed_name: str,
+    closer_legal_name: str,
+) -> dict:
+    """Both parties sign a doc that requires it (Closer Agreement, Mutual NDA).
+
+    Records two signatures (one per party) bound to the SAME doc SHA, so
+    the dual-signed state can be verified later. The audit chain captures
+    both signings as separate events with cross-references.
+
+    Returns {operator_sig, closer_sig, doc_sha256}.
+    """
+    live = get_doc(bullpen, doc)
+    if not live:
+        raise ValueError(f"doc_not_found: {doc}")
+
+    # Operator side
+    op_sig = sign(bullpen, operator_signer, doc, operator_typed_name)
+    # Closer side — but with an extra verifier on the typed name
+    if closer_typed_name.strip().lower() != closer_legal_name.strip().lower():
+        raise ValueError("closer typed name does not match legal name")
+    cl_sig = sign(bullpen, closer_rep, doc, closer_typed_name)
+
+    audit_append(bullpen, "system", "dual_sign",
+                 target_type="legal_doc", target_id=doc,
+                 payload={
+                     "doc_sha256": live["sha256"],
+                     "operator_signer": operator_signer,
+                     "closer": closer_rep,
+                     "closer_legal_name": closer_legal_name,
+                 })
+
+    return {
+        "doc_sha256": live["sha256"],
+        "operator_sig": op_sig,
+        "closer_sig": cl_sig,
+    }
+
+
 # ── CLI ──────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":

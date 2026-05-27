@@ -11,6 +11,37 @@ entirely on your laptop · your data never leaves.
 
 ---
 
+### Status: Phase 0 (Alpha) · Phase 0.5 firewall in code, awaiting counsel
+
+The product is **real**: real CRM, real cold calls, real commissions,
+real legal docs between operators and their closers. Not a simulator of
+a sales floor — *the* sales floor, plus a sim layer for practice.
+
+The architecture is **airtight before it's wide**: real product, small
+floor, firewall in code. See [`ROADMAP.md`](./ROADMAP.md) for the
+phases and [`docs/COMP_AND_LEGAL.md`](./docs/COMP_AND_LEGAL.md) for the
+counterparty model.
+
+**Platform posture in one line:** Beers Labs ships tooling. The
+operator is the contracting party. The closer is the operator's 1099.
+BullpenLM is on zero contracts between them.
+
+The two structural firewalls (verified in code, see [`tests/`](./tests/)):
+
+1. **Two-ledger XP.** Money-XP (closed deals + drill certs) and
+   clout-XP (volume, social, vanity) never merge. Recruiting another
+   closer awards zero of either.
+2. **Allocation firewall.** The prospect-claim priority function in
+   `server/gates.py` accepts only money-XP, cert score, and close rate.
+   The `EarningInputs` dataclass has no field for clout-XP, invite
+   count, post count, or rank — type-system-enforced.
+
+The FTC Koscot pyramid test — does the money trace to product sold to
+real external customers, or to recruitment/promotion of the
+opportunity? — has a code-level answer here, not a copy-tweak answer.
+
+---
+
 ## What this is
 
 - **A CRM** — drop in HubSpot / Salesforce / any CSV; every contact

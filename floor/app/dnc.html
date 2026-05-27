@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DNC management · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh}
+.wrap{max-width:920px;margin:0 auto;padding:36px 28px 100px}
+.brand{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:-.02em;display:inline-flex;text-decoration:none;margin-bottom:22px}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spacing:-.02em;margin:0 0 6px;line-height:1.05}
+.lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;margin:0 0 28px}
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:24px 28px;margin-bottom:20px}
+.panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field input,.field textarea,.field select{width:100%;padding:10px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:15px;outline:none}
+.field .hint{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:5px;letter-spacing:.04em}
+.row.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.row.two{grid-template-columns:1fr}}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:7px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none}
+.btn.primary{background:var(--accent);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid rgba(248,113,113,0.40)}
+.status{padding:10px 14px;border-radius:7px;margin:10px 0;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em}
+.status.ok{background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);color:var(--accent-2)}
+.status.err{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.30);color:var(--danger)}
+.list-row{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:12px 14px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.08);border-radius:8px;margin-bottom:8px;font-family:var(--mono);font-size:12.5px}
+.list-row .name{color:var(--accent-2);letter-spacing:.04em}
+.list-row .meta{color:var(--muted)}
+.warning-box{padding:12px 16px;background:rgba(251,191,36,0.06);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;font-family:var(--serif);font-size:14px;color:var(--muted);margin:14px 0}
+.warning-box strong{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <h1>DNC management</h1>
+  <p class="lede">The platform scrubs prospect numbers against these lists before any closer can claim. Stale lists are a liability — refresh monthly.</p>
+
+  <div class="panel">
+    <h2>LOADED LISTS</h2>
+    <div id="lists"></div>
+  </div>
+
+  <div class="panel">
+    <h2>IMPORT — NATIONAL (donotcall.gov)</h2>
+    <p style="color:var(--muted);margin:0 0 12px">Paste numbers, one per line. 10-digit or 11-digit US. The platform normalizes to digits.</p>
+    <div class="warning-box"><strong>You must have a valid telemarketing subscription</strong> to access the donotcall.gov registry. The platform does NOT redistribute the list.</div>
+    <div class="field"><textarea id="nat" rows="8" placeholder="503-555-0100&#10;5035550101&#10;15035550102"></textarea></div>
+    <div id="nat-status"></div>
+    <button class="btn primary" onclick="importList('national', 'nat')">Replace national list →</button>
+  </div>
+
+  <div class="panel">
+    <h2>IMPORT — STATE DNC</h2>
+    <div class="row two">
+      <div class="field"><label>State code (2 letters)</label><input id="state-code" maxlength="2" placeholder="CA"></div>
+      <div class="field"><label>State registration ID (optional, your records)</label><input id="state-id"></div>
+    </div>
+    <div class="field"><textarea id="state-nums" rows="6"></textarea></div>
+    <div id="state-status"></div>
+    <button class="btn primary" onclick="importStateList()">Replace state list →</button>
+  </div>
+
+  <div class="panel">
+    <h2>INTERNAL OPT-OUT (manual add)</h2>
+    <p style="color:var(--muted);margin:0 0 12px">Use when a prospect calls back and asks to be removed from your bullpen specifically. The number is also automatically added when a closer logs an opt-out request after a call.</p>
+    <div class="row two">
+      <div class="field"><label>Phone</label><input id="opt-phone"></div>
+      <div class="field"><label>Reason (audit log)</label><input id="opt-reason" placeholder="caller asked to be removed"></div>
+    </div>
+    <div id="opt-status"></div>
+    <button class="btn danger" onclick="addOptout()">Add to opt-out list →</button>
+  </div>
+
+</div>
+<script>
+const BULLPEN = (new URLSearchParams(window.location.search)).get('b') || 'default';
+function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+function setStatus(id,ok,msg){const w=document.getElementById(id);clear(w);w.appendChild(el('div',{class:'status '+(ok?'ok':'err'),text:msg}))}
+async function api(method,path,body){const r=await fetch(path,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});return{ok:r.ok,status:r.status,data:await r.json().catch(()=>({}))}}
+
+async function loadLists(){
+  const r = await api('GET', `/api/b/${BULLPEN}/dnc/status`);
+  const wrap = document.getElementById('lists');
+  clear(wrap);
+  if(!r.ok || !r.data.any_loaded){
+    wrap.appendChild(el('div', {class:'status err', text:'No DNC lists loaded yet. Importing the national list is the minimum.'}));
+    return;
+  }
+  for(const [name, meta] of Object.entries(r.data.lists)){
+    const row = el('div', {class:'list-row'});
+    row.appendChild(el('div', {class:'name', text:name}));
+    row.appendChild(el('div', {class:'meta', text: `${meta.count} numbers`}));
+    row.appendChild(el('div', {class:'meta', text: `imported ${meta.imported_at}`}));
+    wrap.appendChild(row);
+  }
+}
+
+async function importList(name, taId){
+  const numbers = document.getElementById(taId).value.split(/\s+/).filter(Boolean);
+  if(!numbers.length) return setStatus(taId+'-status', false, 'Paste at least one number.');
+  const r = await api('POST', `/api/b/${BULLPEN}/dnc/import`, {list_name:name, numbers});
+  if(!r.ok) return setStatus(taId+'-status', false, (r.data && r.data.error) || 'Import failed.');
+  setStatus(taId+'-status', true, `✓ Imported ${r.data.count} numbers into "${name}".`);
+  loadLists();
+}
+
+async function importStateList(){
+  const code = document.getElementById('state-code').value.trim().toUpperCase();
+  if(!code || code.length !== 2) return setStatus('state-status', false, 'Enter a 2-letter state code.');
+  const numbers = document.getElementById('state-nums').value.split(/\s+/).filter(Boolean);
+  if(!numbers.length) return setStatus('state-status', false, 'Paste at least one number.');
+  const r = await api('POST', `/api/b/${BULLPEN}/dnc/import`, {list_name:'state-'+code, numbers});
+  if(!r.ok) return setStatus('state-status', false, (r.data && r.data.error) || 'Import failed.');
+  setStatus('state-status', true, `✓ Imported ${r.data.count} numbers into "state-${code}".`);
+  loadLists();
+}
+
+async function addOptout(){
+  const phone = document.getElementById('opt-phone').value.trim();
+  if(!phone) return setStatus('opt-status', false, 'Enter a phone number.');
+  const r = await api('POST', `/api/b/${BULLPEN}/dnc/optout`, {phone, reason: document.getElementById('opt-reason').value});
+  if(!r.ok) return setStatus('opt-status', false, (r.data && r.data.error) || 'Opt-out failed.');
+  setStatus('opt-status', true, '✓ Number added to internal opt-out list.');
+  document.getElementById('opt-phone').value = '';
+  document.getElementById('opt-reason').value = '';
+}
+
+loadLists();
+</script>
+</body>
+</html>

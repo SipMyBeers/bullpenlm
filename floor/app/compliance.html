@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Compliance dashboard · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh}
+.wrap{max-width:1100px;margin:0 auto;padding:36px 28px 100px}
+.brand{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:-.02em;display:inline-flex;text-decoration:none;margin-bottom:22px}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spacing:-.02em;margin:0 0 6px;line-height:1.05}
+.lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;margin:0 0 28px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:22px 24px}
+.card h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.card.ok h2 .dot{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.card.err h2 .dot{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+.card.warn h2 .dot{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.card .value{font-family:var(--display);font-size:28px;letter-spacing:-.01em;color:var(--text);margin:0 0 6px}
+.card .meta{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
+.card .actions{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none}
+.btn.primary{background:var(--accent);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.btn.gold{background:var(--gold);color:#0a1a14}
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:22px 24px;margin-bottom:18px}
+.panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.closer-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:12px 14px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.08);border-radius:8px;margin-bottom:8px}
+.closer-row .pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;padding:4px 10px;border-radius:5px;text-transform:uppercase}
+.closer-row .pill.ok{background:rgba(52,211,153,0.12);color:var(--accent-2);border:1px solid rgba(52,211,153,0.40)}
+.closer-row .pill.gated{background:rgba(248,113,113,0.08);color:var(--danger);border:1px solid rgba(248,113,113,0.40)}
+.closer-row .rep{font-family:var(--mono);font-size:13px;color:var(--text);letter-spacing:.04em}
+.closer-row .missing{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.empty{font-family:var(--serif);font-style:italic;color:var(--muted);padding:14px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <h1>Compliance dashboard</h1>
+  <p class="lede">Phase 0.5 firewall posture for this bullpen. Each tile is a "can we open the floor wider yet?" check.</p>
+
+  <div class="grid" id="cards"></div>
+
+  <div class="panel">
+    <h2>CLOSER GATE STATUS</h2>
+    <div id="closers"></div>
+  </div>
+
+  <div class="panel">
+    <h2>YEAR-END 1099-NEC PREP</h2>
+    <p style="color:var(--muted);margin:0 0 12px">Download a CSV of commissions paid per closer for a given tax year. Hand it to your CPA — the platform does NOT file IRS forms.</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input id="csv-year" type="number" value="" placeholder="Year (e.g. 2026)" style="width:140px;padding:8px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;color:var(--text);font-family:var(--mono)">
+      <button class="btn primary" onclick="downloadCsv()">Download 1099-NEC prep CSV →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BULLPEN = (new URLSearchParams(window.location.search)).get('b') || 'default';
+function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+
+function makeCard(cls, title, value, meta, actions){
+  const card = el('div', {class:'card ' + cls});
+  const h2 = el('h2');
+  h2.appendChild(el('span', {class:'dot'}));
+  h2.appendChild(document.createTextNode(title));
+  card.appendChild(h2);
+  card.appendChild(el('div', {class:'value', text:value}));
+  if(meta) card.appendChild(el('div', {class:'meta', text:meta}));
+  if(actions && actions.length){
+    const wrap = el('div', {class:'actions'});
+    for(const a of actions){
+      const b = el('a', {class:'btn ' + (a.style||'ghost'), href:a.href, text:a.label});
+      wrap.appendChild(b);
+    }
+    card.appendChild(wrap);
+  }
+  return card;
+}
+
+async function load(){
+  const r = await fetch(`/api/b/${BULLPEN}/compliance`);
+  const d = await r.json();
+  const cards = document.getElementById('cards');
+  clear(cards);
+
+  // Entity
+  if(d.entity_setup_complete){
+    cards.appendChild(makeCard('ok', 'Operator entity', d.entity.legal_name,
+      `${d.entity.kind.toUpperCase()} · ${d.entity.jurisdiction}`,
+      [{label:'Edit', href:'/app/setup/?b='+BULLPEN, style:'ghost'}]));
+  } else {
+    cards.appendChild(makeCard('err', 'Operator entity', 'Not set up',
+      'Required before any legal doc renders.',
+      [{label:'Set up now →', href:'/app/setup/?b='+BULLPEN, style:'primary'}]));
+  }
+
+  // Classification
+  const cls = d.classification && d.classification.score;
+  if(cls && cls.verdict === 'contractor'){
+    cards.appendChild(makeCard('ok', 'Worker classification', 'Contractor',
+      `Score: ${cls.total_score}`,
+      [{label:'Re-run', href:'/app/setup/?b='+BULLPEN, style:'ghost'}]));
+  } else if(cls){
+    cards.appendChild(makeCard(cls.verdict === 'borderline' ? 'warn' : 'err',
+      'Worker classification', cls.verdict.toUpperCase(),
+      `Score: ${cls.total_score} · Cannot render 1099 yet.`,
+      [{label:'Review →', href:'/app/setup/?b='+BULLPEN, style:'primary'}]));
+  } else {
+    cards.appendChild(makeCard('err', 'Worker classification', 'Not run',
+      'Required before any 1099 renders.',
+      [{label:'Run coach →', href:'/app/setup/?b='+BULLPEN, style:'primary'}]));
+  }
+
+  // TOS
+  if(d.tos_accepted){
+    cards.appendChild(makeCard('ok', 'Operator TOS', 'Accepted', 'Counterparty disclaimer in audit chain.'));
+  } else {
+    cards.appendChild(makeCard('err', 'Operator TOS', 'Not accepted',
+      'Required before inviting closers.',
+      [{label:'Accept TOS →', href:'/app/setup/?b='+BULLPEN, style:'primary'}]));
+  }
+
+  // DNC
+  const lists = (d.dnc && d.dnc.lists) || {};
+  const listNames = Object.keys(lists);
+  if(listNames.length){
+    cards.appendChild(makeCard('ok', 'DNC lists',
+      `${listNames.length} list(s) loaded`,
+      listNames.map(n => `${n}:${lists[n].count}`).join(' · '),
+      [{label:'Manage', href:'/app/dnc.html?b='+BULLPEN, style:'ghost'}]));
+  } else {
+    cards.appendChild(makeCard('warn', 'DNC lists', 'None loaded',
+      'Required for prospect claim scrub.',
+      [{label:'Import lists →', href:'/app/dnc.html?b='+BULLPEN, style:'primary'}]));
+  }
+
+  // Audit chain
+  if(d.audit_chain_ok){
+    cards.appendChild(makeCard('ok', 'Audit chain integrity', 'OK', 'Hash chain verified end-to-end.',
+      [{label:'View events', href:'/app/audit.html?b='+BULLPEN, style:'ghost'}]));
+  } else {
+    cards.appendChild(makeCard('err', 'Audit chain integrity', 'BROKEN',
+      `Hash chain breaks at ${d.audit_broken_at}`,
+      [{label:'Investigate', href:'/app/audit.html?b='+BULLPEN, style:'primary'}]));
+  }
+
+  // Closer roster
+  const closersWrap = document.getElementById('closers');
+  clear(closersWrap);
+  if(!d.closers || d.closers.length === 0){
+    closersWrap.appendChild(el('div', {class:'empty', text:'No closers yet. Invite some from the host panel.'}));
+  } else {
+    for(const c of d.closers){
+      const row = el('div', {class:'closer-row'});
+      row.appendChild(el('div', {class:'rep', text:c.rep}));
+      const missingTxt = c.gate_ok ? 'Fully gated — can claim live prospects' :
+                                       (c.missing||[]).slice(0,3).join(', ') || 'unknown';
+      row.appendChild(el('div', {class:'missing', text:missingTxt}));
+      row.appendChild(el('div', {class:'pill ' + (c.gate_ok ? 'ok' : 'gated'), text:c.gate_ok ? '✓ READY' : '⛔ GATED'}));
+      closersWrap.appendChild(row);
+    }
+  }
+
+  // Default year for CSV
+  document.getElementById('csv-year').value = new Date().getFullYear() - 1;
+}
+
+function downloadCsv(){
+  const year = parseInt(document.getElementById('csv-year').value);
+  if(!year || year < 2020 || year > 2100) return alert('Enter a valid year.');
+  window.location.href = `/api/b/${BULLPEN}/payouts/1099-csv?year=${year}`;
+}
+
+load();
+</script>
+</body>
+</html>
