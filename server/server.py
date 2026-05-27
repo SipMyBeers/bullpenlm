@@ -2770,6 +2770,92 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Phase 0.5 firewall — operator setup + closer onboarding GET routes
         # ══════════════════════════════════════════════════════════════════
 
+        # ── Operator cockpit — one aggregated GET for the dashboard ──
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cockpit$", self.path)
+        if m:
+            try:
+                bullpen = m.group(1)
+                out = {"bullpen": bullpen}
+                # Phase 1 + invite readiness
+                try:
+                    from phase_check import invite_ready_check, bullpen_ready
+                    out["invite_ready"] = invite_ready_check(bullpen)
+                    out["bullpen_ready"] = bullpen_ready(bullpen)
+                except Exception as e:
+                    out["readiness_error"] = str(e)
+                # XP leaderboards (both ledgers)
+                try:
+                    from xp import get as xp_get
+                    out["xp"] = xp_get(bullpen)
+                except Exception as e:
+                    out["xp_error"] = str(e)
+                # Marketing aggregate
+                try:
+                    from marketing import aggregate_stats
+                    out["marketing"] = aggregate_stats(bullpen)
+                except Exception as e:
+                    out["marketing_error"] = str(e)
+                # Cadence — active count + due in 72h
+                try:
+                    from cadence import list_all as cad_list, due_steps
+                    out["cadence"] = {
+                        "active": len(cad_list(bullpen, status="active")),
+                        "completed": len(cad_list(bullpen, status="completed")),
+                        "due_72h": due_steps(bullpen, within_hours=72),
+                    }
+                except Exception as e:
+                    out["cadence_error"] = str(e)
+                # Presence
+                try:
+                    from presence import online_now
+                    out["presence"] = online_now(bullpen)
+                except Exception:
+                    try:
+                        # Fallback: read via the existing presence endpoint logic
+                        from pathlib import Path as _P
+                        import json as _json
+                        pp = _P(__file__).parent.parent / "bullpens" / bullpen / "presence.json"
+                        if pp.exists():
+                            out["presence"] = _json.loads(pp.read_text()).get("online", [])
+                        else:
+                            out["presence"] = []
+                    except Exception:
+                        out["presence"] = []
+                # RAG corpus stats
+                try:
+                    from rag import stats as rag_stats
+                    rs = rag_stats(bullpen)
+                    out["rag"] = {
+                        "buyers": rs.get("buyers", []),
+                        "total_chunks": rs.get("total_chunks", 0),
+                    }
+                except Exception:
+                    out["rag"] = {"buyers": [], "total_chunks": 0}
+                # Recent audit tail
+                try:
+                    from audit import tail as audit_tail
+                    out["audit_tail"] = audit_tail(bullpen, n=25)
+                except Exception as e:
+                    out["audit_error"] = str(e)
+                # Closer roster + gate
+                try:
+                    from gates import can_claim_live_prospect
+                    from bullpens import get_members
+                    members = get_members(bullpen) or []
+                    roster = []
+                    for member in members:
+                        rep = member.get("rep") if isinstance(member, dict) else member
+                        if not rep: continue
+                        g = can_claim_live_prospect(bullpen, rep)
+                        roster.append({"rep": rep, "gate_ok": g.ok, "missing": g.missing})
+                    out["closers"] = roster
+                except Exception:
+                    out["closers"] = []
+                self._send_json(200, out)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Phase C Cadence — list / get / due-steps ─────────────────
         # GET /api/b/<slug>/cadences?rep=...&status=...
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences(?:\?|$)", self.path)

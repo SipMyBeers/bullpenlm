@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cockpit · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
+  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--gold-dim:#92400e;
+  --danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}
+.crumb .here{color:var(--gold)}
+.nav{display:flex;gap:6px;margin-left:18px;flex-wrap:wrap}
+.nav a{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:5px}
+.nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.live-pulse{margin-left:auto;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.live-pulse .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+
+.wrap{max-width:1320px;margin:0 auto;padding:20px 22px 80px}
+h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 4px;line-height:1}
+.lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:0 0 20px}
+
+/* ── Status banner ────────────────────────────────────────── */
+.status-banner{padding:14px 22px;border-radius:10px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.status-banner.ready{background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.40);color:var(--accent-2)}
+.status-banner.partial{background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.40);color:var(--gold)}
+.status-banner.broken{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.40);color:var(--danger)}
+.status-banner .status-title{font-family:var(--display);font-size:18px;letter-spacing:-.01em;text-transform:uppercase}
+.status-banner .blockers{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* ── 4-tile grid ─────────────────────────────────────────── */
+.tile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:980px){.tile-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.tile-grid{grid-template-columns:1fr}}
+.tile{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:12px;padding:16px 18px}
+.tile .label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.tile .icon{font-size:14px}
+.tile .value{font-family:var(--display);font-size:34px;letter-spacing:-.01em;color:var(--text);line-height:1}
+.tile .meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px;letter-spacing:.04em}
+
+/* ── Main panels ─────────────────────────────────────────── */
+.shell{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
+@media(max-width:1100px){.shell{grid-template-columns:1fr}}
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:22px 24px;margin-bottom:14px}
+.panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;display:flex;align-items:center;justify-content:space-between}
+.panel h2 .count{background:rgba(52,211,153,0.10);color:var(--accent-2);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700}
+.panel h2 a{color:var(--gold);text-decoration:none;font-size:10px;letter-spacing:.14em}
+.panel h2 a:hover{text-decoration:underline}
+
+/* ── XP leaderboard ──────────────────────────────────────── */
+.leaderboard{display:flex;gap:14px;flex-wrap:wrap}
+.leader-col{flex:1;min-width:240px}
+.leader-col h3{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.leader-col.money h3{color:var(--accent)}
+.leader-col.clout h3{color:var(--gold)}
+.lb-row{display:grid;grid-template-columns:24px 1fr auto;align-items:center;padding:7px 0;border-bottom:1px solid rgba(245,232,216,0.05);font-family:var(--mono);font-size:12px;gap:10px}
+.lb-row .rank{color:var(--muted);font-size:10px;letter-spacing:.06em}
+.lb-row .rank.gold{color:var(--gold)}
+.lb-row .rep{color:var(--text)}
+.lb-row .val{color:var(--accent-2);font-weight:700;letter-spacing:.04em}
+.leader-col.clout .lb-row .val{color:var(--gold)}
+
+/* ── Closer roster ────────────────────────────────────────── */
+.closer-row{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:10px 14px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.06);border-radius:8px;margin-bottom:6px;font-family:var(--mono);font-size:11.5px}
+.closer-row .rep-name{color:var(--text);letter-spacing:.04em}
+.closer-row .missing{color:var(--muted);font-size:10px}
+.pill{font-family:var(--mono);font-size:10px;letter-spacing:.10em;padding:3px 9px;border-radius:5px;text-transform:uppercase;font-weight:700}
+.pill.ok{background:rgba(52,211,153,0.12);color:var(--accent-2);border:1px solid rgba(52,211,153,0.40)}
+.pill.gated{background:rgba(248,113,113,0.08);color:var(--danger);border:1px solid rgba(248,113,113,0.40)}
+
+/* ── Due cadences ─────────────────────────────────────────── */
+.cad-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 13px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.06);border-radius:8px;margin-bottom:6px;font-family:var(--mono);font-size:11px}
+.cad-row.overdue{border-color:rgba(248,113,113,0.30);background:rgba(248,113,113,0.04)}
+.cad-row .ch{font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:3px 7px;border-radius:4px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.10)}
+.cad-row .note{color:var(--text);font-family:var(--serif);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cad-row .due{font-size:10px;color:var(--gold);letter-spacing:.06em}
+.cad-row .due.overdue{color:var(--danger)}
+
+/* ── Audit feed ────────────────────────────────────────────── */
+.audit-feed{max-height:540px;overflow-y:auto}
+.audit-row{padding:8px 0;border-bottom:1px solid rgba(245,232,216,0.04);font-family:var(--mono);font-size:10.5px;letter-spacing:.04em}
+.audit-row .ts{color:var(--dim);font-size:9.5px}
+.audit-row .actor{color:var(--gold);font-weight:700}
+.audit-row .kind{color:var(--accent-2);font-weight:600}
+.audit-row .kind.money{color:var(--gold)}
+.audit-row .kind.clout{color:var(--accent-2)}
+.audit-row .kind.firewall{color:var(--danger)}
+
+/* ── Presence chips ───────────────────────────────────────── */
+.presence-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.presence-chip{padding:5px 11px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.30);border-radius:14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--accent-2)}
+.presence-chip .page{color:var(--muted);margin-left:6px;font-size:9.5px}
+
+.empty{font-family:var(--serif);font-style:italic;color:var(--muted);text-align:center;padding:18px;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <div class="crumb">
+    <a href="/app/lobby.html">Floor</a> <span> / </span>
+    <span class="here">Cockpit</span>
+  </div>
+  <div class="nav">
+    <a href="/app/host.html">Host</a>
+    <a href="/app/office.html">Office</a>
+    <a href="/app/studio.html">Studio</a>
+    <a href="/app/marketing.html">Marketing</a>
+    <a href="/app/cadences.html">Cadences</a>
+    <a href="/app/closers.html">Roster</a>
+    <a href="/app/compliance.html">Compliance</a>
+  </div>
+  <div class="live-pulse"><span class="dot"></span><span id="live-updated">just now</span></div>
+</header>
+
+<div class="wrap">
+  <h1>Cockpit</h1>
+  <p class="lede">Everything that matters in one screen. Updates live. Operator's morning home.</p>
+
+  <div class="status-banner" id="status-banner">
+    <div>
+      <div class="status-title" id="status-title">Loading…</div>
+      <div class="blockers" id="status-blockers"></div>
+    </div>
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:inherit">
+      <span id="status-pill">CHECKING</span>
+    </div>
+  </div>
+
+  <div class="tile-grid" id="tile-grid"></div>
+
+  <div class="shell">
+    <div>
+      <div class="panel">
+        <h2>🏆 XP LEADERBOARD <a href="/app/profile.html">view profiles →</a></h2>
+        <div class="leaderboard" id="leaderboard"></div>
+      </div>
+
+      <div class="panel">
+        <h2>👥 CLOSER ROSTER <span class="count" id="closer-count">0</span></h2>
+        <div id="closer-list"></div>
+      </div>
+
+      <div class="panel">
+        <h2>⏰ DUE CADENCE STEPS <a href="/app/cadences.html">all →</a></h2>
+        <div id="cadence-list"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>🟢 ON THE FLOOR <span class="count" id="presence-count">0</span></h2>
+        <div class="presence-chips" id="presence-chips"></div>
+      </div>
+
+      <div class="panel">
+        <h2>📊 RAG CORPUS</h2>
+        <div id="rag-stats"></div>
+      </div>
+
+      <div class="panel">
+        <h2>📡 LIVE AUDIT FEED</h2>
+        <div class="audit-feed" id="audit-feed"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const URLP = new URL(window.location.href);
+const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else if(k==='href')n.setAttribute('href',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+
+// Classify audit kinds for color-coding
+const MONEY_KINDS = new Set(['deal_closed_won','deal_stage_moved','pilot_signed','marketing_lead_signed','marketing_deal_closed','research_question_landed','drill_passed']);
+const FIREWALL_KINDS = new Set(['gate_refused','gate_bypassed_legacy','classification_saved','operator_tos_accepted','closer_disclosure_accepted','dual_sign','w9_submitted','doc_signed']);
+
+function classifyKind(kind){
+  if(MONEY_KINDS.has(kind)) return 'money';
+  if(FIREWALL_KINDS.has(kind)) return 'firewall';
+  return 'clout';
+}
+
+function fmtRelTime(iso){
+  if(!iso) return '';
+  const t = new Date(iso);
+  const diff = (new Date() - t) / 1000;
+  if(diff < 60)      return `${Math.floor(diff)}s ago`;
+  if(diff < 3600)    return `${Math.floor(diff/60)}m ago`;
+  if(diff < 86400)   return `${Math.floor(diff/3600)}h ago`;
+  return iso.slice(0, 16);
+}
+
+function dueRel(dueAt){
+  const due = new Date(dueAt);
+  const diff = (due - new Date()) / 3600 / 1000;
+  if(diff < -24) return {text: `${Math.floor(-diff/24)}d OVERDUE`, cls:'overdue'};
+  if(diff < 0)   return {text: `${Math.floor(-diff)}h OVERDUE`, cls:'overdue'};
+  if(diff < 24)  return {text: 'TODAY', cls:''};
+  return {text: `${Math.floor(diff/24)}d`, cls:''};
+}
+
+async function load(){
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/cockpit`);
+    if(!r.ok) throw new Error('cockpit fetch failed: ' + r.status);
+    const d = await r.json();
+    renderBanner(d);
+    renderTiles(d);
+    renderLeaderboard(d);
+    renderClosers(d);
+    renderCadences(d);
+    renderPresence(d);
+    renderRag(d);
+    renderAudit(d);
+    document.getElementById('live-updated').textContent = 'updated ' + new Date().toLocaleTimeString();
+  } catch(e){
+    console.warn('cockpit error', e);
+  }
+}
+
+function renderBanner(d){
+  const ir = d.invite_ready || {};
+  const banner = document.getElementById('status-banner');
+  const title = document.getElementById('status-title');
+  const blockers = document.getElementById('status-blockers');
+  const pill = document.getElementById('status-pill');
+  banner.classList.remove('ready','partial','broken');
+  if(ir.ready){
+    banner.classList.add('ready');
+    title.textContent = '✓ Bullpen is invite-ready';
+    blockers.textContent = 'Every operational check is green. Magic links work. Phase 0.5 firewall active.';
+    pill.textContent = 'READY';
+  } else if(ir.missing && ir.missing.length){
+    const isOnlyEntity = ir.missing.length <= 2 && ir.missing.every(m => ['ollama','tunnel'].includes(m));
+    banner.classList.add(isOnlyEntity ? 'partial' : 'broken');
+    title.textContent = `⛔ ${ir.missing.length} blocker${ir.missing.length>1?'s':''}`;
+    blockers.textContent = ir.missing.join(' · ');
+    pill.textContent = 'NOT READY';
+  } else {
+    banner.classList.add('partial');
+    title.textContent = 'Status unknown';
+    blockers.textContent = '';
+    pill.textContent = '—';
+  }
+}
+
+function renderTiles(d){
+  const wrap = document.getElementById('tile-grid');
+  clear(wrap);
+  const xp = d.xp || {reps: []};
+  const totalMoney = (xp.reps || []).reduce((s,r) => s + (r.money_xp || 0), 0);
+  const totalClout = (xp.reps || []).reduce((s,r) => s + (r.clout_xp || 0), 0);
+  const mk = d.marketing || {total:{posts:0,clicks:0,leads:0,deals:0}};
+  const cad = d.cadence || {active:0,completed:0,due_72h:[]};
+  const tiles = [
+    {label:'💰 MONEY-XP TOTAL', value: totalMoney, meta: 'sum across reps', icon:'💰'},
+    {label:'⚡ CLOUT-XP TOTAL', value: totalClout, meta: 'study + social', icon:'⚡'},
+    {label:'📢 MARKETING CLICKS', value: (mk.total||{}).clicks || 0, meta: `${(mk.total||{}).leads||0} leads · ${(mk.total||{}).deals||0} deals`, icon:'📢'},
+    {label:'⏰ CADENCE DUE 72H', value: (cad.due_72h||[]).length, meta: `${cad.active} active · ${cad.completed} done`, icon:'⏰'},
+  ];
+  for(const t of tiles){
+    const tile = el('div', {class:'tile'});
+    const lab = el('div', {class:'label'});
+    lab.appendChild(el('span', {class:'icon', text:t.icon}));
+    lab.appendChild(el('span', {text:t.label.replace(/^[^A-Z]+/, '')}));
+    tile.appendChild(lab);
+    tile.appendChild(el('div', {class:'value', text:String(t.value)}));
+    tile.appendChild(el('div', {class:'meta', text:t.meta}));
+    wrap.appendChild(tile);
+  }
+}
+
+function renderLeaderboard(d){
+  const wrap = document.getElementById('leaderboard');
+  clear(wrap);
+  const reps = (d.xp || {}).reps || [];
+
+  const money = el('div', {class:'leader-col money'});
+  money.appendChild(el('h3', {text:'💰 MONEY-XP (closed deals + cert tier + outcomes)'}));
+  const byMoney = [...reps].sort((a,b) => (b.money_xp||0) - (a.money_xp||0)).slice(0, 8);
+  if(!byMoney.length){
+    money.appendChild(el('div', {class:'empty', text:'No XP yet.'}));
+  } else {
+    byMoney.forEach((r, i) => {
+      const row = el('div', {class:'lb-row'});
+      row.appendChild(el('span', {class: 'rank' + (i===0?' gold':''), text: `#${i+1}`}));
+      row.appendChild(el('span', {class:'rep', text: r.rep || '?'}));
+      row.appendChild(el('span', {class:'val', text: `$${r.money_xp || 0}`}));
+      money.appendChild(row);
+    });
+  }
+  wrap.appendChild(money);
+
+  const clout = el('div', {class:'leader-col clout'});
+  clout.appendChild(el('h3', {text:'⚡ CLOUT-XP (study + social + cadence)'}));
+  const byClout = [...reps].sort((a,b) => (b.clout_xp||0) - (a.clout_xp||0)).slice(0, 8);
+  if(!byClout.length){
+    clout.appendChild(el('div', {class:'empty', text:'No XP yet.'}));
+  } else {
+    byClout.forEach((r, i) => {
+      const row = el('div', {class:'lb-row'});
+      row.appendChild(el('span', {class: 'rank' + (i===0?' gold':''), text: `#${i+1}`}));
+      row.appendChild(el('span', {class:'rep', text: r.rep || '?'}));
+      row.appendChild(el('span', {class:'val', text: `⚡${r.clout_xp || 0}`}));
+      clout.appendChild(row);
+    });
+  }
+  wrap.appendChild(clout);
+}
+
+function renderClosers(d){
+  const wrap = document.getElementById('closer-list');
+  clear(wrap);
+  const closers = d.closers || [];
+  document.getElementById('closer-count').textContent = closers.length;
+  if(!closers.length){
+    wrap.appendChild(el('div', {class:'empty', text:'No closers yet — invite via /app/host.html'}));
+    return;
+  }
+  closers.sort((a,b) => (b.gate_ok?1:0) - (a.gate_ok?1:0) || a.rep.localeCompare(b.rep));
+  for(const c of closers){
+    const row = el('div', {class:'closer-row'});
+    row.appendChild(el('span', {class:'rep-name', text: c.rep}));
+    if(c.gate_ok){
+      row.appendChild(el('span', {class:'missing', text:'cleared for live work'}));
+      row.appendChild(el('span', {class:'pill ok', text:'✓ READY'}));
+    } else {
+      const m = (c.missing || []).slice(0,2).map(x => x.replace(/_/g,' ').replace(/^closer /, '').replace(/^not /, '')).join(' · ');
+      row.appendChild(el('span', {class:'missing', text: m || 'gated'}));
+      row.appendChild(el('span', {class:'pill gated', text:'⛔ GATED'}));
+    }
+    wrap.appendChild(row);
+  }
+}
+
+function renderCadences(d){
+  const wrap = document.getElementById('cadence-list');
+  clear(wrap);
+  const due = ((d.cadence || {}).due_72h) || [];
+  if(!due.length){
+    wrap.appendChild(el('div', {class:'empty', text:'Nothing due. Move a deal into qualified / demo / pilot to start a cadence.'}));
+    return;
+  }
+  due.sort((a,b) => (a.step.due_at || '').localeCompare(b.step.due_at || ''));
+  for(const item of due.slice(0, 8)){
+    const dr = dueRel(item.step.due_at);
+    const row = el('div', {class:'cad-row' + (dr.cls ? ' ' + dr.cls : '')});
+    row.appendChild(el('span', {class:'ch', text: item.step.channel || '—'}));
+    const note = el('div');
+    note.appendChild(el('div', {class:'note', text: item.step.note || '(no notes)'}));
+    note.appendChild(el('div', {style:'color:var(--muted);font-size:10px;margin-top:2px', text: `${item.rep} · deal ${item.deal_id}`}));
+    row.appendChild(note);
+    row.appendChild(el('span', {class:'due ' + dr.cls, text: dr.text}));
+    wrap.appendChild(row);
+  }
+}
+
+function renderPresence(d){
+  const wrap = document.getElementById('presence-chips');
+  clear(wrap);
+  const online = d.presence || [];
+  document.getElementById('presence-count').textContent = online.length;
+  if(!online.length){
+    wrap.appendChild(el('div', {class:'empty', style:'padding:8px;width:100%', text:'No one on the floor.'}));
+    return;
+  }
+  for(const p of online){
+    const chip = el('div', {class:'presence-chip'});
+    chip.appendChild(document.createTextNode(p.rep || '?'));
+    if(p.page) chip.appendChild(el('span', {class:'page', text: '· ' + p.page}));
+    wrap.appendChild(chip);
+  }
+}
+
+function renderRag(d){
+  const wrap = document.getElementById('rag-stats');
+  clear(wrap);
+  const rag = d.rag || {buyers:[], total_chunks:0};
+  if(!rag.buyers.length){
+    wrap.appendChild(el('div', {class:'empty', text:'No buyer dossiers ingested yet. Open /app/studio.html and drop sources.'}));
+    return;
+  }
+  const summary = el('div', {style:'font-family:var(--mono);font-size:11px;color:var(--accent-2);margin-bottom:10px;letter-spacing:.04em'});
+  summary.textContent = `${rag.buyers.length} buyer${rag.buyers.length===1?'':'s'} · ${rag.total_chunks} total chunks`;
+  wrap.appendChild(summary);
+  for(const b of rag.buyers.slice(0, 6)){
+    const row = el('div', {style:'display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(245,232,216,0.04);font-family:var(--mono);font-size:11px'});
+    const link = el('a', {href:`/app/studio.html?b=${BULLPEN}&buyer=${b.buyer_slug}`, style:'color:var(--text);text-decoration:none', text:b.buyer_slug});
+    row.appendChild(link);
+    row.appendChild(el('span', {style:'color:var(--accent-2);font-weight:700', text:`${b.chunks}c`}));
+    wrap.appendChild(row);
+  }
+}
+
+function renderAudit(d){
+  const wrap = document.getElementById('audit-feed');
+  clear(wrap);
+  const events = d.audit_tail || [];
+  if(!events.length){
+    wrap.appendChild(el('div', {class:'empty', text:'No events yet.'}));
+    return;
+  }
+  // Reverse so newest at top
+  for(const ev of [...events].reverse().slice(0, 25)){
+    const cls = classifyKind(ev.kind || '');
+    const row = el('div', {class:'audit-row'});
+    row.appendChild(el('span', {class:'ts', text: fmtRelTime(ev.ts) + '  '}));
+    row.appendChild(el('span', {class:'kind ' + cls, text: (ev.kind || '?') + '  '}));
+    row.appendChild(el('span', {class:'actor', text: ev.actor || '?'}));
+    wrap.appendChild(row);
+  }
+}
+
+// SSE for live updates
+function subscribeSSE(){
+  try {
+    const es = new EventSource(`/api/b/${BULLPEN}/stream`);
+    es.onmessage = () => {
+      clearTimeout(window.__cockpit_reload);
+      window.__cockpit_reload = setTimeout(load, 400);
+    };
+  } catch(e){}
+}
+
+load();
+subscribeSSE();
+setInterval(load, 30000);
+</script>
+</body>
+</html>
