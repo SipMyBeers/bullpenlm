@@ -5022,6 +5022,73 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # POST /api/b/<slug>/cadences/<cad_id>/steps/<idx>/compose
+        # body: {} — composes RAG-grounded draft using the cadence step's
+        # context. Does NOT send.
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences/([a-zA-Z0-9_\-]+)/steps/(\d+)/compose$", self.path)
+        if m:
+            try:
+                from cadence import get as cad_get
+                from cadence_compose import compose_email
+                cad_id, step_idx = m.group(2), int(m.group(3))
+                rec = cad_get(m.group(1), cad_id)
+                if not rec:
+                    self._send_json(404, {"error": "cadence not found"}); return
+                if step_idx < 0 or step_idx >= len(rec["steps"]):
+                    self._send_json(400, {"error": "step_idx out of range"}); return
+                step = rec["steps"][step_idx]
+                if step.get("channel") != "email":
+                    self._send_json(400, {"error": "compose only available for email channel"}); return
+                draft = compose_email(
+                    m.group(1),
+                    buyer_slug=rec.get("deal_id", "").split("-", 1)[-1] or rec.get("deal_id", ""),
+                    step_note=step.get("note", ""),
+                    step_day=step.get("day", 0),
+                    step_template=step.get("template"),
+                )
+                self._send_json(200, draft)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # POST /api/b/<slug>/cadences/<cad_id>/steps/<idx>/send
+        # body: {to, subject, body} — sends via email_send.send_raw then
+        # marks the cadence step done so the audit chain credits XP.
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences/([a-zA-Z0-9_\-]+)/steps/(\d+)/send$", self.path)
+        if m:
+            try:
+                from email_send import send_raw
+                from cadence import mark_done
+                body_req = json.loads(raw) if raw else {}
+                to = (body_req.get("to") or "").strip()
+                subject = (body_req.get("subject") or "").strip()
+                body_md = (body_req.get("body") or "").strip()
+                rep = (body_req.get("rep") or self._current_rep() or "self").strip()
+                if not (to and subject and body_md):
+                    self._send_json(400, {"error": "to + subject + body required"}); return
+                # Send (worker renders markdown → HTML on its side; we send
+                # both fields for completeness)
+                resp = send_raw(
+                    m.group(1), to,
+                    subject=subject,
+                    html=body_md,  # worker handles markdown→html
+                    text=body_md,
+                    actor=rep,
+                )
+                ok = resp.get("ok") if isinstance(resp, dict) else False
+                if ok:
+                    # Mark the cadence step done so audit chain fires
+                    # followup_executed (and credits clout-XP)
+                    try:
+                        mark_done(m.group(1), m.group(2), int(m.group(3)),
+                                   rep=rep, note=f"sent to {to}")
+                    except Exception:
+                        pass
+                self._send_json(200 if ok else 502, resp)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # POST /api/b/<slug>/cadences/<cad_id>/steps/<idx>/done
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences/([a-zA-Z0-9_\-]+)/steps/(\d+)/done$", self.path)
         if m:

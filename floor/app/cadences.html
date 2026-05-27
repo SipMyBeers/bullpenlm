@@ -186,6 +186,10 @@ async function loadDue(){
     row.appendChild(info);
     row.appendChild(el('div', {class:'due-badge ' + lbl.cls, text: lbl.text}));
     const acts = el('div', {class:'actions'});
+    // ✉ Compose appears only on email steps
+    if((item.step.channel || '').toLowerCase() === 'email'){
+      acts.appendChild(el('button', {class:'btn-mini', style:'background:var(--gold);color:#0a1a14', text:'✉ Compose', onClick: () => openComposer(item)}));
+    }
     acts.appendChild(el('button', {class:'btn-mini done', text:'✓ Done', onClick: async () => {
       await api('POST', `/api/b/${BULLPEN}/cadences/${item.cadence_id}/steps/${item.step.idx}/done`, {rep:REP});
       loadDue(); loadActive();
@@ -260,6 +264,87 @@ async function load(){
 }
 load();
 setInterval(load, 30000);
+
+// ── Email composer modal ─────────────────────────────────────────
+function openComposer(item){
+  const overlay = el('div', {id:'composer-overlay', style:'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto'});
+  const modal = el('div', {style:'max-width:680px;width:100%;background:linear-gradient(180deg,rgba(42,29,16,0.97),rgba(26,18,8,0.97));border:1px solid rgba(251,191,36,0.30);border-radius:14px;padding:24px 28px;box-shadow:0 14px 50px rgba(0,0,0,0.6)'});
+  modal.appendChild(el('div', {style:'font-family:var(--display);font-size:24px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 4px', text:'✉ Compose follow-up'}));
+  modal.appendChild(el('div', {style:'font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:16px', text: `${item.rep} · ${item.template} · day ${item.step.day}`}));
+
+  const body = el('div', {style:'font-family:var(--serif);font-size:14px;color:var(--muted);text-align:center;padding:36px', text:'Generating RAG-grounded draft…'});
+  modal.appendChild(body);
+
+  const foot = el('div', {style:'display:flex;justify-content:space-between;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid rgba(245,232,216,0.10)'});
+  foot.appendChild(el('button', {class:'btn-mini skip', text:'Close', onClick:()=>overlay.remove()}));
+  foot.appendChild(el('div', {id:'composer-send-wrap'}));
+  modal.appendChild(foot);
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target.id==='composer-overlay') overlay.remove(); });
+
+  // Fire the compose call
+  fetch(`/api/b/${BULLPEN}/cadences/${item.cadence_id}/steps/${item.step.idx}/compose`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'
+  }).then(r => r.json()).then(d => {
+    clear(body);
+    if(d.error){
+      body.style.color = 'var(--danger)';
+      body.textContent = 'Error: ' + d.error;
+      return;
+    }
+    // Editable form: to, subject, body
+    body.style.color = '';
+    body.style.textAlign = 'left';
+    body.style.padding = '0';
+    body.style.fontFamily = 'inherit';
+    body.style.fontSize = '14px';
+
+    const fld = (label, id, value, multiline) => {
+      const w = el('div', {style:'margin-bottom:10px'});
+      w.appendChild(el('label', {style:'display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px', text: label}));
+      const input = multiline ? el('textarea', {id, style:'width:100%;min-height:200px;padding:11px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:14px;outline:none;resize:vertical;line-height:1.55'}) : el('input', {id, style:'width:100%;padding:9px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none'});
+      input.value = value || '';
+      w.appendChild(input);
+      return w;
+    };
+    body.appendChild(fld('TO', 'compose-to', d.to_suggested || '', false));
+    body.appendChild(fld('SUBJECT', 'compose-subject', d.subject || '', false));
+    body.appendChild(fld('BODY (markdown)', 'compose-body', d.body || '', true));
+    if(d.grounded === false){
+      body.appendChild(el('div', {style:'font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.06em;margin-top:6px', text:'⚠ no RAG sources — draft is template-only. Drop sources to the buyer\'s dossier for a sharper draft.'}));
+    }
+    // Send button
+    const sendWrap = document.getElementById('composer-send-wrap');
+    clear(sendWrap);
+    const sendBtn = el('button', {class:'btn-mini done', style:'padding:8px 16px', text:'Send + mark done →', onClick: async () => {
+      const payload = {
+        to: document.getElementById('compose-to').value.trim(),
+        subject: document.getElementById('compose-subject').value.trim(),
+        body: document.getElementById('compose-body').value.trim(),
+        rep: REP,
+      };
+      if(!payload.to || !payload.subject || !payload.body){ alert('to / subject / body required'); return; }
+      sendBtn.disabled = true; sendBtn.textContent = 'Sending…';
+      const r = await fetch(`/api/b/${BULLPEN}/cadences/${item.cadence_id}/steps/${item.step.idx}/send`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload),
+      });
+      const j = await r.json();
+      if(!r.ok){
+        sendBtn.disabled = false; sendBtn.textContent = 'Send + mark done →';
+        alert('Send failed: ' + (j.error || JSON.stringify(j)));
+        return;
+      }
+      overlay.remove();
+      loadDue(); loadCadenceList('active', 'active-list', 'active-count');
+    }});
+    sendWrap.appendChild(sendBtn);
+  }).catch(e => {
+    body.style.color = 'var(--danger)';
+    body.textContent = 'Compose failed: ' + e.message;
+  });
+}
 </script>
 </body>
 </html>
