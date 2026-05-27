@@ -69,6 +69,7 @@ header .nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
 .legend .swatch.zone-duo{background:#7a5712;border:1px solid var(--gold)}
 .legend .swatch.zone-buyers{background:#2d3a4d}
 .legend .swatch.zone-bell{background:#4a1f3a}
+.legend .swatch.zone-kanban{background:#3a2d1f;border:1px solid var(--accent)}
 .legend .swatch.closer{background:var(--accent)}
 .legend .swatch.buyer{background:#9ab1d9}
 .legend .swatch.you{background:var(--gold)}
@@ -87,6 +88,36 @@ header .nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
 .tile-buyers-dark{fill:#243043}
 .tile-bell{fill:#4a1f3a}
 .tile-bell-dark{fill:#3d1830}
+.tile-kanban{fill:#3a2d1f}
+.tile-kanban-dark{fill:#2f2419}
+.deal-card{cursor:pointer;transition:transform 0.8s cubic-bezier(0.22,1,0.36,1)}
+.deal-card-shadow{fill:rgba(0,0,0,0.5)}
+.deal-card-body{stroke:var(--edge);stroke-width:1}
+.deal-card-side{stroke:var(--edge);stroke-width:1;opacity:0.7}
+.deal-card-label{font-family:var(--mono);font-size:8px;letter-spacing:.04em;fill:var(--text);pointer-events:none;text-anchor:middle}
+.deal-stack-count{font-family:var(--mono);font-size:9px;letter-spacing:.04em;fill:var(--gold);text-anchor:middle;pointer-events:none}
+
+/* Bell ring animation — fires on deal_closed_won */
+.bell.ringing .bell-top{animation:bell-shake 0.6s ease-in-out 3}
+.bell.ringing .bell-side{animation:bell-shake 0.6s ease-in-out 3}
+@keyframes bell-shake {
+  0%,100% { transform:rotate(0) }
+  25%     { transform:rotate(-12deg) }
+  75%     { transform:rotate(12deg) }
+}
+.bell-burst{transform-origin:center;animation:bell-burst 1.2s ease-out 1;pointer-events:none}
+@keyframes bell-burst {
+  0%   { opacity:1; transform:scale(0.3) }
+  100% { opacity:0; transform:scale(2.5) }
+}
+.bell-fanfare{font-family:var(--display);font-size:22px;fill:var(--gold);text-transform:uppercase;letter-spacing:.06em;
+  text-anchor:middle;pointer-events:none;filter:drop-shadow(0 0 8px var(--gold));animation:bell-text 1.8s ease-out 1}
+@keyframes bell-text {
+  0%   { opacity:0; transform:translateY(0) scale(0.7) }
+  20%  { opacity:1; transform:translateY(-10px) scale(1.2) }
+  100% { opacity:0; transform:translateY(-50px) scale(1.4) }
+}
+
 .zone-label{font-family:var(--mono);font-size:9px;letter-spacing:.22em;text-transform:uppercase;fill:rgba(245,232,216,0.45);pointer-events:none}
 .zone-label.gold{fill:var(--gold)}
 
@@ -133,7 +164,7 @@ header .nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
 
 <div class="shell">
   <div class="stage" id="stage">
-    <svg id="office" width="1000" height="640" viewBox="-50 -30 1000 640"></svg>
+    <svg id="office" width="1000" height="780" viewBox="-50 -30 1000 780"></svg>
   </div>
   <aside class="side">
     <h2>📋 The bullpen</h2>
@@ -148,6 +179,7 @@ header .nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
         <div><span class="swatch zone-duo"></span> DUO RING — live 1v1s</div>
         <div><span class="swatch zone-buyers"></span> CLIENT DESKS — AI buyers</div>
         <div><span class="swatch zone-bell"></span> THE BELL — deal-close ring</div>
+        <div><span class="swatch zone-kanban"></span> KANBAN — deal pipeline</div>
         <div><span class="swatch you"></span> YOU</div>
         <div><span class="swatch closer"></span> teammate</div>
         <div><span class="swatch buyer"></span> AI buyer</div>
@@ -187,12 +219,14 @@ function tileDiamond(x, y) {
 }
 
 // ── Office layout (the floor plan) ──────────────────────────────
-// 14 × 10 grid. Origin offset so x=0,y=0 is visible.
-const COLS = 14, ROWS = 10;
+// 14 × 12 grid. Bottom 2 rows = kanban pipeline.
+const COLS = 14, ROWS = 12;
 const OFFSET_X = 460, OFFSET_Y = 60;
 
 // Zones — each tile knows which zone it belongs to.
 function zoneFor(x, y) {
+  // KANBAN — bottom 2 rows
+  if (y >= 10) return 'kanban';
   // DUO RING — center
   if (x >= 5 && x <= 8 && y >= 3 && y <= 5) return 'duo';
   // BELL podium — top-right corner
@@ -201,6 +235,16 @@ function zoneFor(x, y) {
   if (x >= 10 && y >= 4 && y <= 8) return 'buyers';
   // THE PIT — everywhere else
   return 'pit';
+}
+
+// Kanban lane: each pipeline stage gets 2 cols + 2 rows of tiles
+const KANBAN_STAGES_VISIBLE = ['lead', 'contacted', 'qualified', 'demo', 'pilot', 'won'];
+function kanbanLaneFor(stageId) {
+  const idx = KANBAN_STAGES_VISIBLE.indexOf(stageId);
+  if (idx < 0) return null;
+  // Each lane is 2 cols, columns 1-12 (skip 0 and 13 for margin)
+  const startCol = 1 + idx * 2;
+  return { x: startCol, y: 10, w: 2, h: 2, idx };
 }
 
 // Fixed positions for buyer desks (the AI buyers sit at these tiles)
@@ -224,6 +268,8 @@ const state = {
   presence: [],       // [{rep, ts, page, status}]
   duos: [],           // [{id, status, prospect_slug, challenger, opponent, ...}]
   buyer_cards: [],    // [{slug, name, company, ...}]
+  pipeline: null,     // {stages: [...]}
+  deals: [],          // [{id, name, stage, amount, rep, contact_slug, ...}]
 };
 
 // Deterministic placement: closer pawn position from rep hash
@@ -310,6 +356,7 @@ function render() {
       if (z === 'duo') cls += 'tile-duo';
       else if (z === 'buyers') cls += ((x + y) % 2 === 0) ? 'tile-buyers' : 'tile-buyers-dark';
       else if (z === 'bell') cls += ((x + y) % 2 === 0) ? 'tile-bell' : 'tile-bell-dark';
+      else if (z === 'kanban') cls += ((x + y) % 2 === 0) ? 'tile-kanban' : 'tile-kanban-dark';
       else cls += ((x + y) % 2 === 0) ? 'tile-pit' : 'tile-pit-dark';
       tilesGroup.appendChild(el('polygon', { points: tileDiamond(x, y), class: cls }));
     }
@@ -334,6 +381,7 @@ function render() {
     { text: '⚔ DUO RING',    tile: { x: 6.5, y: 2.5 }, gold: hasActiveDuo },
     { text: 'CLIENT DESKS',  tile: { x: 12, y: 3.5 }, gold: false },
     { text: '🔔 THE BELL',   tile: { x: 11.5, y: -0.5 }, gold: false },
+    { text: '📋 PIPELINE',   tile: { x: 6.5, y: 9.5 }, gold: false },
   ];
   for (const l of labels) {
     const c = iso(l.tile.x, l.tile.y);
@@ -343,11 +391,26 @@ function render() {
       text: l.text
     }));
   }
+  // Kanban stage labels — one per lane, above the lane
+  if (state.pipeline && state.pipeline.stages) {
+    for (const s of state.pipeline.stages) {
+      const lane = kanbanLaneFor(s.id);
+      if (!lane) continue;
+      const c = iso(lane.x + lane.w/2 - 0.5, lane.y - 0.4);
+      labelGroup.appendChild(el('text', {
+        x: c.x, y: c.y, 'text-anchor': 'middle',
+        class: 'zone-label',
+        style: `fill:${s.color}`,
+        text: s.name.toUpperCase()
+      }));
+    }
+  }
   svg.appendChild(labelGroup);
 
   // ── 3. The bell (podium in top-right) ──
   const bellTile = iso(11.5, 0.5);
-  const bell = el('g', { class: 'bell', transform: `translate(${bellTile.x + OFFSET_X}, ${bellTile.y + OFFSET_Y})` });
+  const bell = el('g', { class: 'bell', id: 'bell-group',
+                          transform: `translate(${bellTile.x + OFFSET_X}, ${bellTile.y + OFFSET_Y})` });
   bell.appendChild(el('ellipse', { cx: 0, cy: 8, rx: 14, ry: 5, class: 'pawn-shadow' }));
   bell.appendChild(el('polygon', { points: '0,-4 18,-12 18,8 0,16', class: 'podium' }));
   bell.appendChild(el('polygon', { points: '0,-4 -18,-12 -18,8 0,16', class: 'podium' }));
@@ -421,8 +484,139 @@ function render() {
     svg.appendChild(path);
   }
 
+  // ── 7. Kanban deal cards ──
+  // Group deals by stage; stack visually within each lane.
+  const stageColor = {};
+  if (state.pipeline) {
+    for (const s of state.pipeline.stages) stageColor[s.id] = s.color;
+  }
+  const dealsByStage = {};
+  for (const d of state.deals) {
+    const s = d.stage || 'lead';
+    (dealsByStage[s] = dealsByStage[s] || []).push(d);
+  }
+  for (const stageId of KANBAN_STAGES_VISIBLE) {
+    const lane = kanbanLaneFor(stageId);
+    if (!lane) continue;
+    const deals = dealsByStage[stageId] || [];
+    if (!deals.length) continue;
+    // Cap visible cards at 4, render rest as a "+N more" pill
+    const visible = deals.slice(0, 4);
+    const overflow = deals.length - visible.length;
+    visible.forEach((deal, i) => {
+      const tx = lane.x + (i % 2) * 0.85;
+      const ty = lane.y + ((i / 2) | 0) * 0.85;
+      svg.appendChild(dealCard(tx, ty, deal, stageColor[stageId] || '#7a6f5f'));
+    });
+    if (overflow > 0) {
+      const c = iso(lane.x + 1.5, lane.y + 1.4);
+      svg.appendChild(el('text', {
+        x: c.x + OFFSET_X, y: c.y + OFFSET_Y, class: 'deal-stack-count',
+        text: `+${overflow}`
+      }));
+    }
+  }
+
   // Presence pill update
   document.getElementById('presence-count').textContent = state.presence.length;
+}
+
+function dealCard(tx, ty, deal, color) {
+  const c = iso(tx, ty);
+  const cx = c.x + OFFSET_X, cy = c.y + OFFSET_Y;
+  const g = el('g', {
+    class: 'deal-card',
+    transform: `translate(${cx}, ${cy})`,
+    'data-deal-id': deal.id || '',
+  });
+  g.addEventListener('click', () => showDeal(deal));
+
+  const dim = darken(color, 0.4);
+  // Shadow
+  g.appendChild(el('ellipse', { cx: 0, cy: 4, rx: 9, ry: 3, class: 'deal-card-shadow' }));
+  // Card body (small floating tile)
+  g.appendChild(el('polygon', {
+    points: '0,-10 10,-4 0,2 -10,-4',
+    fill: color, class: 'deal-card-body'
+  }));
+  g.appendChild(el('polygon', {
+    points: '0,2 10,-4 10,2 0,8',
+    fill: dim, class: 'deal-card-side'
+  }));
+  g.appendChild(el('polygon', {
+    points: '0,2 -10,-4 -10,2 0,8',
+    fill: darken(color, 0.55), class: 'deal-card-side'
+  }));
+
+  // Amount label (truncated)
+  const amt = deal.amount ? formatAmount(deal.amount) : '';
+  if (amt) {
+    g.appendChild(el('text', { x: 0, y: -2, class: 'deal-card-label', text: amt }));
+  }
+  return g;
+}
+
+function formatAmount(n) {
+  if (!n) return '';
+  if (n >= 1000000) return `$${(n/1000000).toFixed(1)}M`;
+  if (n >= 1000) return `$${Math.round(n/1000)}k`;
+  return `$${n}`;
+}
+
+function showDeal(deal) {
+  const stage = state.pipeline && state.pipeline.stages.find(s => s.id === deal.stage);
+  setSide(
+    deal.name || 'Untitled deal',
+    deal.contact || deal.contact_slug || '',
+    [
+      ['Stage', (stage && stage.name) || deal.stage || '—'],
+      ['Amount', deal.amount ? formatAmount(deal.amount) : '—'],
+      ['Probability', stage ? `${Math.round(stage.probability * 100)}%` : '—'],
+      ['Owner', deal.rep || '—'],
+    ],
+    [
+      { label: '→ Open deal', href: `/app/deal.html?b=${BULLPEN}&rep=${REP}&id=${deal.id || ''}`, style: 'primary' },
+      { label: '→ All deals', href: `/app/deals.html?b=${BULLPEN}&rep=${REP}` },
+    ]
+  );
+}
+
+// Bell ring animation — fires when a deal_closed_won event hits SSE
+function ringBell(deal) {
+  const bell = document.getElementById('bell-group');
+  if (!bell) return;
+  bell.classList.remove('ringing');
+  // Trigger reflow so the animation can replay
+  void bell.offsetWidth;
+  bell.classList.add('ringing');
+
+  // Add fanfare text + burst rings
+  const svg = document.getElementById('office');
+  const bellTile = iso(11.5, 0.5);
+  const cx = bellTile.x + OFFSET_X, cy = bellTile.y + OFFSET_Y;
+
+  // Radiating gold rings
+  for (let i = 0; i < 3; i++) {
+    const ring = el('circle', {
+      cx: cx, cy: cy - 18, r: 18,
+      fill: 'none', stroke: 'var(--gold)', 'stroke-width': '2',
+      class: 'bell-burst',
+      style: `animation-delay:${i * 0.18}s;opacity:0.7`
+    });
+    svg.appendChild(ring);
+    setTimeout(() => ring.remove(), 1500);
+  }
+  // Fanfare text
+  const amt = deal && deal.amount ? formatAmount(deal.amount) : 'CLOSED-WON';
+  const rep = deal && deal.rep ? deal.rep.toUpperCase() : '';
+  const text = el('text', {
+    x: cx, y: cy - 35, class: 'bell-fanfare',
+    text: rep ? `${rep} · ${amt}` : amt
+  });
+  svg.appendChild(text);
+  setTimeout(() => text.remove(), 2000);
+
+  setTimeout(() => bell.classList.remove('ringing'), 2000);
 }
 
 // ── Side panel ────────────────────────────────────────────────────
@@ -518,14 +712,18 @@ async function challenge(opponent) {
 // ── Data load + live updates ────────────────────────────────────
 async function loadAll() {
   try {
-    const [pRes, dRes, cRes] = await Promise.all([
+    const [pRes, dRes, cRes, pipeRes, dealsRes] = await Promise.all([
       fetch(`/api/b/${BULLPEN}/presence`).then(r => r.json()).catch(() => ({online:[]})),
       fetch(`/api/b/${BULLPEN}/duos`).then(r => r.json()).catch(() => ({duos:[]})),
       fetch(`/api/b/${BULLPEN}/cards`).then(r => r.ok ? r.json() : {cards:[]}).catch(() => ({cards:[]})),
+      fetch(`/api/b/${BULLPEN}/pipeline`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/b/${BULLPEN}/deals`).then(r => r.ok ? r.json() : {deals:[]}).catch(() => ({deals:[]})),
     ]);
     state.presence = pRes.online || [];
     state.duos = Array.isArray(dRes) ? dRes : (dRes.duos || []);
     state.buyer_cards = cRes.cards || [];
+    state.pipeline = pipeRes && pipeRes.pipelines ? pipeRes.pipelines[0] : null;
+    state.deals = dealsRes.deals || [];
     render();
   } catch (e) {
     console.warn('load error', e);
@@ -538,8 +736,17 @@ function subscribeSSE() {
     es.onmessage = (ev) => {
       try {
         const event = JSON.parse(ev.data);
-        if (['presence_change','duo_challenged','duo_accepted','duo_ended','duo_msg'].includes(event.kind)) {
-          // Debounce reloads
+        // The bell rings on close-won — and the bullpen celebrates
+        if (event.kind === 'deal_closed_won') {
+          const deal = (event.payload && event.payload.deal) || event.payload || {};
+          deal.rep = event.actor;
+          ringBell(deal);
+          clearTimeout(window.__office_reload);
+          window.__office_reload = setTimeout(loadAll, 800);
+          return;
+        }
+        if (['presence_change','duo_challenged','duo_accepted','duo_ended','duo_msg',
+             'deal_created','deal_stage_moved','deal_amount','deal_closed_lost'].includes(event.kind)) {
           clearTimeout(window.__office_reload);
           window.__office_reload = setTimeout(loadAll, 400);
         }
