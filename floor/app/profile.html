@@ -415,6 +415,86 @@ load();
 setInterval(load, 45000);
 </script>
 
+<!-- ═══════════════════════════════════════════════════════════════════
+     Character Sheet tail — two-ledger XP, deals, marketing, cadences
+     ═══════════════════════════════════════════════════════════════════ -->
+<section style="max-width:980px;margin:30px auto 60px;padding:0 24px;font-family:'Switzer',-apple-system,sans-serif">
+  <h2 style="font-family:'Tanker',serif;font-size:28px;letter-spacing:-.01em;text-transform:uppercase;color:#f5e8d8;margin:0 0 18px">📒 Character Sheet</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px" id="cs-ledgers"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px" id="cs-mid">
+    <div style="background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:12px;padding:18px 20px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin-bottom:10px">💼 Deals owned</div>
+      <div id="cs-deals"></div>
+    </div>
+    <div style="background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:12px;padding:18px 20px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin-bottom:10px">📢 Marketing posts</div>
+      <div id="cs-marketing"></div>
+    </div>
+  </div>
+  <div style="background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:12px;padding:18px 20px;margin-bottom:14px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin-bottom:10px">⏰ Cadences</div>
+    <div id="cs-cadences"></div>
+  </div>
+</section>
+
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const BP = params.get('b') || 'ghengis';
+  const RP = params.get('rep') || (localStorage.getItem('bullpen-rep') || 'beers');
+  function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+  function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+  async function loadChar(){
+    try {
+      const r = await fetch(`/api/b/${BP}/profile/${encodeURIComponent(RP)}`);
+      if(!r.ok) return;
+      const d = await r.json();
+      const ledgerWrap = document.getElementById('cs-ledgers'); clear(ledgerWrap);
+      for(const c of [
+        {label:'💰 MONEY-XP', value: d.money_xp || 0, sub:'closed deals + cert drills + attribution', color:'#34d399'},
+        {label:'⚡ CLOUT-XP', value: d.clout_xp || 0, sub:'study + social + cadence discipline', color:'#fbbf24'},
+      ]){
+        const card = el('div', {style:`background:rgba(26,18,8,0.55);border:1px solid ${c.color}40;border-radius:12px;padding:18px 20px`});
+        card.appendChild(el('div', {style:'font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87', text:c.label}));
+        card.appendChild(el('div', {style:`font-family:"Tanker",serif;font-size:42px;letter-spacing:-.01em;color:${c.color};line-height:1;margin:6px 0`, text: String(c.value)}));
+        card.appendChild(el('div', {style:'font-family:"JetBrains Mono",monospace;font-size:10px;color:#a89a87;letter-spacing:.04em', text:c.sub}));
+        ledgerWrap.appendChild(card);
+      }
+      const dealsWrap = document.getElementById('cs-deals'); clear(dealsWrap);
+      const deals = d.deals || [];
+      if(!deals.length){ dealsWrap.appendChild(el('div', {style:'color:#a89a87;font-style:italic;font-size:13px', text:'No deals owned yet.'})); }
+      for(const x of deals.slice(0,8)){
+        const row = el('div', {style:'display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(245,232,216,0.05);font-family:"JetBrains Mono",monospace;font-size:11.5px'});
+        row.appendChild(el('span', {style:'color:#f5e8d8', text: x.prospect_slug || '?'}));
+        row.appendChild(el('span', {style:'color:#a89a87', text: `${x.stage} · $${(x.amount||0).toLocaleString()}`}));
+        dealsWrap.appendChild(row);
+      }
+      const mkWrap = document.getElementById('cs-marketing'); clear(mkWrap);
+      const posts = d.marketing || [];
+      if(!posts.length){ mkWrap.appendChild(el('div', {style:'color:#a89a87;font-style:italic;font-size:13px', text:'No marketing posts yet.'})); }
+      for(const p of posts.slice(0,6)){
+        const m = p.metrics || {};
+        const row = el('div', {style:'display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(245,232,216,0.05);font-family:"JetBrains Mono",monospace;font-size:11px'});
+        row.appendChild(el('span', {style:'color:#f5e8d8;text-transform:uppercase;letter-spacing:.04em', text: p.channel || '?'}));
+        row.appendChild(el('span', {style:'color:#6ee7b7', text: `${m.clicks||0}c · ${m.leads_attributed||0}L · ${m.deals_attributed||0}D`}));
+        mkWrap.appendChild(row);
+      }
+      const cWrap = document.getElementById('cs-cadences'); clear(cWrap);
+      const cads = d.cadences || [];
+      if(!cads.length){ cWrap.appendChild(el('div', {style:'color:#a89a87;font-style:italic;font-size:13px', text:'No cadences active.'})); }
+      for(const c of cads.slice(0,8)){
+        const row = el('div', {style:'display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(245,232,216,0.05);font-family:"JetBrains Mono",monospace;font-size:11.5px;gap:10px'});
+        row.appendChild(el('span', {style:'color:#f5e8d8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: c.template_name || c.template}));
+        row.appendChild(el('span', {style:'color:#a89a87', text: `${c.done_count}/${c.step_count}`}));
+        row.appendChild(el('span', {style:'color:' + (c.status === 'active' ? '#6ee7b7' : c.status === 'completed' ? '#fbbf24' : '#a89a87') + ';text-transform:uppercase;letter-spacing:.08em;font-weight:700;font-size:10px', text: c.status}));
+        cWrap.appendChild(row);
+      }
+    } catch(e){}
+  }
+  loadChar();
+})();
+</script>
+
 
 <script>
 (function(){
