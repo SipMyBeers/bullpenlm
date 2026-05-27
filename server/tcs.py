@@ -174,6 +174,28 @@ def record_attempt(bullpen: str, rep: str, tcs_id: str, result: str,
                               "phase_tier": tcs.get("phase_tier") or 0,
                               "source": source, "checker": checker,
                               "score": int(score)})
+        # Phase D loop extension: cert-tier drill passes ALSO ingest the
+        # response transcript into a synthetic "drills" buyer in the
+        # bullpen's RAG corpus. The compounding-practice loop: rare,
+        # high-signal moments where a closer actually nailed an
+        # objection or open feed back into future drill grading + into
+        # the "what good looks like" reference material for newer reps.
+        # Buyer slug for drill content is `_drill_bank` (underscore
+        # prefix prevents collision with real buyers).
+        if (tcs.get("phase_tier") or 0) >= 3 and (response or "").strip():
+            try:
+                from rag import ingest_text as _rag_ingest
+                _rag_ingest(
+                    bullpen, "_drill_bank",
+                    f"# Cert-tier pass · {tcs.get('name', tcs_id)} · {rep}\n"
+                    f"_TCS: {tcs_id} · phase_tier {tcs.get('phase_tier')}_\n\n"
+                    f"## What the closer said\n\n{response}\n\n"
+                    f"## Auto-grade\n\n{feedback or '(no feedback)'}\n",
+                    source_name=f"drill-{tcs_id}-{rep}-{_now()}.md",
+                    actor=rep,
+                )
+            except Exception:
+                pass
     else:
         audit_append(bullpen, rep, "drill_attempt",
                      target_type="tcs", target_id=tcs_id,
