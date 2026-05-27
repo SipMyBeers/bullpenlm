@@ -119,6 +119,17 @@ def append(bullpen: str, actor_rep: Optional[str] = None, kind: Optional[str] = 
     except Exception:
         pass
 
+    # Cadence auto-start: when a deal moves into a stage that has a
+    # cadence template, fire it. Idempotent on (deal_id, template).
+    # Self-recursion guard: cadence_started events themselves don't
+    # re-enter this hook (entry["kind"] != "deal_stage_moved").
+    if kind == "deal_stage_moved":
+        try:
+            from cadence import handle_audit_event as _cad_hook
+            _cad_hook(bullpen, entry)
+        except Exception:
+            pass
+
     # Discord webhook fan-out (no-op if not configured for the bullpen)
     try:
         from discord import notify as _discord_notify

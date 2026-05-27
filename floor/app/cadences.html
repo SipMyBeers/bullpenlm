@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cadences · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="/app/gate-banner.js" defer></script>
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
+  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--gold-dim:#92400e;
+  --danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}
+.crumb .here{color:var(--gold)}
+.nav{display:flex;gap:6px;margin-left:18px}
+.nav a{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:5px}
+.nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 22px 80px}
+h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 6px;line-height:1}
+.lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;margin:0 0 24px;max-width:740px}
+
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:24px 28px;margin-bottom:20px}
+.panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 16px;display:flex;align-items:center;gap:8px}
+.panel h2 .badge{background:rgba(251,191,36,0.10);color:var(--gold);border:1px solid rgba(251,191,36,0.40);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:.06em}
+
+.tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.tab{padding:8px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.10);border-radius:18px;font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.tab.active{background:rgba(52,211,153,0.10);border-color:var(--accent);color:var(--accent-2)}
+
+.due-step{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:14px 16px;background:rgba(0,0,0,0.28);border:1px solid rgba(245,232,216,0.08);border-radius:9px;margin-bottom:8px}
+.due-step.overdue{border-color:rgba(248,113,113,0.35);background:rgba(248,113,113,0.04)}
+.due-step.today{border-color:rgba(251,191,36,0.40);background:rgba(251,191,36,0.04)}
+.due-step .channel{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;padding:4px 8px;border-radius:4px;font-weight:700;background:rgba(0,0,0,0.30);color:var(--muted);border:1px solid rgba(245,232,216,0.10);min-width:80px;text-align:center}
+.due-step .channel.email{color:#60a5fa;border-color:rgba(96,165,250,0.40)}
+.due-step .channel.call{color:var(--accent-2);border-color:rgba(52,211,153,0.40)}
+.due-step .channel.linkedin{color:#60a5fa;border-color:rgba(96,165,250,0.40)}
+.due-step .channel.meeting{color:var(--purple);border-color:rgba(167,139,250,0.40)}
+.due-step .step-info{min-width:0}
+.due-step .step-title{font-family:var(--serif);font-size:14px;color:var(--text);line-height:1.4}
+.due-step .step-meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.04em}
+.due-step .due-badge{font-family:var(--mono);font-size:10px;color:var(--gold);padding:3px 7px;border:1px solid rgba(251,191,36,0.40);border-radius:4px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.due-step .due-badge.overdue{color:var(--danger);border-color:rgba(248,113,113,0.40)}
+.due-step .actions{display:flex;gap:5px}
+.btn-mini{padding:6px 10px;border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none}
+.btn-mini.done{background:var(--accent);color:#0a1a14}
+.btn-mini.skip{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+
+.cadence-row{padding:16px 18px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.08);border-radius:10px;margin-bottom:10px}
+.cadence-row .head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.cadence-row .title{font-family:var(--display);font-size:16px;letter-spacing:-.01em;text-transform:uppercase;color:var(--text)}
+.cadence-row .meta{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted)}
+.cadence-row .progress{display:flex;gap:3px;margin-top:8px}
+.cadence-row .pip{flex:1;height:6px;background:rgba(245,232,216,0.10);border-radius:2px}
+.cadence-row .pip.done{background:var(--accent)}
+.cadence-row .pip.skipped{background:var(--muted)}
+.cadence-row .pip.overdue{background:var(--danger)}
+.cadence-row .status-pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:10px;font-weight:700}
+.cadence-row .status-pill.active{background:rgba(52,211,153,0.12);color:var(--accent-2);border:1px solid rgba(52,211,153,0.40)}
+.cadence-row .status-pill.completed{background:rgba(251,191,36,0.12);color:var(--gold);border:1px solid rgba(251,191,36,0.40)}
+.cadence-row .status-pill.abandoned{background:rgba(168,154,135,0.10);color:var(--muted);border:1px solid rgba(168,154,135,0.30)}
+
+.empty{font-family:var(--serif);font-style:italic;color:var(--muted);text-align:center;padding:30px}
+.template-card{padding:14px 16px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.08);border-radius:9px;margin-bottom:8px}
+.template-card .name{font-family:var(--display);font-size:14px;letter-spacing:-.01em;text-transform:uppercase;color:var(--text)}
+.template-card .desc{font-family:var(--serif);color:var(--muted);font-size:13px;margin:3px 0 6px}
+.template-card .steps{font-family:var(--mono);font-size:10px;color:var(--accent-2);letter-spacing:.05em}
+.template-card .trigger{font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:.10em;text-transform:uppercase;margin-top:5px}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <div class="crumb">
+    <a href="/app/lobby.html">Floor</a> <span> / </span>
+    <span class="here">Cadences</span>
+  </div>
+  <div class="nav">
+    <a href="/app/deals.html">Deals</a>
+    <a href="/app/marketing.html">Marketing</a>
+    <a href="/app/studio.html">Studio</a>
+    <a href="/app/office.html">Office</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <h1>Cadences</h1>
+  <p class="lede">Stage-triggered follow-up sequences. When a deal moves into a pipeline stage, the matching cadence auto-starts and schedules every touch. Step done = clout-XP. All steps done = cadence_completed bonus. The deal closing is what credits money-XP — cadence is the discipline that gets you there.</p>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="due" onclick="switchTab('due')">⏰ Due now</div>
+    <div class="tab" data-tab="active" onclick="switchTab('active')">▶ Active</div>
+    <div class="tab" data-tab="completed" onclick="switchTab('completed')">✓ Completed</div>
+    <div class="tab" data-tab="templates" onclick="switchTab('templates')">📋 Templates</div>
+  </div>
+
+  <div class="panel" id="pane-due">
+    <h2>⏰ DUE WITHIN 72 HOURS <span class="badge" id="due-count">0</span></h2>
+    <div id="due-list"></div>
+  </div>
+
+  <div class="panel" id="pane-active" style="display:none">
+    <h2>▶ ACTIVE CADENCES <span class="badge" id="active-count">0</span></h2>
+    <div id="active-list"></div>
+  </div>
+
+  <div class="panel" id="pane-completed" style="display:none">
+    <h2>✓ COMPLETED <span class="badge" id="completed-count">0</span></h2>
+    <div id="completed-list"></div>
+  </div>
+
+  <div class="panel" id="pane-templates" style="display:none">
+    <h2>📋 CADENCE TEMPLATES</h2>
+    <p style="color:var(--muted);font-family:var(--serif);font-size:13px;margin-bottom:14px">
+      These auto-start when a deal moves into the trigger stage. Drop custom JSON into <code style="background:rgba(0,0,0,0.30);padding:1px 6px;border-radius:3px;color:var(--accent-2)">bullpens/&lt;slug&gt;/cadence-templates/</code> to override or add your own.
+    </p>
+    <div id="templates-list"></div>
+  </div>
+</div>
+
+<script>
+const URLP = new URL(window.location.href);
+const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+let REP = URLP.searchParams.get('rep');
+if (!REP) { try { REP = localStorage.getItem('bullpen-rep'); } catch(e){} }
+if (!REP) REP = 'self';
+
+function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+async function api(method, path, body){
+  const opts={method, headers:{}};
+  if(body !== undefined){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body)}
+  const r = await fetch(path, opts);
+  return {ok:r.ok, status:r.status, data: await r.json().catch(()=>({}))};
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-tab')===name));
+  for(const id of ['due','active','completed','templates']){
+    document.getElementById('pane-'+id).style.display = (id === name) ? '' : 'none';
+  }
+  load();
+}
+
+function dueLabel(dueAt){
+  const due = new Date(dueAt);
+  const now = new Date();
+  const diff = (due - now) / 1000 / 3600;
+  if(diff < -24) return {text: `${Math.floor(-diff/24)}d OVERDUE`, cls:'overdue'};
+  if(diff < 0)   return {text: `${Math.floor(-diff)}h OVERDUE`, cls:'overdue'};
+  if(diff < 24)  return {text: 'TODAY', cls:'today'};
+  if(diff < 72)  return {text: `${Math.floor(diff/24)}d`, cls:''};
+  return {text: due.toISOString().slice(0,10), cls:''};
+}
+
+async function loadDue(){
+  const r = await api('GET', `/api/b/${BULLPEN}/cadences/due?within=72`);
+  const due = (r.data && r.data.due) || [];
+  document.getElementById('due-count').textContent = due.length;
+  const wrap = document.getElementById('due-list');
+  clear(wrap);
+  if(!due.length){
+    wrap.appendChild(el('div', {class:'empty', text:'Nothing due in the next 72 hours. Move a deal into a stage to start a cadence.'}));
+    return;
+  }
+  // Sort overdue first, then by due_at
+  due.sort((a,b) => (a.step.due_at || '').localeCompare(b.step.due_at || ''));
+  for(const item of due){
+    const lbl = dueLabel(item.step.due_at);
+    const row = el('div', {class:'due-step' + (lbl.cls ? ' ' + lbl.cls : '')});
+    row.appendChild(el('div', {class:'channel ' + (item.step.channel||''), text: item.step.channel || '—'}));
+    const info = el('div', {class:'step-info'});
+    info.appendChild(el('div', {class:'step-title', text: item.step.note || '(no notes)'}));
+    info.appendChild(el('div', {class:'step-meta', text: `${item.rep} · ${item.template} · deal ${item.deal_id}`}));
+    row.appendChild(info);
+    row.appendChild(el('div', {class:'due-badge ' + lbl.cls, text: lbl.text}));
+    const acts = el('div', {class:'actions'});
+    acts.appendChild(el('button', {class:'btn-mini done', text:'✓ Done', onClick: async () => {
+      await api('POST', `/api/b/${BULLPEN}/cadences/${item.cadence_id}/steps/${item.step.idx}/done`, {rep:REP});
+      loadDue(); loadActive();
+    }}));
+    acts.appendChild(el('button', {class:'btn-mini skip', text:'Skip', onClick: async () => {
+      if(!confirm('Skip this step?')) return;
+      await api('POST', `/api/b/${BULLPEN}/cadences/${item.cadence_id}/steps/${item.step.idx}/skip`, {rep:REP, reason:'manual'});
+      loadDue(); loadActive();
+    }}));
+    row.appendChild(acts);
+    wrap.appendChild(row);
+  }
+}
+
+async function loadCadenceList(status, wrapId, countId){
+  const r = await api('GET', `/api/b/${BULLPEN}/cadences?status=${status}`);
+  const cads = (r.data && r.data.cadences) || [];
+  document.getElementById(countId).textContent = cads.length;
+  const wrap = document.getElementById(wrapId);
+  clear(wrap);
+  if(!cads.length){
+    wrap.appendChild(el('div', {class:'empty', text:`No ${status} cadences.`}));
+    return;
+  }
+  for(const c of cads){
+    const row = el('div', {class:'cadence-row'});
+    const head = el('div', {class:'head'});
+    const left = el('div');
+    left.appendChild(el('div', {class:'title', text: c.template_name || c.template}));
+    left.appendChild(el('div', {class:'meta', text: `${c.rep} · deal ${c.deal_id} · started ${c.started_at}`}));
+    head.appendChild(left);
+    head.appendChild(el('div', {class:'status-pill ' + c.status, text: c.status}));
+    row.appendChild(head);
+    const progress = el('div', {class:'progress'});
+    const now = new Date();
+    for(const s of c.steps){
+      let pipCls = '';
+      if(s.status === 'done') pipCls = 'done';
+      else if(s.status === 'skipped') pipCls = 'skipped';
+      else if(s.due_at && new Date(s.due_at) < now) pipCls = 'overdue';
+      progress.appendChild(el('div', {class: 'pip ' + pipCls, title: `Day ${s.day} · ${s.channel} · ${s.status}`}));
+    }
+    row.appendChild(progress);
+    wrap.appendChild(row);
+  }
+}
+
+async function loadTemplates(){
+  const r = await api('GET', `/api/b/${BULLPEN}/cadences/templates`);
+  const ts = (r.data && r.data.templates) || {};
+  const wrap = document.getElementById('templates-list');
+  clear(wrap);
+  for(const [tid, t] of Object.entries(ts)){
+    const card = el('div', {class:'template-card'});
+    card.appendChild(el('div', {class:'name', text: t.name || tid}));
+    if(t.description) card.appendChild(el('div', {class:'desc', text: t.description}));
+    card.appendChild(el('div', {class:'steps', text: `${(t.steps||[]).length} steps over ${(t.steps||[]).reduce((m,s)=>Math.max(m, s.day||0), 0)} days`}));
+    if(t.trigger_stage){
+      card.appendChild(el('div', {class:'trigger', text: `▶ AUTO-START on stage=${t.trigger_stage}`}));
+    } else {
+      card.appendChild(el('div', {class:'trigger', style:'color:var(--muted)', text: '✋ MANUAL TRIGGER ONLY'}));
+    }
+    wrap.appendChild(card);
+  }
+}
+
+async function load(){
+  loadDue();
+  loadCadenceList('active', 'active-list', 'active-count');
+  loadCadenceList('completed', 'completed-list', 'completed-count');
+  loadTemplates();
+}
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>

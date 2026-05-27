@@ -2770,6 +2770,68 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Phase 0.5 firewall — operator setup + closer onboarding GET routes
         # ══════════════════════════════════════════════════════════════════
 
+        # ── Phase C Cadence — list / get / due-steps ─────────────────
+        # GET /api/b/<slug>/cadences?rep=...&status=...
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences(?:\?|$)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from cadence import list_all as cad_list
+                qs = _pq(_up(self.path).query)
+                rep = (qs.get("rep") or [None])[0]
+                status_q = (qs.get("status") or [None])[0]
+                self._send_json(200, {"cadences": cad_list(m.group(1), rep=rep, status=status_q)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # GET /api/b/<slug>/cadences/due?rep=...&within=24
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences/due(?:\?|$)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from cadence import due_steps
+                qs = _pq(_up(self.path).query)
+                rep = (qs.get("rep") or [None])[0]
+                within = int((qs.get("within") or ["72"])[0])
+                self._send_json(200, {"due": due_steps(m.group(1), rep=rep, within_hours=within)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # GET /api/b/<slug>/cadences/templates
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences/templates$", self.path)
+        if m:
+            try:
+                from cadence import get_templates
+                self._send_json(200, {"templates": get_templates(m.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # GET /api/b/<slug>/cadences/<cad_id>
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences/([a-zA-Z0-9_\-]+)$", self.path)
+        if m:
+            try:
+                from cadence import get as cad_get
+                rec = cad_get(m.group(1), m.group(2))
+                if rec is None:
+                    self._send_json(404, {"error": "not found"}); return
+                self._send_json(200, rec)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # GET /api/b/<slug>/deals/<deal_id>/cadences  — cadences for one deal
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/deals/([a-zA-Z0-9_\-]+)/cadences$", self.path)
+        if m:
+            try:
+                from cadence import list_for_deal
+                self._send_json(200, {"cadences": list_for_deal(m.group(1), m.group(2))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Phase C Marketing — public click-redirect (/m/<token>) ──
         # Public path; rate-limited by Cloudflare in production, in-process
         # here. Records the click + redirects to the dest URL with ?ref=
@@ -4800,6 +4862,69 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # ══════════════════════════════════════════════════════════════════
         # Phase 0.5 firewall — POST routes
         # ══════════════════════════════════════════════════════════════════
+
+        # ── Phase C Cadence — POST routes ────────────────────────────
+        # POST /api/b/<slug>/cadences/start  body: {deal_id, template, rep}
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences/start$", self.path)
+        if m:
+            try:
+                from cadence import start_for_deal
+                body = json.loads(raw) if raw else {}
+                deal_id = (body.get("deal_id") or "").strip()
+                tpl = (body.get("template") or "").strip()
+                rep = (body.get("rep") or self._current_rep() or "self").strip()
+                if not deal_id or not tpl:
+                    self._send_json(400, {"error": "deal_id and template required"}); return
+                rec = start_for_deal(m.group(1), deal_id, template=tpl, rep=rep)
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # POST /api/b/<slug>/cadences/<cad_id>/steps/<idx>/done
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences/([a-zA-Z0-9_\-]+)/steps/(\d+)/done$", self.path)
+        if m:
+            try:
+                from cadence import mark_done
+                body = json.loads(raw) if raw else {}
+                rep = (body.get("rep") or self._current_rep() or "self").strip()
+                self._send_json(200, mark_done(m.group(1), m.group(2), int(m.group(3)),
+                                                rep=rep, note=body.get("note", "")))
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # POST /api/b/<slug>/cadences/<cad_id>/steps/<idx>/skip
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences/([a-zA-Z0-9_\-]+)/steps/(\d+)/skip$", self.path)
+        if m:
+            try:
+                from cadence import skip_step
+                body = json.loads(raw) if raw else {}
+                rep = (body.get("rep") or self._current_rep() or "self").strip()
+                self._send_json(200, skip_step(m.group(1), m.group(2), int(m.group(3)),
+                                                rep=rep, reason=body.get("reason", "")))
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # POST /api/b/<slug>/cadences/<cad_id>/abandon
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cadences/([a-zA-Z0-9_\-]+)/abandon$", self.path)
+        if m:
+            try:
+                from cadence import abandon
+                body = json.loads(raw) if raw else {}
+                rep = (body.get("rep") or self._current_rep() or "self").strip()
+                self._send_json(200, abandon(m.group(1), m.group(2),
+                                              rep=rep, reason=body.get("reason", "")))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
 
         # ── Phase C Marketing — POST register a marketing post ──
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/marketing/post$", self.path)
