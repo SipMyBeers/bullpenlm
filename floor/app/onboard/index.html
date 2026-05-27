@@ -158,14 +158,18 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
 
   <div id="step-5" class="step-section hide">
     <div class="panel">
-      <h2>STEP 5 / 5 — DRILL CERTIFICATION GATE</h2>
-      <h3>Last gate before live work.</h3>
-      <p>Before you claim a real prospect, the platform needs proof you can hold a call without burning leads. That proof is a passed certification-tier drill in the sim.</p>
+      <h2>STEP 5 / 5 — DRILL FLOOR (PRACTICE PHASE)</h2>
+      <h3>Welcome to practice. Real cold calls unlock after a Tier-3 drill cert.</h3>
+      <p>You're in the practice phase. The first drill is the Tier-1 cold open — read the task / conditions / standards, then deliver your open in 90 seconds. Aim for Tier-3 to unlock live prospects.</p>
       <div class="gate-list" id="gate-list">Loading your gate status…</div>
-      <div class="warning-box"><strong>Drills aren't paperwork.</strong> The platform's prospect-claim priority uses your drill-cert score + close rate + money-XP — it never uses leaderboard rank or clout-XP. Clean drilling means better leads later.</div>
+      <div class="warning-box"><strong>Drill order:</strong> P1 cold-open → P2 voicemail → P3 gatekeeper (cert tier) → P4-P7 advanced. Pass them solo first; duel teammates after you have reps. The platform tracks money-XP from cert-tier drills only — clean drilling means better leads later.</div>
       <div class="foot-nav">
         <button class="btn ghost" onclick="showStep(4)">← Back to DNC</button>
-        <a class="btn primary" id="go-drill" href="/app/lobby.html">Go to the drill floor →</a>
+        <a class="btn primary" id="go-drill-tier1">▶ Start Tier-1 drill →</a>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn ghost" id="go-briefing">📚 Read briefing first</a>
+        <a class="btn ghost" id="go-lobby">Lobby</a>
       </div>
     </div>
   </div>
@@ -177,8 +181,8 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
       <p>Disclosure, agreement, W-9, DNC, and drill certification — all cleared.</p>
       <div class="status info">Remember: BullpenLM is software, not your employer. All commission comes from the operator. Recruitment earns no XP. Use the DNC scrub on every dial.</div>
       <div class="foot-nav">
-        <a href="/app/lobby.html" class="btn ghost">← Back to lobby</a>
-        <a href="/app/contact.html" class="btn primary">Claim a prospect →</a>
+        <a id="done-lobby" class="btn ghost">← Back to lobby</a>
+        <a id="done-claim" class="btn primary">Claim a prospect →</a>
       </div>
     </div>
   </div>
@@ -375,9 +379,21 @@ async function loadGateStatus(){
   }
 }
 
+// Set href on the step-5 + step-done exit buttons so they preserve b=&rep=
+function wireExits(){
+  const q = `?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`;
+  const set = (id, href) => { const el = document.getElementById(id); if(el) el.setAttribute('href', href); };
+  set('go-drill-tier1', `/app/spotcheck.html${q}&tcs=cold-open-bfsi`);
+  set('go-briefing',    `/app/briefing.html${q}`);
+  set('go-lobby',       `/app/lobby.html${q}`);
+  set('done-lobby',     `/app/lobby.html${q}`);
+  set('done-claim',     `/app/contact.html${q}`);
+}
+
 async function init(){
   renderStepper();
   loadDisclosure();
+  wireExits();
 }
 init();
 </script>

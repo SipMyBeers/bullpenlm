@@ -2982,7 +2982,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         # ── /floor and /floor/index.html → the prospect-map sales floor ──
         # Closers and operators both reach this from deals.html breadcrumb.
-        if self.path in ("/floor", "/floor/", "/floor/index.html") or self.path.startswith("/floor/index.html?"):
+        # Match the query-string variants too: /floor?b=ghengis, /floor/?rep=beers
+        if (self.path in ("/floor", "/floor/", "/floor/index.html") or
+            self.path.startswith("/floor/index.html?") or
+            self.path.startswith("/floor?") or
+            self.path.startswith("/floor/?")):
             from pathlib import Path as _P
             f = _P(__file__).parent.parent / "floor" / "index.html"
             try:
