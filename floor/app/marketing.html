@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marketing · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="/app/gate-banner.js" defer></script>
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
+  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--gold-dim:#92400e;
+  --danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}
+.crumb .here{color:var(--gold)}
+.nav{display:flex;gap:6px;margin-left:18px}
+.nav a{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:5px}
+.nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 22px 80px}
+h1{font-family:var(--display);font-size:44px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 6px;line-height:1}
+.lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;margin:0 0 24px;max-width:760px}
+.lede strong{color:var(--text);font-style:normal}
+
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:24px 28px;margin-bottom:20px}
+.panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 16px}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+@media(max-width:720px){.stats-row{grid-template-columns:1fr 1fr}}
+.stat{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:11px;padding:16px 18px}
+.stat .label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.stat .value{font-family:var(--display);font-size:30px;letter-spacing:-.01em;color:var(--text)}
+.stat .meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px}
+
+.field{margin-bottom:12px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field input,.field select{width:100%;padding:10px 13px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:15px;outline:none}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.row.two{grid-template-columns:1fr 1fr}
+@media(max-width:640px){.row,.row.two{grid-template-columns:1fr}}
+
+.btn{padding:10px 18px;border-radius:7px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none;text-align:center;display:inline-block;transition:transform .12s}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:var(--accent);color:#0a1a14}
+.btn.gold{background:var(--gold);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.btn.ghost:hover{color:var(--text);border-color:var(--text)}
+
+.status-msg{padding:10px 14px;border-radius:7px;margin:10px 0;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em}
+.status-msg.ok{background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);color:var(--accent-2)}
+.status-msg.err{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.30);color:var(--danger)}
+
+.link-box{display:flex;gap:8px;align-items:center;padding:11px 14px;background:rgba(0,0,0,0.40);border:1px solid rgba(251,191,36,0.35);border-radius:8px;font-family:var(--mono);font-size:12px;color:var(--gold);word-break:break-all;margin-top:10px}
+.link-box .copy{background:var(--gold);color:#0a1a14;border:none;padding:5px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer;white-space:nowrap}
+
+.post-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:13px 16px;background:rgba(0,0,0,0.28);border:1px solid rgba(245,232,216,0.07);border-radius:9px;margin-bottom:8px}
+.post-row .channel{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;padding:4px 8px;border-radius:4px;font-weight:700}
+.post-row .channel.twitter{background:rgba(96,165,250,0.10);color:#60a5fa;border:1px solid rgba(96,165,250,0.40)}
+.post-row .channel.linkedin{background:rgba(96,165,250,0.10);color:#60a5fa;border:1px solid rgba(96,165,250,0.40)}
+.post-row .channel.discord{background:rgba(167,139,250,0.10);color:var(--purple);border:1px solid rgba(167,139,250,0.40)}
+.post-row .channel.blog{background:rgba(52,211,153,0.10);color:var(--accent-2);border:1px solid rgba(52,211,153,0.40)}
+.post-row .channel.youtube{background:rgba(248,113,113,0.10);color:var(--danger);border:1px solid rgba(248,113,113,0.40)}
+.post-row .channel.other{background:rgba(168,154,135,0.10);color:var(--muted);border:1px solid rgba(168,154,135,0.30)}
+.post-row .post-info{min-width:0}
+.post-row .post-title{font-family:var(--serif);font-size:14px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.post-row .post-meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.04em}
+.post-row .metrics{display:flex;gap:14px;font-family:var(--mono);font-size:11px;color:var(--accent-2)}
+.post-row .metrics .lbl{color:var(--muted);font-size:9px;letter-spacing:.10em;text-transform:uppercase;display:block}
+.post-row a.tiny{font-family:var(--mono);font-size:10px;color:var(--muted);text-decoration:none;padding:3px 7px;border:1px solid rgba(245,232,216,0.12);border-radius:4px}
+.post-row a.tiny:hover{color:var(--text);border-color:var(--text)}
+
+.help-box{font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.8;letter-spacing:.04em;background:rgba(0,0,0,0.20);padding:14px 18px;border-radius:8px;margin-top:14px}
+.help-box strong{color:var(--gold)}
+.help-box code{background:rgba(0,0,0,0.40);padding:1px 6px;border-radius:3px;color:var(--accent-2)}
+
+.firewall-callout{padding:12px 16px;background:rgba(248,113,113,0.05);border-left:3px solid var(--danger);border-radius:0 6px 6px 0;font-family:var(--serif);font-size:13px;color:var(--muted);margin:14px 0}
+.firewall-callout strong{color:var(--danger);font-style:normal}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <div class="crumb">
+    <a href="/app/lobby.html">Floor</a> <span> / </span>
+    <span class="here">Marketing</span>
+  </div>
+  <div class="nav">
+    <a href="/app/host.html">Host</a>
+    <a href="/app/studio.html">Studio</a>
+    <a href="/app/office.html">Office</a>
+    <a href="/app/lobby.html">Lobby</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <h1>Marketing</h1>
+  <p class="lede">
+    Track posts that point at <strong>the product</strong>, not at recruitment. When someone clicks your tracked link → lands on bullpenlm.com → signs up → you earn money-XP via outcome attribution. Posts that fail to drive signups just earn small clout-XP for the effort.
+  </p>
+
+  <div class="firewall-callout">
+    <strong>Firewall rule:</strong> tracked links can only point at product surfaces (bullpenlm.com landing, signup, demo, GitHub). They <em>cannot</em> point at closer-onboarding or commission-earning surfaces. The platform refuses to mint a token for any other destination.
+  </div>
+
+  <div class="stats-row" id="stats">
+    <div class="stat"><div class="label">Posts</div><div class="value">—</div></div>
+    <div class="stat"><div class="label">Clicks</div><div class="value">—</div></div>
+    <div class="stat"><div class="label">Leads</div><div class="value">—</div></div>
+    <div class="stat"><div class="label">Deals</div><div class="value">—</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>📢 PUBLISH A POST</h2>
+    <p style="color:var(--muted);margin:0 0 14px">Posted on Twitter, LinkedIn, Discord, your blog? Drop the URL + pick where the tracked link should route. We'll mint your token + give you the URL to paste back into the post.</p>
+
+    <div class="row two">
+      <div class="field"><label>Channel</label>
+        <select id="channel">
+          <option value="twitter">Twitter / X</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="discord">Discord</option>
+          <option value="blog">Blog post</option>
+          <option value="youtube">YouTube</option>
+          <option value="other">Other</option>
+        </select></div>
+      <div class="field"><label>Destination</label>
+        <select id="dest">
+          <option value="landing">bullpenlm.com landing</option>
+          <option value="signup">bullpenlm.com/signup</option>
+          <option value="demo">bullpenlm.com/demo</option>
+          <option value="github">GitHub repo</option>
+        </select></div>
+    </div>
+    <div class="field"><label>URL where the post lives</label>
+      <input id="post-url" placeholder="https://twitter.com/you/status/...">
+    </div>
+    <div class="field"><label>Topic (optional)</label>
+      <input id="topic" placeholder="killsesh · bullpenlm · general">
+    </div>
+
+    <button class="btn gold" onclick="publishPost()">↑ Register + mint tracking link</button>
+    <div id="publish-status"></div>
+    <div id="publish-link" style="display:none"></div>
+
+    <div class="help-box">
+      <strong>How it works:</strong><br>
+      1. You write a post pointing at <code>https://app.bullpenlm.com/m/&lt;token&gt;</code><br>
+      2. Someone clicks → server logs the click → 302s them to the dest URL with <code>?ref=&lt;token&gt;</code><br>
+      3. If they sign up, the landing page picks up <code>ref</code> → attribution wires back to you → you earn money-XP<br>
+      4. Same for deals that trace to that lead — money-XP credited to whoever drew them in
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>📊 YOUR POSTS</h2>
+    <div id="post-list"></div>
+  </div>
+</div>
+
+<script>
+const URLP = new URL(window.location.href);
+const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+let REP = URLP.searchParams.get('rep');
+if (!REP) { try { REP = localStorage.getItem('bullpen-rep'); } catch(e){} }
+if (!REP) REP = 'self';
+
+function el(t, p, ...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+function setStatus(id, ok, msg){const w=document.getElementById(id);clear(w);w.appendChild(el('div',{class:'status-msg '+(ok?'ok':'err'),text:msg}))}
+async function api(method, path, body){
+  const opts={method, headers:{}};
+  if(body !== undefined){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body)}
+  const r = await fetch(path, opts);
+  return {ok:r.ok, status:r.status, data: await r.json().catch(()=>({}))};
+}
+
+async function publishPost(){
+  const channel = document.getElementById('channel').value;
+  const dest = document.getElementById('dest').value;
+  const url = document.getElementById('post-url').value.trim();
+  const topic = document.getElementById('topic').value.trim() || 'general';
+  if(!url){ setStatus('publish-status', false, 'Post URL required'); return; }
+  const r = await api('POST', `/api/b/${BULLPEN}/marketing/post`, {rep:REP, url, channel, dest, topic});
+  if(!r.ok){ setStatus('publish-status', false, r.data.error || 'failed'); return; }
+  setStatus('publish-status', true, `✓ Post registered. Token: ${r.data.tracking_token}`);
+  const trackUrl = `${window.location.origin}/m/${r.data.tracking_token}`;
+  const wrap = document.getElementById('publish-link');
+  clear(wrap); wrap.style.display = '';
+  wrap.appendChild(el('div', {style:'font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px', text:'PASTE THIS INTO YOUR POST:'}));
+  const box = el('div', {class:'link-box'});
+  box.appendChild(el('span', {style:'flex:1', text: trackUrl}));
+  const btn = el('button', {class:'copy', text:'COPY'});
+  btn.addEventListener('click', () => {
+    navigator.clipboard.writeText(trackUrl).then(()=>{ btn.textContent = 'COPIED ✓'; setTimeout(()=>{btn.textContent='COPY'}, 1500); });
+  });
+  box.appendChild(btn);
+  wrap.appendChild(box);
+
+  document.getElementById('post-url').value = '';
+  document.getElementById('topic').value = '';
+  loadPosts();
+  loadStats();
+}
+
+async function loadPosts(){
+  const r = await api('GET', `/api/b/${BULLPEN}/marketing/posts`);
+  const wrap = document.getElementById('post-list');
+  clear(wrap);
+  const posts = (r.data && r.data.posts) || [];
+  if(!posts.length){
+    wrap.appendChild(el('div', {style:'color:var(--muted);font-family:var(--serif);font-style:italic;text-align:center;padding:24px', text:'No posts tracked yet.'}));
+    return;
+  }
+  for(const p of posts){
+    const row = el('div', {class:'post-row'});
+    row.appendChild(el('div', {class:'channel ' + (p.channel||'other'), text:p.channel || 'other'}));
+    const info = el('div', {class:'post-info'});
+    const tit = el('div', {class:'post-title'});
+    tit.appendChild(el('a', {href:p.url, target:'_blank', style:'color:inherit;text-decoration:none', text: p.url}));
+    info.appendChild(tit);
+    info.appendChild(el('div', {class:'post-meta', text: `${p.rep} · ${p.topic} · → ${p.dest} · ${p.created_at}`}));
+    row.appendChild(info);
+    const metrics = el('div', {class:'metrics'});
+    const m = p.metrics || {};
+    for(const [lbl, v] of [['clicks', m.clicks||0],['leads', m.leads_attributed||0],['deals', m.deals_attributed||0]]){
+      const col = el('div');
+      col.appendChild(el('span', {class:'lbl', text:lbl}));
+      col.appendChild(el('span', {text:String(v)}));
+      metrics.appendChild(col);
+    }
+    row.appendChild(metrics);
+    const trackUrl = `${window.location.origin}/m/${p.tracking_token}`;
+    row.appendChild(el('a', {class:'tiny', href:trackUrl, target:'_blank', text:'tracked URL'}));
+    wrap.appendChild(row);
+  }
+}
+
+async function loadStats(){
+  const r = await api('GET', `/api/b/${BULLPEN}/marketing/stats`);
+  const wrap = document.getElementById('stats');
+  clear(wrap);
+  const t = (r.data && r.data.total) || {posts:0, clicks:0, leads:0, deals:0};
+  const tiles = [
+    ['Posts', t.posts, 'live'],
+    ['Clicks', t.clicks, t.unique_clicks ? `${t.unique_clicks} unique` : ''],
+    ['Leads', t.leads, 'signups'],
+    ['Deals', t.deals, 'closed-attributed'],
+  ];
+  for(const [label, value, meta] of tiles){
+    const s = el('div', {class:'stat'});
+    s.appendChild(el('div', {class:'label', text: label}));
+    s.appendChild(el('div', {class:'value', text: String(value)}));
+    if(meta) s.appendChild(el('div', {class:'meta', text:meta}));
+    wrap.appendChild(s);
+  }
+}
+
+loadStats();
+loadPosts();
+setInterval(loadPosts, 20000);
+setInterval(loadStats, 20000);
+</script>
+</body>
+</html>

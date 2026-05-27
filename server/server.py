@@ -1516,9 +1516,10 @@ _PUBLIC_PATHS = {
 # Regex patterns matched in addition to _PUBLIC_PATHS (for routes with
 # variable bullpen slugs that should be reachable without auth).
 _PUBLIC_PATH_PATTERNS = [
-    re.compile(r"^/api/b/[a-z0-9\-]+/apply$"),         # POST a membership application
-    re.compile(r"^/api/b/[a-z0-9\-]+/public(?:$|\?)"),  # GET public-facing bullpen info
-    re.compile(r"^/api/bullpens$"),                     # POST: founder onboarding (create bullpen)
+    re.compile(r"^/api/b/[a-z0-9\-]+/apply$"),          # POST a membership application
+    re.compile(r"^/api/b/[a-z0-9\-]+/public(?:$|\?)"),   # GET public-facing bullpen info
+    re.compile(r"^/api/bullpens$"),                      # POST: founder onboarding (create bullpen)
+    re.compile(r"^/m/[A-Za-z0-9_\-]+(?:\?|$)"),          # Phase C: public marketing click redirect
 ]
 
 
@@ -2768,6 +2769,74 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # ══════════════════════════════════════════════════════════════════
         # Phase 0.5 firewall — operator setup + closer onboarding GET routes
         # ══════════════════════════════════════════════════════════════════
+
+        # ── Phase C Marketing — public click-redirect (/m/<token>) ──
+        # Public path; rate-limited by Cloudflare in production, in-process
+        # here. Records the click + redirects to the dest URL with ?ref=
+        # appended so the destination can capture the attribution.
+        m = re.match(r"^/m/([A-Za-z0-9_\-]+)(?:\?|$)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from marketing import record_click, _load_tokens, get_post
+                qs = _pq(_up(self.path).query)
+                token = m.group(1)
+                slug_hint = (qs.get("b") or [None])[0]
+                # Find which bullpen owns this token (cheap — most installs have 1)
+                from pathlib import Path as _P
+                bullpens_root = _P(__file__).parent.parent / "bullpens"
+                found_bullpen = None
+                if slug_hint:
+                    idx = _load_tokens(slug_hint)
+                    if token in idx: found_bullpen = slug_hint
+                if not found_bullpen:
+                    for bd in bullpens_root.iterdir():
+                        if not bd.is_dir(): continue
+                        idx = _load_tokens(bd.name)
+                        if token in idx:
+                            found_bullpen = bd.name
+                            break
+                if not found_bullpen:
+                    self._send_json(404, {"error": "unknown tracking token"}); return
+                rec = record_click(
+                    found_bullpen, token,
+                    ip=self.client_address[0] if self.client_address else None,
+                    user_agent=self.headers.get("User-Agent"),
+                )
+                if not rec:
+                    self._send_json(404, {"error": "post not found"}); return
+                # 302 to the post's outbound URL
+                self.send_response(302)
+                self.send_header("Location", rec["outbound_url"])
+                self.send_header("Cache-Control", "no-store")
+                self._cors()
+                self.end_headers()
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/marketing/posts?rep=...
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/marketing/posts(?:\?|$)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from marketing import list_posts
+                qs = _pq(_up(self.path).query)
+                rep = (qs.get("rep") or [None])[0]
+                self._send_json(200, {"posts": list_posts(m.group(1), rep=rep)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/marketing/stats
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/marketing/stats$", self.path)
+        if m:
+            try:
+                from marketing import aggregate_stats
+                self._send_json(200, aggregate_stats(m.group(1)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
 
         # ── Phase B Studio — buyer-asset manifest + per-kind reads ──
         # /api/b/<slug>/studio/<buyer> — manifest of all generated assets
@@ -4731,6 +4800,27 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # ══════════════════════════════════════════════════════════════════
         # Phase 0.5 firewall — POST routes
         # ══════════════════════════════════════════════════════════════════
+
+        # ── Phase C Marketing — POST register a marketing post ──
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/marketing/post$", self.path)
+        if m:
+            try:
+                from marketing import register_post
+                body = json.loads(raw) if raw else {}
+                rec = register_post(
+                    m.group(1),
+                    rep=(body.get("rep") or self._current_rep() or "self").strip(),
+                    url=(body.get("url") or "").strip(),
+                    channel=(body.get("channel") or "other").strip().lower(),
+                    topic=(body.get("topic") or "general").strip(),
+                    dest=(body.get("dest") or "landing").strip(),
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
 
         # ── Phase B Studio — force-regenerate an asset ──
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/studio/([a-zA-Z0-9_\-]+)/([a-z_]+)/regenerate$", self.path)

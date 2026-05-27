@@ -185,6 +185,86 @@ RULES: list[dict] = [
     {"kind": "contact_created", "bucket": "clout", "xp": 10,
      "reason": "New contact added"},
 
+    # ── STUDY / RAG ingestion (Phase B Studio) ─────────────────────────
+    # Dropping a source = volume (clout). Cap per-event so dumping a 200-chunk
+    # PDF doesn't out-credit a thoughtful targeted ingestion.
+    {"kind": "source_ingested", "bucket": "clout", "xp": 5,
+     "reason": "Source added to dossier",
+     "bonus": lambda p: min(20, int(p.get("chunks") or 0))},
+    {"kind": "source_removed", "bucket": "clout", "xp": 0,
+     "reason": "Source removed (no XP)"},
+
+    # ── Flashcards / SRS practice ──
+    # Each card pass = clout (study volume). Easy rating gets a small bump
+    # because the rep self-reports they've internalized it.
+    {"kind": "flashcard_passed", "bucket": "clout", "xp": 3,
+     "reason": "Flashcard passed",
+     "match": lambda p: (p.get("rating") or "good") != "easy"},
+    {"kind": "flashcard_passed", "bucket": "clout", "xp": 5,
+     "reason": "Flashcard passed (easy)",
+     "match": lambda p: (p.get("rating") or "") == "easy"},
+
+    # ── Quiz ──
+    # Completing a quiz = clout. A PERFECT score on a cert-tier quiz
+    # (corpus has 3+ sources for the buyer, proving real study material
+    # was used) = money. Otherwise still clout.
+    {"kind": "quiz_completed", "bucket": "clout", "xp": 20,
+     "reason": "Pop quiz completed",
+     "match": lambda p: not (p.get("perfect") and int(p.get("source_count") or 0) >= 3)},
+    {"kind": "quiz_completed", "bucket": "money", "xp": 100,
+     "reason": "PERFECT quiz on cert-tier dossier (3+ sources)",
+     "match": lambda p: p.get("perfect") and int(p.get("source_count") or 0) >= 3},
+
+    # ── Briefing / one-sheeter / account map / data table — viewing ──
+    {"kind": "briefing_read", "bucket": "clout", "xp": 8,
+     "reason": "Briefing read"},
+    {"kind": "one_sheeter_viewed", "bucket": "clout", "xp": 6,
+     "reason": "One-sheeter viewed"},
+    {"kind": "account_map_viewed", "bucket": "clout", "xp": 6,
+     "reason": "Account map viewed"},
+    {"kind": "data_table_viewed", "bucket": "clout", "xp": 4,
+     "reason": "Data table viewed"},
+
+    # ── Research chat ──
+    # Asking is clout (effort + volume). A question that LANDS — i.e., the
+    # closer closes the same buyer's deal within 7 days of asking — credits
+    # money via outcome attribution (research_question_landed event fired
+    # by the deal-close watcher, NOT directly by the user).
+    {"kind": "research_question_asked", "bucket": "clout", "xp": 4,
+     "reason": "Pre-call research question asked"},
+    {"kind": "research_question_landed", "bucket": "money", "xp": 50,
+     "reason": "Research landed (closed within 7 days)"},
+
+    # ── Marketing (outcome-attributed) ─────────────────────────────────
+    # Publishing a marketing post: clout (you did the work).
+    # A click on your tracked link: clout (someone saw it).
+    # A SIGNUP attributed to your post: money (real outcome — someone
+    # entered the funnel because of you).
+    #
+    # CRITICAL — these are MARKETING (product / outreach), not RECRUITMENT
+    # (closer-to-closer invites). Marketing posts about the PRODUCT / the
+    # PROSPECT-FACING brand earn XP. Posts about "join my bullpen to earn
+    # commission" earn ZERO and would be flagged.
+    {"kind": "marketing_post_published", "bucket": "clout", "xp": 10,
+     "reason": "Marketing post published"},
+    {"kind": "marketing_post_clicked", "bucket": "clout", "xp": 2,
+     "reason": "Marketing post got a click",
+     "bonus": lambda p: 0},  # capped per event; tracker can rate-limit
+    {"kind": "marketing_lead_signed", "bucket": "money", "xp": 200,
+     "reason": "Marketing-attributed signup"},
+    {"kind": "marketing_deal_closed", "bucket": "money", "xp": 500,
+     "reason": "Marketing-attributed deal closed"},
+
+    # ── Follow-up cadence (Phase C) ───────────────────────────────────
+    # Cadence = the deal-stage-triggered touch sequence. Discipline credits
+    # clout; the underlying close still credits money via deal_closed_won.
+    {"kind": "followup_scheduled", "bucket": "clout", "xp": 2,
+     "reason": "Follow-up scheduled"},
+    {"kind": "followup_executed", "bucket": "clout", "xp": 8,
+     "reason": "Follow-up executed"},
+    {"kind": "cadence_completed", "bucket": "clout", "xp": 30,
+     "reason": "Cadence completed (all steps)"},
+
     # ── RECRUITMENT — explicitly NONE ──────────────────────────────────
     # Inviting a closer or operator credits ZERO XP of either kind. The
     # event is still audit-logged for attribution; the audit log shows
