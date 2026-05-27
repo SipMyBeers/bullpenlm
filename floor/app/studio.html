@@ -252,12 +252,13 @@ if (!REP) REP = 'operator';
 let currentBuyer = URLP.searchParams.get('buyer') || null;
 let currentKind = null;
 const ASSETS = [
-  {kind:'briefing',    icon:'📄', name:'Briefing',    desc:'300-word pre-call doc'},
-  {kind:'one_sheeter', icon:'📋', name:'One-Sheeter', desc:'Pin-to-the-wall cheat sheet'},
-  {kind:'flashcards',  icon:'🃏', name:'Flashcards',  desc:'Drill cards'},
-  {kind:'quiz',        icon:'🎯', name:'Pop Quiz',    desc:'5-Q knowledge gate'},
-  {kind:'account_map', icon:'🗺️', name:'Account Map', desc:'Org chart + relationships'},
-  {kind:'data_table',  icon:'📊', name:'Data Table',  desc:'CRM-ready fields'},
+  {kind:'briefing',       icon:'📄', name:'Briefing',       desc:'300-word pre-call doc'},
+  {kind:'briefing_audio', icon:'🎧', name:'Audio Brief',    desc:'TTS for the car'},
+  {kind:'one_sheeter',    icon:'📋', name:'One-Sheeter',    desc:'Pin-to-the-wall cheat sheet'},
+  {kind:'flashcards',     icon:'🃏', name:'Flashcards',     desc:'Drill cards'},
+  {kind:'quiz',           icon:'🎯', name:'Pop Quiz',       desc:'5-Q knowledge gate'},
+  {kind:'account_map',    icon:'🗺️', name:'Account Map',    desc:'Org chart + relationships'},
+  {kind:'data_table',     icon:'📊', name:'Data Table',     desc:'CRM-ready fields'},
 ];
 
 function el(t, p, ...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
@@ -519,6 +520,22 @@ function renderAsset(kind, data, body){
   if(kind === 'quiz'){ renderQuiz(data.questions || [], body); return; }
   if(kind === 'account_map'){ renderAccountMap(data.nodes || [], data.edges || [], body); return; }
   if(kind === 'data_table'){ renderDataTable(data, body); return; }
+  if(kind === 'briefing_audio'){ renderBriefingAudio(data, body); return; }
+}
+
+function renderBriefingAudio(data, body){
+  if(data.empty || !data.audio_url){
+    body.appendChild(el('div', {style:'color:var(--muted);font-style:italic;text-align:center;padding:20px', text: data.message || 'No audio yet.'}));
+    return;
+  }
+  const wrap = el('div', {style:'text-align:center;padding:20px 0'});
+  wrap.appendChild(el('div', {style:'font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:14px', text:`${data.voice || 'voice'} · ${data.duration_estimate_sec || '?'}s · ${data.word_count || 0} words`}));
+  const audio = el('audio', {controls:'controls', src: data.audio_url, style:'width:100%;max-width:560px;margin:0 auto;display:block'});
+  wrap.appendChild(audio);
+  wrap.appendChild(el('div', {style:'font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:14px;letter-spacing:.04em', text:'Listen on the way to the call. Briefing text below.'}));
+  body.appendChild(wrap);
+  body.appendChild(el('hr', {style:'border:none;border-top:1px solid rgba(245,232,216,0.10);margin:20px 0'}));
+  if(data.markdown) body.appendChild(renderMarkdown(data.markdown));
 }
 
 function renderFlashcards(cards, body){

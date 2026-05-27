@@ -3062,6 +3062,40 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Studio artifact static serve (audio briefings, etc.) ──
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/artifacts/([a-zA-Z0-9_\-]+)/([a-zA-Z0-9_\-\.]+)$", self.path)
+        if m:
+            try:
+                from pathlib import Path as _P
+                slug, buyer, fname = m.group(1), m.group(2), m.group(3)
+                # Whitelist extensions — never serve arbitrary files
+                if not fname.endswith((".aiff", ".m4a", ".mp3", ".wav", ".ogg", ".pdf", ".json")):
+                    self._send_json(403, {"error": "extension not allowed"}); return
+                p = _P(__file__).parent.parent / "bullpens" / slug / "artifacts" / buyer / fname
+                resolved = p.resolve(strict=True)
+                # Prevent path traversal
+                root = (_P(__file__).parent.parent / "bullpens" / slug / "artifacts" / buyer).resolve(strict=True)
+                resolved.relative_to(root)
+                body = resolved.read_bytes()
+                ctype = {
+                    ".aiff": "audio/x-aiff", ".m4a": "audio/mp4",
+                    ".mp3": "audio/mpeg", ".wav": "audio/wav",
+                    ".ogg": "audio/ogg", ".pdf": "application/pdf",
+                    ".json": "application/json",
+                }.get("." + fname.rsplit(".", 1)[-1], "application/octet-stream")
+                self.send_response(200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Accept-Ranges", "bytes")
+                self._cors()
+                self.end_headers()
+                self.wfile.write(body)
+            except FileNotFoundError:
+                self._send_json(404, {"error": "artifact not found"})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Phase B Studio — buyer-asset manifest + per-kind reads ──
         # /api/b/<slug>/studio/<buyer> — manifest of all generated assets
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/studio/([a-zA-Z0-9_\-]+)$", self.path)

@@ -458,13 +458,95 @@ def gen_data_table(bullpen: str, buyer: str) -> dict:
 
 # ── Top-level dispatcher + manifest ──────────────────────────────────────
 
+# ── 7. BRIEFING AUDIO (TTS via macOS `say`) ───────────────────────────────
+
+def gen_briefing_audio(bullpen: str, buyer: str) -> dict:
+    """Generate a spoken-audio version of the briefing — closer can
+    listen on the way to the call instead of reading. Uses macOS `say`
+    (always present on Mac); future builds can wire piper for
+    cross-platform support.
+    """
+    import shutil
+    import subprocess
+
+    cached = _read_cached(bullpen, buyer, "briefing_audio")
+    if cached and (_artifacts_dir(bullpen, buyer) / "briefing.aiff").exists():
+        return cached
+
+    # Need the markdown briefing first — generate it if not cached
+    briefing = gen_briefing(bullpen, buyer)
+    md = briefing.get("markdown", "")
+    if not md.strip():
+        return _write_cached(bullpen, buyer, "briefing_audio", {
+            "empty": True, "audio_path": None,
+            "message": "No briefing markdown to narrate yet — drop sources first.",
+        })
+
+    say_bin = shutil.which("say")
+    if not say_bin:
+        return _write_cached(bullpen, buyer, "briefing_audio", {
+            "empty": True, "audio_path": None,
+            "message": "macOS 'say' command not available. Briefing-audio "
+                       "requires macOS or a piper install. Read the markdown "
+                       "briefing instead.",
+        })
+
+    # Strip markdown to plain text for TTS
+    plain = re.sub(r"^#+\s+", "", md, flags=re.M)        # headers → bare text
+    plain = re.sub(r"\*\*([^*]+)\*\*", r"\1", plain)     # **bold** → bold
+    plain = re.sub(r"`([^`]+)`", r"\1", plain)           # `code` → code
+    plain = re.sub(r"^\s*[-*]\s+", "Next, ", plain, flags=re.M)  # list bullets → "next,"
+    plain = re.sub(r"\s+", " ", plain).strip()
+
+    if len(plain) < 40:
+        return _write_cached(bullpen, buyer, "briefing_audio", {
+            "empty": True, "audio_path": None,
+            "message": "Briefing markdown too short to narrate.",
+        })
+
+    audio_path = _artifacts_dir(bullpen, buyer) / "briefing.aiff"
+    # macOS `say` flags: -v voice, -r WPM, -o file (auto-detects aiff)
+    try:
+        subprocess.run(
+            [say_bin, "-v", "Alex", "-r", "200", "-o", str(audio_path), plain],
+            check=True, capture_output=True, timeout=120,
+        )
+    except subprocess.SubprocessError as e:
+        return _write_cached(bullpen, buyer, "briefing_audio", {
+            "empty": True, "audio_path": None,
+            "message": f"say command failed: {e}",
+        })
+
+    if not audio_path.exists() or audio_path.stat().st_size < 1000:
+        return _write_cached(bullpen, buyer, "briefing_audio", {
+            "empty": True, "audio_path": None,
+            "message": "TTS produced empty audio file.",
+        })
+
+    # ~150 WPM is conservative — say's defaults at -r 200 are closer to
+    # 200 WPM. Estimate from word count.
+    words = len(plain.split())
+    duration_sec = max(20, int(words / 200 * 60))
+
+    return _write_cached(bullpen, buyer, "briefing_audio", {
+        "audio_relpath": f"artifacts/{buyer}/briefing.aiff",
+        "audio_url": f"/api/b/{bullpen}/artifacts/{buyer}/briefing.aiff",
+        "voice": "Alex",
+        "duration_estimate_sec": duration_sec,
+        "word_count": words,
+        "size_bytes": audio_path.stat().st_size,
+        "markdown": md,
+    })
+
+
 GENERATORS = {
-    "flashcards":  gen_flashcards,
-    "quiz":        gen_quiz,
-    "briefing":    gen_briefing,
-    "one_sheeter": gen_one_sheeter,
-    "account_map": gen_account_map,
-    "data_table":  gen_data_table,
+    "flashcards":      gen_flashcards,
+    "quiz":            gen_quiz,
+    "briefing":        gen_briefing,
+    "one_sheeter":     gen_one_sheeter,
+    "account_map":     gen_account_map,
+    "data_table":      gen_data_table,
+    "briefing_audio":  gen_briefing_audio,
 }
 
 
@@ -512,6 +594,9 @@ def _summary_for(kind: str, data: dict) -> str:
     if kind == "one_sheeter": return "ready"
     if kind == "account_map": return f"{len(data.get('nodes') or [])} entities, {len(data.get('edges') or [])} edges"
     if kind == "data_table":  return f"{len(data.get('contacts') or [])} contacts, {len(data.get('recent_news') or [])} news"
+    if kind == "briefing_audio":
+        if data.get("empty"): return "TTS not available"
+        return f"{data.get('duration_estimate_sec', 0)}s · {data.get('voice', '?')} voice"
     return ""
 
 
