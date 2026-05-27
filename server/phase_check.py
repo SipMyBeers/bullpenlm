@@ -232,9 +232,139 @@ def bullpen_ready(bullpen: str) -> dict:
     }
 
 
+# ── Tonight-ready: can Beers invite a friend RIGHT NOW? ─────────────────
+#
+# Phase 1 distribution needs counsel + signed binaries — months of work.
+# But "can I DM a friend a magic link right now?" is a much lower bar:
+# the platform + bullpen need to be operationally ready (entity setup,
+# TOS, classification, server + tunnel + ollama running, audit chain
+# healthy). Counsel review is NOT required for this — friends-and-family
+# alpha is exactly the use case that pre-dates counsel.
+#
+# This check is what the Discord-DM-able state requires. It's an
+# operational green-light, not a distribution-ready green-light.
+
+def invite_ready_check(bullpen: str) -> dict:
+    """Tonight-ready diagnostic: can the operator DM a magic link to a
+    friend right now and have them onboard cleanly?
+
+    Returns {ready, missing, checks, magic_link_base}.
+    """
+    checks: dict[str, dict] = {}
+
+    # Operator entity is set up
+    try:
+        from entity import is_setup, get_entity
+        checks["entity"] = {
+            "ok": is_setup(bullpen),
+            "fix": "python3 server/bullpen_quickstart.py " + bullpen,
+        }
+    except Exception as e:
+        checks["entity"] = {"ok": False, "fix": str(e)}
+
+    # Classification done
+    try:
+        from classification import get_answers
+        ans = get_answers(bullpen, None)
+        verdict = (ans or {}).get("score", {}).get("verdict")
+        checks["classification"] = {
+            "ok": verdict == "contractor",
+            "fix": "python3 server/bullpen_quickstart.py " + bullpen,
+        }
+    except Exception as e:
+        checks["classification"] = {"ok": False, "fix": str(e)}
+
+    # Operator TOS accepted
+    try:
+        from disclosures import has_accepted_operator_tos
+        checks["tos"] = {
+            "ok": has_accepted_operator_tos(bullpen),
+            "fix": "python3 server/bullpen_quickstart.py " + bullpen,
+        }
+    except Exception as e:
+        checks["tos"] = {"ok": False, "fix": str(e)}
+
+    # Server reachable (best-effort — only checks the local port)
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.5)
+        s.connect(("127.0.0.1", 7878))
+        s.close()
+        checks["server_running"] = {"ok": True, "fix": ""}
+    except Exception:
+        checks["server_running"] = {
+            "ok": False,
+            "fix": "python3 server/server.py",
+        }
+
+    # Tunnel up + reachable
+    try:
+        from tunnel import tunnel_status
+        ts = tunnel_status()
+        checks["tunnel"] = {
+            "ok": bool(ts.get("running") and ts.get("url")),
+            "fix": "Open /app/host.html and click Start tunnel",
+            "url": ts.get("url"),
+        }
+    except Exception:
+        checks["tunnel"] = {"ok": False, "fix": "Open /app/host.html"}
+
+    # Ollama reachable for AI buyers (drill prerequisite)
+    try:
+        import urllib.request
+        urllib.request.urlopen("http://127.0.0.1:11434/api/tags", timeout=1)
+        checks["ollama"] = {"ok": True, "fix": ""}
+    except Exception:
+        checks["ollama"] = {
+            "ok": False,
+            "fix": "ollama serve  (and: ollama pull gemma2:9b)",
+        }
+
+    # Audit chain integrity
+    try:
+        from audit import verify
+        ok, broken = verify(bullpen)
+        checks["audit_chain"] = {
+            "ok": ok,
+            "fix": f"broken at {broken}" if not ok else "",
+        }
+    except Exception as e:
+        checks["audit_chain"] = {"ok": False, "fix": str(e)}
+
+    missing = [k for k, c in checks.items() if not c.get("ok")]
+    base = checks.get("tunnel", {}).get("url") or "http://127.0.0.1:7878"
+
+    return {
+        "ready": not missing,
+        "missing": missing,
+        "checks": checks,
+        "magic_link_base": base,
+        "bullpen": bullpen,
+    }
+
+
 if __name__ == "__main__":
     import json, sys
-    if len(sys.argv) > 1 and sys.argv[1] != "platform":
-        print(json.dumps(bullpen_ready(sys.argv[1]), indent=2))
-    else:
+    args = sys.argv[1:]
+    if not args or args[0] == "platform":
         print(json.dumps(platform_ready(), indent=2))
+    elif args[0] == "invite":
+        bullpen = args[1] if len(args) > 1 else "default"
+        result = invite_ready_check(bullpen)
+        if result["ready"]:
+            print(f"\n  ✓ READY — bullpen {bullpen!r} can invite friends right now.")
+            print(f"  ✓ Magic-link base: {result['magic_link_base']}\n")
+            print(f"  Next: python3 server/invites.py magic-link <friend-name> --bullpen {bullpen}\n")
+        else:
+            print(f"\n  ⛔ NOT READY — {len(result['missing'])} blocker(s) for bullpen {bullpen!r}:\n")
+            for name, c in result["checks"].items():
+                mark = "✓" if c.get("ok") else "✗"
+                print(f"    {mark} {name}")
+                if not c.get("ok") and c.get("fix"):
+                    print(f"        fix: {c['fix']}")
+            print()
+        sys.exit(0 if result["ready"] else 1)
+    else:
+        # Assume it's a bullpen slug for bullpen_ready (Phase 1 check)
+        print(json.dumps(bullpen_ready(args[0]), indent=2))

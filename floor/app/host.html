@@ -78,6 +78,23 @@ h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spa
   <h1>Host control</h1>
   <p class="sub">Publish your floor to the internet. Generate invite codes. Charge for entry if you want.</p>
 
+  <!-- INVITE-READY DIAGNOSTIC + MAGIC LINK -->
+  <section class="panel" style="margin-bottom:18px;border-color:rgba(52,211,153,0.30)">
+    <h2 style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin:0 0 14px">🚀 INVITE A FRIEND — TONIGHT</h2>
+    <div id="invite-ready-status" style="margin-bottom:14px">Checking…</div>
+    <div id="invite-ready-detail" style="margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#a89a87;line-height:1.8;display:none"></div>
+    <div id="magic-link-form" style="display:none">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="field" style="display:inline-flex;flex-direction:column;margin-right:8px">
+          <label style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#a89a87;margin-bottom:5px">Friend's rep name</label>
+          <input id="ml-rep" placeholder="jordan-ramirez" style="padding:9px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;color:#f5e8d8;font-family:'Bespoke Serif',Georgia,serif;font-size:15px;min-width:220px">
+        </div>
+        <button class="btn gold" onclick="genMagicLink()">Generate magic link →</button>
+      </div>
+      <div id="magic-output" style="display:none;margin-top:14px"></div>
+    </div>
+  </section>
+
   <!-- PHASE 0.5 FIREWALL NAV -->
   <section class="panel" style="margin-bottom:18px">
     <h2 style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin:0 0 14px">⚙ OPERATOR SURFACES — PHASE 0.5 FIREWALL</h2>
@@ -320,6 +337,108 @@ $("#createBtn").addEventListener("click", async () => {
 
 renderTunnel();
 renderInvites();
+
+// ── Invite-ready diagnostic + magic-link generator ──
+const BP = 'default';
+function safeEl(t, props, ...kids){
+  const n = document.createElement(t);
+  if(props) for(const k in props){
+    if(k === 'class') n.className = props[k];
+    else if(k === 'style') n.setAttribute('style', props[k]);
+    else if(k === 'onClick') n.addEventListener('click', props[k]);
+    else if(k === 'text') n.textContent = props[k];
+    else n.setAttribute(k, props[k]);
+  }
+  for(const kid of kids){
+    if(kid == null) continue;
+    n.appendChild(typeof kid === 'string' ? document.createTextNode(kid) : kid);
+  }
+  return n;
+}
+function clearEl(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+
+async function checkInviteReady(){
+  try {
+    const r = await fetch(`/api/b/${BP}/invite-ready`);
+    const d = await r.json();
+    const statusEl = document.getElementById('invite-ready-status');
+    const detailEl = document.getElementById('invite-ready-detail');
+    const formEl = document.getElementById('magic-link-form');
+    clearEl(statusEl);
+    if(d.ready){
+      statusEl.appendChild(safeEl('div', {
+        style: 'padding:11px 16px;background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.40);border-radius:7px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#6ee7b7;letter-spacing:.06em',
+        text: '✓ READY — you can DM a magic link to a friend right now.'
+      }));
+      detailEl.style.display = 'none';
+      formEl.style.display = '';
+    } else {
+      statusEl.appendChild(safeEl('div', {
+        style: 'padding:11px 16px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.40);border-radius:7px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#fda4a4;letter-spacing:.06em',
+        text: `⛔ NOT READY — ${d.missing.length} blocker(s):`
+      }));
+      detailEl.style.display = '';
+      clearEl(detailEl);
+      for(const [name, c] of Object.entries(d.checks)){
+        const row = safeEl('div', {style:'display:flex;gap:10px;align-items:center'});
+        row.appendChild(safeEl('span', {style:'width:18px;color:' + (c.ok ? '#6ee7b7' : '#fda4a4'), text: c.ok ? '✓' : '✗'}));
+        row.appendChild(safeEl('span', {style:'min-width:140px;color:#f5e8d8', text:name}));
+        if(c.fix && !c.ok){
+          row.appendChild(safeEl('code', {style:'color:#a89a87;background:rgba(0,0,0,0.30);padding:2px 6px;border-radius:3px', text:c.fix}));
+        }
+        detailEl.appendChild(row);
+      }
+      formEl.style.display = 'none';
+    }
+  } catch(e){
+    document.getElementById('invite-ready-status').textContent = 'check unavailable';
+  }
+}
+
+async function genMagicLink(){
+  const rep = document.getElementById('ml-rep').value.trim();
+  if(!rep){ alert('Enter the friend\'s rep name first.'); return; }
+  const out = document.getElementById('magic-output');
+  clearEl(out);
+  try {
+    const r = await fetch(`/api/b/${BP}/magic-link?rep=${encodeURIComponent(rep)}`);
+    const d = await r.json();
+    if(!d.magic_link){ throw new Error(d.error || 'no magic_link in response'); }
+    out.style.display = '';
+    const box = safeEl('div', {style:'padding:12px 16px;background:rgba(0,0,0,0.35);border:1px solid rgba(251,191,36,0.40);border-radius:8px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#fbbf24;word-break:break-all;display:flex;gap:10px;align-items:center'});
+    box.appendChild(safeEl('span', {style:'flex:1', text:d.magic_link}));
+    const copyBtn = safeEl('button', {style:'background:#fbbf24;color:#0a1a14;border:none;padding:6px 12px;border-radius:5px;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer', text:'COPY'});
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(d.magic_link).then(()=>{
+        copyBtn.textContent = 'COPIED ✓';
+        setTimeout(()=>{ copyBtn.textContent = 'COPY'; }, 1500);
+      });
+    });
+    box.appendChild(copyBtn);
+    out.appendChild(box);
+    const dmText = `hey — you're in the BullpenLM alpha. one click + 5 minutes:\n\n${d.magic_link}\n\nwhat happens: reads a quick disclosure, signs an IC agreement, drops a W-9, then you're at the drill floor. real cold calls unlock after you pass a tier-3 drill. ping me if anything's weird.`;
+    const dmBox = safeEl('div', {style:'margin-top:10px;padding:12px 16px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.30);border-radius:8px;font-family:"Bespoke Serif",Georgia,serif;font-size:13.5px;color:#a89a87;line-height:1.5;white-space:pre-wrap'});
+    dmBox.textContent = dmText;
+    out.appendChild(safeEl('div', {style:'font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#a89a87;margin:14px 0 6px', text:'SUGGESTED DM:'}));
+    out.appendChild(dmBox);
+    const dmCopy = safeEl('button', {class:'btn ghost', style:'margin-top:8px', text:'Copy DM text'});
+    dmCopy.addEventListener('click', () => {
+      navigator.clipboard.writeText(dmText).then(()=>{
+        dmCopy.textContent = 'COPIED ✓';
+        setTimeout(()=>{ dmCopy.textContent = 'Copy DM text'; }, 1500);
+      });
+    });
+    out.appendChild(dmCopy);
+    document.getElementById('ml-rep').value = '';
+    setTimeout(renderInvites, 400);
+  } catch(e){
+    out.style.display = '';
+    out.appendChild(safeEl('div', {style:'padding:10px 14px;background:rgba(248,113,113,0.10);border:1px solid rgba(248,113,113,0.30);border-radius:6px;color:#fda4a4;font-family:"JetBrains Mono",monospace;font-size:11px', text:'× ' + e.message}));
+  }
+}
+
+checkInviteReady();
+setInterval(checkInviteReady, 15000);
 </script>
 </body>
 </html>

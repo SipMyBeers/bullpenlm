@@ -237,6 +237,57 @@ def validate_session_cookie(cookie_value: str) -> Optional[str]:
     return rep
 
 
+# ── Tunnel URL discovery (best-effort) ────────────────────────────────────
+
+def get_public_url() -> Optional[str]:
+    """Return the operator's current Cloudflare tunnel URL if running.
+
+    Reads from ~/.bullpenlm/tunnel-url (written by server/tunnel.py when
+    a tunnel comes up) or from the tunnel module directly. Returns None
+    if no tunnel is active — caller should fall back to localhost.
+    """
+    # Cached tunnel state
+    cache = Path.home() / ".bullpenlm" / "tunnel-url"
+    if cache.exists():
+        try:
+            url = cache.read_text().strip()
+            if url.startswith("http"):
+                return url
+        except Exception:
+            pass
+    # Live tunnel module
+    try:
+        from tunnel import tunnel_status
+        s = tunnel_status()
+        if s.get("running") and s.get("url"):
+            return s["url"]
+    except Exception:
+        pass
+    return None
+
+
+def build_magic_link(
+    rep: str,
+    *,
+    bullpen: str = "default",
+    base_url: Optional[str] = None,
+    code: Optional[str] = None,
+) -> str:
+    """Build the single magic URL a friend clicks to start onboarding.
+
+    Falls back to localhost if no tunnel URL is available — useful for
+    same-network testing. Caller should pass base_url explicitly when
+    the host knows their own public URL (e.g. a named tunnel like
+    bullpen.beerslabs.com).
+    """
+    base = base_url or get_public_url() or "http://127.0.0.1:7878"
+    base = base.rstrip("/")
+    parts = [f"b={bullpen}", f"rep={rep}"]
+    if code:
+        parts.append(f"code={code}")
+    return f"{base}/app/onboard/?" + "&".join(parts)
+
+
 # ── CLI for the host to create an invite from the terminal ────────────────
 
 if __name__ == "__main__":
@@ -244,8 +295,11 @@ if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "help"):
         print("Usage:")
         print("  python3 server/invites.py create <rep-name> [note]")
-        print("  python3 server/invites.py list")
-        print("  python3 server/invites.py list --all")
+        print("  python3 server/invites.py list [--all]")
+        print("  python3 server/invites.py magic-link <rep-name> [--bullpen <slug>] [--base <url>] [--note <text>]")
+        print()
+        print("magic-link prints ONE URL ready to paste in a Discord DM.")
+        print("Combines invite-code creation + onboarding URL into one click for friends.")
         sys.exit(0)
     cmd = sys.argv[1]
     if cmd == "create":
@@ -257,6 +311,43 @@ if __name__ == "__main__":
         print(f"✓ Created invite for {inv['rep']}")
         print(f"  Code: {inv['code']}")
         print(f"  Share: <YOUR-HOST-URL>/join?code={inv['code']}")
+    elif cmd == "magic-link":
+        if len(sys.argv) < 3:
+            print("× rep name required"); sys.exit(1)
+        rep = sys.argv[2]
+        args = sys.argv[3:]
+        bullpen = "default"
+        base = None
+        note = ""
+        i = 0
+        while i < len(args):
+            a = args[i]
+            if a == "--bullpen" and i + 1 < len(args):
+                bullpen = args[i + 1]; i += 2
+            elif a == "--base" and i + 1 < len(args):
+                base = args[i + 1]; i += 2
+            elif a == "--note" and i + 1 < len(args):
+                note = args[i + 1]; i += 2
+            else:
+                i += 1
+        inv = create_invite(rep, note)
+        url = build_magic_link(rep, bullpen=bullpen, base_url=base, code=inv["code"])
+        print()
+        print(f"  Magic link for {rep!r}")
+        print(f"  ─────────────────────────────────────────────────────────────")
+        print(f"  {url}")
+        print(f"  ─────────────────────────────────────────────────────────────")
+        print()
+        print(f"  Suggested DM:")
+        print(f"  ─────────────────────────────────────────────────────────────")
+        print(f"  hey — you're in the BullpenLM alpha. one click + 5 minutes:")
+        print(f"")
+        print(f"  {url}")
+        print(f"")
+        print(f"  what happens: reads a quick disclosure, signs an IC agreement,")
+        print(f"  drops a W-9, then you're at the drill floor. real cold calls")
+        print(f"  unlock after you pass a tier-3 drill. ping me if anything's weird.")
+        print(f"  ─────────────────────────────────────────────────────────────")
     elif cmd == "list":
         include_used = "--all" in sys.argv
         invs = list_invites(include_used=include_used)

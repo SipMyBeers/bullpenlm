@@ -2885,6 +2885,38 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # /api/b/<slug>/invite-ready — tonight-ready ops diagnostic
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/invite-ready$", self.path)
+        if m:
+            try:
+                from phase_check import invite_ready_check
+                self._send_json(200, invite_ready_check(m.group(1)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/magic-link?rep=<name>&note=<text>
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/magic-link$", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from invites import create_invite, build_magic_link
+                qs = _pq(_up(self.path).query)
+                rep = (qs.get("rep") or [""])[0]
+                note = (qs.get("note") or [""])[0]
+                if not rep:
+                    self._send_json(400, {"error": "rep_required"}); return
+                inv = create_invite(rep, note)
+                url = build_magic_link(rep, bullpen=m.group(1), code=inv["code"])
+                self._send_json(200, {
+                    "rep": rep,
+                    "code": inv["code"],
+                    "magic_link": url,
+                })
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # /api/b/<slug>/payouts/1099-csv?year=YYYY — 1099-NEC prep export
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/payouts/1099-csv$", self.path)
         if m:

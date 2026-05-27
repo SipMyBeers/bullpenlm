@@ -177,25 +177,36 @@ hr
 echo
 ok "Install complete. Mac Mini is the host."
 echo
-echo -e "${GOLD}On the Mac Mini (or via SSH from your laptop):${RESET}"
-echo "  open http://localhost:7878/app/start-bullpen.html"
-echo "  → walk through the 5-step wizard"
+echo -e "${GREEN}═══════════════════════════════════════════════════════════════${RESET}"
+echo -e "${GREEN}  NEXT 3 STEPS — INVITE A FRIEND IN UNDER 5 MINUTES${RESET}"
+echo -e "${GREEN}═══════════════════════════════════════════════════════════════${RESET}"
 echo
+echo -e "${GOLD}1. Set up your bullpen (one command, 60 seconds):${RESET}"
+echo "     cd ~/bullpenlm && python3 server/bullpen_quickstart.py killsesh"
+echo "   → walks you through entity → classification → TOS in the terminal"
+echo
+echo -e "${GOLD}2. Seed real prospects (so closers have someone to claim):${RESET}"
+echo "     cd ~/bullpenlm && python3 scripts/_seed_killsesh_prospects.py"
+echo
+echo -e "${GOLD}3. Generate a magic link for each friend:${RESET}"
+echo "     cd ~/bullpenlm && python3 server/invites.py magic-link <friend-name> --bullpen killsesh"
+echo "   → prints ONE URL ready to paste in a Discord DM"
+echo
+echo -e "${GOLD}Or use the UI from any device:${RESET}"
 if [[ -n "$TUNNEL_URL" ]]; then
-  echo -e "${GOLD}From any other device (laptop, phone):${RESET}"
-  echo "  $TUNNEL_URL/app/start-bullpen.html"
-  echo "  (use this to run the wizard from your couch)"
-  echo
+  echo "     $TUNNEL_URL/app/host.html"
+else
+  echo "     http://localhost:7878/app/host.html"
 fi
-echo -e "${GOLD}After the wizard finishes:${RESET}"
-echo "  cd ~/bullpenlm && python3 scripts/_seed_killsesh_prospects.py"
-echo "  → seeds 24 BFSI prospects so closers have someone to claim"
+echo "   → 'Invite a friend — tonight' panel does steps 1+3 in the browser"
+echo
+echo -e "${GOLD}Check status anytime:${RESET}"
+echo "     cd ~/bullpenlm && python3 server/phase_check.py invite killsesh"
 echo
 echo -e "${GOLD}Tail server logs:${RESET}"
-echo "  tail -f /tmp/bullpen-server.log"
+echo "     tail -f /tmp/bullpen-server.log"
 echo
-echo -e "${GOLD}To stop the server later:${RESET}"
-echo "  lsof -ti :7878 | xargs kill -9"
-echo "  pkill -f 'caffeinate -dimsu'"
+echo -e "${GOLD}Stop the server later:${RESET}"
+echo "     lsof -ti :7878 | xargs kill -9 && pkill -f 'caffeinate -dimsu'"
 echo
 hr
