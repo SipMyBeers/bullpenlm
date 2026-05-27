@@ -2770,6 +2770,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Phase 0.5 firewall — operator setup + closer onboarding GET routes
         # ══════════════════════════════════════════════════════════════════
 
+        # ── CRM import — GET stats for cockpit tile ──
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/crm/stats$", self.path)
+        if m:
+            try:
+                from crm_import import aggregate as crm_agg
+                self._send_json(200, crm_agg(m.group(1)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Operator cockpit — one aggregated GET for the dashboard ──
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/cockpit$", self.path)
         if m:
@@ -4766,6 +4776,48 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         }
                     except Exception as e:
                         result["debrief_error"] = str(e)
+                self._send_json(200, result)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── CRM import — preview + run (raw CSV body, NOT JSON) ──────
+        # These MUST live above the JSON-parse below; bodies are CSV text.
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/crm/import/preview(?:$|\?)", self.path)
+        if m:
+            try:
+                from crm_import import preview as crm_preview
+                text = raw.decode("utf-8", errors="replace") if raw else ""
+                if not text.strip():
+                    self._send_json(400, {"error": "empty CSV body"}); return
+                self._send_json(200, crm_preview(text))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/crm/import/run(?:$|\?)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from crm_import import run_import
+                qs = _pq(_up(self.path).query)
+                create_deals = (qs.get("create_deals") or ["1"])[0] != "0"
+                owner = (qs.get("owner") or [self._current_rep() or "self"])[0]
+                cols_arg = (qs.get("columns") or [""])[0]
+                column_override = None
+                if cols_arg:
+                    try: column_override = json.loads(cols_arg)
+                    except Exception: pass
+                text = raw.decode("utf-8", errors="replace") if raw else ""
+                if not text.strip():
+                    self._send_json(400, {"error": "empty CSV body"}); return
+                result = run_import(
+                    m.group(1), text,
+                    column_override=column_override,
+                    create_deals=create_deals,
+                    default_owner=owner,
+                    actor=self._current_rep() or "operator",
+                )
                 self._send_json(200, result)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})

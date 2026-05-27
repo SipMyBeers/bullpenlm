@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CRM import · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
+  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--gold-dim:#92400e;
+  --danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}
+.crumb .here{color:var(--gold)}
+.nav{display:flex;gap:6px;margin-left:18px}
+.nav a{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:5px}
+.nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 22px 80px}
+h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 4px;line-height:1}
+.lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:0 0 22px;max-width:780px}
+
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:22px 24px;margin-bottom:18px}
+.panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+
+.drop-zone{border:2px dashed rgba(52,211,153,0.30);background:rgba(52,211,153,0.04);border-radius:10px;padding:48px 22px;text-align:center;cursor:pointer;transition:all .15s;font-family:var(--serif);font-style:italic;font-size:15px;color:var(--muted)}
+.drop-zone.active{border-color:var(--accent);background:rgba(52,211,153,0.10);color:var(--accent-2)}
+.drop-zone strong{display:block;color:var(--text);font-family:var(--display);font-size:22px;font-style:normal;letter-spacing:-.01em;text-transform:uppercase;margin-bottom:8px}
+.drop-zone .hint{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.10em;text-transform:uppercase;margin-top:8px}
+
+.btn{padding:10px 18px;border-radius:7px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none;text-align:center;display:inline-block;transition:transform .12s}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:var(--accent);color:#0a1a14}
+.btn.gold{background:var(--gold);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+
+.status-msg{padding:10px 14px;border-radius:7px;margin:10px 0;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em}
+.status-msg.ok{background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);color:var(--accent-2)}
+.status-msg.err{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.30);color:var(--danger)}
+.status-msg.info{background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.25);color:var(--purple)}
+
+.field{margin-bottom:10px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.field select,.field input{width:100%;padding:8px 11px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none}
+
+.map-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:760px){.map-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.map-grid{grid-template-columns:1fr}}
+
+.preview-table{width:100%;border-collapse:collapse;font-size:12px;margin:6px 0}
+.preview-table th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:7px 9px;border-bottom:1px solid rgba(245,232,216,0.15);background:rgba(0,0,0,0.20)}
+.preview-table td{padding:8px 9px;border-bottom:1px solid rgba(245,232,216,0.05);font-family:var(--mono);font-size:11.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+.preview-table .stage-pill{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.preview-table .stage-pill.lead{background:rgba(122,111,95,0.20);color:#7a6f5f;border:1px solid rgba(122,111,95,0.40)}
+.preview-table .stage-pill.contacted{background:rgba(34,211,238,0.10);color:#22d3ee;border:1px solid rgba(34,211,238,0.40)}
+.preview-table .stage-pill.qualified{background:rgba(52,211,153,0.10);color:var(--accent);border:1px solid rgba(52,211,153,0.40)}
+.preview-table .stage-pill.demo{background:rgba(110,231,183,0.10);color:var(--accent-2);border:1px solid rgba(110,231,183,0.40)}
+.preview-table .stage-pill.pilot{background:rgba(251,191,36,0.10);color:var(--gold);border:1px solid rgba(251,191,36,0.40)}
+.preview-table .stage-pill.won{background:rgba(52,211,153,0.20);color:var(--accent-2);border:1px solid var(--accent)}
+.preview-table .stage-pill.lost{background:rgba(248,113,113,0.10);color:var(--danger);border:1px solid rgba(248,113,113,0.40)}
+
+.outcome-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:9px 13px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.06);border-radius:7px;margin-bottom:5px;font-family:var(--mono);font-size:11px}
+.outcome-row.ok{border-color:rgba(52,211,153,0.20)}
+.outcome-row.skipped{border-color:rgba(168,154,135,0.20);opacity:0.6}
+.outcome-row.failed{border-color:rgba(248,113,113,0.30);background:rgba(248,113,113,0.04)}
+
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:680px){.stat-grid{grid-template-columns:1fr 1fr}}
+.stat-card{padding:14px 16px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.08);border-radius:10px}
+.stat-card .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.stat-card .val{font-family:var(--display);font-size:28px;letter-spacing:-.01em;color:var(--accent-2)}
+.stat-card .val.warn{color:var(--gold)}
+.stat-card .val.err{color:var(--danger)}
+
+.hide{display:none}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <div class="crumb">
+    <a href="/app/lobby.html">Floor</a> <span> / </span>
+    <a href="/app/host.html">Host</a> <span> / </span>
+    <span class="here">CRM import</span>
+  </div>
+  <div class="nav">
+    <a href="/app/cockpit.html">Cockpit</a>
+    <a href="/app/deals.html">Deals</a>
+    <a href="/app/studio.html">Studio</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <h1>CRM import</h1>
+  <p class="lede">Drop a CSV (HubSpot / Salesforce / Notion / Google Sheet export — any flat file with people in it). We auto-detect the columns, preview the first rows, and on confirmation create organizations + contacts + deals in your bullpen. Idempotent — re-running keeps your existing records, only adds new ones.</p>
+
+  <div class="panel" id="step-drop">
+    <h2>STEP 1 — DROP THE CSV</h2>
+    <div class="drop-zone" id="drop-zone">
+      <strong>Drop a CSV</strong>
+      HubSpot · Salesforce · Notion · Google Sheets · whatever you've got
+      <div class="hint">or click to browse</div>
+    </div>
+    <input type="file" id="file-input" style="display:none" accept=".csv,text/csv">
+  </div>
+
+  <div class="panel hide" id="step-map">
+    <h2>STEP 2 — VERIFY COLUMN MAPPING</h2>
+    <p style="color:var(--muted);font-family:var(--serif);font-size:13px;margin:0 0 14px">Auto-detected. Override any if we got it wrong, or leave blank to skip.</p>
+    <div class="map-grid" id="map-grid"></div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label style="display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer">
+        <input type="checkbox" id="create-deals-toggle" checked>
+        Create deals from stage/amount columns
+      </label>
+      <span style="color:var(--muted);font-size:11px">Deals owner: <strong id="owner-display" style="color:var(--text)">self</strong></span>
+    </div>
+  </div>
+
+  <div class="panel hide" id="step-preview">
+    <h2>STEP 3 — PREVIEW (FIRST 10 ROWS) <span id="preview-total" style="color:var(--accent-2);font-weight:700"></span></h2>
+    <div style="overflow-x:auto"><table class="preview-table" id="preview-table"></table></div>
+    <div style="margin-top:18px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <button class="btn ghost" onclick="reset()">← Start over</button>
+      <button class="btn gold" id="confirm-btn" onclick="runImport()">↓ Import all rows</button>
+    </div>
+    <div id="import-status" style="margin-top:10px"></div>
+  </div>
+
+  <div class="panel hide" id="step-done">
+    <h2>STEP 4 — DONE</h2>
+    <div class="stat-grid" id="result-stats"></div>
+    <p style="color:var(--muted);font-family:var(--serif);font-size:13.5px">First 30 outcomes below. Full audit at <a href="/app/audit.html" style="color:var(--gold);text-decoration:none">/app/audit.html</a>.</p>
+    <div id="outcome-list"></div>
+    <div style="margin-top:18px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <button class="btn ghost" onclick="reset()">Import another CSV</button>
+      <a class="btn primary" href="/app/deals.html">View deals →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const URLP = new URL(window.location.href);
+const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+let REP = URLP.searchParams.get('rep');
+if (!REP) { try { REP = localStorage.getItem('bullpen-rep'); } catch(e){} }
+if (!REP) REP = 'operator';
+document.getElementById('owner-display').textContent = REP;
+
+const FIELDS = [
+  ['person_name', 'Person name'],
+  ['first_name',  'First name'],
+  ['last_name',   'Last name'],
+  ['email',       'Email'],
+  ['phone',       'Phone'],
+  ['linkedin',    'LinkedIn'],
+  ['company',     'Company'],
+  ['title',       'Title / role'],
+  ['stage',       'Pipeline stage'],
+  ['amount',      'Deal amount'],
+  ['notes',       'Notes / description'],
+];
+
+let csvText = '';
+let headers = [];
+let activeColumns = {};
+
+function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else if(k==='value')n.value=p[k];else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+function show(id){document.getElementById(id).classList.remove('hide')}
+function hide(id){document.getElementById(id).classList.add('hide')}
+function setStatus(id, kind, msg){const w=document.getElementById(id);clear(w);w.appendChild(el('div',{class:'status-msg '+kind,text:msg}))}
+
+document.getElementById('drop-zone').addEventListener('click', ()=>document.getElementById('file-input').click());
+document.getElementById('file-input').addEventListener('change', (ev)=>{
+  const f = ev.target.files[0]; if(!f) return;
+  loadFile(f);
+});
+['dragenter','dragover'].forEach(e => document.getElementById('drop-zone').addEventListener(e, ev=>{ev.preventDefault(); document.getElementById('drop-zone').classList.add('active')}));
+['dragleave','drop'].forEach(e => document.getElementById('drop-zone').addEventListener(e, ev=>{ev.preventDefault(); document.getElementById('drop-zone').classList.remove('active')}));
+document.getElementById('drop-zone').addEventListener('drop', (ev)=>{
+  const f = ev.dataTransfer.files[0]; if(!f) return;
+  loadFile(f);
+});
+
+async function loadFile(file){
+  csvText = await file.text();
+  const r = await fetch(`/api/b/${BULLPEN}/crm/import/preview`, {
+    method:'POST', headers:{'Content-Type':'text/csv'}, body: csvText,
+  });
+  const d = await r.json();
+  if(!r.ok){ alert('Preview failed: ' + (d.error||'unknown')); return; }
+  headers = d.headers;
+  activeColumns = d.active_columns;
+  renderMapping(d.detected_columns);
+  renderPreview(d);
+  show('step-map'); show('step-preview');
+  document.getElementById('preview-total').textContent = `· ${d.row_count_total} rows total`;
+  window.scrollTo({top: document.getElementById('step-map').offsetTop - 20, behavior:'smooth'});
+}
+
+function renderMapping(detected){
+  const wrap = document.getElementById('map-grid');
+  clear(wrap);
+  for(const [field, label] of FIELDS){
+    const f = el('div', {class:'field'});
+    f.appendChild(el('label', {text: label}));
+    const sel = el('select', {'data-field': field});
+    sel.appendChild(el('option', {value:'', text:'— skip —'}));
+    for(const h of headers){
+      const opt = el('option', {value: h, text: h});
+      if(activeColumns[field] === h) opt.selected = true;
+      sel.appendChild(opt);
+    }
+    sel.addEventListener('change', () => {
+      activeColumns[field] = sel.value || null;
+      // Re-preview when the user changes mapping
+      requestPreview();
+    });
+    f.appendChild(sel);
+    wrap.appendChild(f);
+  }
+}
+
+async function requestPreview(){
+  const r = await fetch(`/api/b/${BULLPEN}/crm/import/preview`, {
+    method:'POST', headers:{'Content-Type':'text/csv'}, body: csvText,
+  });
+  const d = await r.json();
+  // Use server's reconciliation (with our override applied client-side)
+  // Apply overrides on server next request — for now we just re-render with current cols
+  renderPreview(d);
+}
+
+function renderPreview(d){
+  const tbl = document.getElementById('preview-table');
+  clear(tbl);
+  const head = el('thead'); const hr = el('tr');
+  for(const c of ['Name','Company','Title','Email','Phone','Stage','Amount']){
+    hr.appendChild(el('th', {text:c}));
+  }
+  head.appendChild(hr); tbl.appendChild(head);
+  const body = el('tbody');
+  for(const r of d.sample || []){
+    const row = el('tr');
+    row.appendChild(el('td', {text: r.person_name || '—'}));
+    row.appendChild(el('td', {text: r.company || '—'}));
+    row.appendChild(el('td', {text: r.title || '—'}));
+    row.appendChild(el('td', {text: r.email || '—'}));
+    row.appendChild(el('td', {text: r.phone || '—'}));
+    const stageCell = el('td');
+    if(r.stage){ stageCell.appendChild(el('span', {class:'stage-pill ' + r.stage, text: r.stage})); }
+    else { stageCell.textContent = '—'; }
+    row.appendChild(stageCell);
+    row.appendChild(el('td', {text: r.amount || '—'}));
+    body.appendChild(row);
+  }
+  tbl.appendChild(body);
+}
+
+async function runImport(){
+  setStatus('import-status', 'info', 'Importing… can take a few seconds for big files');
+  document.getElementById('confirm-btn').disabled = true;
+  const createDeals = document.getElementById('create-deals-toggle').checked;
+  const cleanCols = {};
+  for(const [k,v] of Object.entries(activeColumns)){ if(v) cleanCols[k] = v; }
+  const params = new URLSearchParams({create_deals: createDeals ? '1' : '0', owner: REP, columns: JSON.stringify(cleanCols)});
+  const r = await fetch(`/api/b/${BULLPEN}/crm/import/run?${params}`, {
+    method:'POST', headers:{'Content-Type':'text/csv'}, body: csvText,
+  });
+  const d = await r.json();
+  document.getElementById('confirm-btn').disabled = false;
+  if(!r.ok){ setStatus('import-status', 'err', d.error || 'failed'); return; }
+  renderResult(d);
+  hide('step-drop'); hide('step-map'); hide('step-preview'); show('step-done');
+  window.scrollTo({top: document.getElementById('step-done').offsetTop - 20, behavior:'smooth'});
+}
+
+function renderResult(d){
+  const wrap = document.getElementById('result-stats');
+  clear(wrap);
+  const s = d.stats || {};
+  const tiles = [
+    ['Contacts created', s.contacts_created || 0, 'ok'],
+    ['Orgs created', s.orgs_created || 0, 'ok'],
+    ['Deals created', s.deals_created || 0, 'ok'],
+    ['Skipped', (s.rows_skipped || 0) + (s.contacts_existing || 0), 'warn'],
+  ];
+  for(const [lbl, val, kind] of tiles){
+    const c = el('div', {class:'stat-card'});
+    c.appendChild(el('div', {class:'lbl', text:lbl}));
+    c.appendChild(el('div', {class:'val ' + (kind==='warn'?'warn':kind==='err'?'err':''), text:String(val)}));
+    wrap.appendChild(c);
+  }
+  const outWrap = document.getElementById('outcome-list');
+  clear(outWrap);
+  for(const o of (d.outcomes || []).slice(0, 30)){
+    const row = el('div', {class:'outcome-row ' + (o.status === 'ok' ? 'ok' : o.status === 'skipped' ? 'skipped' : 'failed')});
+    row.appendChild(el('span', {style:'color:var(--muted);font-size:10px;letter-spacing:.10em', text:`#${o.row}`}));
+    row.appendChild(el('span', {text: o.status === 'ok' ? `${o.contact_slug || '(no contact)'} @ ${o.org_slug || '?'}` + (o.deal_id ? ` · deal ${o.deal_id}` : '') : (o.reason || o.status)}));
+    row.appendChild(el('span', {style:'color:' + (o.status==='ok'?'var(--accent-2)':o.status==='skipped'?'var(--muted)':'var(--danger)'), text: o.status.toUpperCase()}));
+    outWrap.appendChild(row);
+  }
+}
+
+function reset(){
+  csvText=''; headers=[]; activeColumns={};
+  hide('step-map'); hide('step-preview'); hide('step-done');
+  show('step-drop');
+  document.getElementById('file-input').value = '';
+}
+</script>
+</body>
+</html>
