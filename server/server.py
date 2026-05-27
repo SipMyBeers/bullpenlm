@@ -2718,19 +2718,47 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(200, {"personas": slim, "model": get_model()})
             return
 
-        # ── Static fallback: serve /app/<page>.html from floor/app/ ──
-        m = re.match(r"^/app/([a-z0-9_\-]+\.html)(?:$|\?)", self.path)
+        # ── Static fallback: serve /app/<page>.html and /app/<dir>/[index.html] ──
+        # Matches:
+        #   /app/host.html           → floor/app/host.html
+        #   /app/setup/              → floor/app/setup/index.html
+        #   /app/setup/index.html    → floor/app/setup/index.html
+        #   /app/setup/foo.html      → floor/app/setup/foo.html
+        #   /app/onboard/?b=ghengis  → floor/app/onboard/index.html
+        #   /app/gate-banner.js      → floor/app/gate-banner.js
+        m = re.match(r"^/app/([a-zA-Z0-9_\-/]+?)(\.html|\.js|\.css)?/?(\?.*)?$", self.path)
         if m:
-            page = m.group(1)
             from pathlib import Path as _P
-            f = _P(__file__).parent.parent / "floor" / "app" / page
+            base = m.group(1)
+            ext = m.group(2)
+            app_root = _P(__file__).parent.parent / "floor" / "app"
+            # Try the obvious file first, then directory/index.html
+            candidates = []
+            if ext:
+                candidates.append(app_root / f"{base}{ext}")
+            else:
+                # Bare path — try .html then dir/index.html
+                candidates.append(app_root / f"{base}.html")
+                candidates.append(app_root / base / "index.html")
+            f = next((c for c in candidates if c.exists() and c.is_file()), None)
+            if f is None:
+                self._send_json(404, {"error": "page not found", "tried": [str(c) for c in candidates]})
+                return
+            # Resolve and prevent path traversal outside floor/app/
             try:
-                body = f.read_bytes()
+                resolved = f.resolve(strict=True)
+                resolved.relative_to(app_root.resolve(strict=True))
             except Exception:
                 self._send_json(404, {"error": "page not found"})
                 return
+            ctype = "text/html; charset=utf-8"
+            if str(resolved).endswith(".js"):
+                ctype = "application/javascript; charset=utf-8"
+            elif str(resolved).endswith(".css"):
+                ctype = "text/css; charset=utf-8"
+            body = resolved.read_bytes()
             self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
             self._cors()
             self.end_headers()
