@@ -2769,6 +2769,27 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Phase 0.5 firewall — operator setup + closer onboarding GET routes
         # ══════════════════════════════════════════════════════════════════
 
+        # ── Phase A RAG keystone — knowledge base GET routes ──
+        # /api/b/<slug>/rag/stats — health + buyer/chunk counts
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/rag/stats$", self.path)
+        if m:
+            try:
+                from rag import stats as rag_stats
+                self._send_json(200, rag_stats(m.group(1)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/sources/<buyer> — list sources for one buyer
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/sources/([a-zA-Z0-9_\-]+)$", self.path)
+        if m:
+            try:
+                from rag import sources as rag_sources
+                self._send_json(200, {"sources": rag_sources(m.group(1), m.group(2))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # /api/b/<slug>/commission-defaults — bullpen-wide closer-agreement vars
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/commission-defaults$", self.path)
         if m:
@@ -4531,6 +4552,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
             bullpen_ctx = (req.get("bullpen") or "").strip().lower() or None
             sys_prompt = persona_system_prompt(slug, difficulty=difficulty,
                                                  bullpen=bullpen_ctx)
+            # Phase A RAG keystone — if this bullpen has a corpus for this
+            # buyer, append the top-k retrieved chunks for the LATEST user
+            # message so the AI buyer's roleplay is grounded in real
+            # source material (earnings calls, news, LinkedIn, prior call
+            # transcripts) instead of just the static persona card.
+            if bullpen_ctx and history:
+                try:
+                    from rag import context as rag_context
+                    last_user = next((m for m in reversed(history)
+                                       if m.get("role") == "user"), None)
+                    if last_user and last_user.get("content"):
+                        ctx_block = rag_context(bullpen_ctx, slug,
+                                                last_user["content"],
+                                                max_chars=2000)
+                        if ctx_block:
+                            sys_prompt = sys_prompt + "\n\n" + ctx_block + (
+                                "\n\nIMPORTANT: stay in character. Use the "
+                                "reference material ABOVE only if it helps you "
+                                "respond authentically as the buyer. NEVER "
+                                "recite or quote it directly — embody it."
+                            )
+                except Exception:
+                    pass
             msgs = [{"role": "system", "content": sys_prompt}] + history
             if opening:
                 msgs.append({
@@ -4664,6 +4708,143 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # ══════════════════════════════════════════════════════════════════
         # Phase 0.5 firewall — POST routes
         # ══════════════════════════════════════════════════════════════════
+
+        # ── Phase A RAG keystone — POST routes ──
+        # /api/b/<slug>/sources/<buyer>/text — drop text/markdown
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/sources/([a-zA-Z0-9_\-]+)/text$", self.path)
+        if m:
+            try:
+                from rag import ingest_text
+                body = json.loads(raw) if raw else {}
+                rec = ingest_text(
+                    m.group(1), m.group(2),
+                    body.get("text") or "",
+                    source_name=body.get("source_name") or "pasted-text.md",
+                    actor=body.get("actor") or self._current_rep() or "operator",
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/sources/<buyer>/url — fetch + ingest URL
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/sources/([a-zA-Z0-9_\-]+)/url$", self.path)
+        if m:
+            try:
+                from rag import ingest_url
+                body = json.loads(raw) if raw else {}
+                url_in = (body.get("url") or "").strip()
+                if not url_in:
+                    self._send_json(400, {"error": "url required"}); return
+                rec = ingest_url(
+                    m.group(1), m.group(2), url_in,
+                    actor=body.get("actor") or self._current_rep() or "operator",
+                )
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/sources/<buyer>/file — raw PDF/audio upload (body=bytes)
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/sources/([a-zA-Z0-9_\-]+)/file$", self.path)
+        if m:
+            try:
+                from rag import ingest_pdf, ingest_audio
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                qs = _pq(_up(self.path).query)
+                fname = (qs.get("name") or ["upload.bin"])[0]
+                kind = (qs.get("kind") or [""])[0].lower()
+                if not kind:
+                    kind = "pdf" if fname.lower().endswith(".pdf") else ("audio" if fname.lower().endswith((".wav",".mp3",".m4a",".flac")) else "")
+                if not kind:
+                    self._send_json(400, {"error": "kind=pdf or kind=audio required"}); return
+                # Write the upload to a tmp file
+                import tempfile, os as _os
+                with tempfile.NamedTemporaryFile(delete=False, suffix=f"-{fname}") as tf:
+                    tf.write(raw); tmp_path = tf.name
+                try:
+                    if kind == "pdf":
+                        rec = ingest_pdf(m.group(1), m.group(2), tmp_path,
+                                          actor=self._current_rep() or "operator")
+                    else:
+                        rec = ingest_audio(m.group(1), m.group(2), tmp_path,
+                                            actor=self._current_rep() or "operator")
+                finally:
+                    try: _os.unlink(tmp_path)
+                    except Exception: pass
+                self._send_json(200, rec)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/rag/search — semantic search across one buyer's corpus
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/rag/search$", self.path)
+        if m:
+            try:
+                from rag import search as rag_search
+                body = json.loads(raw) if raw else {}
+                buyer = (body.get("buyer") or "").strip()
+                query = (body.get("query") or "").strip()
+                k = int(body.get("k") or 8)
+                if not buyer or not query:
+                    self._send_json(400, {"error": "buyer and query required"}); return
+                self._send_json(200, {"hits": rag_search(m.group(1), buyer, query, k=k)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/rag/research — closer-facing pre-call research chat
+        # (uses Gemma + RAG context to answer questions ABOUT the buyer,
+        #  rather than ROLEPLAYING as the buyer)
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/rag/research$", self.path)
+        if m:
+            try:
+                from rag import context as rag_context
+                body = json.loads(raw) if raw else {}
+                buyer = (body.get("buyer") or "").strip()
+                query = (body.get("query") or "").strip()
+                if not buyer or not query:
+                    self._send_json(400, {"error": "buyer and query required"}); return
+                ctx_block = rag_context(m.group(1), buyer, query, max_chars=3000)
+                if not ctx_block:
+                    self._send_json(200, {
+                        "answer": "No source material yet — drop a PDF, URL, or paste text into the buyer's dossier first.",
+                        "grounded": False,
+                    })
+                    return
+                sys = (
+                    "You are a sales research assistant for a closer about to call a real prospect. "
+                    "Answer their question SHORT, FACT-DENSE, and cite the source name in parentheses. "
+                    "Do NOT roleplay as the buyer; you are the closer's coach. "
+                    "If the reference material doesn't answer the question, say so plainly.\n\n"
+                    + ctx_block
+                )
+                msgs = [
+                    {"role": "system", "content": sys},
+                    {"role": "user", "content": query},
+                ]
+                answer = ollama_chat(msgs, temperature=0.3)
+                self._send_json(200, {"answer": answer, "grounded": True})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/sources/<buyer>/<source_id>/delete
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/sources/([a-zA-Z0-9_\-]+)/([a-zA-Z0-9_\-]+)/delete$", self.path)
+        if m:
+            try:
+                from rag import delete_source
+                self._send_json(200, delete_source(m.group(1), m.group(2), m.group(3),
+                                                    actor=self._current_rep() or "operator"))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
 
         # /api/b/<slug>/entity — operator entity setup
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/entity$", self.path)
