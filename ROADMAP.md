@@ -2,21 +2,31 @@
 
 The product **doesn't change** as it ships through these phases. Same Python
 server, same Cloudflare tunnels, same audit log, same real-CRM and real cold
-calls. What changes is **how it's distributed** and **who's allowed in**.
+calls. What changes is **how it's distributed**, **who's allowed in**, and
+**how legally airtight the platform mechanics are**.
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Phase 0        │    │  Phase 1        │    │  Phase 2        │    │  Phase 3        │
-│  ALPHA          │ →  │  CLOSED BETA    │ →  │  STEAM EA       │ →  │  STEAM 1.0      │
-│  (now)          │    │  (~1-2 months)  │    │  (~3-4 months)  │    │  (~6-9 months)  │
-│                 │    │                 │    │                 │    │                 │
-│  Mac Mini + SSH │    │  .dmg/.exe/...  │    │  Steam install  │    │  Steam install  │
-│  cloudflared    │    │  direct download│    │  + Steam Cloud  │    │  + Workshop     │
-│  invite codes   │    │  signed binaries│    │  + Steam friends│    │  + DLC packs    │
-│  Discord role   │    │  auto-updater   │    │  $19.99 EA      │    │  $29.99 v1.0    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
-    ~5 friends            ~50 operators          ~500 wishlist          ~thousands
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│  Phase 0     │   │  Phase 0.5   │   │  Phase 1     │   │  Phase 2     │   │  Phase 3     │
+│  ALPHA       │ → │  FIREWALL    │ → │  CLOSED BETA │ → │  STEAM EA    │ → │  STEAM 1.0   │
+│  (now)       │   │  (1-3 weeks) │   │  (~1-2 mo)   │   │  (~3-4 mo)   │   │  (~6-9 mo)   │
+│              │   │              │   │              │   │              │   │              │
+│  hand-picked │   │  legal +     │   │  signed app  │   │  Steam train │   │  + Workshop  │
+│  friends     │   │  XP firewall │   │  + auto-upd. │   │  + Cloud     │   │  + DLC packs │
+│  invite-code │   │  + counsel   │   │  + classif.  │   │  + Friends   │   │  + Workshop  │
+│  Discord     │   │  sign-off    │   │  coach live  │   │  + EA price  │   │  + 1.0 price │
+└──────────────┘   └──────────────┘   └──────────────┘   └──────────────┘   └──────────────┘
+   ~5 friends        same ~5 +         ~50 operators       ~500 wishlist     ~thousands
+                     hardened plat
 ```
+
+> **The framing that matters:** the gamified training sim and the real
+> commission floor are *two products in one binary*. Steam will host the
+> sim. Steam will NOT host the floor (real-money commission + real
+> external customers is commerce, not a game, by Valve's standard). The
+> floor lives on the operator's self-hosted instance. The Steam game is
+> top-of-funnel; the self-hosted floor is the business. Both are real.
+> Neither scales until Phase 0.5 ships.
 
 ---
 
@@ -33,28 +43,138 @@ calls. What changes is **how it's distributed** and **who's allowed in**.
 - Beers's hand-picked friends
 - Each operator runs their own bullpen on their own machine
 - KillSesh is the first product being sold
+- **Floor stays small until Phase 0.5 lands.** Real product, real
+  commission — but the closer count is intentionally capped at ~15 across
+  all bullpens combined while the platform mechanics get hardened.
 
 ### Build work remaining
-Nothing — the alpha is shippable today. See `docs/LAUNCH_DAY.md` for the
+Nothing on the alpha distribution itself. See `docs/LAUNCH_DAY.md` for the
 operator pre-flight ritual + friend-DM template.
 
-### Exit criteria for moving to Phase 1
+### Exit criteria for moving to Phase 0.5
 - 5+ friends are running their own bullpens (operator role)
 - 10+ closers have signed agreements and logged at least one real call
 - First close-won deal logged with a real client + commission paid
 - At least one friend invites another friend without Beers's involvement
-- `docs/LAUNCH_DAY.md` has been used by at least one non-Beers operator successfully
+- `docs/LAUNCH_DAY.md` has been used by at least one non-Beers operator
+  successfully
 
 ### Success metric
-**Word of mouth.** Phase 0 succeeds if a friend texts another friend "yo
-get on bullpenlm" without Beers asking. If the alpha cohort isn't sharing
-it organically, the product isn't ready for paid distribution.
+**Word of mouth + zero legal surprises.** Phase 0 succeeds if a friend
+texts another friend "yo get on bullpenlm" without Beers asking, AND no
+operator runs into a closer-pay dispute, classification challenge, or
+Stripe pattern-match flag during the alpha window.
 
 ---
 
-## Phase 1 — CLOSED BETA (1-2 months from Phase 0 exit)
+## Phase 0.5 — LEGAL & XP FIREWALL (1-3 weeks)
 
-**Status:** Build phase. Engineering scope is well-defined.
+**Status:** Active build. Blocks all scaling.
+
+This phase exists because the floor (real commission, real customers,
+real closer-as-1099) is the real product, and it has to be airtight at
+the platform-mechanics level before more than 15 closers exist on the
+network. The work is structural, not cosmetic — once it's in code, the
+"is this MLM-adjacent?" question has a code-level answer instead of a
+copy-tweak answer.
+
+### Why this phase exists
+
+Two specific risks the platform mechanics have to extinguish:
+
+1. **The pyramid silhouette.** FTC's Koscot/Omnitrition test asks whether
+   earnings trace to product sold to real external customers, or to
+   recruitment + promotion of the opportunity itself. Stripe pattern-
+   matches the same shape and quietly kills accounts.
+2. **The allocation-layer leak.** Even with separate "money" and "clout"
+   XP buckets, if clout-XP drives *which closers get the juicy
+   prospects*, then clout-XP converts to money one hop removed. The
+   firewall has to extend to the allocation layer, not just the
+   commission percentage.
+
+### Build work
+
+1. **`server/xp.py` two-ledger refactor.** Every `RULES` entry gets a
+   `bucket: "money" | "clout" | "none"` tag. Money-XP is awarded only on
+   closed deals + outcome-tagged drill certifications. Clout-XP is
+   awarded for posts, attendance, drill volume, social activity.
+   Recruiting another closer awards **zero of either** — not a "clout"
+   reward, zero. Inviting flow is a button with no XP attached.
+2. **Allocation firewall** in `server/team.py` + `server/gates.py`. The
+   `team.claim()` priority function takes only `money_xp`,
+   `drill_certification_score`, and historical `close_rate` as inputs.
+   The signature does not accept `clout_xp` — it's structurally
+   unrepresentable. Leaderboards can show clout-XP for vanity, but the
+   leaderboard cannot route prospects.
+3. **`server/entity.py` — operator entity profile.** Every bullpen
+   captures the operator's legal entity (LLC / sole prop / individual),
+   legal name, EIN/SSN, jurisdiction. Every generated doc renders from
+   this; "Beers Labs LLC" never appears on a closer agreement.
+4. **`server/classification.py` — IRS 20-factor coach.** Wizard walks
+   the operator through the 20-factor + state-aware (CA AB5, NJ 75-IIIA,
+   NY/IL/LA Freelance Isn't Free) questions when they set up commission
+   terms. If their answers describe an employee, the wizard refuses to
+   render a 1099 Closer Agreement and explains why.
+5. **`templates/legal/` — closer agreement bundle.** Closer Agreement
+   (1099 framework), W-9, Mutual NDA, Code of Conduct, DNC
+   Acknowledgement, Closer Disclosure (BullpenLM is not your employer),
+   Operator TOS (you are the counterparty, you carry the risk). All
+   render with `{{operator_entity}}` substitution. Legal text marked
+   PLACEHOLDER awaiting counsel review.
+6. **`server/disclosures.py` + `server/gates.py` — live-work gate.** A
+   closer cannot be assigned a real prospect (only AI-buyer drills)
+   until (a) signed Closer Agreement on file w/ SHA, (b) W-9 on file,
+   (c) drill certification cleared, (d) jurisdiction compliance check
+   passed, (e) DNC scrub completed for the target. The platform does
+   not sign the agreement (BullpenLM is on no contracts), but it
+   refuses to allow live work without proof the off-platform agreement
+   exists.
+7. **`server/dnc.py` — telemarketing tooling.** DNC scrub against
+   donotcall.gov + state lists before any prospect can be claimed.
+   Two-party-consent prompts wired by jurisdiction. Hours-of-day
+   enforcement (no 9pm dials in CA). Operator certifies compliance; the
+   platform makes compliance trivial.
+8. **`docs/COMP_AND_LEGAL.md` — canonical model.** Written down so
+   counsel has a single artifact to review: platform-tooling vs
+   operator-counterparty vs closer-1099. What we won't touch (escrow,
+   money rails, mediation, classification calls). The counsel-review
+   checklist before non-friend operators are allowed in.
+9. **MLM/securities + worker-classification counsel sign-off.** One hour
+   minimum. Reviews: platform XP mechanics, the closer agreement
+   template, the operator TOS, jurisdiction warnings. Counsel signs off
+   before Phase 1 starts.
+
+### Who's in
+- Same Phase 0 friends — no new closers, no new operators during
+  Phase 0.5. The point is to harden the platform before scale.
+
+### Exit criteria for moving to Phase 1
+- `server/xp.py` ships the two-ledger split with passing tests on both
+  the money/clout separation AND the allocation-layer firewall.
+- `team.claim()` priority function signature is type-system-enforced to
+  reject clout-XP.
+- At least one closer agreement renders with a real operator's entity,
+  is signed by closer + operator (both hashes in the audit log), and
+  the live-work gate is verified blocking unsigned closers.
+- Classification coach refuses to render a 1099 for at least one
+  obvious-employee answer set.
+- DNC scrub is live and blocking dials to listed numbers.
+- Counsel review complete. Sign-off recorded as `docs/legal/COUNSEL_REVIEW.md`
+  in the repo, with date + jurisdictions blessed.
+
+### Success metric
+**Zero pyramid-shaped paths in the code.** Verified by a code review
+that grep's for any function consuming clout-XP that also influences
+prospect routing, commission %, payout amount, or invite priority. Zero
+hits, or the phase isn't done.
+
+---
+
+## Phase 1 — CLOSED BETA (1-2 months from Phase 0.5 exit)
+
+**Status:** Build phase. Engineering scope is well-defined. Blocked by
+Phase 0.5 — no signed binaries go to non-friends until the firewall is
+in code.
 
 ### What changes
 - **Tauri app replaces the curl-install ritual.** Operators download a
@@ -70,6 +190,10 @@ it organically, the product isn't ready for paid distribution.
 - **Named Cloudflare Tunnels** (optional, recommended) — operators with a
   domain can route the tunnel through `app.theirdomain.com` instead of
   the ephemeral `<random>.trycloudflare.com`.
+- **Operator onboarding gate.** Before a new operator can invite
+  closers, they complete entity setup + classification coach + accept
+  Operator TOS. The Phase 0.5 firewall is enforced on every new
+  operator.
 
 ### Build work
 1. PyInstaller spec file that bundles `python3 server/server.py` + all deps
@@ -90,8 +214,11 @@ it organically, the product isn't ready for paid distribution.
 **Total engineering:** ~3-5 weeks of focused work.
 
 ### Who's in (closed beta)
-- Phase 0 alpha cohort (auto-promoted)
+- Phase 0 alpha cohort (auto-promoted, no re-onboarding required)
 - Each alpha friend invites 2-3 of their friends (the "+2 invites" model)
+- **New operators must clear the firewall onboarding** — entity setup,
+  classification coach, signed Operator TOS — before they can invite
+  closers
 - BullpenLM Discord "Beta" role auto-grants when an alpha verifies they
   installed the signed app
 
@@ -101,14 +228,19 @@ it organically, the product isn't ready for paid distribution.
 - Auto-updater has pushed at least one patch successfully without bricking
   any operator
 - 50+ operators across both macOS and Windows
+- 100+ closers across all bullpens have completed the live-work gate
+  (signed agreement + W-9 + drill cert + jurisdiction OK)
+- Zero classification disputes (no operator has had a closer challenge
+  1099 status with their state DOL)
 - Steam Direct application approved + app ID issued (apply early —
   approval is 1-4 weeks)
 - 1,000+ wishlists on the Steam store page
 
 ### Success metric
-**Install friction is gone.** A non-technical friend can go from
-"bullpenlm.com" link to "running my floor" in under 5 minutes without
-typing a single shell command.
+**Install friction is gone AND the firewall holds at scale.** A
+non-technical friend can go from "bullpenlm.com" link to "running my
+floor" in under 5 minutes without typing a single shell command — but
+they cannot dial a real prospect until the onboarding gate is cleared.
 
 ---
 
@@ -116,56 +248,76 @@ typing a single shell command.
 
 **Status:** Plan locked, awaiting Phase 1 + Steam approval.
 
+> **Critical scope clarification:** the Steam build is the *training
+> sim*, not the full bullpen. AI-buyer drills, ranks, leaderboards,
+> achievements, cosmetics, PvP duels — all on Steam. The real-customer
+> commission floor stays on the operator's self-hosted instance (the
+> Tauri app from Phase 1). The Steam title is top-of-funnel for the
+> floor. Valve will not host real-world commission/recruitment commerce,
+> and we don't ask them to.
+
 ### What changes
 - **Distribution = Steam.** Operators search "BullpenLM" on Steam, hit
-  Install, the bundled installer downloads + sets up. Steam handles
-  updates, refunds, payment processing, cloud sync.
-- **Steam Friends replaces invite codes** for closers who use Steam.
-  The invite-code system stays as the fallback for friends who don't.
-- **Steam Cloud syncs `bullpens/<slug>/`** — the operator's entire floor
-  state backs up automatically. Survives reformat/reinstall.
+  Install, the bundled sim downloads. From inside the sim, an "Open My
+  Floor" button launches the self-hosted Tauri app (or prompts to
+  install it). Steam handles updates, refunds, and payment processing
+  for the SIM. The FLOOR's money flow stays operator-direct.
+- **Steam Friends replaces invite codes** for *the sim's* PvP and
+  leaderboard side. Floor invites still go through invite codes (real
+  legal flow).
+- **Steam Cloud syncs sim-side progress** — rank, drill history, drill
+  certifications. Floor data (real CRM, signed docs, real calls) stays
+  local-only by default; an opt-in encrypted Steam Cloud backup is
+  available but disabled by default.
 - **62 in-game achievements become Steam achievements** via Steamworks
-  SDK. Same triggers, just published to Steam profile.
-- **EA pricing: $19.99 one-time.** No subscription, no DLC at EA.
+  SDK. Same triggers, sim-side only.
+- **EA pricing: $19.99 one-time.** No subscription, no DLC at EA. Buying
+  the game does not grant any closer-side earning capability — the
+  earning side is gated by the firewall onboarding, period.
 
 ### Build work
 1. Steamworks SDK integration via the `steamworks` Rust crate
    (feature-gated, off in Phase 1 builds). ~2 weeks.
-2. Achievement-publishing bridge — every existing in-game achievement
+2. Achievement-publishing bridge — every existing sim-side achievement
    unlock calls `steamworks::Client::user_stats().set_achievement(…)`.
    ~3 days.
-3. Steam Cloud bridge — at app shutdown, zip `bullpens/<slug>/` to
-   Steam's remote storage; at startup, unzip if newer. ~1 week.
-4. Steam Friends integration — replace the join-code paste UI with
-   "Join via Steam Friends" picker. Code path still exists for non-Steam
-   friends. ~1 week.
-5. Steam store page (see `docs/STEAM_LAUNCH_PLAN.md`):
+3. Sim/floor split — clear partition between what's Steam-distributed
+   (sim) and what's self-hosted (floor). ~1 week.
+4. Steam Cloud bridge (sim-side only). ~1 week.
+5. Steam Friends integration for sim's PvP/leaderboard. ~1 week.
+6. Steam store page (see `docs/STEAM_LAUNCH_PLAN.md`):
    - Title, short desc, long desc, tags, capsule images, hero image,
      screenshots, trailer.
    - Age rating + content warning forms.
-6. Steam Direct submission + content review wait. ~2-4 weeks.
+7. Steam Direct submission + content review wait. ~2-4 weeks.
 
 **Total engineering on top of Phase 1:** ~4-6 weeks.
 
 ### Who's in
-- Anyone who buys it on Steam ($19.99 EA price)
+- Anyone who buys the sim on Steam ($19.99 EA price)
 - Phase 0 alpha + Phase 1 beta cohorts get **free Steam keys** as thanks
-- New operators can still bring their own VPS / Mac Mini hosting — Steam
-  just bundles the install. No platform lock-in.
+- Floor access (real commission work) remains gated by the Phase 0.5
+  firewall — Steam buyers who want to run a real bullpen go through the
+  same entity setup + classification coach + signed TOS as any other
+  operator
 
 ### Exit criteria for moving to Phase 3
-- 500+ Steam owners
+- 500+ Steam owners (sim side)
 - "Very Positive" Steam review rating (>80% positive)
 - All core multiplayer flows are stable across 100+ concurrent operators
 - At least one operator has run their bullpen for 90+ days continuously
   with no audit-chain breaks
+- Zero Stripe / counterparty / classification disputes in the floor side
+  during Phase 2
 - DLC content pipeline tested (one pack shipped to alpha for feedback)
 
 ### Success metric
-**Real commissions paid through invoices generated by the app.** Phase 2
-succeeds when operators are actually paying closers monthly via the
-auto-generated invoices, and closers are actually receiving the money.
-Until cash moves, this is a fancy practice tool.
+**Real commissions paid through operator-direct rails recorded in the
+audit chain.** Phase 2 succeeds when operators are actually paying
+closers monthly (Stripe / Wise / Zelle / USDC — any rail they choose,
+direct between them) and the audit chain records every payment for
+year-end 1099-NEC prep. Until cash moves and the firewall holds at
+scale, the floor is a fancy practice tool with extra steps.
 
 ---
 
@@ -180,7 +332,7 @@ Until cash moves, this is a fancy practice tool.
   - *SaaS Slingers* — Modern B2B SaaS persona library + objection trees.
   - *Boutique* — Solo / creative-services persona pack (designers, consultants, freelancers).
 - **Steam Workshop** for community-uploaded persona libraries. Top
-  uploaders get revenue share.
+  uploaders get revenue share **on the sim**, not on the floor.
 - **Controller support + Steam Deck verification** — 10× store visibility.
 - **Localization** — en → es, pt-BR, ja, de. The four highest-leverage
   languages for sales-game audiences.
@@ -208,18 +360,29 @@ behind it, and the next move is either:
 These never change as we move through phases:
 
 1. **Self-hosted forever.** Every operator owns their data. BullpenLM is
-   not a SaaS in any phase. Steam distributes the install; the floor
-   runs on the operator's machine.
+   not a SaaS in any phase. Steam distributes the sim; the floor runs
+   on the operator's machine.
 2. **Open source forever.** The repo stays MIT. Free for anyone who
    wants to run their own bullpen without Steam.
 3. **Audit chain integrity.** Every mutation flows through
    `audit.append()`. Operators can verify the chain at any time. No
    "trust the platform" — the chain is the trust.
 4. **Real-CRM real-money real-calls.** Never fictionalized for any
-   platform. The Steam version IS the BullpenLM you've been using.
+   platform. The Steam sim drills against AI buyers; the self-hosted
+   floor handles real customers. Both are real to what they are.
 5. **Closer protections.** Every closer signs the auto-rendered legal
-   agreement. Monthly invoices auto-generate. Operator pays via the
-   agreed payout method. BullpenLM never custodies funds.
+   agreement *with the operator* (BullpenLM is on no contracts).
+   Settlement runs operator-direct on the rail they pick. BullpenLM
+   never custodies funds.
+6. **Platform on no contracts.** BullpenLM provides the tooling;
+   operators carry the counterparty relationship. The platform refuses
+   to be escrow, judge, or insurer. Operator TOS makes this explicit
+   and is enforced at every gate.
+7. **Two-ledger XP forever.** Money-XP and clout-XP never merge.
+   Recruitment never pays.
+8. **No earning without certification.** Drill cert + signed agreement
+   + W-9 + jurisdiction OK gates every live-prospect claim, in every
+   phase, in every distribution channel.
 
 ---
 
@@ -229,7 +392,8 @@ Moving from Phase N → Phase N+1 requires:
 1. Hitting that phase's **exit criteria** (above)
 2. The next phase's **build work** is verified shippable (smoke tests +
    3 days of soaking on Beers's own bullpen)
-3. The Phase N+1 plan doc is finalized (`docs/STEAM_LAUNCH_PLAN.md` for
+3. The Phase N+1 plan doc is finalized (`docs/COMP_AND_LEGAL.md` +
+   counsel sign-off for Phase 0.5, `docs/STEAM_LAUNCH_PLAN.md` for
    Phase 2, future TBD for Phase 3)
 4. Beers personally signs off — phase transitions are commitments to
    downstream operators, not just engineering milestones
@@ -242,6 +406,7 @@ fix it in place; don't revert to Phase 1.
 ## Where to look next
 
 - **Phase 0 mechanics:** `docs/LAUNCH_DAY.md`
+- **Phase 0.5 model + counsel checklist:** `docs/COMP_AND_LEGAL.md`
 - **Phase 1 + 2 Steam specifics:** `docs/STEAM_LAUNCH_PLAN.md`
 - **Alpha program rules:** `docs/ALPHA_PROGRAM.md`
 - **Security posture:** `SECURITY.md`

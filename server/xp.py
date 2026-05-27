@@ -1,14 +1,61 @@
 """XP rules + level curve + projection from the audit log.
 
-Design contract: **XP is a derivation of the audit log, not a separate store.**
-Every audit event has a corresponding XP delta (from `RULES`). We compute
-totals on demand by streaming through `audit.iter_all(bullpen)`. A small
-in-process cache (`_xp_cache`) avoids re-scanning on every request.
+═══════════════════════════════════════════════════════════════════════
+TWO-LEDGER FIREWALL (Phase 0.5)
+═══════════════════════════════════════════════════════════════════════
 
-If the audit log changes (`audit.append`), call `invalidate(bullpen)` so
-the next read recomputes.
+Every XP event lands in exactly one of three buckets:
 
-Level curve: triangular progression — Lvl N requires ~250·N(N+1)/2 cumulative XP.
+    money — awarded only when value is actually created for a real
+            external customer (closed deals, signed pilots) OR when
+            outcome-tagged drill certifications prove competence to
+            handle real customers. Drives commission tier eligibility
+            and prospect claim priority.
+
+    clout — awarded for social / volume / housekeeping activity (calls
+            attempted, drills practiced, emails sent, meetings logged,
+            achievements unlocked). Drives rank, leaderboard position,
+            cosmetics. Vanity only. Never routes prospects, never
+            raises commission %.
+
+    none  — recorded in the audit chain for attribution, but credits
+            no XP of any kind. Specifically: inviting another closer,
+            recruiting another operator, sharing the bullpen, posting
+            about the opportunity to recruit reps. Marketing the
+            product (NOT the opportunity) is `clout`, not `none`.
+
+The buckets are SEPARATE LEDGERS. They never merge. The allocation
+firewall in `server/team.py` + `server/gates.py` accepts ONLY money_xp
+as an earning-opportunity input — never clout_xp.
+
+Why: the FTC's Koscot pyramid test asks whether earnings trace to real
+product sold to real external customers, or to recruitment/promotion of
+the opportunity itself. Two ledgers + zero-XP-for-recruitment + an
+allocation firewall that can't accept clout-XP make the platform
+structurally incapable of taking the bad shape.
+
+If you're adding a rule and you're not sure which bucket it belongs in:
+    - Does this event represent revenue created for a real external
+      customer, or proof of competence to do so? → money
+    - Is this event a recruit/promote-the-opportunity action? → none
+    - Everything else → clout
+
+═══════════════════════════════════════════════════════════════════════
+
+Design contract: **XP is a derivation of the audit log, not a separate
+store.** Every audit event has a corresponding XP delta (from `RULES`).
+We compute totals on demand by streaming through
+`audit.iter_all(bullpen)`. A small in-process cache (`_xp_cache`) avoids
+re-scanning on every request.
+
+If the audit log changes (`audit.append`), call `invalidate(bullpen)`
+so the next read recomputes.
+
+Level curve: triangular progression — Lvl N requires ~250·N(N+1)/2
+cumulative XP. Levels are computed against the SUM of money_xp +
+clout_xp (vanity rank), but eligibility/allocation always queries
+money_xp directly.
+
   Lvl 2:    750 XP
   Lvl 5:  3,750 XP
   Lvl 10: 13,750 XP
@@ -19,9 +66,12 @@ from __future__ import annotations
 import json
 import math
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 from audit import iter_all as audit_iter_all
+
+
+Bucket = Literal["money", "clout", "none"]
 
 
 # ── XP rules table — single source of truth ──────────────────────────────
@@ -30,8 +80,10 @@ from audit import iter_all as audit_iter_all
 # Order matters only for events that match multiple rules — we apply ALL
 # matching rules (an event can earn multiple XP types).
 #
-# Some rules pull dynamic XP from the event payload (e.g. deal close-won
-# scales with amount). Those use a callable instead of an int.
+# `bucket` is REQUIRED on every rule. The validator at module import
+# refuses to load a rule that's missing it or has an invalid value —
+# this is the structural guarantee that no future contributor
+# accidentally introduces a third path.
 
 def _xp_close_won(payload: dict) -> int:
     amount = float(payload.get("amount") or 0)
@@ -48,52 +100,125 @@ def _xp_achievement_unlocked(payload: dict) -> int:
 
 RULES: list[dict] = [
     # ── Practice / drills ──
-    {"kind": "drill_attempt",     "xp": 10,  "reason": "Practice drill completed"},
-    {"kind": "drill_passed",      "xp": 50,  "reason": "Drill passed",
-     "bonus": lambda p: 25 * int(p.get("phase_tier") or 0)},  # +25 per phase tier
+    # Practice attempts are CLOUT — volume reward, no proof of outcome.
+    {"kind": "drill_attempt", "bucket": "clout", "xp": 10,
+     "reason": "Practice drill completed"},
+    # Drill passed at certification tier (phase_tier ≥ 3) is MONEY —
+    # proof of competence to handle real customers. Lower-tier passes
+    # are CLOUT (improvement, but not certification).
+    {"kind": "drill_passed", "bucket": "money", "xp": 100,
+     "reason": "Drill CERTIFIED (cert tier)",
+     "bonus": lambda p: 50 * max(0, int(p.get("phase_tier") or 0) - 3),
+     "match": lambda p: int(p.get("phase_tier") or 0) >= 3},
+    {"kind": "drill_passed", "bucket": "clout", "xp": 50,
+     "reason": "Drill passed",
+     "bonus": lambda p: 25 * int(p.get("phase_tier") or 0),
+     "match": lambda p: int(p.get("phase_tier") or 0) < 3},
 
     # ── Real calls ──
-    {"kind": "call",              "xp": 25,  "reason": "Real call uploaded",
+    # Calls are activity, not outcome. CLOUT.
+    # (deal_closed_won is what credits real-customer revenue.)
+    {"kind": "call", "bucket": "clout", "xp": 25, "reason": "Real call uploaded",
      "match": lambda p: p.get("call_kind") == "real"},
-    {"kind": "call",              "xp": 10,  "reason": "Practice call uploaded",
+    {"kind": "call", "bucket": "clout", "xp": 10, "reason": "Practice call uploaded",
      "match": lambda p: p.get("call_kind") == "practice"},
-    {"kind": "call",              "xp": 5,   "reason": "Speaking drill",
+    {"kind": "call", "bucket": "clout", "xp": 5, "reason": "Speaking drill",
      "match": lambda p: p.get("call_kind") == "speaking"},
 
     # ── Debrief extraction ──
-    {"kind": "debrief_extracted", "xp": 40,  "reason": "New contact extracted from call"},
+    # Housekeeping. CLOUT.
+    {"kind": "debrief_extracted", "bucket": "clout", "xp": 40,
+     "reason": "New contact extracted from call"},
 
     # ── Claims (territory) ──
-    {"kind": "claim",             "xp": 5,   "reason": "Prospect claimed"},
+    # Claiming a prospect is an action, not an outcome. CLOUT.
+    {"kind": "claim", "bucket": "clout", "xp": 5,
+     "reason": "Prospect claimed"},
 
     # ── Deal pipeline ──
-    {"kind": "deal_created",      "xp": 20,  "reason": "Deal created"},
-    {"kind": "deal_stage_moved",  "xp": _xp_stage_moved, "reason": "Deal advanced"},
-    {"kind": "deal_closed_won",   "xp": _xp_close_won,   "reason": "DEAL CLOSED-WON"},
+    # Creating a deal is activity (CLOUT). Moving a real deal forward
+    # in prob is an outcome signal against a real customer (MONEY).
+    # Closing won is THE outcome (MONEY).
+    {"kind": "deal_created", "bucket": "clout", "xp": 20,
+     "reason": "Deal created"},
+    {"kind": "deal_stage_moved", "bucket": "money", "xp": _xp_stage_moved,
+     "reason": "Deal advanced"},
+    {"kind": "deal_closed_won", "bucket": "money", "xp": _xp_close_won,
+     "reason": "DEAL CLOSED-WON"},
 
     # ── Legal / signatures ──
-    {"kind": "doc_signed",        "xp": 50,  "reason": "Legal doc signed"},
-    {"kind": "pilot_signed",      "xp": 500, "reason": "PILOT CONTRACT SIGNED"},
+    # Signing internal docs = housekeeping (CLOUT). Signing a real
+    # pilot contract with a real customer = revenue event (MONEY).
+    {"kind": "doc_signed", "bucket": "clout", "xp": 50,
+     "reason": "Legal doc signed"},
+    {"kind": "pilot_signed", "bucket": "money", "xp": 500,
+     "reason": "PILOT CONTRACT SIGNED"},
 
     # ── Mentor / teamwork ──
-    {"kind": "mentor_flag",       "xp": 75,  "reason": "Helped a teammate"},
+    # Helping a teammate is good behavior but not customer outcome. CLOUT.
+    {"kind": "mentor_flag", "bucket": "clout", "xp": 75,
+     "reason": "Helped a teammate"},
 
     # ── Achievement unlocks ──
-    {"kind": "achievement_unlocked", "xp": _xp_achievement_unlocked, "reason": "Achievement"},
+    # Vanity. CLOUT.
+    {"kind": "achievement_unlocked", "bucket": "clout",
+     "xp": _xp_achievement_unlocked, "reason": "Achievement"},
 
     # ── Quest completions ──
-    {"kind": "quest_completed",   "xp": lambda p: int(p.get("xp_reward") or 0),
+    # Vanity / engagement. CLOUT.
+    {"kind": "quest_completed", "bucket": "clout",
+     "xp": lambda p: int(p.get("xp_reward") or 0),
      "reason": "Quest completed"},
 
     # ── Follow-up discipline ──
-    {"kind": "followup_done",     "xp": 8,   "reason": "Follow-up done"},
+    # Activity (CLOUT). The downstream close credits MONEY.
+    {"kind": "followup_done", "bucket": "clout", "xp": 8,
+     "reason": "Follow-up done"},
 
     # ── Activity types beyond raw 'call' ──
-    {"kind": "activity_email",    "xp": 6,   "reason": "Email sent"},
-    {"kind": "activity_meeting",  "xp": 40,  "reason": "Meeting logged"},
-    {"kind": "activity_note",     "xp": 2,   "reason": "Note added"},
-    {"kind": "contact_created",   "xp": 10,  "reason": "New contact added"},
+    {"kind": "activity_email", "bucket": "clout", "xp": 6,
+     "reason": "Email sent"},
+    {"kind": "activity_meeting", "bucket": "clout", "xp": 40,
+     "reason": "Meeting logged"},
+    {"kind": "activity_note", "bucket": "clout", "xp": 2,
+     "reason": "Note added"},
+    {"kind": "contact_created", "bucket": "clout", "xp": 10,
+     "reason": "New contact added"},
+
+    # ── RECRUITMENT — explicitly NONE ──────────────────────────────────
+    # Inviting a closer or operator credits ZERO XP of either kind. The
+    # event is still audit-logged for attribution; the audit log shows
+    # "Jordan invited Ramos" without awarding Jordan anything earnable.
+    # This is the structural guarantee against the Koscot pyramid shape.
+    {"kind": "invite_closer", "bucket": "none", "xp": 0,
+     "reason": "Closer invited (no XP — recruitment doesn't pay)"},
+    {"kind": "invite_operator", "bucket": "none", "xp": 0,
+     "reason": "Operator invited (no XP — recruitment doesn't pay)"},
+    {"kind": "closer_joined", "bucket": "none", "xp": 0,
+     "reason": "Closer accepted invite (no XP — recruitment doesn't pay)"},
+    {"kind": "operator_joined", "bucket": "none", "xp": 0,
+     "reason": "Operator accepted invite (no XP — recruitment doesn't pay)"},
 ]
+
+
+# ── Bucket validation at module load ─────────────────────────────────────
+# Refuses to import the module if any rule is missing a bucket or has an
+# invalid value. This is the structural guarantee.
+
+_VALID_BUCKETS: tuple[str, ...] = ("money", "clout", "none")
+
+def _validate_rules() -> None:
+    for i, r in enumerate(RULES):
+        b = r.get("bucket")
+        if b not in _VALID_BUCKETS:
+            raise RuntimeError(
+                f"server/xp.py RULES[{i}] (kind={r.get('kind')!r}) "
+                f"has invalid bucket {b!r}. "
+                f"Must be one of {_VALID_BUCKETS}. "
+                f"This is the two-ledger firewall — no rule may bypass it."
+            )
+
+_validate_rules()
 
 
 # ── Level curve ──────────────────────────────────────────────────────────
@@ -109,7 +234,6 @@ def level_for_xp(xp: int) -> int:
     """Given total XP, return the highest level reached. Soft cap at Lvl 50."""
     if xp <= 0:
         return 1
-    # Solve 250·n(n-1)/2 ≤ xp  →  n ≤ (1 + sqrt(1 + 8·xp/250)) / 2
     n = int((1 + math.sqrt(1 + 8 * xp / 250)) / 2)
     return min(max(n, 1), 50)
 
@@ -156,18 +280,19 @@ def _xp_from_rule(rule: dict, event: dict) -> int:
 
 
 def xp_for_event(event: dict) -> list[dict]:
-    """Return the list of {xp, reason} rule hits for one event."""
+    """Return the list of {xp, reason, bucket} rule hits for one event."""
     hits = []
     for r in RULES:
         if _matches(r, event):
-            hits.append({"xp": _xp_from_rule(r, event), "reason": r.get("reason", r["kind"])})
+            hits.append({
+                "xp": _xp_from_rule(r, event),
+                "reason": r.get("reason", r["kind"]),
+                "bucket": r["bucket"],
+            })
     return hits
 
 
 # ── Per-rep XP projection ────────────────────────────────────────────────
-#
-# We cache (bullpen → {rep → totals}) until `invalidate(bullpen)` is called.
-# Recompute is cheap (a few thousand events scans in milliseconds).
 
 _xp_cache: dict[str, dict] = {}
 
@@ -177,8 +302,6 @@ def invalidate(bullpen: str) -> None:
 
 
 def _compute(bullpen: str) -> dict[str, dict]:
-    # Cache squad bonus per actor — squad membership doesn't change inside
-    # a single projection pass, and looking it up per-event is a file read.
     try:
         from parties import squad_xp_bonus
     except Exception:
@@ -188,42 +311,105 @@ def _compute(bullpen: str) -> dict[str, dict]:
     by_rep: dict[str, dict] = {}
     for event in audit_iter_all(bullpen):
         actor = event.get("actor") or "self"
-        slot = by_rep.setdefault(actor, {"xp": 0, "ledger": []})
+        slot = by_rep.setdefault(actor, {
+            "money_xp": 0,
+            "clout_xp": 0,
+            "ledger": [],
+        })
         if actor not in bonus_cache:
             try: bonus_cache[actor] = squad_xp_bonus(bullpen, actor)
             except Exception: bonus_cache[actor] = 1.0
         mult = bonus_cache[actor]
         for hit in xp_for_event(event):
-            scored = int(round(hit["xp"] * mult))
-            slot["xp"] += scored
+            if hit["bucket"] == "none":
+                # Recorded for attribution, awards no XP.
+                slot["ledger"].append({
+                    "ts": event.get("ts"),
+                    "kind": event.get("kind"),
+                    "target_id": event.get("target_id"),
+                    "xp": 0,
+                    "bucket": "none",
+                    "reason": hit["reason"],
+                })
+                continue
+            # Squad multiplier applies only to money-XP — clout shouldn't
+            # bonus-stack from squad membership (that creates a recruit-
+            # adjacent incentive).
+            scored = int(round(hit["xp"] * mult)) if hit["bucket"] == "money" else int(hit["xp"])
+            if hit["bucket"] == "money":
+                slot["money_xp"] += scored
+            else:
+                slot["clout_xp"] += scored
             slot["ledger"].append({
                 "ts": event.get("ts"),
                 "kind": event.get("kind"),
                 "target_id": event.get("target_id"),
                 "xp": scored,
-                "reason": hit["reason"] + (f" (squad ×{mult:.2f})" if mult > 1.0 else ""),
+                "bucket": hit["bucket"],
+                "reason": hit["reason"] + (
+                    f" (squad ×{mult:.2f})"
+                    if (mult > 1.0 and hit["bucket"] == "money")
+                    else ""
+                ),
             })
     return by_rep
 
 
+# ── Public read API ──────────────────────────────────────────────────────
+
+def get_money_xp(bullpen: str, rep: str) -> int:
+    """Money-XP for one rep. THIS is the input the allocation firewall
+    uses; clout-XP is forbidden from the firewall."""
+    if bullpen not in _xp_cache:
+        _xp_cache[bullpen] = _compute(bullpen)
+    slot = _xp_cache[bullpen].get(rep)
+    return int(slot["money_xp"]) if slot else 0
+
+
+def get_clout_xp(bullpen: str, rep: str) -> int:
+    """Clout-XP for one rep. Use ONLY for vanity surfaces (leaderboards,
+    rank, cosmetics). MUST NOT be passed to allocation/priority/
+    commission-tier logic. The firewall in team.py / gates.py refuses
+    to accept it."""
+    if bullpen not in _xp_cache:
+        _xp_cache[bullpen] = _compute(bullpen)
+    slot = _xp_cache[bullpen].get(rep)
+    return int(slot["clout_xp"]) if slot else 0
+
+
 def get(bullpen: str, rep: Optional[str] = None) -> dict:
-    """Return XP totals + level for one rep (or all reps if rep is None)."""
+    """Return XP totals + level for one rep (or all reps if rep is None).
+
+    Both buckets are surfaced. Callers that need allocation/commission
+    decisions MUST use get_money_xp() — calling get()['xp'] (combined)
+    for those decisions defeats the firewall.
+    """
     if bullpen not in _xp_cache:
         _xp_cache[bullpen] = _compute(bullpen)
     by_rep = _xp_cache[bullpen]
 
+    def _rep_summary(r: str, slot: dict) -> dict:
+        combined = slot["money_xp"] + slot["clout_xp"]
+        prog = progress_to_next(combined)
+        return {
+            "rep": r,
+            "money_xp": slot["money_xp"],
+            "clout_xp": slot["clout_xp"],
+            "xp": combined,
+            **{k: v for k, v in prog.items() if k != "xp"},
+            "events": len(slot["ledger"]),
+        }
+
     if rep is None:
-        out = []
-        for r, slot in by_rep.items():
-            p = progress_to_next(slot["xp"])
-            out.append({"rep": r, **p, "events": len(slot["ledger"])})
+        out = [_rep_summary(r, s) for r, s in by_rep.items()]
+        # Vanity leaderboard sorts by combined XP (rank-ish).
         out.sort(key=lambda x: -x["xp"])
         return {"reps": out}
 
-    slot = by_rep.get(rep, {"xp": 0, "ledger": []})
-    return {"rep": rep, **progress_to_next(slot["xp"]),
-            "events": len(slot["ledger"]),
-            "ledger": list(reversed(slot["ledger"]))[:50]}  # newest 50
+    slot = by_rep.get(rep, {"money_xp": 0, "clout_xp": 0, "ledger": []})
+    summary = _rep_summary(rep, slot)
+    summary["ledger"] = list(reversed(slot["ledger"]))[:50]
+    return summary
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────
@@ -237,9 +423,14 @@ if __name__ == "__main__":
     rep = sys.argv[2] if len(sys.argv) > 2 else None
     r = get(bullpen, rep)
     if rep:
-        print(f"  {r['rep']:12} Lvl {r['level']:3}  xp={r['xp']:>6}  ({r['xp_into_level']}/{r['xp_for_next_level']} to Lvl {r['level']+1})")
+        print(f"  {r['rep']:12} Lvl {r['level']:3}  "
+              f"$={r['money_xp']:>6}  clout={r['clout_xp']:>6}  "
+              f"({r['xp_into_level']}/{r['xp_for_next_level']} to Lvl {r['level']+1})")
         for e in r["ledger"][:10]:
-            print(f"    +{e['xp']:>4} XP  {e['kind']:20}  {e['reason']}")
+            tag = e.get("bucket", "?")[0].upper()  # M / C / N
+            print(f"    [{tag}] +{e['xp']:>4} XP  {e['kind']:20}  {e['reason']}")
     else:
         for x in r["reps"]:
-            print(f"  {x['rep']:12} Lvl {x['level']:3}  xp={x['xp']:>6}  events={x['events']}")
+            print(f"  {x['rep']:12} Lvl {x['level']:3}  "
+                  f"$={x['money_xp']:>6}  clout={x['clout_xp']:>6}  "
+                  f"events={x['events']}")

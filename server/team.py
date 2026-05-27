@@ -61,9 +61,51 @@ def get_claim(prospect_slug: str) -> Optional[dict]:
     return c
 
 
-def claim(prospect_slug: str, rep: str) -> dict:
+def claim(prospect_slug: str, rep: str, *, bullpen: Optional[str] = None) -> dict:
     """Claim a prospect for a rep. If already claimed by someone else, this
-    is rejected (caller should surface the existing owner)."""
+    is rejected (caller should surface the existing owner).
+
+    Phase 0.5 firewall: when `bullpen` is supplied, the live-work gate
+    fires first. If the gate refuses (closer missing signed agreement,
+    W-9, drill cert, jurisdiction OK, or DNC scrub), the claim is
+    blocked and the missing requirements are returned so the UI can
+    show the closer exactly what to complete.
+
+    Backward compat: legacy callers that pass no `bullpen` continue to
+    claim without the gate (used by the global team layer of the
+    self-hosted host, which predates bullpens). The audit chain records
+    these as `gate_bypassed_legacy` so we can grep for callers still on
+    the old path.
+    """
+    if bullpen:
+        try:
+            from gates import can_claim_live_prospect
+            from audit import append as audit_append
+            check = can_claim_live_prospect(bullpen, rep, prospect_slug)
+            if not check.ok:
+                audit_append(bullpen, kind="gate_refused", actor=rep, payload={
+                    "prospect": prospect_slug,
+                    "missing": check.missing,
+                })
+                return {
+                    "ok": False,
+                    "error": "live_work_gate_refused",
+                    "missing": check.missing,
+                    "details": check.details,
+                }
+        except Exception as e:
+            # Fail-closed: if the gate module can't be loaded, refuse
+            # the live claim rather than silently bypassing it.
+            return {"ok": False, "error": "gate_unavailable", "detail": str(e)}
+    else:
+        # Audit-flag the bypass so we can find legacy code paths.
+        try:
+            from audit import append as audit_append
+            audit_append("_global", kind="gate_bypassed_legacy", actor=rep,
+                         payload={"prospect": prospect_slug})
+        except Exception:
+            pass
+
     existing = get_claim(prospect_slug)
     if existing and existing.get("rep") != rep:
         return {"ok": False, "error": "already_claimed",
@@ -74,6 +116,7 @@ def claim(prospect_slug: str, rep: str) -> dict:
         "rep": rep,
         "claimed_at": existing.get("claimed_at") if existing else now,
         "last_activity": now,
+        "bullpen": bullpen,
     }
     _claim_path(prospect_slug).write_text(json.dumps(data, indent=2) + "\n")
     _log_event("claim", rep=rep, prospect=prospect_slug)

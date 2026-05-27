@@ -4078,12 +4078,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 team_req = json.loads(raw) if raw else {}
                 prospect = (team_req.get("prospect") or "").strip()
                 rep = (team_req.get("rep") or "").strip() or "self"
+                bullpen = (team_req.get("bullpen") or "").strip() or None
                 if not prospect:
                     self._send_json(400, {"error": "missing prospect slug"})
                     return
                 if self.path == "/api/team/claim":
                     from team import claim as team_claim
-                    self._send_json(200, team_claim(prospect, rep))
+                    self._send_json(200, team_claim(prospect, rep, bullpen=bullpen))
                 else:
                     from team import release_claim
                     self._send_json(200, release_claim(prospect, by=rep))
