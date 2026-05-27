@@ -2770,6 +2770,72 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Phase 0.5 firewall — operator setup + closer onboarding GET routes
         # ══════════════════════════════════════════════════════════════════
 
+        # ── Per-rep character sheet aggregate ─────────────────────────
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/profile/([a-zA-Z0-9_\-\.]+)$", self.path)
+        if m:
+            try:
+                bullpen, rep = m.group(1), m.group(2)
+                out = {"bullpen": bullpen, "rep": rep}
+                # Two-ledger XP detail
+                try:
+                    from xp import get_money_xp, get_clout_xp, get as xp_get
+                    out["money_xp"] = get_money_xp(bullpen, rep)
+                    out["clout_xp"] = get_clout_xp(bullpen, rep)
+                    full = xp_get(bullpen, rep)
+                    out["xp_detail"] = {
+                        "level": full.get("level"),
+                        "events": full.get("events"),
+                        "ledger": full.get("ledger", [])[:20],
+                    }
+                except Exception as e:
+                    out["xp_error"] = str(e)
+                # Gate status
+                try:
+                    from gates import can_claim_live_prospect
+                    g = can_claim_live_prospect(bullpen, rep)
+                    out["gate"] = {"ok": g.ok, "missing": g.missing}
+                except Exception:
+                    out["gate"] = None
+                # Owned deals
+                try:
+                    from deals import list_all as deals_list_all
+                    deals = deals_list_all(bullpen, owner_rep=rep) or []
+                    out["deals"] = [{
+                        "id": d.get("id"), "prospect_slug": d.get("prospect_slug"),
+                        "stage": d.get("stage"), "amount": d.get("amount"),
+                        "opened_at": d.get("opened_at"),
+                    } for d in deals]
+                except Exception:
+                    out["deals"] = []
+                # Marketing posts owned
+                try:
+                    from marketing import list_posts
+                    posts = list_posts(bullpen, rep=rep) or []
+                    out["marketing"] = [{
+                        "id": p["id"], "channel": p["channel"], "url": p["url"],
+                        "topic": p.get("topic"), "metrics": p.get("metrics", {}),
+                        "created_at": p["created_at"],
+                    } for p in posts]
+                except Exception:
+                    out["marketing"] = []
+                # Cadences owned
+                try:
+                    from cadence import list_all as cad_list_all
+                    cads = cad_list_all(bullpen, rep=rep) or []
+                    out["cadences"] = [{
+                        "id": c["id"], "template": c["template"],
+                        "template_name": c.get("template_name"),
+                        "deal_id": c.get("deal_id"), "status": c["status"],
+                        "step_count": len(c.get("steps", [])),
+                        "done_count": sum(1 for s in c.get("steps", []) if s.get("status") == "done"),
+                    } for c in cads]
+                except Exception:
+                    out["cadences"] = []
+                self._send_json(200, out)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── CRM import — GET stats for cockpit tile ──
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/crm/stats$", self.path)
         if m:
