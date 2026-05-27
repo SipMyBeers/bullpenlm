@@ -2769,6 +2769,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Phase 0.5 firewall — operator setup + closer onboarding GET routes
         # ══════════════════════════════════════════════════════════════════
 
+        # ── Phase B Studio — buyer-asset manifest + per-kind reads ──
+        # /api/b/<slug>/studio/<buyer> — manifest of all generated assets
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/studio/([a-zA-Z0-9_\-]+)$", self.path)
+        if m:
+            try:
+                from generators import manifest as gen_manifest
+                self._send_json(200, gen_manifest(m.group(1), m.group(2)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/studio/<buyer>/<kind> — read one asset (cache or generate)
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/studio/([a-zA-Z0-9_\-]+)/([a-z_]+)$", self.path)
+        if m:
+            try:
+                from generators import generate as gen_generate, GENERATORS
+                if m.group(3) not in GENERATORS:
+                    self._send_json(400, {"error": "unknown kind"}); return
+                self._send_json(200, gen_generate(m.group(1), m.group(2), m.group(3)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Phase A RAG keystone — knowledge base GET routes ──
         # /api/b/<slug>/rag/stats — health + buyer/chunk counts
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/rag/stats$", self.path)
@@ -4708,6 +4731,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # ══════════════════════════════════════════════════════════════════
         # Phase 0.5 firewall — POST routes
         # ══════════════════════════════════════════════════════════════════
+
+        # ── Phase B Studio — force-regenerate an asset ──
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/studio/([a-zA-Z0-9_\-]+)/([a-z_]+)/regenerate$", self.path)
+        if m:
+            try:
+                from generators import generate as gen_generate, GENERATORS
+                if m.group(3) not in GENERATORS:
+                    self._send_json(400, {"error": "unknown kind"}); return
+                self._send_json(200, gen_generate(m.group(1), m.group(2), m.group(3), force=True))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
 
         # ── Phase A RAG keystone — POST routes ──
         # /api/b/<slug>/sources/<buyer>/text — drop text/markdown
