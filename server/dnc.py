@@ -240,6 +240,68 @@ def record_consent(bullpen: str, prospect_slug: str, *, granted: bool, by: str, 
     return record
 
 
+# ── Single-number scrub (closer pre-claim check) ─────────────────────────
+
+def check_number(
+    bullpen: str,
+    phone: str,
+    *,
+    state: Optional[str] = None,
+    hours: bool = True,
+) -> dict:
+    """Closer-side "can I dial this number right now?" check.
+
+    Combines DNC lookup + hours-of-day enforcement. Returns:
+      {
+        "ok": bool,
+        "phone_normalized": "...",
+        "dnc": {ok, reason},
+        "hours": {ok, reason},
+      }
+    """
+    normalized = _normalize(phone)
+    if len(normalized) < 10:
+        return {
+            "ok": False,
+            "phone_normalized": normalized,
+            "dnc": {"ok": False, "reason": "malformed phone number"},
+            "hours": {"ok": True, "reason": None},
+        }
+
+    state = (state or "").upper()
+
+    # DNC check inline (mirrors is_clear_to_dial but takes phone directly
+    # rather than looking up the prospect via contacts.get_contact)
+    internal = _load_list(bullpen, "internal-optouts")
+    if normalized in internal or normalized[-10:] in internal:
+        dnc_result = {"ok": False, "reason": "internal opt-out (this prospect asked to be removed)"}
+    else:
+        national = _load_list(bullpen, "national")
+        if national and (normalized in national or normalized[-10:] in national):
+            dnc_result = {"ok": False, "reason": "national DNC list"}
+        elif state and len(state) == 2:
+            state_list = _load_list(bullpen, f"state-{state}")
+            if state_list and (normalized in state_list or normalized[-10:] in state_list):
+                dnc_result = {"ok": False, "reason": f"state DNC list ({state})"}
+            else:
+                dnc_result = {"ok": True, "reason": None}
+        else:
+            dnc_result = {"ok": True, "reason": None}
+
+    if hours:
+        hours_ok, hours_reason = is_allowed_hour(state=state)
+        hours_result = {"ok": hours_ok, "reason": hours_reason}
+    else:
+        hours_result = {"ok": True, "reason": None}
+
+    return {
+        "ok": dnc_result["ok"] and hours_result["ok"],
+        "phone_normalized": normalized,
+        "dnc": dnc_result,
+        "hours": hours_result,
+    }
+
+
 # ── Status snapshot for UI ───────────────────────────────────────────────
 
 def dnc_status(bullpen: str) -> dict:

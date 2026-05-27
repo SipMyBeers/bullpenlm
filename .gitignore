@@ -68,3 +68,8 @@ clips/*/*.mp3
 clips/*/*.m4a
 clips/*/*.wav
 clips/*/*.ogg
+
+# ── Tauri sidecar build artifacts ──
+desktop/src-tauri/binaries/build/
+desktop/src-tauri/binaries/dist/
+desktop/src-tauri/binaries/bullpenlm-server-*

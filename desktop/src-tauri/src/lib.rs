@@ -103,15 +103,39 @@ async fn start_host(
     log::info!("Starting Python server with cwd={}", repo.display());
 
     let shell = app.shell();
-    let (mut rx, child) = shell
-        .command("python3")
-        .args(["-u", "server/server.py"])
-        .current_dir(&repo)
-        .spawn()
-        .map_err(|e| ErrorResult {
-            ok: false,
-            error: format!("python3 spawn failed: {}. Install Python 3 from python.org.", e),
-        })?;
+    // Phase 1: try the PyInstaller-bundled sidecar first. If `sidecar(...)`
+    // resolves (the binary is in the .app's resources from `externalBin`
+    // in tauri.conf.json), spawn that. Otherwise fall back to system
+    // `python3` (Phase 0 dev mode — repo must be on disk + Python 3
+    // installed).
+    let (mut rx, child) = match shell.sidecar("bullpenlm-server") {
+        Ok(cmd) => {
+            log::info!("Spawning bundled sidecar bullpenlm-server");
+            cmd.current_dir(&repo)
+               .spawn()
+               .map_err(|e| ErrorResult {
+                   ok: false,
+                   error: format!("sidecar spawn failed: {}", e),
+               })?
+        }
+        Err(sidecar_err) => {
+            log::info!("Sidecar not available ({}), falling back to system python3", sidecar_err);
+            shell
+                .command("python3")
+                .args(["-u", "server/server.py"])
+                .current_dir(&repo)
+                .spawn()
+                .map_err(|e| ErrorResult {
+                    ok: false,
+                    error: format!(
+                        "Neither bundled sidecar nor python3 worked. \
+                         Sidecar error: {}. Python error: {}. \
+                         Install Python 3 from python.org.",
+                        sidecar_err, e
+                    ),
+                })?
+        }
+    };
 
     {
         let mut guard = state.server.lock().unwrap();

@@ -20,7 +20,20 @@
   const url = new URL(window.location.href);
   const BULLPEN = url.searchParams.get('b');
   const REP = url.searchParams.get('rep');
-  if (!BULLPEN || !REP || REP === 'self' || REP === 'operator' || REP === 'founder') return;
+
+  // Localhost-skip — the operator on their own machine doesn't need a
+  // gate banner. The gate still fires on team.claim and upload-call;
+  // we just don't nag them visually while they're practicing against
+  // AI buyers in their own bullpen.
+  const isLocalhost = ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(window.location.hostname);
+
+  // Operator-reserved rep names — the operator is never a "closer" of
+  // their own bullpen for live-work purposes.
+  const operatorReps = new Set(['self', 'operator', 'founder', 'host', 'beers']);
+
+  if (!BULLPEN || !REP) return;
+  if (isLocalhost) return;
+  if (operatorReps.has((REP || '').toLowerCase())) return;
 
   const labels = {
     operator_entity_not_set_up: 'Operator entity not set up',

@@ -2796,6 +2796,24 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # /api/b/<slug>/dnc/check?phone=...&state=XX — single-number scrub
+        # Closer uses this from the contact page BEFORE attempting a claim.
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/dnc/check$", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from dnc import check_number
+                qs = _pq(_up(self.path).query)
+                phone = (qs.get("phone") or [""])[0]
+                state = (qs.get("state") or [""])[0]
+                hours = (qs.get("hours") or ["true"])[0].lower() == "true"
+                if not phone:
+                    self._send_json(400, {"error": "phone_required"}); return
+                self._send_json(200, check_number(m.group(1), phone, state=state, hours=hours))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # /api/b/<slug>/dnc/status
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/dnc/status$", self.path)
         if m:

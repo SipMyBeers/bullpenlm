@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Closer roster · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;min-height:100vh}
+.wrap{max-width:1200px;margin:0 auto;padding:30px 28px 100px}
+.brand{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:-.02em;display:inline-flex;text-decoration:none;margin-bottom:18px}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spacing:-.02em;margin:0 0 6px;line-height:1.05}
+.lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;margin:0 0 26px}
+.row-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:7px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none}
+.btn.primary{background:var(--accent);color:#0a1a14}
+.btn.gold{background:var(--gold);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.btn.ghost:hover{color:var(--text);border-color:var(--text)}
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:22px 26px;margin-bottom:18px}
+.panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.field{display:inline-flex;flex-direction:column;margin-right:12px;margin-bottom:8px}
+.field label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field input{padding:8px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;color:var(--text);font-family:var(--serif);font-size:15px;outline:none;min-width:200px}
+.field input:focus{border-color:var(--accent)}
+.status{padding:9px 13px;border-radius:6px;margin:10px 0;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em}
+.status.ok{background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);color:var(--accent-2)}
+.status.err{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.30);color:var(--danger)}
+.status.info{background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.25);color:var(--purple)}
+table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:14px}
+th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:10px 8px;border-bottom:1px solid rgba(245,232,216,0.10)}
+td{padding:12px 8px;border-bottom:1px solid rgba(245,232,216,0.06)}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.rep-cell{font-family:var(--mono);font-size:13px;color:var(--text);letter-spacing:.04em}
+.rep-cell .small{display:block;color:var(--muted);font-size:10.5px;letter-spacing:.02em;margin-top:3px}
+.pill{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.10em;padding:4px 9px;border-radius:5px;text-transform:uppercase;font-weight:700}
+.pill.ok{background:rgba(52,211,153,0.12);color:var(--accent-2);border:1px solid rgba(52,211,153,0.40)}
+.pill.gated{background:rgba(248,113,113,0.08);color:var(--danger);border:1px solid rgba(248,113,113,0.40)}
+.pill.warn{background:rgba(251,191,36,0.10);color:var(--gold);border:1px solid rgba(251,191,36,0.40)}
+.missing-list{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+.tiny-action{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 8px;border-radius:4px;border:1px solid rgba(245,232,216,0.10);margin-right:4px}
+.tiny-action:hover{color:var(--text);border-color:var(--text)}
+.empty{font-family:var(--serif);font-style:italic;color:var(--muted);padding:28px;text-align:center}
+.invite-link-box{display:flex;gap:8px;align-items:center;padding:10px 14px;background:rgba(0,0,0,0.35);border:1px solid rgba(52,211,153,0.30);border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--accent-2);word-break:break-all;margin-top:10px}
+.invite-link-box .copy{background:var(--accent);color:#0a1a14;border:none;padding:5px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;white-space:nowrap}
+.summary-row{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:22px}
+.summary-tile{padding:18px 22px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:11px;min-width:160px}
+.summary-tile .label{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.summary-tile .value{font-family:var(--display);font-size:32px;letter-spacing:-.01em;color:var(--text)}
+.summary-tile .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <h1>Closer roster</h1>
+  <p class="lede">Every member of this bullpen, their gate status, and the actions to push them forward. The operator's daily workspace.</p>
+
+  <div class="row-bar">
+    <a class="btn ghost" href="/app/host.html">← Host control</a>
+    <a class="btn ghost" href="/app/compliance.html?b=default">Compliance dashboard</a>
+    <a class="btn ghost" href="/app/dnc.html?b=default">DNC management</a>
+    <a class="btn ghost" href="/app/setup/?b=default">Operator setup</a>
+  </div>
+
+  <div class="summary-row" id="summary"></div>
+
+  <div class="panel">
+    <h2>INVITE A CLOSER</h2>
+    <p style="color:var(--muted);margin:0 0 12px">Generates a single-use code. Share it via DM with the onboarding URL. Inviting earns zero XP — recruitment doesn't pay (firewall rule).</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div class="field"><label>Rep name (kebab-case)</label><input id="inv-rep" placeholder="jordan-ramirez"></div>
+      <div class="field"><label>Note (your reference)</label><input id="inv-note" placeholder="met at conference"></div>
+      <button class="btn primary" onclick="createInvite()">Generate invite →</button>
+    </div>
+    <div id="inv-status"></div>
+    <div id="inv-link" style="display:none"></div>
+  </div>
+
+  <div class="panel">
+    <h2>CLOSER ROSTER</h2>
+    <div id="roster-wrap">
+      <div class="empty">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BULLPEN = (new URLSearchParams(window.location.search)).get('b') || 'default';
+
+function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+function setStatus(id,ok,msg){const w=document.getElementById(id);clear(w);w.appendChild(el('div',{class:'status '+(ok?'ok':'err'),text:msg}))}
+async function api(method,path,body){const r=await fetch(path,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});return{ok:r.ok,status:r.status,data:await r.json().catch(()=>({}))}}
+
+function gateLabel(missing){
+  const labels = {
+    operator_entity_not_set_up: 'operator entity',
+    closer_disclosure_not_accepted: 'disclosure',
+    closer_agreement_not_signed: 'closer agreement',
+    closer_agreement_out_of_date: 'agreement (out-of-date)',
+    w9_not_on_file: 'W-9',
+    drill_certification_not_cleared: 'drill cert',
+    jurisdiction_check_failed: 'jurisdiction',
+    jurisdiction_check_unavailable: 'jurisdiction (unavail.)',
+    dnc_scrub_failed: 'DNC scrub',
+  };
+  return missing.map(m => labels[m] || m).join(', ');
+}
+
+async function loadRoster(){
+  const r = await fetch(`/api/b/${BULLPEN}/compliance`);
+  if(!r.ok){ document.getElementById('roster-wrap').textContent = 'Failed to load roster.'; return; }
+  const d = await r.json();
+  const wrap = document.getElementById('roster-wrap');
+  clear(wrap);
+
+  // Summary tiles
+  const sumWrap = document.getElementById('summary');
+  clear(sumWrap);
+  const closers = d.closers || [];
+  const ready = closers.filter(c => c.gate_ok).length;
+  const gated = closers.length - ready;
+  for(const tile of [
+    {label:'Closers total', value: closers.length, meta: ''},
+    {label:'Gate green', value: ready, meta: ready ? 'cleared for live work' : '—'},
+    {label:'Gate red', value: gated, meta: gated ? 'onboarding pending' : 'all clear'},
+  ]){
+    const t = el('div', {class:'summary-tile'});
+    t.appendChild(el('div', {class:'label', text:tile.label}));
+    t.appendChild(el('div', {class:'value', text:String(tile.value)}));
+    if(tile.meta) t.appendChild(el('div', {class:'meta', text:tile.meta}));
+    sumWrap.appendChild(t);
+  }
+
+  if(!closers.length){
+    wrap.appendChild(el('div', {class:'empty', text:'No closers yet. Invite some above — onboarding link auto-generates with the invite code.'}));
+    return;
+  }
+
+  const table = el('table');
+  const thead = el('thead');
+  const tr = el('tr');
+  for(const h of ['Closer', 'Gate', 'Missing', 'Actions']){
+    tr.appendChild(el('th', {text:h}));
+  }
+  thead.appendChild(tr);
+  table.appendChild(thead);
+
+  const tbody = el('tbody');
+  for(const c of closers){
+    const row = el('tr');
+
+    const repCell = el('td', {class:'rep-cell'});
+    repCell.appendChild(document.createTextNode(c.rep));
+    if(c.gate_ok){
+      const small = el('span', {class:'small', text:'cleared for live work'});
+      repCell.appendChild(small);
+    }
+    row.appendChild(repCell);
+
+    const gateCell = el('td');
+    gateCell.appendChild(el('span', {class:'pill ' + (c.gate_ok ? 'ok' : 'gated'), text: c.gate_ok ? '✓ READY' : '⛔ GATED'}));
+    row.appendChild(gateCell);
+
+    const missCell = el('td', {class:'missing-list'});
+    if(c.gate_ok){
+      missCell.textContent = '—';
+    } else {
+      missCell.textContent = gateLabel(c.missing || []);
+    }
+    row.appendChild(missCell);
+
+    const actCell = el('td');
+    const url = `${window.location.origin}/app/onboard/?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(c.rep)}`;
+    const onboardLink = el('a', {class:'tiny-action', href: url, target:'_blank', text:'onboarding link'});
+    actCell.appendChild(onboardLink);
+    const copy = el('a', {class:'tiny-action', href:'#', onClick:(ev)=>{ev.preventDefault(); navigator.clipboard.writeText(url).then(()=>{copy.textContent='copied ✓'; setTimeout(()=>{copy.textContent='copy URL'}, 1500);});}, text:'copy URL'});
+    actCell.appendChild(copy);
+    row.appendChild(actCell);
+
+    tbody.appendChild(row);
+  }
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+}
+
+async function createInvite(){
+  const rep = document.getElementById('inv-rep').value.trim();
+  const note = document.getElementById('inv-note').value.trim();
+  if(!rep) return setStatus('inv-status', false, 'Rep name required.');
+  // Use the existing team-level invite endpoint
+  const r = await api('POST', '/api/invites', {rep, note});
+  if(!r.ok) return setStatus('inv-status', false, (r.data && r.data.error) || 'Invite failed.');
+  setStatus('inv-status', true, `✓ Invite created for ${rep}. Share the URL below.`);
+  const code = r.data.code || (r.data.invite && r.data.invite.code) || '';
+  const onboardUrl = `${window.location.origin}/app/onboard/?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(rep)}&code=${encodeURIComponent(code)}`;
+  const wrap = document.getElementById('inv-link');
+  clear(wrap);
+  wrap.style.display = '';
+  const box = el('div', {class:'invite-link-box'});
+  box.appendChild(el('span', {style:'flex:1;word-break:break-all', text:onboardUrl}));
+  const btn = el('button', {class:'copy', text:'COPY'});
+  btn.addEventListener('click', () => {
+    navigator.clipboard.writeText(onboardUrl).then(()=>{btn.textContent='COPIED ✓'; setTimeout(()=>{btn.textContent='COPY'}, 1500);});
+  });
+  box.appendChild(btn);
+  wrap.appendChild(box);
+  setTimeout(loadRoster, 500);
+}
+
+loadRoster();
+// Refresh every 30s in case the closer hits an onboarding milestone
+setInterval(loadRoster, 30000);
+</script>
+</body>
+</html>
