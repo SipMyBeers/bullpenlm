@@ -53,6 +53,12 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
   <div class="grid" id="cards"></div>
 
   <div class="panel">
+    <h2>PHASE 1 READINESS — PLATFORM + BULLPEN</h2>
+    <p style="color:var(--muted);margin:0 0 12px">Both must be ready before Phase 1 (signed-binary distribution to non-friends, scaling beyond ~5 closers) opens.</p>
+    <div id="phase-readiness">Loading…</div>
+  </div>
+
+  <div class="panel">
     <h2>CLOSER GATE STATUS</h2>
     <div id="closers"></div>
   </div>
@@ -177,6 +183,40 @@ async function load(){
 
   // Default year for CSV
   document.getElementById('csv-year').value = new Date().getFullYear() - 1;
+
+  // Phase 1 readiness
+  loadPhase();
+}
+
+async function loadPhase(){
+  const wrap = document.getElementById('phase-readiness');
+  clear(wrap);
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/phase`);
+    const d = await r.json();
+    const summary = el('div', {style:'padding:14px 18px;border-radius:8px;margin-bottom:12px;font-family:var(--mono);font-size:13px;letter-spacing:.04em;background:' + (d.ready ? 'rgba(52,211,153,0.10)' : 'rgba(248,113,113,0.08)') + ';border:1px solid ' + (d.ready ? 'rgba(52,211,153,0.40)' : 'rgba(248,113,113,0.30)') + ';color:' + (d.ready ? 'var(--accent-2)' : 'var(--danger)')});
+    summary.textContent = d.ready
+      ? '✓ PHASE 1 READY — platform + this bullpen pass all checks.'
+      : '⛔ NOT READY — blockers below must clear before Phase 1.';
+    wrap.appendChild(summary);
+    const allChecks = {};
+    Object.entries(d.checks || {}).forEach(([k,v]) => { allChecks['bullpen:' + k] = v; });
+    // Add platform-level blockers if we can derive
+    if (d.platform_blockers && d.platform_blockers.length) {
+      for(const k of d.platform_blockers){
+        allChecks['platform:' + k] = {ok:false, detail:'Platform-level blocker — see /api/phase/platform'};
+      }
+    }
+    for(const [name, c] of Object.entries(allChecks)){
+      const row = el('div', {style:'display:flex;align-items:center;gap:12px;padding:7px 0;font-family:var(--mono);font-size:12.5px;border-bottom:1px solid rgba(245,232,216,0.06)'});
+      row.appendChild(el('span', {style:'width:18px;color:' + (c.ok ? 'var(--accent-2)' : c.ok === null ? 'var(--muted)' : 'var(--danger)'), text: c.ok ? '✓' : c.ok === null ? '?' : '✗'}));
+      row.appendChild(el('span', {style:'color:var(--text);min-width:240px', text:name.replace(/_/g, ' ')}));
+      row.appendChild(el('span', {style:'color:var(--muted);font-size:11px', text:c.detail || ''}));
+      wrap.appendChild(row);
+    }
+  } catch(e){
+    wrap.appendChild(el('div', {class:'status err', text:'Phase readiness check unavailable'}));
+  }
 }
 
 function downloadCsv(){

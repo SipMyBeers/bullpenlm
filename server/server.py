@@ -2848,6 +2848,25 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # /api/phase/platform — platform-level Phase 1 readiness
+        if self.path == "/api/phase/platform":
+            try:
+                from phase_check import platform_ready
+                self._send_json(200, platform_ready())
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # /api/b/<slug>/phase — per-bullpen Phase 1 readiness
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/phase$", self.path)
+        if m:
+            try:
+                from phase_check import bullpen_ready
+                self._send_json(200, bullpen_ready(m.group(1)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # /api/b/<slug>/payouts/1099-csv?year=YYYY — 1099-NEC prep export
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/payouts/1099-csv$", self.path)
         if m:
@@ -4317,9 +4336,38 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 org_slug = (qs.get("org") or [None])[0]
                 auto_debrief = (qs.get("debrief") or ["1"])[0] == "1"
                 rep = (qs.get("rep") or ["self"])[0]
+                bullpen = (qs.get("bullpen") or [None])[0]
+                kind = (qs.get("kind") or ["real"])[0]
                 if not org_slug:
                     self._send_json(400, {"error": "missing ?org=<slug>"})
                     return
+                # Phase 0.5 firewall — real-call uploads against real
+                # prospects require the closer to have cleared the gate
+                # within their bullpen. Practice / speaking-drill uploads
+                # bypass (no real customer involved).
+                if bullpen and kind == "real":
+                    try:
+                        from gates import can_claim_live_prospect
+                        from audit import append as _audit
+                        check = can_claim_live_prospect(bullpen, rep, org_slug)
+                        if not check.ok:
+                            _audit(bullpen, rep, "gate_refused", payload={
+                                "action": "upload_real_call",
+                                "prospect": org_slug,
+                                "missing": check.missing,
+                            })
+                            self._send_json(403, {
+                                "error": "live_work_gate_refused",
+                                "missing": check.missing,
+                                "details": check.details,
+                            })
+                            return
+                    except Exception as gate_err:
+                        # Fail-closed: if the gate module can't load, refuse
+                        # rather than silently bypassing it.
+                        self._send_json(500, {"error": "gate_unavailable",
+                                               "detail": str(gate_err)})
+                        return
                 org_dir = _REPO / "organizations" / org_slug
                 if not org_dir.exists():
                     self._send_json(404, {"error": f"org not found: {org_slug}"})
@@ -4334,9 +4382,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 try:
                     from team import touch_claim, log_call
                     touch_claim(org_slug, rep)
-                    log_call(rep=rep, prospect_slug=org_slug, kind="real")
+                    log_call(rep=rep, prospect_slug=org_slug, kind=kind)
                 except Exception:
                     pass
+                # Bullpen-scoped audit — when this is a real call in a
+                # bullpen context, it's also a money-XP-eligible event.
+                if bullpen and kind == "real":
+                    try:
+                        from audit import append as _audit
+                        _audit(bullpen, rep, "call", payload={
+                            "call_kind": "real",
+                            "prospect": org_slug,
+                            "call_id": call_id,
+                        })
+                    except Exception:
+                        pass
                 if auto_debrief:
                     try:
                         from debrief import debrief_call
