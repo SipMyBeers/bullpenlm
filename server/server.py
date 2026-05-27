@@ -2769,6 +2769,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Phase 0.5 firewall — operator setup + closer onboarding GET routes
         # ══════════════════════════════════════════════════════════════════
 
+        # /api/b/<slug>/commission-defaults — bullpen-wide closer-agreement vars
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/commission-defaults$", self.path)
+        if m:
+            try:
+                from pathlib import Path as _P
+                slug = m.group(1)
+                f = _P(__file__).parent.parent / "bullpens" / slug / "commission-defaults.json"
+                if not f.exists():
+                    self._send_json(404, {"error": "no commission defaults set"})
+                    return
+                self._send_json(200, json.loads(f.read_text()))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # /api/b/<slug>/setup/status — operator setup wizard state
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/setup/status$", self.path)
         if m:

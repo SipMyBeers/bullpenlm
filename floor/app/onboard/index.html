@@ -266,13 +266,25 @@ async function acceptDisclosure(){
 
 // ── STEP 2 — AGREEMENT ────────────────────────────────────────────────
 async function loadAgreement(){
-  // Render the closer-agreement with the closer's vars before showing it.
-  const r = await api('POST', `/api/b/${BULLPEN}/legal/render/closer-agreement`, {
+  // Pull bullpen-wide commission defaults (commission %, payment days,
+  // rail, etc.) so the rendered agreement has real numbers, not
+  // {{placeholder}} literals.
+  let defaults = {};
+  try {
+    const dr = await api('GET', `/api/b/${BULLPEN}/commission-defaults`);
+    if (dr.ok) defaults = dr.data || {};
+  } catch(e) {}
+
+  const extra = Object.assign({}, defaults, {
     closer_legal_name: state.legalName,
     closer_first_name: state.legalName.split(' ')[0],
     closer_address: '(closer fills out W-9 next)',
     signed_date: new Date().toISOString().slice(0,10),
   });
+  // Drop the _note key — it's an internal explainer, not a template var
+  delete extra._note;
+
+  const r = await api('POST', `/api/b/${BULLPEN}/legal/render/closer-agreement`, extra);
   if(r.ok) document.getElementById('agr-text').textContent = (r.data && r.data.body_md) || '(agreement unavailable)';
 }
 
