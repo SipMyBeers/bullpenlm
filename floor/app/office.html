@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Bullpen · Office</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="/app/challenge-notif.js" defer></script>
+<script src="/app/gate-banner.js" defer></script>
+<style>
+:root{
+  --bg-0:#0a0703; --bg-1:#1a1208; --bg-2:#2a1d10; --bg-3:#3d2c1a;
+  --text:#f5e8d8; --muted:#a89a87; --dim:#806a4f;
+  --accent:#34d399; --accent-2:#6ee7b7; --accent-dim:#064e3b;
+  --gold:#fbbf24; --gold-dim:#92400e;
+  --danger:#f87171; --purple:#a78bfa;
+  --edge:#020410;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg-0);color:var(--text);font-family:var(--sans);font-size:14px}
+body{background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%)}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+header{position:sticky;top:0;z-index:30;height:54px;padding:0 22px;display:flex;align-items:center;gap:18px;
+  background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
+.brand .b{color:var(--gold)} .brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none} .crumb a:hover{color:var(--text)}
+.crumb .here{color:var(--gold)}
+header .meta{margin-left:auto;display:flex;gap:18px;align-items:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+header .meta .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;box-shadow:0 0 8px var(--accent)}
+header .meta .pill{padding:5px 10px;border:1px solid rgba(245,232,216,0.12);border-radius:16px;color:var(--text)}
+header .nav{display:flex;gap:6px;margin-left:18px}
+header .nav a{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:5px}
+header .nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+
+/* ── Main layout ─────────────────────────────────────────────────── */
+.shell{position:absolute;top:54px;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 320px;gap:0}
+.stage{position:relative;overflow:auto;background:radial-gradient(ellipse at 50% 60%,rgba(61,44,26,0.5),transparent 70%)}
+.stage svg{display:block;margin:30px auto;cursor:grab}
+.stage svg:active{cursor:grabbing}
+
+/* ── Side panel ─────────────────────────────────────────────────── */
+.side{background:rgba(10,7,3,0.65);border-left:1px solid rgba(245,232,216,0.08);overflow-y:auto;padding:20px 22px}
+.side h2{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.side h3{font-family:var(--display);font-size:22px;text-transform:uppercase;letter-spacing:-.01em;margin:0 0 6px;color:var(--text)}
+.side .sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:14px;margin:0 0 18px;line-height:1.45}
+.side .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(245,232,216,0.06);font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+.side .row .k{color:var(--muted)}
+.side .row .v{color:var(--text)}
+.side .row .v.gold{color:var(--gold)}
+.side .row .v.mint{color:var(--accent-2)}
+.side .actions{display:flex;flex-direction:column;gap:8px;margin-top:18px}
+.btn{padding:9px 13px;border-radius:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none;text-align:center;display:inline-block;transition:transform .12s}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:var(--accent);color:#0a1a14}
+.btn.gold{background:var(--gold);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.btn.ghost:hover{color:var(--text);border-color:var(--text)}
+.legend{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;line-height:2;color:var(--muted)}
+.legend .swatch{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:7px;vertical-align:middle}
+.legend .swatch.zone-pit{background:#5b3c2a}
+.legend .swatch.zone-duo{background:#7a5712;border:1px solid var(--gold)}
+.legend .swatch.zone-buyers{background:#2d3a4d}
+.legend .swatch.zone-bell{background:#4a1f3a}
+.legend .swatch.closer{background:var(--accent)}
+.legend .swatch.buyer{background:#9ab1d9}
+.legend .swatch.you{background:var(--gold)}
+
+/* ── SVG element styles ─────────────────────────────────────────── */
+.tile{stroke:rgba(0,0,0,0.35);stroke-width:0.5}
+.tile-pit{fill:#5b3c2a}
+.tile-pit-dark{fill:#4d2f1f}
+.tile-duo{fill:#7a5712;stroke:var(--gold);stroke-width:0.8}
+.tile-duo-active{animation:duo-pulse 1.4s ease-in-out infinite}
+@keyframes duo-pulse {
+  0%, 100% { filter: drop-shadow(0 0 6px var(--gold)) }
+  50%      { filter: drop-shadow(0 0 18px var(--gold)) brightness(1.15) }
+}
+.tile-buyers{fill:#2d3a4d}
+.tile-buyers-dark{fill:#243043}
+.tile-bell{fill:#4a1f3a}
+.tile-bell-dark{fill:#3d1830}
+.zone-label{font-family:var(--mono);font-size:9px;letter-spacing:.22em;text-transform:uppercase;fill:rgba(245,232,216,0.45);pointer-events:none}
+.zone-label.gold{fill:var(--gold)}
+
+.pawn{cursor:pointer}
+.pawn-top{stroke:var(--edge);stroke-width:1.2}
+.pawn-side{stroke:var(--edge);stroke-width:1.2}
+.pawn-shadow{fill:rgba(0,0,0,0.45)}
+.pawn-label{font-family:var(--mono);font-size:9px;letter-spacing:.10em;text-transform:uppercase;fill:var(--text);pointer-events:none;text-anchor:middle}
+.pawn-label-bg{fill:rgba(10,7,3,0.78);stroke:none;rx:3}
+.pawn.you .pawn-top{fill:var(--gold)}
+.pawn.you .pawn-side{fill:var(--gold-dim)}
+.pawn.you .pawn-label{fill:var(--gold)}
+.pawn.in-duo .pawn-top{filter:drop-shadow(0 0 4px var(--gold))}
+.bell{cursor:default}
+.bell-top{fill:var(--gold);stroke:var(--edge);stroke-width:1.2}
+.bell-side{fill:var(--gold-dim);stroke:var(--edge);stroke-width:1.2}
+.podium{fill:#5b3c2a;stroke:var(--edge);stroke-width:1.2}
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.empty-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;
+  font-family:var(--serif);font-style:italic;color:var(--muted);font-size:18px;line-height:1.6;pointer-events:none}
+.empty-overlay strong{color:var(--text);font-style:normal;font-family:var(--display);font-size:24px;letter-spacing:-.01em;text-transform:uppercase;display:block;margin-bottom:6px}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <div class="crumb">
+    <a href="/app/lobby.html">Floor</a>
+    <span> / </span>
+    <span class="here">Office</span>
+  </div>
+  <div class="nav">
+    <a href="/app/lobby.html">Lobby</a>
+    <a href="/app/arena.html">Drills</a>
+    <a href="/app/deals.html">Deals</a>
+    <a href="/app/closers.html">Roster</a>
+  </div>
+  <div class="meta">
+    <span class="pill" id="presence-pill"><span class="dot"></span><span id="presence-count">0</span> online</span>
+    <span id="bullpen-name" class="pill">—</span>
+  </div>
+</header>
+
+<div class="shell">
+  <div class="stage" id="stage">
+    <svg id="office" width="1000" height="640" viewBox="-50 -30 1000 640"></svg>
+  </div>
+  <aside class="side">
+    <h2>📋 The bullpen</h2>
+    <h3 id="side-title">Welcome.</h3>
+    <p class="sub" id="side-sub">Click any pawn to see who they are. Closers spawn in the pit. AI buyers sit at their desks. Active duos light up gold.</p>
+    <div id="side-detail"></div>
+
+    <div style="margin-top:24px">
+      <h2>Legend</h2>
+      <div class="legend">
+        <div><span class="swatch zone-pit"></span> THE PIT — closers</div>
+        <div><span class="swatch zone-duo"></span> DUO RING — live 1v1s</div>
+        <div><span class="swatch zone-buyers"></span> CLIENT DESKS — AI buyers</div>
+        <div><span class="swatch zone-bell"></span> THE BELL — deal-close ring</div>
+        <div><span class="swatch you"></span> YOU</div>
+        <div><span class="swatch closer"></span> teammate</div>
+        <div><span class="swatch buyer"></span> AI buyer</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+// ── Identity ─────────────────────────────────────────────────────
+const url = new URL(window.location.href);
+const BULLPEN = url.searchParams.get('b') || (localStorage.getItem('bullpen-slug') || 'ghengis');
+let REP = url.searchParams.get('rep');
+if (!REP) { try { REP = localStorage.getItem('bullpen-rep'); } catch(e) {} }
+if (!REP) REP = 'self';
+try { localStorage.setItem('bullpen-rep', REP); localStorage.setItem('bullpen-slug', BULLPEN); } catch(e) {}
+
+document.getElementById('bullpen-name').textContent = BULLPEN.toUpperCase();
+
+// ── Iso projection ──────────────────────────────────────────────
+const TILE_W = 64, TILE_H = 32;
+function iso(x, y) {
+  return {
+    x: (x - y) * (TILE_W / 2),
+    y: (x + y) * (TILE_H / 2)
+  };
+}
+function tileDiamond(x, y) {
+  // Returns the 4 points of an iso tile diamond at grid (x, y)
+  const c = iso(x, y);
+  return [
+    [c.x,           c.y - TILE_H / 2],          // top
+    [c.x + TILE_W/2, c.y],                       // right
+    [c.x,           c.y + TILE_H / 2],          // bottom
+    [c.x - TILE_W/2, c.y],                       // left
+  ].map(p => p.join(',')).join(' ');
+}
+
+// ── Office layout (the floor plan) ──────────────────────────────
+// 14 × 10 grid. Origin offset so x=0,y=0 is visible.
+const COLS = 14, ROWS = 10;
+const OFFSET_X = 460, OFFSET_Y = 60;
+
+// Zones — each tile knows which zone it belongs to.
+function zoneFor(x, y) {
+  // DUO RING — center
+  if (x >= 5 && x <= 8 && y >= 3 && y <= 5) return 'duo';
+  // BELL podium — top-right corner
+  if (x >= 11 && x <= 12 && y >= 0 && y <= 1) return 'bell';
+  // BUYER DESKS — right side
+  if (x >= 10 && y >= 4 && y <= 8) return 'buyers';
+  // THE PIT — everywhere else
+  return 'pit';
+}
+
+// Fixed positions for buyer desks (the AI buyers sit at these tiles)
+const BUYER_DESKS = [
+  { tile: { x: 11, y: 5 }, slug: 'accenture-mainframe' },
+  { tile: { x: 11, y: 7 }, slug: 'allstate' },
+  { tile: { x: 13, y: 5 }, slug: 'reserved-3' },
+  { tile: { x: 13, y: 7 }, slug: 'reserved-4' },
+];
+
+// Color hash from rep name → palette accent
+const PALETTE = ['#34d399','#a78bfa','#fb7185','#60a5fa','#fbbf24','#22d3ee','#f472b6','#34d399'];
+function colorFor(name) {
+  if (!name) return PALETTE[0];
+  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 1000;
+  return PALETTE[h % PALETTE.length];
+}
+
+// ── State ───────────────────────────────────────────────────────
+const state = {
+  presence: [],       // [{rep, ts, page, status}]
+  duos: [],           // [{id, status, prospect_slug, challenger, opponent, ...}]
+  buyer_cards: [],    // [{slug, name, company, ...}]
+};
+
+// Deterministic placement: closer pawn position from rep hash
+function closerPosition(rep) {
+  // Hash the name to pick a tile in THE PIT (rows 1-2, cols 1-9)
+  let h = 0; for (const c of rep) h = (h * 31 + c.charCodeAt(0)) % 10000;
+  return { x: 1 + (h % 9), y: 1 + ((h / 9) | 0) % 2 };
+}
+
+// ── Render ──────────────────────────────────────────────────────
+function el(tag, props, ...kids) {
+  const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  if (props) for (const k in props) {
+    if (k === 'class') n.setAttribute('class', props[k]);
+    else if (k === 'onClick') n.addEventListener('click', props[k]);
+    else if (k === 'text') n.textContent = props[k];
+    else n.setAttribute(k, props[k]);
+  }
+  for (const kid of kids) { if (kid != null) n.appendChild(kid); }
+  return n;
+}
+
+function pawnGroup(tx, ty, opts) {
+  // opts: { rep, name, color, kind ('closer'|'buyer'), inDuo, isYou, onclick }
+  const c = iso(tx, ty);
+  const cx = c.x + OFFSET_X, cy = c.y + OFFSET_Y;
+
+  const g = el('g', { class: 'pawn ' + (opts.isYou ? 'you ' : '') + (opts.inDuo ? 'in-duo' : ''),
+                       transform: `translate(${cx}, ${cy})` });
+  if (opts.onclick) g.addEventListener('click', opts.onclick);
+
+  // Shadow under the pawn
+  g.appendChild(el('ellipse', { cx: 0, cy: 6, rx: 12, ry: 4, class: 'pawn-shadow' }));
+
+  // Body — iso prism with dark edges (palette per rep)
+  const color = opts.color || '#34d399';
+  const colorDim = darken(color, 0.35);
+  const colorDarker = darken(color, 0.55);
+
+  // Right face
+  g.appendChild(el('polygon', {
+    points: `0,-2 12,-10 12,2 0,10`,
+    fill: colorDim, class: 'pawn-side'
+  }));
+  // Left face
+  g.appendChild(el('polygon', {
+    points: `0,-2 -12,-10 -12,2 0,10`,
+    fill: colorDarker, class: 'pawn-side'
+  }));
+  // Top — head
+  g.appendChild(el('polygon', {
+    points: `0,-22 12,-10 0,-2 -12,-10`,
+    fill: color, class: 'pawn-top'
+  }));
+
+  // Name label
+  const label = (opts.name || opts.rep || '?').toUpperCase().slice(0, 14);
+  const labelW = label.length * 6 + 10;
+  g.appendChild(el('rect', {
+    x: -labelW/2, y: 14, width: labelW, height: 14, rx: 3, class: 'pawn-label-bg'
+  }));
+  g.appendChild(el('text', { x: 0, y: 24, class: 'pawn-label', text: label }));
+
+  return g;
+}
+
+function darken(hex, amt) {
+  const c = hex.replace('#','');
+  const r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
+  const m = 1 - amt;
+  return '#' + [r,g,b].map(v => Math.max(0, Math.round(v * m)).toString(16).padStart(2,'0')).join('');
+}
+
+function render() {
+  const svg = document.getElementById('office');
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  // ── 1. Floor tiles ──
+  const tilesGroup = el('g', { transform: `translate(${OFFSET_X}, ${OFFSET_Y})` });
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const z = zoneFor(x, y);
+      let cls = 'tile ';
+      if (z === 'duo') cls += 'tile-duo';
+      else if (z === 'buyers') cls += ((x + y) % 2 === 0) ? 'tile-buyers' : 'tile-buyers-dark';
+      else if (z === 'bell') cls += ((x + y) % 2 === 0) ? 'tile-bell' : 'tile-bell-dark';
+      else cls += ((x + y) % 2 === 0) ? 'tile-pit' : 'tile-pit-dark';
+      tilesGroup.appendChild(el('polygon', { points: tileDiamond(x, y), class: cls }));
+    }
+  }
+  svg.appendChild(tilesGroup);
+
+  // Active duo lights up the ring
+  const hasActiveDuo = state.duos.some(d => d.status === 'accepted' || d.status === 'in_progress');
+  if (hasActiveDuo) {
+    for (let y = 3; y <= 5; y++) {
+      for (let x = 5; x <= 8; x++) {
+        const t = tilesGroup.querySelector(`polygon[points="${tileDiamond(x, y)}"]`);
+        if (t) t.classList.add('tile-duo-active');
+      }
+    }
+  }
+
+  // ── 2. Zone labels ──
+  const labelGroup = el('g', { transform: `translate(${OFFSET_X}, ${OFFSET_Y})` });
+  const labels = [
+    { text: 'THE PIT',       tile: { x: 4, y: 0 }, gold: false },
+    { text: '⚔ DUO RING',    tile: { x: 6.5, y: 2.5 }, gold: hasActiveDuo },
+    { text: 'CLIENT DESKS',  tile: { x: 12, y: 3.5 }, gold: false },
+    { text: '🔔 THE BELL',   tile: { x: 11.5, y: -0.5 }, gold: false },
+  ];
+  for (const l of labels) {
+    const c = iso(l.tile.x, l.tile.y);
+    labelGroup.appendChild(el('text', {
+      x: c.x, y: c.y, 'text-anchor': 'middle',
+      class: 'zone-label' + (l.gold ? ' gold' : ''),
+      text: l.text
+    }));
+  }
+  svg.appendChild(labelGroup);
+
+  // ── 3. The bell (podium in top-right) ──
+  const bellTile = iso(11.5, 0.5);
+  const bell = el('g', { class: 'bell', transform: `translate(${bellTile.x + OFFSET_X}, ${bellTile.y + OFFSET_Y})` });
+  bell.appendChild(el('ellipse', { cx: 0, cy: 8, rx: 14, ry: 5, class: 'pawn-shadow' }));
+  bell.appendChild(el('polygon', { points: '0,-4 18,-12 18,8 0,16', class: 'podium' }));
+  bell.appendChild(el('polygon', { points: '0,-4 -18,-12 -18,8 0,16', class: 'podium' }));
+  bell.appendChild(el('polygon', { points: '-18,-12 0,-20 18,-12 0,-4', class: 'podium' }));
+  bell.appendChild(el('polygon', { points: '0,-32 10,-22 0,-14 -10,-22', class: 'bell-top' }));
+  bell.appendChild(el('polygon', { points: '0,-14 10,-22 10,-18 0,-10', class: 'bell-side' }));
+  svg.appendChild(bell);
+
+  // ── 4. AI buyer pawns at their desks ──
+  for (const desk of BUYER_DESKS) {
+    const card = state.buyer_cards.find(c => c.slug === desk.slug);
+    if (!card && !desk.slug.startsWith('reserved-')) continue;
+    // Reserved slot → empty desk indicator
+    if (desk.slug.startsWith('reserved-')) {
+      const c = iso(desk.tile.x, desk.tile.y);
+      svg.appendChild(el('text', {
+        x: c.x + OFFSET_X, y: c.y + OFFSET_Y - 4, 'text-anchor': 'middle',
+        class: 'zone-label', text: '— empty —'
+      }));
+      continue;
+    }
+    const g = pawnGroup(desk.tile.x, desk.tile.y, {
+      rep: card.slug,
+      name: (card.persona && card.persona.name) || card.company || card.slug,
+      color: '#9ab1d9',  // muted blue for AI buyers
+      kind: 'buyer',
+      isYou: false,
+      onclick: () => showBuyer(card)
+    });
+    svg.appendChild(g);
+  }
+
+  // ── 5. Closer pawns from presence (THE PIT or DUO RING if active) ──
+  const activeDuo = state.duos.find(d => d.status === 'accepted' || d.status === 'in_progress');
+  for (const p of state.presence) {
+    let tile;
+    if (activeDuo && (p.rep === activeDuo.challenger || p.rep === activeDuo.opponent)) {
+      // Duelists face each other in the ring
+      tile = p.rep === activeDuo.challenger
+        ? { x: 6, y: 4 }
+        : { x: 7, y: 4 };
+    } else {
+      tile = closerPosition(p.rep);
+    }
+    const inDuo = activeDuo && (p.rep === activeDuo.challenger || p.rep === activeDuo.opponent);
+    const g = pawnGroup(tile.x, tile.y, {
+      rep: p.rep,
+      name: p.rep,
+      color: colorFor(p.rep),
+      kind: 'closer',
+      inDuo: inDuo,
+      isYou: p.rep === REP,
+      onclick: () => showCloser(p)
+    });
+    svg.appendChild(g);
+  }
+
+  // ── 6. Pending challenges floating between desks ──
+  for (const d of state.duos) {
+    if (d.status !== 'pending') continue;
+    const fromTile = closerPosition(d.challenger);
+    const toTile = closerPosition(d.opponent);
+    const f = iso(fromTile.x, fromTile.y);
+    const t = iso(toTile.x, toTile.y);
+    const path = el('path', {
+      d: `M ${f.x + OFFSET_X} ${f.y + OFFSET_Y - 18} Q ${(f.x+t.x)/2 + OFFSET_X} ${Math.min(f.y, t.y) + OFFSET_Y - 60} ${t.x + OFFSET_X} ${t.y + OFFSET_Y - 18}`,
+      fill: 'none', stroke: 'var(--gold)', 'stroke-width': '1.5',
+      'stroke-dasharray': '4,3'
+    });
+    path.style.opacity = '0.7';
+    svg.appendChild(path);
+  }
+
+  // Presence pill update
+  document.getElementById('presence-count').textContent = state.presence.length;
+}
+
+// ── Side panel ────────────────────────────────────────────────────
+function setSide(title, sub, detailRows, actions) {
+  document.getElementById('side-title').textContent = title;
+  document.getElementById('side-sub').textContent = sub || '';
+  const detail = document.getElementById('side-detail');
+  while (detail.firstChild) detail.removeChild(detail.firstChild);
+  if (detailRows) {
+    for (const [k, v, klass] of detailRows) {
+      const row = document.createElement('div'); row.className = 'row';
+      const kn = document.createElement('span'); kn.className = 'k'; kn.textContent = k;
+      const vn = document.createElement('span'); vn.className = 'v ' + (klass || ''); vn.textContent = v;
+      row.appendChild(kn); row.appendChild(vn); detail.appendChild(row);
+    }
+  }
+  if (actions) {
+    const wrap = document.createElement('div'); wrap.className = 'actions';
+    for (const a of actions) {
+      const btn = document.createElement('a');
+      btn.className = 'btn ' + (a.style || 'ghost');
+      btn.href = a.href || '#';
+      btn.textContent = a.label;
+      if (a.onClick) btn.addEventListener('click', (ev) => { ev.preventDefault(); a.onClick(); });
+      wrap.appendChild(btn);
+    }
+    detail.appendChild(wrap);
+  }
+}
+
+function showCloser(p) {
+  const isYou = p.rep === REP;
+  const challengeUrl = `#`;
+  setSide(
+    p.rep.toUpperCase(),
+    isYou ? "That's you." : p.status || ('on ' + p.page),
+    [
+      ['Page',   p.page || '—'],
+      ['Status', p.status || '—'],
+      ['Last',   (p.ts || '').replace('T', ' ')],
+    ],
+    isYou ? [
+      { label: '→ Go to drill', href: `/app/spotcheck.html?b=${BULLPEN}&rep=${REP}&tcs=cold-open-bfsi`, style: 'primary' },
+      { label: '→ View deals', href: `/app/deals.html?b=${BULLPEN}&rep=${REP}` },
+    ] : [
+      { label: '⚔ Challenge to a duo', style: 'gold', onClick: () => challenge(p.rep) },
+      { label: '→ View profile', href: `/app/profile.html?b=${BULLPEN}&rep=${p.rep}` },
+    ]
+  );
+}
+
+function showBuyer(card) {
+  const persona = card.persona || {};
+  setSide(
+    card.company || card.slug,
+    persona.tone || '',
+    [
+      ['Role',      card.role || persona.role || '—'],
+      ['Vertical',  card.vertical || '—'],
+      ['Persona',   persona.name || '—'],
+      ['Approach',  persona.decision_style || '—'],
+    ],
+    [
+      { label: '→ Roleplay (solo)', href: `/app/contact.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`, style: 'primary' },
+      { label: '→ Read briefing',   href: `/app/briefing.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}` },
+    ]
+  );
+}
+
+async function challenge(opponent) {
+  // Pick the first buyer card as the duo prospect (UX: panel later for picker)
+  const card = state.buyer_cards[0];
+  if (!card) { alert('No buyer cards available'); return; }
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/duos`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        rep: REP, opponent: opponent, prospect_slug: card.slug,
+        role: 'seller', duration_minutes: 5,
+      }),
+    });
+    const d = await r.json();
+    if (d.id) {
+      window.location.href = `/app/duo.html?b=${BULLPEN}&rep=${REP}&duo_id=${d.id}`;
+    } else {
+      alert('Challenge failed: ' + (d.error || 'unknown'));
+    }
+  } catch (e) {
+    alert('Network error: ' + e.message);
+  }
+}
+
+// ── Data load + live updates ────────────────────────────────────
+async function loadAll() {
+  try {
+    const [pRes, dRes, cRes] = await Promise.all([
+      fetch(`/api/b/${BULLPEN}/presence`).then(r => r.json()).catch(() => ({online:[]})),
+      fetch(`/api/b/${BULLPEN}/duos`).then(r => r.json()).catch(() => ({duos:[]})),
+      fetch(`/api/b/${BULLPEN}/cards`).then(r => r.ok ? r.json() : {cards:[]}).catch(() => ({cards:[]})),
+    ]);
+    state.presence = pRes.online || [];
+    state.duos = Array.isArray(dRes) ? dRes : (dRes.duos || []);
+    state.buyer_cards = cRes.cards || [];
+    render();
+  } catch (e) {
+    console.warn('load error', e);
+  }
+}
+
+function subscribeSSE() {
+  try {
+    const es = new EventSource(`/api/b/${BULLPEN}/stream`);
+    es.onmessage = (ev) => {
+      try {
+        const event = JSON.parse(ev.data);
+        if (['presence_change','duo_challenged','duo_accepted','duo_ended','duo_msg'].includes(event.kind)) {
+          // Debounce reloads
+          clearTimeout(window.__office_reload);
+          window.__office_reload = setTimeout(loadAll, 400);
+        }
+      } catch (e) {}
+    };
+    es.onerror = () => {};
+  } catch (e) {}
+}
+
+// Heartbeat presence so we appear in the office too
+function beat() {
+  fetch(`/api/b/${BULLPEN}/presence/beat`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({rep: REP, page: 'office', status: 'in the office'}),
+  }).catch(() => {});
+}
+
+loadAll();
+beat();
+setInterval(loadAll, 15000);
+setInterval(beat, 25000);
+subscribeSSE();
+</script>
+</body>
+</html>
