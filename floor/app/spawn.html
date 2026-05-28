@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spawn · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="/app/gate-banner.js" defer></script>
+<script src="/app/challenge-notif.js" defer></script>
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
+  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;
+  --gold:#fbbf24;--gold-dim:#92400e;
+  --danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}
+.crumb .here{color:var(--gold)}
+.nav{display:flex;gap:6px;margin-left:18px;flex-wrap:wrap}
+.nav a{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:5px}
+.nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+
+.wrap{max-width:1100px;margin:0 auto;padding:30px 22px 80px}
+.hero{margin-bottom:30px}
+.hero .you-spawned{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.hero h1{font-family:var(--display);font-size:54px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 8px;line-height:1}
+.hero .sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:17px;max-width:780px;margin:0}
+.hero .world-id{color:var(--accent-2);font-style:normal}
+
+/* ── World state strip ── */
+.world-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:24px 0 28px}
+@media(max-width:880px){.world-strip{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.world-strip{grid-template-columns:1fr 1fr}}
+.world-tile{padding:14px 16px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:11px}
+.world-tile.zero{border-color:rgba(248,113,113,0.30);background:rgba(248,113,113,0.04)}
+.world-tile.warm{border-color:rgba(251,191,36,0.35);background:rgba(251,191,36,0.04)}
+.world-tile.hot{border-color:rgba(52,211,153,0.40);background:rgba(52,211,153,0.04)}
+.world-tile .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.world-tile .val{font-family:var(--display);font-size:30px;letter-spacing:-.01em;line-height:1;color:var(--text)}
+.world-tile.zero .val{color:var(--danger)}
+.world-tile.warm .val{color:var(--gold)}
+.world-tile.hot .val{color:var(--accent-2)}
+.world-tile .meta{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:3px}
+
+/* ── Section heading ── */
+.section-h{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:32px 0 14px}
+.section-h h2{font-family:var(--display);font-size:26px;letter-spacing:-.01em;text-transform:uppercase;color:var(--text);margin:0}
+.section-h .meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* ── Quest cards ── */
+.quest-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:680px){.quest-grid{grid-template-columns:1fr}}
+.quest{background:rgba(26,18,8,0.65);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;position:relative;text-decoration:none;color:inherit;transition:all .12s}
+.quest:hover{border-color:var(--accent);background:rgba(52,211,153,0.04);transform:translateY(-2px)}
+.quest.high{border-color:rgba(251,191,36,0.30)}
+.quest.high:hover{border-color:var(--gold);background:rgba(251,191,36,0.04)}
+.quest .top-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.quest .kind-pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:5px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);color:var(--muted)}
+.quest.high .kind-pill{color:var(--gold);border-color:var(--gold)}
+.quest.gate .kind-pill{color:var(--danger);border-color:var(--danger);background:rgba(248,113,113,0.06)}
+.quest .impact-pill{font-family:var(--mono);font-size:9px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;padding:2px 7px;border-radius:4px}
+.quest .impact-pill.high{background:rgba(251,191,36,0.10);color:var(--gold);border:1px solid rgba(251,191,36,0.40)}
+.quest .impact-pill.mid{background:rgba(52,211,153,0.10);color:var(--accent-2);border:1px solid rgba(52,211,153,0.40)}
+.quest .impact-pill.low{background:rgba(168,154,135,0.10);color:var(--muted);border:1px solid rgba(168,154,135,0.30)}
+.quest .title{font-family:var(--display);font-size:24px;letter-spacing:-.01em;text-transform:uppercase;line-height:1.05;color:var(--text)}
+.quest .subtitle{font-family:var(--serif);font-size:14px;color:var(--muted);line-height:1.5}
+.quest .footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:12px;border-top:1px solid rgba(245,232,216,0.06)}
+.quest .footer .count{font-family:var(--mono);font-size:11px;color:var(--accent-2);letter-spacing:.06em}
+.quest .footer .xp{font-family:var(--mono);font-size:10.5px;color:var(--gold);letter-spacing:.06em}
+.quest .footer .cta{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--accent-2);background:rgba(52,211,153,0.10);padding:7px 13px;border-radius:6px;border:1px solid rgba(52,211,153,0.40)}
+.quest:hover .footer .cta{background:var(--accent);color:#0a1a14;border-color:var(--accent)}
+.quest.high:hover .footer .cta{background:var(--gold);color:#0a1a14;border-color:var(--gold)}
+
+/* ── Empty state ── */
+.empty-stage{text-align:center;padding:60px 20px;background:rgba(0,0,0,0.20);border:1px dashed rgba(245,232,216,0.15);border-radius:14px}
+.empty-stage .emoji{font-size:48px;margin-bottom:12px}
+.empty-stage h2{font-family:var(--display);font-size:28px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 8px;color:var(--text)}
+.empty-stage p{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:0 0 14px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.55}
+.empty-stage .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.empty-stage .btn{padding:10px 18px;border-radius:7px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none}
+.empty-stage .btn.gold{background:var(--gold);color:#0a1a14}
+.empty-stage .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+
+/* ── Online reps ── */
+.online-strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.online-chip{padding:5px 12px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.30);border-radius:14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--accent-2)}
+
+@media(max-width:540px){
+  header{padding:10px 14px;flex-wrap:wrap;gap:8px}
+  .nav{margin-left:0;width:100%;order:3}
+  .brand{font-size:18px}
+  .wrap{padding:18px 14px 60px}
+  .hero h1{font-size:36px}
+  .hero .sub{font-size:14px}
+  .quest{padding:16px 18px}
+  .quest .title{font-size:20px}
+  .section-h h2{font-size:22px}
+}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <div class="crumb">
+    <a href="/app/lobby.html">Floor</a> <span> / </span>
+    <span class="here">Spawn</span>
+  </div>
+  <div class="nav">
+    <a href="/app/cockpit.html">Cockpit</a>
+    <a href="/app/office.html">Office</a>
+    <a href="/app/studio.html">Studio</a>
+    <a href="/app/arena.html">Arena</a>
+    <a href="/app/voice.html">Voice</a>
+    <a href="/app/deals.html">Deals</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="you-spawned" id="spawn-line">You spawned in</div>
+    <h1 id="world-name">…</h1>
+    <p class="sub" id="hero-sub">Welcome to the bullpen.</p>
+  </div>
+
+  <div class="section-h">
+    <h2>🌍 The world right now</h2>
+    <div class="meta" id="updated-meta">checking…</div>
+  </div>
+  <div class="world-strip" id="world-strip"></div>
+
+  <div class="section-h">
+    <h2>🪓 Open work — pick one</h2>
+    <div class="meta" id="quest-count-meta"></div>
+  </div>
+  <div id="online-strip-wrap"></div>
+  <div class="quest-grid" id="quest-grid"></div>
+  <div id="empty-stage-wrap"></div>
+</div>
+
+<script>
+const URLP = new URL(window.location.href);
+const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+let REP = URLP.searchParams.get('rep');
+if (!REP) { try { REP = localStorage.getItem('bullpen-rep'); } catch(e){} }
+if (!REP) REP = 'self';
+
+function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else if(k==='href')n.setAttribute('href',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+
+async function load(){
+  const r = await fetch(`/api/b/${BULLPEN}/spawn?rep=${encodeURIComponent(REP)}`);
+  if(!r.ok){ document.getElementById('hero-sub').textContent = 'Spawn check failed.'; return; }
+  const d = await r.json();
+  renderHero(d);
+  renderWorld(d.stats || {});
+  renderQuests(d.quests || []);
+  renderOnline(d.stats || {});
+  document.getElementById('updated-meta').textContent = 'as of ' + new Date().toLocaleTimeString();
+}
+
+function renderHero(d){
+  document.getElementById('world-name').textContent = (d.bullpen || 'BULLPEN').toUpperCase();
+  document.getElementById('spawn-line').textContent = `Welcome, ${REP}. You spawned in`;
+  const stats = d.stats || {};
+  const quests = d.quests || [];
+  const high = quests.filter(q => q.impact === 'high').length;
+  let sub;
+  if(stats.deals_total === 0 && stats.posts_total === 0){
+    sub = `The world is empty. No deals, no calls, no posts. Pick a quest below — every action you take fills in part of the map for the rest of the team.`;
+  } else if(quests.length === 0){
+    sub = `Everything's covered for the moment. Drill, duel, or open the office to see who's on.`;
+  } else {
+    sub = `${quests.length} open quest${quests.length===1?'':'s'} on the board${high?', '+high+' high-impact':''}. Anyone can claim any of them. Pick what looks fun.`;
+  }
+  document.getElementById('hero-sub').textContent = sub;
+}
+
+function renderWorld(s){
+  const wrap = document.getElementById('world-strip');
+  clear(wrap);
+  const tiles = [
+    {label:'Prospects', value: s.deals_total || 0, meta: tinySpread(s.deals_by_stage || {})},
+    {label:'Real calls', value: s.calls_total || 0, meta: s.calls_today ? `${s.calls_today} today` : 'none today'},
+    {label:'Drills run', value: s.drills_total || 0, meta: 'practice loops'},
+    {label:'Posts', value: s.posts_total || 0, meta: `${s.clicks_total || 0} clicks`},
+    {label:'Dossiers', value: s.buyers_with_dossier || 0, meta: `${s.chunks_total || 0} chunks`},
+    {label:'Online now', value: s.online_count || 0, meta: `${s.members_total || 0} members`},
+  ];
+  for(const t of tiles){
+    const cls = t.value === 0 ? 'zero' : t.value < 3 ? 'warm' : 'hot';
+    const tile = el('div', {class:`world-tile ${cls}`});
+    tile.appendChild(el('div', {class:'lbl', text: t.label}));
+    tile.appendChild(el('div', {class:'val', text: String(t.value)}));
+    tile.appendChild(el('div', {class:'meta', text: t.meta || ''}));
+    wrap.appendChild(tile);
+  }
+}
+
+function tinySpread(byStage){
+  // "5 lead · 3 contacted · 1 demo"
+  const parts = [];
+  for(const k of ['lead','contacted','qualified','demo','pilot','won']){
+    if(byStage[k]) parts.push(`${byStage[k]} ${k}`);
+  }
+  return parts.join(' · ') || 'none yet';
+}
+
+function renderQuests(quests){
+  const grid = document.getElementById('quest-grid');
+  const emptyWrap = document.getElementById('empty-stage-wrap');
+  clear(grid); clear(emptyWrap);
+  document.getElementById('quest-count-meta').textContent = quests.length ? `${quests.length} open` : '';
+
+  if(!quests.length){
+    const stage = el('div', {class:'empty-stage'});
+    stage.appendChild(el('div', {class:'emoji', text:'✨'}));
+    stage.appendChild(el('h2', {text:'Everything\'s claimed for now'}));
+    stage.appendChild(el('p', {text:'Either someone\'s on top of every loose end, or the world is genuinely quiet. Drill against an AI buyer, duel a teammate, or open the office to see who\'s online.'}));
+    const actions = el('div', {class:'actions'});
+    actions.appendChild(el('a', {class:'btn gold', href:`/app/voice.html?b=${BULLPEN}&rep=${REP}`, text:'🎤 Voice drill'}));
+    actions.appendChild(el('a', {class:'btn ghost', href:`/app/office.html?b=${BULLPEN}&rep=${REP}`, text:'🏢 Open office'}));
+    stage.appendChild(actions);
+    emptyWrap.appendChild(stage);
+    return;
+  }
+
+  for(const q of quests){
+    const card = el('a', {class:`quest ${q.kind === 'gate' ? 'gate' : (q.impact === 'high' ? 'high' : '')}`,
+                            href: q.href || '#'});
+    const top = el('div', {class:'top-row'});
+    top.appendChild(el('div', {class:'kind-pill', text: q.kind.toUpperCase()}));
+    top.appendChild(el('div', {class:'impact-pill ' + (q.impact||'low'), text: q.impact || 'low'}));
+    card.appendChild(top);
+    card.appendChild(el('div', {class:'title', text: q.title}));
+    card.appendChild(el('div', {class:'subtitle', text: q.subtitle}));
+    const foot = el('div', {class:'footer'});
+    if(q.count){
+      foot.appendChild(el('div', {class:'count', text: `${q.count} open`}));
+    } else {
+      foot.appendChild(el('div', {class:'count', text: ''}));
+    }
+    foot.appendChild(el('div', {class:'xp', text: q.xp_estimate ? `~${q.xp_estimate} XP` : ''}));
+    foot.appendChild(el('div', {class:'cta', text: q.cta || 'GO →'}));
+    card.appendChild(foot);
+    grid.appendChild(card);
+  }
+}
+
+function renderOnline(s){
+  const wrap = document.getElementById('online-strip-wrap');
+  clear(wrap);
+  const online = s.online_reps || [];
+  if(online.length){
+    const strip = el('div', {class:'online-strip'});
+    strip.appendChild(el('span', {style:'font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);align-self:center', text:'🟢 on the floor:'}));
+    for(const r of online){
+      strip.appendChild(el('span', {class:'online-chip', text: r}));
+    }
+    wrap.appendChild(strip);
+  }
+}
+
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>

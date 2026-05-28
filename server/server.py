@@ -2770,6 +2770,20 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Phase 0.5 firewall — operator setup + closer onboarding GET routes
         # ══════════════════════════════════════════════════════════════════
 
+        # ── Minecraft-spawn world view (gap-derived quests) ──────────
+        # GET /api/b/<slug>/spawn?rep=<rep>
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/spawn(?:\?|$)", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from world_gaps import world_state
+                qs = _pq(_up(self.path).query)
+                rep = (qs.get("rep") or [self._current_rep() or "self"])[0]
+                self._send_json(200, world_state(m.group(1), rep))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Per-rep character sheet aggregate ─────────────────────────
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/profile/([a-zA-Z0-9_\-\.]+)$", self.path)
         if m:
