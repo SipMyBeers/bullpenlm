@@ -329,15 +329,25 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::default())
         .setup(|app| {
-            // Auto-spawn the bundled sidecar on app launch so the very
-            // first window paints over a server that's already coming up.
-            // The picker UI listens for `server-ready` and unblocks its
-            // "Continue" button when the event fires.
+            // Auto-spawn the bundled sidecar on app launch AND swap the
+            // webview from the static loading splash to the live server
+            // root the moment the health probe succeeds. The picker is
+            // bypassed entirely — / routes operator/closer to the right
+            // surface (cockpit/host/spawn/quickstart) via 302.
             let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 let state: tauri::State<'_, AppState> = app_handle.state();
                 match start_host(app_handle.clone(), state).await {
-                    Ok(r) => log::info!("Server auto-started on {}", r.url),
+                    Ok(r) => {
+                        log::info!("Server auto-started on {}", r.url);
+                        if let Some(win) = app_handle.get_webview_window("main") {
+                            if let Ok(url) = r.url.parse::<url::Url>() {
+                                if let Err(e) = win.navigate(url) {
+                                    log::warn!("Webview navigate to {} failed: {}", r.url, e);
+                                }
+                            }
+                        }
+                    }
                     Err(e) => log::warn!("Server auto-start failed: {}", e.error),
                 }
             });
