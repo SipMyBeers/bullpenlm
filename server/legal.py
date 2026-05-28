@@ -212,6 +212,22 @@ def sign(bullpen: str, rep: str, doc: str, typed_name: str) -> dict:
                  target_type="legal_doc", target_id=live["id"],
                  payload={"doc_title": live["title"], "doc_sha256": live["sha256"],
                           "version": version, "typed_name": typed_name.strip()})
+
+    # Mirror cert-relevant signatures into the host-wide closer profile.
+    # closer-agreement is the canonical one the gate checks for.
+    try:
+        from closer_profiles import email_for_rep, record_cert
+        _email = email_for_rep(bullpen, rep)
+        if _email and live["id"] == "closer-agreement":
+            record_cert(_email, "closer_agreement", bullpen=bullpen,
+                        doc_sha256=live["sha256"], version=version,
+                        current=True)
+        elif _email and live["id"] == "dnc-acknowledgement":
+            record_cert(_email, "dnc_ack", bullpen=bullpen,
+                        doc_sha256=live["sha256"], version=version)
+    except Exception:
+        pass
+
     return sig
 
 

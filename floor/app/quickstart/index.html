@@ -71,6 +71,12 @@ h1{font-family:var(--display);font-size:62px;letter-spacing:-.025em;text-transfo
         <input id="display-name" type="text" autocomplete="off" autocapitalize="words"
                placeholder="What should the floor call you?" maxlength="40" required>
       </div>
+      <div class="field">
+        <label for="email">Email <span style="color:var(--dim);text-transform:none;letter-spacing:0">(optional — carries clearance across bullpens)</span></label>
+        <input id="email" type="email" autocomplete="email" inputmode="email"
+               placeholder="you@example.com" maxlength="100">
+      </div>
+      <div id="carry-notice" style="display:none;margin-bottom:18px;padding:12px 14px;border-radius:9px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.30);font-family:var(--mono);font-size:11.5px;letter-spacing:.03em;color:var(--accent-2);line-height:1.5"></div>
       <button type="submit" class="go" id="go-btn">Hit the floor →</button>
       <div id="err" class="err"></div>
     </form>
@@ -115,19 +121,57 @@ async function redeemIfNeeded(){
   }
 }
 
+// Pre-fill email from a prior session, and probe the closer-profile
+// API to show "we recognize you, your clearance carries over."
+async function prefillFromPrior(){
+  let priorEmail = '';
+  try { priorEmail = localStorage.getItem('bullpen-email') || ''; } catch(e){}
+  if(!priorEmail) return;
+  document.getElementById('email').value = priorEmail;
+  try {
+    const r = await fetch(`/api/closer/profile?email=${encodeURIComponent(priorEmail)}`);
+    if(!r.ok) return;
+    const d = await r.json();
+    const certs = Object.keys(d.certs || {});
+    if(certs.length){
+      const notice = document.getElementById('carry-notice');
+      notice.style.display = 'block';
+      notice.textContent = `👋 Welcome back, ${d.display_name || 'closer'}. ${certs.length} clearance${certs.length===1?'':'s'} from prior bullpens (${certs.join(', ')}) will carry over.`;
+    }
+  } catch(e){}
+}
+prefillFromPrior();
+
 async function enterFloor(){
   const btn = document.getElementById('go-btn');
   const inp = document.getElementById('display-name');
+  const emailInp = document.getElementById('email');
   const raw = inp.value.trim();
+  const email = emailInp.value.trim().toLowerCase();
   if(!raw){ showErr('Pick a name to get started'); return; }
   const slug = raw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   if(!slug){ showErr('Use letters or numbers'); return; }
+  if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+    showErr('That email doesn\'t look right'); return;
+  }
   btn.disabled = true;
   btn.textContent = 'Spawning…';
-  try { localStorage.setItem('bullpen-rep', slug); } catch(e){}
+  try {
+    localStorage.setItem('bullpen-rep', slug);
+    if(email) localStorage.setItem('bullpen-email', email);
+  } catch(e){}
   await redeemIfNeeded();
-  // Forward to the spawn screen — they see the world's open quests and
-  // pick what looks fun.
+  // If they provided an email, link the (bullpen, rep) → email so
+  // clearance carries across bullpens on this host AND a portable
+  // identity bundle can be exported later.
+  if(email){
+    try {
+      await fetch('/api/closer/link-email', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({bullpen: BULLPEN, rep: slug, email, display_name: raw}),
+      });
+    } catch(e){ /* non-fatal */ }
+  }
   window.location.href = `/app/spawn.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(slug)}`;
 }
 

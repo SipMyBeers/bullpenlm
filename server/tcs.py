@@ -174,6 +174,18 @@ def record_attempt(bullpen: str, rep: str, tcs_id: str, result: str,
                               "phase_tier": tcs.get("phase_tier") or 0,
                               "source": source, "checker": checker,
                               "score": int(score)})
+        # Mirror cert-tier passes (phase_tier ≥ 3) into the host-wide
+        # closer profile so the drill cert carries to other bullpens.
+        try:
+            phase_tier = int(tcs.get("phase_tier") or 0)
+            if phase_tier >= 3:
+                from closer_profiles import email_for_rep, record_cert
+                _email = email_for_rep(bullpen, rep)
+                if _email:
+                    record_cert(_email, "drill_cert_tier3", bullpen=bullpen,
+                                tcs=tcs_id, phase_tier=phase_tier, score=int(score))
+        except Exception:
+            pass
         # Phase D loop extension: cert-tier drill passes ALSO ingest the
         # response transcript into a synthetic "drills" buyer in the
         # bullpen's RAG corpus. The compounding-practice loop: rare,

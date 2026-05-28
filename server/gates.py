@@ -73,6 +73,24 @@ def can_claim_live_prospect(bullpen: str, closer: str, prospect_slug: Optional[s
     missing: list[str] = []
     details: dict = {}
 
+    # ── Cross-bullpen profile lookup ─────────────────────────────────
+    # If this closer has cleared any of the per-closer items in ANOTHER
+    # bullpen on this host (or imported a bundle from elsewhere), those
+    # certs count here too. Resolved per kind below — each step prefers
+    # the per-bullpen check but falls back to the host-wide profile.
+    host_certs: dict = {}
+    try:
+        from closer_profiles import email_for_rep, has_cert
+        _email = email_for_rep(bullpen, closer)
+        if _email:
+            for kind in ("disclosure", "closer_agreement", "w9", "drill_cert_tier3"):
+                c = has_cert(_email, kind)
+                if c: host_certs[kind] = c
+            details["portable_identity"] = {"email_matched": True,
+                                              "carried_certs": list(host_certs)}
+    except Exception:
+        pass
+
     # 1. Operator entity is set up
     try:
         from entity import is_setup as entity_is_setup, get_entity
@@ -85,49 +103,72 @@ def can_claim_live_prospect(bullpen: str, closer: str, prospect_slug: Optional[s
         missing.append("entity_check_failed")
         details["operator_entity_error"] = str(e)
 
-    # 2. Closer has signed the Closer Agreement
+    # 2. Closer has signed the Closer Agreement (per-bullpen OR carried)
     try:
         from legal import get_member_signatures
         sigs = get_member_signatures(bullpen, closer) or {}
         ca = sigs.get("closer-agreement")
-        if not ca:
-            missing.append("closer_agreement_not_signed")
-        elif not ca.get("current"):
+        if ca and ca.get("current"):
+            details["closer_agreement"] = ca
+        elif ca:
             missing.append("closer_agreement_out_of_date")
-        details["closer_agreement"] = ca
+            details["closer_agreement"] = ca
+        elif host_certs.get("closer_agreement"):
+            details["closer_agreement"] = {**host_certs["closer_agreement"], "carried": True}
+        else:
+            missing.append("closer_agreement_not_signed")
     except Exception:
-        # legal.get_member_signatures may not exist in older builds — be
-        # defensive and treat as missing.
-        missing.append("closer_agreement_not_signed")
+        if host_certs.get("closer_agreement"):
+            details["closer_agreement"] = {**host_certs["closer_agreement"], "carried": True}
+        else:
+            missing.append("closer_agreement_not_signed")
 
-    # 3. W-9 on file
+    # 3. W-9 on file (per-bullpen OR carried)
     try:
         from disclosures import has_w9
-        if not has_w9(bullpen, closer):
+        if has_w9(bullpen, closer):
+            pass
+        elif host_certs.get("w9"):
+            details["w9"] = {**host_certs["w9"], "carried": True}
+        else:
             missing.append("w9_not_on_file")
     except Exception:
-        missing.append("w9_not_on_file")
+        if host_certs.get("w9"):
+            details["w9"] = {**host_certs["w9"], "carried": True}
+        else:
+            missing.append("w9_not_on_file")
 
-    # 4. Closer Disclosure accepted
+    # 4. Closer Disclosure accepted (per-bullpen OR carried)
     try:
         from disclosures import has_accepted_closer_disclosure
-        if not has_accepted_closer_disclosure(bullpen, closer):
+        if has_accepted_closer_disclosure(bullpen, closer):
+            pass
+        elif host_certs.get("disclosure"):
+            details["disclosure"] = {**host_certs["disclosure"], "carried": True}
+        else:
             missing.append("closer_disclosure_not_accepted")
     except Exception:
-        missing.append("closer_disclosure_not_accepted")
+        if host_certs.get("disclosure"):
+            details["disclosure"] = {**host_certs["disclosure"], "carried": True}
+        else:
+            missing.append("closer_disclosure_not_accepted")
 
-    # 5. Drill certification cleared
+    # 5. Drill certification cleared (per-bullpen OR carried)
     try:
         from xp import get_money_xp
-        # Phase 0.5 minimum: any positive money-XP from drill
-        # certifications (drill_passed at phase_tier ≥ 3). A future
-        # tightening can require a specific cert tier per role.
         mxp = get_money_xp(bullpen, closer)
         details["money_xp"] = mxp
-        if mxp < 100:   # one cert-tier drill_passed = 100 base
+        if mxp >= 100:
+            pass
+        elif host_certs.get("drill_cert_tier3"):
+            details["drill_cert"] = {**host_certs["drill_cert_tier3"], "carried": True}
+        else:
             missing.append("drill_certification_not_cleared")
     except Exception:
-        missing.append("drill_certification_check_failed")
+        if host_certs.get("drill_cert_tier3"):
+            details["drill_cert"] = {**host_certs["drill_cert_tier3"], "carried": True}
+        else:
+            missing.append("drill_certification_check_failed")
 
     # 6. Jurisdiction compliance (closer + operator location compatible)
     try:

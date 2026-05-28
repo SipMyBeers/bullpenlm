@@ -112,6 +112,18 @@ def accept_closer_disclosure(
         "disclosure_sha256": text_sha,
     })
 
+    # Mirror to the host-wide closer profile so this clearance carries
+    # to other bullpens on this host (and exports as a portable bundle).
+    try:
+        from closer_profiles import email_for_rep, record_cert
+        _email = email_for_rep(bullpen, closer)
+        if _email:
+            record_cert(_email, "disclosure", bullpen=bullpen,
+                        disclosure_sha256=text_sha,
+                        legal_name_hash=_sha256(closer_legal_name.strip().lower()))
+    except Exception:
+        pass
+
     return record
 
 
@@ -243,6 +255,23 @@ def submit_w9(
         "tin_sha256": tin_sha,
         "federal_tax_classification": federal_tax_classification,
     })
+
+    # Mirror to host-wide profile so the closer doesn't redo W-9 in
+    # another bullpen on this host. We store only the TIN last-4 + a
+    # legal-name hash — never the raw TIN, never the full address.
+    try:
+        from closer_profiles import email_for_rep, record_cert
+        _email = email_for_rep(bullpen, closer)
+        if _email:
+            digits = "".join(c for c in raw_tin if c.isdigit())
+            record_cert(_email, "w9", bullpen=bullpen,
+                        tin_sha256=tin_sha,
+                        tin_last4=digits[-4:] if len(digits) >= 4 else "",
+                        legal_name_hash=hashlib.sha256(
+                            legal_name.strip().lower().encode("utf-8")).hexdigest(),
+                        federal_tax_classification=federal_tax_classification)
+    except Exception:
+        pass
 
     return record
 

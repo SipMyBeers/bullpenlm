@@ -1537,6 +1537,17 @@ def _is_localhost(addr: tuple) -> bool:
     return ip in ("127.0.0.1", "::1", "localhost") or ip.startswith("127.")
 
 
+def _host_label_str() -> str:
+    """Friendly label for THIS bullpen host — appears on exported identity
+    bundles so a receiving operator can see where the clearance came from.
+    Default: 'bullpen@<machine>'. Override via BULLPENLM_HOST_LABEL env var."""
+    import os, socket
+    custom = os.environ.get("BULLPENLM_HOST_LABEL", "").strip()
+    if custom: return custom
+    try: return f"bullpen@{socket.gethostname()}"
+    except Exception: return "bullpen@unknown"
+
+
 # Endpoints that are public (no session required) even over the public tunnel.
 _PUBLIC_PATHS = {
     "/api/invite/redeem",      # POST: redeem a code → set session cookie
@@ -1684,6 +1695,56 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 from invites import list_invites
                 include_used = "include_used=true" in self.path
                 self._send_json(200, {"invites": list_invites(include_used=include_used)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Host-wide closer profile + portable identity bundle ──────
+        # GET /api/closer/profile?email=<addr>
+        # GET /api/closer/profile?bullpen=<slug>&rep=<rep>    (resolves email via index)
+        # GET /api/closer/profile/export?email=<addr>          (downloadable JSON bundle)
+        from urllib.parse import urlparse as _up_cp, parse_qs as _pq_cp
+        if self.path.startswith("/api/closer/profile"):
+            try:
+                from closer_profiles import load, email_hash, email_for_rep, export_bundle
+                qs = _pq_cp(_up_cp(self.path).query)
+                email = (qs.get("email") or [""])[0].strip().lower()
+                if not email:
+                    bp = (qs.get("bullpen") or [""])[0]
+                    rep = (qs.get("rep") or [""])[0]
+                    if bp and rep:
+                        email = email_for_rep(bp, rep) or ""
+                if not email:
+                    self._send_json(404, {"error": "no profile — closer hasn't shared an email yet"})
+                    return
+                if self.path.startswith("/api/closer/profile/export"):
+                    bundle = export_bundle(email, host_id=_host_label_str())
+                    if not bundle:
+                        self._send_json(404, {"error": "no profile to export"})
+                        return
+                    body = json.dumps(bundle, indent=2).encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Disposition",
+                                       f'attachment; filename="bullpenlm-identity-{email_hash(email)[:8]}.json"')
+                    self.send_header("Content-Length", str(len(body)))
+                    self._cors(); self.end_headers()
+                    self.wfile.write(body)
+                    return
+                profile = load(email_hash(email))
+                if not profile:
+                    self._send_json(404, {"error": "no profile for that email"})
+                    return
+                # Redact: never return raw hashes in API
+                self._send_json(200, {
+                    "email_hash": email_hash(email),
+                    "display_name": profile.get("display_name"),
+                    "rep_slugs": profile.get("rep_slugs", []),
+                    "first_seen_at": profile.get("first_seen_at"),
+                    "certs": {k: {"at": v.get("at"), "bullpen": v.get("bullpen"),
+                                  "carried_from": v.get("imported_from")}
+                              for k, v in (profile.get("certs") or {}).items()},
+                })
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
@@ -4839,6 +4900,49 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         # ── Team-layer POSTs: claim + release (parse JSON inline since this
         #    block runs before the shared `req = json.loads(raw)` line below) ──
+        # ── Closer: link an email to a (bullpen, rep) slug ────────────
+        # POST /api/closer/link-email  {bullpen, rep, email, display_name?}
+        if self.path == "/api/closer/link-email":
+            try:
+                from closer_profiles import ensure, link_rep_to_email
+                req = json.loads(raw) if raw else {}
+                bp = (req.get("bullpen") or "").strip()
+                rep = (req.get("rep") or "").strip()
+                email = (req.get("email") or "").strip().lower()
+                display_name = (req.get("display_name") or "").strip() or rep
+                if not (bp and rep and email and "@" in email):
+                    self._send_json(400, {"error": "bullpen, rep, and a valid email are required"})
+                    return
+                link_rep_to_email(bp, rep, email)
+                profile = ensure(email, display_name=display_name, rep_slug=rep)
+                self._send_json(200, {
+                    "ok": True,
+                    "display_name": profile.get("display_name"),
+                    "carried_certs": list((profile.get("certs") or {}).keys()),
+                })
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Closer: import a portable identity bundle ─────────────────
+        # POST /api/closer/import-bundle  {email, bundle}
+        if self.path == "/api/closer/import-bundle":
+            try:
+                from closer_profiles import import_bundle
+                req = json.loads(raw) if raw else {}
+                email = (req.get("email") or "").strip().lower()
+                bundle = req.get("bundle") or {}
+                profile = import_bundle(bundle, email=email)
+                self._send_json(200, {
+                    "ok": True,
+                    "carried_certs": list((profile.get("certs") or {}).keys()),
+                })
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Ollama: kick off a background model pull ──
         # POST /api/ollama/pull   body: {model: "gemma2:9b"}
         if self.path == "/api/ollama/pull":
