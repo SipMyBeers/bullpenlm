@@ -1,86 +1,153 @@
 /**
  * Closer gate banner — drop-in for any floor page.
  *
- * Polls /api/b/<bullpen>/gate/<rep> on load + every 60s. If the gate
- * is not green, mounts a sticky banner at the top of <body> showing
- * what's missing + a "Complete onboarding" CTA. Hides itself once the
- * gate is green.
+ * Renders a SINGLE-LINE strip at the top of <body> when the closer
+ * isn't yet cleared for paid work. Tap to expand. Tone is friendly,
+ * not alarmist — the practice product is fully usable behind the
+ * gate, so the banner is a soft "unlock more" prompt, not a "LIVE
+ * WORK LOCKED" wall.
  *
  * Usage:
  *   <script src="/app/gate-banner.js" defer></script>
  *
- * The script auto-discovers `?b=<bullpen>&rep=<rep>` from window.location
- * (the floor pages already pass these). If either is missing, the banner
- * stays dormant.
+ * Auto-discovers `?b=<bullpen>&rep=<rep>` from window.location.
  *
- * Operators viewing their own floor (rep === 'self' or rep matches
- * operator entity) see no banner — the gate is a closer-side concern.
+ * Hidden for:
+ *   - localhost (operator practicing on their own machine)
+ *   - operator-reserved rep names ('self', 'operator', 'founder',
+ *     'host', 'beers')
+ *   - newcomer grace window — first 90 seconds on the floor, banner
+ *     stays hidden so the very first impression isn't a yellow strip
+ *     telling them what's broken
+ *
+ * Banner state persists across pages via localStorage key
+ * `gate-banner-collapsed` — collapsed (the default) becomes their
+ * preference unless they explicitly open it.
  */
 (function(){
   const url = new URL(window.location.href);
   const BULLPEN = url.searchParams.get('b');
   const REP = url.searchParams.get('rep');
 
-  // Localhost-skip — the operator on their own machine doesn't need a
-  // gate banner. The gate still fires on team.claim and upload-call;
-  // we just don't nag them visually while they're practicing against
-  // AI buyers in their own bullpen.
   const isLocalhost = ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(window.location.hostname);
-
-  // Operator-reserved rep names — the operator is never a "closer" of
-  // their own bullpen for live-work purposes.
   const operatorReps = new Set(['self', 'operator', 'founder', 'host', 'beers']);
 
   if (!BULLPEN || !REP) return;
   if (isLocalhost) return;
   if (operatorReps.has((REP || '').toLowerCase())) return;
 
+  // Newcomer grace: keep the banner hidden during the first 90s on the
+  // floor so a brand-new friend doesn't see a yellow nag the moment
+  // they land. They'll see it the next time they navigate.
+  const GRACE_KEY = `gate-grace-${BULLPEN}-${REP}`;
+  const GRACE_MS = 90 * 1000;
+  try {
+    let graceStart = parseInt(localStorage.getItem(GRACE_KEY) || '0', 10);
+    if (!graceStart) {
+      graceStart = Date.now();
+      localStorage.setItem(GRACE_KEY, String(graceStart));
+    }
+    if (Date.now() - graceStart < GRACE_MS) return;
+  } catch (e) { /* localStorage blocked — fall through */ }
+
   const labels = {
-    operator_entity_not_set_up: 'Operator entity not set up',
-    closer_disclosure_not_accepted: 'Disclosure not accepted',
-    closer_agreement_not_signed: 'Closer Agreement not signed',
-    closer_agreement_out_of_date: 'Closer Agreement out of date (template changed)',
-    w9_not_on_file: 'W-9 not submitted',
-    drill_certification_not_cleared: 'Drill certification not cleared (pass a Tier-3+ drill)',
-    jurisdiction_check_failed: 'Jurisdiction compliance check failed',
-    jurisdiction_check_unavailable: 'Jurisdiction check unavailable',
+    operator_entity_not_set_up: 'Operator hasn\'t finished entity setup',
+    closer_disclosure_not_accepted: 'Disclosure acknowledgment',
+    closer_agreement_not_signed: 'Closer Agreement',
+    closer_agreement_out_of_date: 'Closer Agreement (refresh — template updated)',
+    w9_not_on_file: 'W-9 tax form',
+    drill_certification_not_cleared: 'One Tier-3+ drill pass',
+    jurisdiction_check_failed: 'Jurisdiction check',
+    jurisdiction_check_unavailable: 'Jurisdiction check (unavailable)',
     dnc_scrub_failed: 'DNC scrub on this prospect',
-    dnc_check_unavailable: 'DNC check unavailable',
-    entity_check_failed: 'Entity check failed',
-    gate_unavailable: 'Gate module unavailable',
+    dnc_check_unavailable: 'DNC check (unavailable)',
+    entity_check_failed: 'Entity check',
+    gate_unavailable: 'Compliance check',
   };
+
+  const COLLAPSE_KEY = 'gate-banner-expanded';
+  function isExpanded(){
+    try { return localStorage.getItem(COLLAPSE_KEY) === '1'; } catch(e){ return false; }
+  }
+  function setExpanded(v){
+    try { localStorage.setItem(COLLAPSE_KEY, v ? '1' : '0'); } catch(e){}
+  }
 
   function mountBanner(missing){
     let banner = document.getElementById('bullpenlm-gate-banner');
     if(!banner){
       banner = document.createElement('div');
       banner.id = 'bullpenlm-gate-banner';
-      banner.style.cssText = 'position:sticky;top:0;z-index:99;background:rgba(248,113,113,0.10);border-bottom:1px solid rgba(248,113,113,0.40);padding:10px 18px;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.04em;color:#fda4a4;display:flex;align-items:center;gap:14px;flex-wrap:wrap';
+      // Single thin line, no border-bottom slab. Soft amber not red.
+      banner.style.cssText = [
+        'position:sticky', 'top:0', 'z-index:99',
+        'background:rgba(251,191,36,0.06)',
+        'border-bottom:1px solid rgba(251,191,36,0.18)',
+        'font-family:"JetBrains Mono",ui-monospace,Menlo,monospace',
+        'font-size:11px', 'letter-spacing:.04em',
+        'color:#fbbf24',
+      ].join(';');
       document.body.insertBefore(banner, document.body.firstChild);
     }
     while(banner.firstChild) banner.removeChild(banner.firstChild);
 
-    const lock = document.createElement('span');
-    lock.textContent = '⛔';
-    lock.style.fontSize = '14px';
-    banner.appendChild(lock);
+    // ── Always-visible strip (single line) ────────────────────────
+    const strip = document.createElement('div');
+    strip.style.cssText = 'padding:7px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none';
+    strip.addEventListener('click', () => { setExpanded(!isExpanded()); renderDetail(); });
+
+    const dot = document.createElement('span');
+    dot.style.cssText = 'width:6px;height:6px;background:#fbbf24;border-radius:50%;flex-shrink:0';
+    strip.appendChild(dot);
 
     const msg = document.createElement('span');
-    msg.style.color = '#fda4a4';
-    msg.textContent = 'Live work locked — ' + (missing.length === 1 ? '1 item missing:' : `${missing.length} items missing:`);
-    banner.appendChild(msg);
+    msg.style.cssText = 'flex:1;min-width:0;color:#fbbf24;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    const itemCount = missing.length;
+    msg.textContent = `Practice is free · ${itemCount} item${itemCount===1?'':'s'} to unlock paid work`;
+    strip.appendChild(msg);
 
-    const list = document.createElement('span');
-    list.style.color = '#a89a87';
-    const labelled = missing.map(m => labels[m] || m).slice(0, 3);
-    list.textContent = labelled.join(' · ') + (missing.length > 3 ? ` (+${missing.length - 3} more)` : '');
-    banner.appendChild(list);
+    const chev = document.createElement('span');
+    chev.id = 'gate-banner-chev';
+    chev.style.cssText = 'font-size:10px;color:#a89a87;flex-shrink:0';
+    chev.textContent = isExpanded() ? '▴' : '▾';
+    strip.appendChild(chev);
 
-    const cta = document.createElement('a');
-    cta.href = `/app/onboard/?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`;
-    cta.textContent = 'Complete onboarding →';
-    cta.style.cssText = 'margin-left:auto;background:#34d399;color:#0a1a14;padding:5px 12px;border-radius:5px;text-decoration:none;font-weight:700;letter-spacing:.10em;text-transform:uppercase;font-size:10px';
-    banner.appendChild(cta);
+    banner.appendChild(strip);
+
+    // ── Detail panel (expanded) ────────────────────────────────────
+    const detail = document.createElement('div');
+    detail.id = 'gate-banner-detail';
+    detail.style.cssText = 'padding:0 14px 12px;display:none;flex-direction:column;gap:6px';
+    banner.appendChild(detail);
+
+    function renderDetail(){
+      chev.textContent = isExpanded() ? '▴' : '▾';
+      detail.style.display = isExpanded() ? 'flex' : 'none';
+      if(!isExpanded()) return;
+      while(detail.firstChild) detail.removeChild(detail.firstChild);
+      const intro = document.createElement('div');
+      intro.style.cssText = 'color:#a89a87;font-size:11px;line-height:1.45;margin-bottom:4px';
+      intro.textContent = 'Drill, voice-chat, listen in, and post marketing are all open. To claim real prospects and earn commissions, knock these out:';
+      detail.appendChild(intro);
+      for(const m of missing){
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;color:#f5e8d8';
+        const check = document.createElement('span');
+        check.style.cssText = 'color:#a89a87';
+        check.textContent = '○';
+        row.appendChild(check);
+        const text = document.createElement('span');
+        text.textContent = labels[m] || m;
+        row.appendChild(text);
+        detail.appendChild(row);
+      }
+      const cta = document.createElement('a');
+      cta.href = `/app/onboard/?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`;
+      cta.textContent = 'Get cleared →';
+      cta.style.cssText = 'margin-top:8px;align-self:flex-start;background:#fbbf24;color:#0a1a14;padding:7px 14px;border-radius:5px;text-decoration:none;font-weight:700;letter-spacing:.10em;text-transform:uppercase;font-size:10px';
+      detail.appendChild(cta);
+    }
+    renderDetail();
   }
 
   function dismount(){
@@ -98,19 +165,13 @@
       } else {
         mountBanner(d.missing || []);
       }
-    } catch (e) {
-      // Network blip — leave existing banner state alone.
-    }
+    } catch (e) { /* network blip — leave existing banner alone */ }
   }
 
   check();
-  // Slow poll as a fallback; SSE handles the fast path.
   setInterval(check, 60000);
 
-  // Subscribe to the bullpen audit stream — recheck the gate whenever any
-  // event that could flip our status fires. Far less load than polling and
-  // updates instantly when the operator signs an agreement on the closer's
-  // behalf or the closer passes a cert-tier drill.
+  // SSE — recheck when any gate-affecting event fires
   const GATE_EVENT_KINDS = new Set([
     'doc_signed', 'doc_rendered', 'dual_sign',
     'w9_submitted',
@@ -129,19 +190,15 @@
         const event = JSON.parse(ev.data);
         const kind = event && event.kind;
         if(kind && GATE_EVENT_KINDS.has(kind)){
-          // Small debounce so a burst of related events triggers one check
           clearTimeout(window.__bullpenlm_gate_recheck);
           window.__bullpenlm_gate_recheck = setTimeout(check, 400);
         }
       } catch(e){}
     };
-    es.onerror = () => { /* let the slow poll cover it */ };
-  } catch(e){
-    // Older browser / no SSE — slow poll is enough.
-  }
+    es.onerror = () => { /* slow poll fallback */ };
+  } catch(e){}
 
-  // Also re-check after any state-changing POST from the same page (e.g.
-  // submitting the W-9 form from /app/onboard/). Hooks into global fetch.
+  // Re-check after gate-affecting POSTs from the page itself
   const origFetch = window.fetch;
   window.fetch = async function(...args){
     const res = await origFetch.apply(this, args);

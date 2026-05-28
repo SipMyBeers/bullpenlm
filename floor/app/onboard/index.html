@@ -390,10 +390,54 @@ function wireExits(){
   set('done-claim',     `/app/contact.html${q}`);
 }
 
+// Translate the live /gate/<rep> missing-keys list into the local step
+// number. First incomplete step wins. If everything's already done we
+// jump straight to 'done'.
+function deriveStepFromGate(missing){
+  const set = new Set(missing || []);
+  if(set.has('closer_disclosure_not_accepted')) return 1;
+  // Agreement may be missing OR out-of-date — both go to step 2
+  if(set.has('closer_agreement_not_signed') || set.has('closer_agreement_out_of_date')) return 2;
+  if(set.has('w9_not_on_file')) return 3;
+  // DNC is signed via the legal-sign endpoint; the gate doesn't always
+  // surface a key for it. Treat as done if disclosure+agreement+w9 are
+  // already cleared and only drill cert remains.
+  if(set.has('drill_certification_not_cleared')) return 5;
+  if(set.size === 0) return 'done';
+  return 4;  // catch-all → DNC step (low-risk)
+}
+
+async function loadStepLoaders(stepNum){
+  // Each step has a loader that fetches its rendered content. Fire the
+  // loader for the step we're showing PLUS any earlier ones that have
+  // form state we want pre-filled.
+  if(stepNum >= 1) loadDisclosure();
+  if(stepNum >= 2) loadAgreement();
+  if(stepNum === 5 || stepNum === 'done') loadGateStatus();
+}
+
 async function init(){
   renderStepper();
-  loadDisclosure();
   wireExits();
+  // Fetch current gate state — if friend's already past step 1, skip
+  // ahead. This is what fixes "I clicked through and got sent back to
+  // the beginning" — the page was always re-mounting at step 1.
+  try {
+    const gr = await api('GET', `/api/b/${BULLPEN}/gate/${REP}`);
+    if(gr.ok){
+      const next = deriveStepFromGate(gr.data && gr.data.missing);
+      if(next === 'done'){
+        showStep('done');
+        return;
+      }
+      showStep(next);
+      loadStepLoaders(next);
+      return;
+    }
+  } catch(e){ /* fall through to step 1 */ }
+  // Default: show step 1
+  showStep(1);
+  loadDisclosure();
 }
 init();
 </script>

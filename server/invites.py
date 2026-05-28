@@ -285,7 +285,12 @@ def build_magic_link(
     parts = [f"b={bullpen}", f"rep={rep}"]
     if code:
         parts.append(f"code={code}")
-    return f"{base}/app/onboard/?" + "&".join(parts)
+    # Magic-link lands on /quickstart/ — a single screen that asks for a
+    # display name and drops the friend on the spawn screen. The heavy
+    # /app/onboard/ legal-clearance flow only triggers when they try to
+    # claim a real prospect or cash out, so the first impression isn't a
+    # 5-step W-9 wizard.
+    return f"{base}/app/quickstart/?" + "&".join(parts)
 
 
 # ── CLI for the host to create an invite from the terminal ────────────────

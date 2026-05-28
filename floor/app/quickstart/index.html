@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Welcome · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
+  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;
+  --gold:#fbbf24;--gold-dim:#92400e;
+  --danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;display:flex;flex-direction:column}
+header{padding:18px 22px;display:flex;align-items:center;gap:14px}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:30px 22px}
+.card{max-width:520px;width:100%;text-align:center}
+.welcome-line{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.welcome-line .pulse{width:6px;height:6px;background:var(--gold);border-radius:50%;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+h1{font-family:var(--display);font-size:62px;letter-spacing:-.025em;text-transform:uppercase;margin:0 0 14px;line-height:.95}
+.sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:17px;margin:0 0 38px;line-height:1.5}
+.sub strong{color:var(--text);font-style:normal;font-weight:600}
+
+.field{display:flex;flex-direction:column;gap:8px;margin-bottom:24px;text-align:left}
+.field label{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.field input{padding:14px 16px;background:rgba(26,18,8,0.65);border:1px solid rgba(245,232,216,0.15);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:18px;font-weight:600;letter-spacing:-.005em}
+.field input:focus{outline:none;border-color:var(--accent);background:rgba(52,211,153,0.04)}
+
+.go{display:block;width:100%;padding:18px;font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;background:var(--accent);color:#0a1a14;border:none;border-radius:10px;cursor:pointer;transition:all .12s}
+.go:hover{background:var(--accent-2);transform:translateY(-1px)}
+.go:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.fineprint{margin-top:24px;font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.04em;line-height:1.6}
+.fineprint .lock-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.fineprint .lock-row span{display:inline-flex;align-items:center;gap:5px}
+.fineprint a{color:var(--muted);text-decoration:underline;text-decoration-color:rgba(245,232,216,0.20)}
+.fineprint a:hover{color:var(--text)}
+
+.err{margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--danger);letter-spacing:.04em}
+
+@media(max-width:540px){
+  h1{font-size:48px}
+  .sub{font-size:15px}
+  .field input{font-size:16px}
+}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+</header>
+<main>
+  <div class="card">
+    <div class="welcome-line"><span class="pulse"></span> <span id="invited-line">You were invited to a bullpen</span></div>
+    <h1 id="bullpen-name">BULLPENLM</h1>
+    <p class="sub">Practice cold calls against AI buyers. Drill voicemails. Listen in on teammates. <strong>It's free to play and you'll learn fast.</strong></p>
+
+    <form id="quickform" onsubmit="event.preventDefault(); enterFloor();">
+      <div class="field">
+        <label for="display-name">Pick a display name</label>
+        <input id="display-name" type="text" autocomplete="off" autocapitalize="words"
+               placeholder="What should the floor call you?" maxlength="40" required>
+      </div>
+      <button type="submit" class="go" id="go-btn">Hit the floor →</button>
+      <div id="err" class="err"></div>
+    </form>
+
+    <div class="fineprint">
+      <div class="lock-row">
+        <span>✓ Drill freely</span>
+        <span>✓ Voice mode</span>
+        <span>✓ Listen in</span>
+      </div>
+      <div>Claiming real prospects + cashing out commissions needs a quick legal step — you'll see it the first time you try.</div>
+    </div>
+  </div>
+</main>
+<script>
+const URLP = new URLSearchParams(window.location.search);
+const BULLPEN = URLP.get('b') || 'default';
+const REP_FROM_URL = URLP.get('rep') || '';
+const CODE = URLP.get('code') || '';
+
+document.getElementById('bullpen-name').textContent = BULLPEN.toUpperCase();
+if (REP_FROM_URL) {
+  document.getElementById('display-name').value = REP_FROM_URL.replace(/-/g, ' ');
+}
+
+async function redeemIfNeeded(){
+  if(!CODE) return true;  // No code = already past redemption
+  try {
+    const r = await fetch('/api/invite/redeem', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({code: CODE}),
+    });
+    const d = await r.json();
+    if(!r.ok && d.error && d.error !== 'already_redeemed' && d.error !== 'invite_already_used'){
+      showErr(`Invite issue: ${d.error}`);
+      return false;
+    }
+    return true;
+  } catch(e){
+    // Network blip — proceed anyway, the floor pages still respect b= + rep=
+    return true;
+  }
+}
+
+async function enterFloor(){
+  const btn = document.getElementById('go-btn');
+  const inp = document.getElementById('display-name');
+  const raw = inp.value.trim();
+  if(!raw){ showErr('Pick a name to get started'); return; }
+  const slug = raw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if(!slug){ showErr('Use letters or numbers'); return; }
+  btn.disabled = true;
+  btn.textContent = 'Spawning…';
+  try { localStorage.setItem('bullpen-rep', slug); } catch(e){}
+  await redeemIfNeeded();
+  // Forward to the spawn screen — they see the world's open quests and
+  // pick what looks fun.
+  window.location.href = `/app/spawn.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(slug)}`;
+}
+
+function showErr(msg){
+  const e = document.getElementById('err');
+  e.textContent = msg;
+  document.getElementById('go-btn').disabled = false;
+  document.getElementById('go-btn').textContent = 'Hit the floor →';
+}
+</script>
+</body>
+</html>
