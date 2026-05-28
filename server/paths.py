@@ -93,12 +93,22 @@ _SEED_DIRS: tuple[tuple[str, bool], ...] = (
 )
 
 
-_DEBUG = os.environ.get("BULLPENLM_DEBUG_PATHS") == "1" or _is_frozen()
-
-
 def _log(msg: str) -> None:
-    if _DEBUG:
-        print(f"[paths] {msg}", file=sys.stderr, flush=True)
+    """Debug breadcrumb used to diagnose bundled-launch issues.
+
+    Off by default. To enable, set BULLPENLM_BOOTLOG=/path/to/log; lines
+    will be appended there. File-based because PyInstaller's bootloader
+    buffers stdout/stderr until process exit which made a previous
+    silent-hang impossible to diagnose from stdout alone.
+    """
+    bootlog = os.environ.get("BULLPENLM_BOOTLOG")
+    if not bootlog:
+        return
+    try:
+        with open(bootlog, "a") as f:
+            f.write(f"[{os.getpid()}] [paths] {msg}\n")
+    except Exception:
+        pass
 
 
 def _seed_bundle_assets() -> None:

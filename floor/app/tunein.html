@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tune in · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="/app/gate-banner.js" defer></script>
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
+  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;
+  --gold:#fbbf24;--gold-dim:#92400e;
+  --danger:#f87171;--purple:#a78bfa;
+  --live:#ef4444;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}
+.crumb .here{color:var(--live)}
+
+.wrap{max-width:980px;margin:0 auto;padding:30px 22px 80px}
+.hero{margin-bottom:30px}
+.hero .you-spawned{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--live);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.hero .you-spawned .pulse{width:8px;height:8px;background:var(--live);border-radius:50%;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.hero h1{font-family:var(--display);font-size:50px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 8px;line-height:1}
+.hero .sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;max-width:780px;margin:0}
+
+.calls-list{display:flex;flex-direction:column;gap:12px;margin:24px 0}
+.call-card{background:rgba(26,18,8,0.65);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:18px 22px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+.call-card.playing{border-color:var(--live);background:rgba(239,68,68,0.05)}
+.call-card .info{display:flex;flex-direction:column;gap:5px;min-width:0}
+.call-card .pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:5px;border:1px solid rgba(245,232,216,0.18);color:var(--muted)}
+.pill.live{color:var(--live);border-color:var(--live);background:rgba(239,68,68,0.06)}
+.pill.kind-drill{color:var(--accent-2);border-color:rgba(52,211,153,0.40)}
+.pill.kind-real{color:var(--gold);border-color:rgba(251,191,36,0.40)}
+.call-card .title{font-family:var(--display);font-size:24px;letter-spacing:-.01em;text-transform:uppercase;line-height:1.05;color:var(--text)}
+.call-card .meta{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em}
+.call-card .actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.btn-listen{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:10px 18px;border-radius:7px;border:1px solid var(--live);background:rgba(239,68,68,0.10);color:var(--live);cursor:pointer;transition:all .12s}
+.btn-listen:hover{background:var(--live);color:#0a1a14}
+.btn-stop{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:7px 14px;border-radius:6px;border:1px solid rgba(245,232,216,0.20);background:transparent;color:var(--muted);cursor:pointer}
+.btn-stop:hover{color:var(--text);border-color:var(--text)}
+
+.empty-stage{text-align:center;padding:80px 20px;background:rgba(0,0,0,0.20);border:1px dashed rgba(245,232,216,0.15);border-radius:14px}
+.empty-stage .emoji{font-size:48px;margin-bottom:12px}
+.empty-stage h2{font-family:var(--display);font-size:28px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 8px;color:var(--text)}
+.empty-stage p{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:0;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.55}
+
+.player{margin-top:14px;padding:14px;background:rgba(0,0,0,0.30);border-radius:9px;border:1px solid rgba(239,68,68,0.30)}
+.player .status{font-family:var(--mono);font-size:11px;color:var(--accent-2);letter-spacing:.06em;margin-bottom:6px}
+
+@media(max-width:540px){
+  .hero h1{font-size:34px}
+  .call-card{grid-template-columns:1fr;gap:10px}
+  .call-card .actions{flex-direction:row;align-items:center}
+}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <div class="crumb">
+    <a href="/app/spawn.html">Floor</a> <span> / </span>
+    <span class="here">🔴 Tune in</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="you-spawned"><span class="pulse"></span> <span>Live floor radio</span></div>
+    <h1>Tune in</h1>
+    <p class="sub" id="hero-sub">Every active call on the floor, streamed about 4-6 seconds behind real-time. Click any card to listen. One stream at a time.</p>
+  </div>
+  <div id="calls-area"></div>
+</div>
+
+<script>
+const URLP = new URL(window.location.href);
+const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+const POLL_MS = 4000;          // active-calls list refresh
+const CHUNK_POLL_MS = 1500;    // per-call new-chunks refresh
+
+function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else if(k==='href')n.setAttribute('href',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+
+async function fetchActive(){
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/live/active`);
+    if(!r.ok) return [];
+    const d = await r.json();
+    return d.calls || [];
+  } catch(e){ return []; }
+}
+
+let currentCallId = null;
+let currentPlayer = null;
+
+async function render(){
+  const calls = await fetchActive();
+  const area = document.getElementById('calls-area');
+  if(!calls.length){
+    if(currentCallId){ stopListening(); }
+    clear(area);
+    const stage = el('div', {class:'empty-stage'});
+    stage.appendChild(el('div', {class:'emoji', text:'🤫'}));
+    stage.appendChild(el('h2', {text:'Quiet floor'}));
+    stage.appendChild(el('p', {text:'Nobody on a call right now. As soon as a teammate picks up the phone or starts a drill, they\'ll show up here and you can listen in.'}));
+    area.appendChild(stage);
+    return;
+  }
+  const ids = new Set(calls.map(c => c.call_id));
+  if(currentCallId && !ids.has(currentCallId)){ stopListening(); }
+  clear(area);
+  const list = el('div', {class:'calls-list'});
+  for(const c of calls){ list.appendChild(renderCard(c)); }
+  area.appendChild(list);
+}
+
+function renderCard(c){
+  const card = el('div', {class:'call-card' + (c.call_id === currentCallId ? ' playing' : '')});
+  const info = el('div', {class:'info'});
+  const pills = el('div', {class:'pills'});
+  pills.appendChild(el('span', {class:'pill live', text:'🔴 LIVE'}));
+  pills.appendChild(el('span', {class:'pill kind-' + (c.kind || 'drill'), text: c.kind || 'drill'}));
+  if(c.rep)   pills.appendChild(el('span', {class:'pill', text: c.rep}));
+  info.appendChild(pills);
+  info.appendChild(el('div', {class:'title', text: c.title || c.buyer || 'Live call'}));
+  const startedSec = c.started_at ? Math.max(0, Math.floor((Date.now() - new Date(c.started_at).getTime())/1000)) : 0;
+  info.appendChild(el('div', {class:'meta', text: `${Math.floor(startedSec/60)}m ${startedSec%60}s in · ${(c.latest_seq+1) || 0} chunks recorded`}));
+  card.appendChild(info);
+
+  const actions = el('div', {class:'actions'});
+  if(c.call_id === currentCallId){
+    actions.appendChild(el('button', {class:'btn-stop', onClick: () => stopListening(), text:'■ Stop'}));
+    actions.appendChild(el('span', {style:'font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-2)', text:'🎧 Listening'}));
+  } else {
+    actions.appendChild(el('button', {class:'btn-listen', onClick: () => startListening(c.call_id), text:'🎧 Listen in'}));
+  }
+  card.appendChild(actions);
+
+  if(c.call_id === currentCallId){
+    const player = el('div', {class:'player'});
+    player.appendChild(el('div', {class:'status', id:`status-${c.call_id}`, text:'Buffering…'}));
+    card.appendChild(player);
+  }
+  return card;
+}
+
+function startListening(callId){
+  if(currentCallId){ stopListening(); }
+  currentCallId = callId;
+  const state = {
+    audio: new Audio(),
+    queue: [],
+    lastSeq: -1,
+    stopped: false,
+    playing: false,
+  };
+  state.audio.preload = 'auto';
+  state.audio.addEventListener('ended', () => { state.playing = false; playNext(state); });
+  state.audio.addEventListener('error', () => { state.playing = false; setStatus(state, 'audio error — skipping'); playNext(state); });
+  currentPlayer = state;
+  pollChunks(state);
+  render();
+}
+
+function stopListening(){
+  if(currentPlayer){
+    currentPlayer.stopped = true;
+    try { currentPlayer.audio.pause(); } catch(e){}
+    try { currentPlayer.audio.removeAttribute('src'); currentPlayer.audio.load(); } catch(e){}
+  }
+  currentPlayer = null;
+  currentCallId = null;
+  render();
+}
+
+function setStatus(state, msg){
+  const elx = document.getElementById(`status-${currentCallId}`);
+  if(elx) elx.textContent = msg;
+}
+
+async function pollChunks(state){
+  if(state.stopped) return;
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/live/${currentCallId}/chunks?since=${state.lastSeq}`);
+    if(r.ok){
+      const d = await r.json();
+      for(const c of d.chunks || []){
+        state.queue.push(c.seq);
+        if(c.seq > state.lastSeq) state.lastSeq = c.seq;
+      }
+      setStatus(state, `${state.queue.length} chunks queued · seq ${state.lastSeq}`);
+      if(!state.playing && state.queue.length) playNext(state);
+    }
+  } catch(e){ setStatus(state, 'poll error · retrying'); }
+  setTimeout(() => pollChunks(state), CHUNK_POLL_MS);
+}
+
+function playNext(state){
+  if(state.stopped) return;
+  if(!state.queue.length){
+    setStatus(state, 'Waiting for next chunk…');
+    state.playing = false;
+    return;
+  }
+  const seq = state.queue.shift();
+  state.audio.src = `/api/b/${BULLPEN}/live/${currentCallId}/chunk/${seq}.webm`;
+  state.playing = true;
+  state.audio.play().then(() => {
+    setStatus(state, `▶ Playing chunk #${seq} (${state.queue.length} buffered)`);
+  }).catch(err => {
+    state.playing = false;
+    setStatus(state, `playback blocked — click 🎧 again to grant audio permission (${err.message})`);
+  });
+}
+
+render();
+setInterval(render, POLL_MS);
+</script>
+</body>
+</html>

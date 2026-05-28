@@ -208,7 +208,85 @@ async function pickUp(){
   HISTORY_ID = d.history_id;
   if(d.buyer_text) appendTurn(getBuyerLabel(), d.buyer_text);
   if(d.audio_url){ await playAudio(d.audio_url); }
+  // Kick off the listen-in broadcast bridge — drills are always live.
+  startBroadcast().catch((e) => console.warn('[broadcast] start failed:', e));
   setState('press_talk');
+}
+
+// ── Listen-in broadcast ─────────────────────────────────────────────
+// A second, continuous MediaRecorder loop that emits ~3s self-contained
+// WebM chunks and POSTs them to /api/b/<slug>/live/<id>/chunk. Listeners
+// on /app/tunein.html poll those chunks and play them back ~4-6s behind
+// real-time. End-to-end design lives in server/live_audio.py.
+let broadcastState = null;  // {stream, recorder, callId, seq, stopRequested}
+const BROADCAST_CHUNK_MS = 3000;
+
+async function startBroadcast(){
+  if(broadcastState) return;
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  } catch(e){
+    // Mic was already requested by startRecording / will be requested
+    // there. Swallow — broadcast is best-effort.
+    return;
+  }
+  const callId = `drill-${REP}-${Date.now()}`;
+  // Register the call so listeners can discover it
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/live/start`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        call_id: callId,
+        rep: REP,
+        kind: 'drill',
+        buyer: CURRENT_BUYER,
+        title: `${REP} → ${(buyerCard && buyerCard.company) || CURRENT_BUYER}`,
+      }),
+    });
+    if(!r.ok){ stream.getTracks().forEach(t => t.stop()); return; }
+  } catch(e){ stream.getTracks().forEach(t => t.stop()); return; }
+  broadcastState = { stream, callId, seq: 0, stopRequested: false, recorder: null };
+  loopBroadcastChunk();  // fire-and-forget; restarts itself
+}
+
+function loopBroadcastChunk(){
+  const s = broadcastState;
+  if(!s || s.stopRequested) return;
+  let mime = 'audio/webm;codecs=opus';
+  if (!MediaRecorder.isTypeSupported(mime)) mime = 'audio/mp4';
+  if (!MediaRecorder.isTypeSupported(mime)) mime = '';
+  const chunks = [];
+  const rec = new MediaRecorder(s.stream, mime ? {mimeType: mime} : {});
+  s.recorder = rec;
+  rec.ondataavailable = (e) => { if(e.data && e.data.size > 0) chunks.push(e.data); };
+  rec.onstop = async () => {
+    const blob = new Blob(chunks, {type: rec.mimeType || 'audio/webm'});
+    const mySeq = s.seq++;
+    // Self-contained ~3s WebM. POST raw bytes; ignore failures so a
+    // momentary network blip doesn't kill the broadcast loop.
+    try {
+      const buf = await blob.arrayBuffer();
+      await fetch(`/api/b/${BULLPEN}/live/${s.callId}/chunk?seq=${mySeq}`, {
+        method:'POST', headers:{'Content-Type':'audio/webm'}, body: buf,
+      });
+    } catch(e){ console.warn('[broadcast] chunk send failed:', e); }
+    if(!s.stopRequested) loopBroadcastChunk();
+  };
+  rec.start();
+  setTimeout(() => { try { if(rec.state === 'recording') rec.stop(); } catch(e){} }, BROADCAST_CHUNK_MS);
+}
+
+async function stopBroadcast(){
+  const s = broadcastState;
+  if(!s) return;
+  s.stopRequested = true;
+  try { if(s.recorder && s.recorder.state === 'recording') s.recorder.stop(); } catch(e){}
+  try { s.stream.getTracks().forEach(t => t.stop()); } catch(e){}
+  try {
+    await fetch(`/api/b/${BULLPEN}/live/${s.callId}/end`, { method:'POST' });
+  } catch(e){}
+  broadcastState = null;
 }
 
 async function startRecording(){
@@ -273,7 +351,16 @@ btn.addEventListener('mouseup', () => { if(pressActive){ pressActive = false; st
 btn.addEventListener('touchend', () => { if(pressActive){ pressActive = false; stopRecording(); } });
 
 document.getElementById('reset-btn').addEventListener('click', () => {
-  HISTORY_ID = null; clearTranscript(); setState('idle');
+  HISTORY_ID = null; clearTranscript(); stopBroadcast(); setState('idle');
+});
+
+// End the broadcast cleanly when the closer closes the tab.
+window.addEventListener('beforeunload', () => {
+  if(broadcastState){
+    try {
+      navigator.sendBeacon(`/api/b/${BULLPEN}/live/${broadcastState.callId}/end`, new Blob([]));
+    } catch(e){}
+  }
 });
 
 setState('idle');

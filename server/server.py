@@ -41,7 +41,24 @@ sys.path.insert(0, str(_CODE_ROOT))
 sys.path.insert(0, str(_CODE_ROOT / "personas"))
 sys.path.insert(0, str(_CODE_ROOT / "server"))
 
+def _bootlog(msg):
+    # No-op unless explicitly requested. PyInstaller's bootloader buffers
+    # stdout/stderr until the script exits, so a file-based breadcrumb log
+    # is how we'd debug a wedged bundled launch. Enable via env:
+    #   BULLPENLM_BOOTLOG=/tmp/bullpenlm-bootlog.txt python3 server.py
+    import os as _os
+    path = _os.environ.get("BULLPENLM_BOOTLOG")
+    if not path:
+        return
+    try:
+        with open(path, "a") as _f:
+            _f.write(f"[{_os.getpid()}] [server.py] {msg}\n")
+    except Exception:
+        pass
+
+_bootlog("about to import paths")
 from paths import ASSETS_DIR, DATA_DIR  # noqa: E402
+_bootlog(f"paths imported. assets={ASSETS_DIR} data={DATA_DIR}")
 _REPO = DATA_DIR  # legacy alias — keeps every existing _REPO / "x" working
 
 try:
@@ -2794,6 +2811,53 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Phase 0.5 firewall — operator setup + closer onboarding GET routes
         # ══════════════════════════════════════════════════════════════════
 
+        # ── Listen-in: live-audio GETs ────────────────────────────────
+        # GET /api/b/<slug>/live/active
+        # GET /api/b/<slug>/live/<call_id>/chunks?since=N
+        # GET /api/b/<slug>/live/<call_id>/chunk/<n>.webm
+        m_live_active = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/live/active(?:\?|$)", self.path)
+        if m_live_active:
+            try:
+                from live_audio import list_active
+                self._send_json(200, {"calls": list_active(m_live_active.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+        m_live_chunks = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/live/([a-zA-Z0-9_\-]+)/chunks(?:\?|$)", self.path)
+        if m_live_chunks:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from live_audio import list_chunks, get_meta
+                qs = _pq(_up(self.path).query)
+                since = int((qs.get("since") or ["-1"])[0])
+                bullpen, call_id = m_live_chunks.group(1), m_live_chunks.group(2)
+                self._send_json(200, {
+                    "meta": get_meta(bullpen, call_id),
+                    "chunks": list_chunks(bullpen, call_id, since=since),
+                })
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+        m_live_chunk = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/live/([a-zA-Z0-9_\-]+)/chunk/(\d+)\.webm$", self.path)
+        if m_live_chunk:
+            try:
+                from live_audio import read_chunk
+                bullpen, call_id, seq = m_live_chunk.group(1), m_live_chunk.group(2), int(m_live_chunk.group(3))
+                blob = read_chunk(bullpen, call_id, seq)
+                if blob is None:
+                    self._send_json(404, {"error": "chunk not found"})
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", "audio/webm")
+                self.send_header("Content-Length", str(len(blob)))
+                self.send_header("Cache-Control", "public, max-age=3600")
+                self._cors()
+                self.end_headers()
+                self.wfile.write(blob)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Minecraft-spawn world view (gap-derived quests) ──────────
         # GET /api/b/<slug>/spawn?rep=<rep>
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/spawn(?:\?|$)", self.path)
@@ -4973,6 +5037,67 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     self._send_json(500, {"error": str(e)})
                 return
 
+        # ── Listen-in: start a broadcastable call ─────────────────────
+        # POST /api/b/<slug>/live/start  body: {call_id, rep, kind, buyer?, title?}
+        # Note: `raw` is already populated at the top of do_POST (line ~3497) so
+        # we MUST NOT re-read from self.rfile here — it would hang.
+        m_live_start = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/live/start$", self.path)
+        if m_live_start:
+            try:
+                req = json.loads(raw) if raw else {}
+                from live_audio import start_call
+                meta = start_call(
+                    m_live_start.group(1),
+                    call_id=req["call_id"],
+                    rep=req["rep"],
+                    kind=req.get("kind", "drill"),
+                    buyer=req.get("buyer"),
+                    title=req.get("title"),
+                )
+                self._send_json(200, meta)
+            except KeyError as e:
+                self._send_json(400, {"error": f"missing field {e}"})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Listen-in: end a broadcastable call ───────────────────────
+        # POST /api/b/<slug>/live/<call_id>/end
+        m_live_end = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/live/([a-zA-Z0-9_\-]+)/end$", self.path)
+        if m_live_end:
+            try:
+                from live_audio import end_call
+                meta = end_call(m_live_end.group(1), m_live_end.group(2))
+                self._send_json(200, meta)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Listen-in: upload one audio chunk (binary, not JSON) ──────
+        # POST /api/b/<slug>/live/<call_id>/chunk?seq=N  body: raw webm bytes
+        # `raw` already holds the body from the top of do_POST.
+        m_live_chunk_post = re.match(
+            r"^/api/b/([a-zA-Z0-9\-]+)/live/([a-zA-Z0-9_\-]+)/chunk(?:\?|$)",
+            self.path,
+        )
+        if m_live_chunk_post:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from live_audio import save_chunk
+                qs = _pq(_up(self.path).query)
+                seq = int((qs.get("seq") or ["-1"])[0])
+                meta = save_chunk(
+                    m_live_chunk_post.group(1),
+                    m_live_chunk_post.group(2),
+                    seq, raw,
+                )
+                self._send_json(200, {"ok": True, "seq": seq, "latest": meta["latest_seq"]})
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         if self.path.startswith("/api/upload-call"):
             try:
                 from urllib.parse import urlparse, parse_qs
@@ -5821,6 +5946,7 @@ def _start_monthly_invoice_thread() -> None:
 
 
 def main():
+    _bootlog("main() entered")
     model = get_model()
     print("─" * 60)
     print("  BullpenLM · trainer + org graph + post-call debrief")
