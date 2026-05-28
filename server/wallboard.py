@@ -11,7 +11,7 @@ from pathlib import Path
 
 from audit import iter_all
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 
 

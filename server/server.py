@@ -28,13 +28,21 @@ import re
 import shutil
 from pathlib import Path
 
-# BullpenLM uses two file stores: the legacy personas/ (still loaded if
-# present, for back-compat) AND the new organizations/<slug>/ structure that
-# is the canonical source going forward.
-_REPO = Path(__file__).parent.parent
-sys.path.insert(0, str(_REPO))           # repo root → enables `from adapters.ingest import ...`
-sys.path.insert(0, str(_REPO / "personas"))
-sys.path.insert(0, str(_REPO / "server"))
+# Path resolution lives in paths.py so the bundled PyInstaller binary
+# and the dev source tree behave identically.
+#   ASSETS_DIR  — read-only, shipped with the binary (floor/, templates/, sales/)
+#   DATA_DIR    — user-writable state (bullpens/, organizations/, training-runs/)
+# In dev they're equal (both = repo root). In a bundle they diverge and
+# paths.py seeds ASSETS_DIR → DATA_DIR on first run.
+#
+# Code lookup (sys.path) needs the assets root; data lookup uses DATA_DIR.
+_CODE_ROOT = Path(__file__).resolve().parent.parent  # source-of-this-file's tree
+sys.path.insert(0, str(_CODE_ROOT))
+sys.path.insert(0, str(_CODE_ROOT / "personas"))
+sys.path.insert(0, str(_CODE_ROOT / "server"))
+
+from paths import ASSETS_DIR, DATA_DIR  # noqa: E402
+_REPO = DATA_DIR  # legacy alias — keeps every existing _REPO / "x" working
 
 try:
     from loader import load_all as _load_personas, build_persona_prompt as _build_persona_prompt, build_scoring_prompt as _build_scoring_prompt, load_library as _load_library, load_library_index as _load_library_index, load_orgs_as_personas as _load_orgs_as_personas
@@ -65,7 +73,13 @@ WHISPER_BIN = shutil.which("whisper-cli") or "/opt/homebrew/bin/whisper-cli"
 # Prefer small.en (4x more accurate than base.en, still real-time on M-series).
 # Falls back to base.en if small.en isn't downloaded yet — keeps the install
 # graceful on fresh checkouts.
-_WHISPER_DIR = _REPO / "server" / "models"
+# whisper.cpp model lives next to the binary in the bundle; in dev it sits
+# under server/models in the repo. Try both.
+_WHISPER_DIR_CANDIDATES = [DATA_DIR / "server" / "models",
+                            ASSETS_DIR / "server" / "models",
+                            _CODE_ROOT / "server" / "models"]
+_WHISPER_DIR = next((p for p in _WHISPER_DIR_CANDIDATES if p.exists()),
+                     _WHISPER_DIR_CANDIDATES[0])
 WHISPER_MODEL = str(
     (_WHISPER_DIR / "ggml-small.en.bin") if (_WHISPER_DIR / "ggml-small.en.bin").exists()
     else (_WHISPER_DIR / "ggml-base.en.bin")
@@ -2729,26 +2743,36 @@ class Handler(http.server.BaseHTTPRequestHandler):
         #   /app/gate-banner.js      → floor/app/gate-banner.js
         m = re.match(r"^/app/([a-zA-Z0-9_\-/]+?)(\.html|\.js|\.css)?/?(\?.*)?$", self.path)
         if m:
-            from pathlib import Path as _P
             base = m.group(1)
             ext = m.group(2)
-            app_root = _P(__file__).parent.parent / "floor" / "app"
-            # Try the obvious file first, then directory/index.html
+            # Look up the file in either root — bundled assets live in
+            # ASSETS_DIR (PyInstaller _MEIPASS) and the seeded copy lives
+            # in DATA_DIR. In dev these are the same path.
+            roots = [r / "floor" / "app" for r in {DATA_DIR, ASSETS_DIR}]
             candidates = []
-            if ext:
-                candidates.append(app_root / f"{base}{ext}")
-            else:
-                # Bare path — try .html then dir/index.html
-                candidates.append(app_root / f"{base}.html")
-                candidates.append(app_root / base / "index.html")
+            for app_root in roots:
+                if ext:
+                    candidates.append(app_root / f"{base}{ext}")
+                else:
+                    candidates.append(app_root / f"{base}.html")
+                    candidates.append(app_root / base / "index.html")
             f = next((c for c in candidates if c.exists() and c.is_file()), None)
             if f is None:
                 self._send_json(404, {"error": "page not found", "tried": [str(c) for c in candidates]})
                 return
-            # Resolve and prevent path traversal outside floor/app/
             try:
                 resolved = f.resolve(strict=True)
-                resolved.relative_to(app_root.resolve(strict=True))
+                # Ensure resolved path is inside at least one of the app roots
+                inside = False
+                for app_root in roots:
+                    try:
+                        resolved.relative_to(app_root.resolve(strict=True))
+                        inside = True
+                        break
+                    except (ValueError, FileNotFoundError):
+                        continue
+                if not inside:
+                    raise ValueError("path escape")
             except Exception:
                 self._send_json(404, {"error": "page not found"})
                 return

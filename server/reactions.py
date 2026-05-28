@@ -13,7 +13,7 @@ from pathlib import Path
 
 from audit import append as audit_append
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 
 # Hard-coded allow-list — keeps reactions playful but bounded.

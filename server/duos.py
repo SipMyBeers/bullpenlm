@@ -33,7 +33,7 @@ from audit import append as audit_append
 from audit import iter_all as audit_iter_all
 from buyer_cards import generate as buyer_card_generate
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 
 DEFAULT_DURATION_MIN = 10

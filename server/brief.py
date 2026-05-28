@@ -19,7 +19,7 @@ import re
 import urllib.request
 from pathlib import Path
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 import sys
 sys.path.insert(0, str(REPO / "server"))
 from orgs import load_org

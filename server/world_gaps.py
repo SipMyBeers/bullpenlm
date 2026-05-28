@@ -29,7 +29,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 ORGS_ROOT = REPO / "organizations"
 

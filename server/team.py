@@ -19,7 +19,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 TEAM_DIR = REPO / "team"
 CLAIMS_DIR = TEAM_DIR / "claims"
 ACTIVITY_LOG = TEAM_DIR / "activity.jsonl"

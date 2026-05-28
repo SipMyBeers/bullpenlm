@@ -33,7 +33,7 @@ from typing import Optional
 
 from events import publish
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 
 

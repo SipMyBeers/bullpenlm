@@ -40,7 +40,7 @@ try:
 except Exception:
     _SSL_CTX = ssl.create_default_context()
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 CLIPS_ROOT = REPO / "clips"
 DEFAULT_OUT = REPO / "clips" / ".out"
 DEFAULT_OUT.mkdir(exist_ok=True)

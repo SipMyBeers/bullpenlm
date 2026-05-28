@@ -17,7 +17,7 @@ from typing import Callable, Optional
 from audit import iter_all as audit_iter_all
 from audit import append as audit_append
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 
 

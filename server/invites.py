@@ -51,7 +51,7 @@ import secrets
 from pathlib import Path
 from typing import Optional
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 TEAM_DIR = REPO / "team"
 INVITES_DIR = TEAM_DIR / "invites"
 USED_DIR = TEAM_DIR / "invites" / "used"

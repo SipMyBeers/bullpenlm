@@ -44,7 +44,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 INVOICE_GRACE_DAYS = 15  # operator has this long from issue to pay
 

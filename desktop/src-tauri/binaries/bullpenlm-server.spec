@@ -38,8 +38,10 @@ a = Analysis(
     ],
     binaries=[],
     datas=[
-        # Ship the templates, sales markdown, and personas/_sample inside
-        # the binary so a fresh install can wizard immediately.
+        # Ship the static assets so a fresh install can wizard + serve
+        # the floor immediately. paths.py seeds these from _MEIPASS into
+        # the user-data dir on first run so REPO-style paths keep working.
+        ('../../../floor', 'floor'),
         ('../../../templates', 'templates'),
         ('../../../sales', 'sales'),
         ('../../../personas/_sample', 'personas/_sample'),
@@ -47,16 +49,30 @@ a = Analysis(
     hiddenimports=[
         # PyInstaller can't always discover dynamically-imported modules.
         # These come up via import_module/__import__ in the server code.
-        'audit', 'bullpens', 'invites', 'invoices', 'tunnel', 'discord',
-        'discord_roles', 'email_send', 'email_templates', 'docs',
-        'stripe_client', 'calls', 'bumblebee', 'events', 'presence',
-        'classes', 'achievements', 'quests', 'parties', 'reactions',
-        'trophies', 'streaks', 'pvp', 'legal', 'commissions', 'contacts',
-        'activity', 'followups', 'today', 'duos', 'buyer_cards', 'tcs',
-        'spotcheck', 'onboarding', 'applications', 'briefing',
-        'wallboard', 'outbox', 'pipeline', 'deals', 'debrief',
-        'team', 'orgs', 'xp',
+        # Kept alphabetized — when you add a new server/<name>.py module,
+        # also add it here so `from <name> import ...` survives bundling.
+        'paths',
+        'achievements', 'activity', 'applications', 'audit', 'brief',
+        'briefing', 'buyer_cards', 'bullpens', 'bullpen_quickstart',
+        'bumblebee', 'cadence', 'cadence_compose', 'calls', 'classes',
+        'classification', 'commissions', 'contacts', 'crm_import',
+        'deals', 'debrief', 'disclosures', 'discord', 'discord_roles',
+        'dnc', 'docs', 'duos', 'email_send', 'email_templates',
+        'entity', 'events', 'followups', 'gates', 'generators',
+        'invites', 'invoices', 'legal', 'marketing', 'metrics',
+        'onboarding', 'orgs', 'outbox', 'parties', 'payouts',
+        'phase_check', 'pipeline', 'presence', 'pvp', 'quests', 'rag',
+        'reactions', 'spotcheck', 'streaks', 'stripe_client', 'tcs',
+        'team', 'today', 'trophies', 'tunnel', 'voice', 'wallboard',
+        'world_gaps', 'xp',
+        # Third-party
         'yaml', 'certifi',
+        # ChromaDB has heavy dynamic-import surface — pull in the bits
+        # PyInstaller's static analysis misses
+        'chromadb', 'chromadb.api', 'chromadb.config',
+        'chromadb.db.impl.sqlite', 'chromadb.segment.impl.manager.local',
+        'chromadb.telemetry.product.posthog',
+        'onnxruntime', 'tokenizers',
     ],
     hookspath=[],
     hooksconfig={},
@@ -79,7 +95,10 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,         # compress the binary; ~30% smaller, no runtime cost
+    # UPX is broken on Apple Silicon + chromadb's bundled C extensions —
+    # the compressed binary segfaults on launch. Turn off until we can
+    # test per-platform.
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,     # keep stdout/stderr — Tauri tails it for the ready signal
@@ -95,7 +114,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='bullpenlm-server',
 )

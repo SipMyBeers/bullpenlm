@@ -26,7 +26,7 @@ from typing import Optional
 from audit import append as audit_append
 from audit import iter_all as audit_iter_all
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 
 SQUAD_COLORS = ["#34d399", "#fbbf24", "#a78bfa", "#f87171", "#22d3ee", "#fb923c"]

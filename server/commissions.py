@@ -22,7 +22,7 @@ from typing import Optional
 from audit import iter_all as audit_iter_all
 from legal import get_doc as legal_get_doc, is_current_signature
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 
 REFERRAL_DOC_ID = "referral-agreement"

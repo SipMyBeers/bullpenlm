@@ -114,7 +114,7 @@ try:
 except Exception:
     _HAVE_TRAFILATURA = False
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 
 OLLAMA_HOST = "http://127.0.0.1:11434"

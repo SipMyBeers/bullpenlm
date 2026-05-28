@@ -28,7 +28,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 ORGS = REPO / "organizations"
 
 # Reuse the server's voice + ollama helpers via module import. Since this

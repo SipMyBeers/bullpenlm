@@ -31,7 +31,7 @@ import os
 from pathlib import Path
 from typing import Iterator, Optional
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 
 

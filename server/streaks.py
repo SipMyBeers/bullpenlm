@@ -16,7 +16,7 @@ from typing import Optional
 
 from audit import iter_all as audit_iter_all
 
-REPO = Path(__file__).parent.parent
+from paths import DATA_DIR as REPO
 BULLPENS_ROOT = REPO / "bullpens"
 
 # Event kinds that count as "the rep showed up today"
