@@ -248,6 +248,42 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
 .dnc-collapse{margin:6px 0 18px;padding:18px 20px;background:rgba(248,113,113,0.04);border:1.5px solid rgba(248,113,113,0.30);border-radius:11px}
 .dnc-collapse-h{font-family:var(--display);font-size:17px;text-transform:uppercase;letter-spacing:-.005em;color:var(--danger);margin-bottom:5px}
 .dnc-collapse-sub{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);margin:0 0 10px;line-height:1.5}
+
+/* ── Done panel: real capabilities + real next actions ───────────── */
+.done-hq{width:240px;height:200px;margin:0 auto 18px;position:relative;animation:done-rise .8s cubic-bezier(.34,1.56,.64,1)}
+@keyframes done-rise{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.done-hq svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 12px 24px rgba(251,191,36,0.20))}
+.done-hq-name{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);text-align:center;margin-top:-4px}
+
+.cap-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:18px 0;text-align:left;max-width:640px;margin-left:auto;margin-right:auto}
+@media(max-width:560px){.cap-grid{grid-template-columns:1fr}}
+.cap{display:flex;gap:9px;align-items:flex-start;padding:8px 10px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.18);border-radius:7px;font-family:var(--serif);font-size:13.5px;color:var(--text);line-height:1.4}
+.cap strong{color:var(--accent-2);font-style:normal;font-weight:600}
+.cap-tick{color:var(--accent-2);font-weight:700;flex-shrink:0;font-size:14px}
+
+.next-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0 14px;text-align:left}
+@media(max-width:680px){.next-grid{grid-template-columns:1fr}}
+.next-card{padding:18px 18px;background:rgba(26,18,8,0.85);border:1.5px solid rgba(245,232,216,0.10);border-radius:12px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:all .15s;position:relative}
+.next-card:hover{transform:translateY(-3px);border-color:var(--gold);background:rgba(251,191,36,0.04);box-shadow:0 8px 22px rgba(251,191,36,0.15)}
+.next-card.next-drill:hover{border-color:var(--accent)}
+.next-card.next-floor:hover{border-color:var(--purple)}
+.next-icon{font-size:30px;line-height:1}
+.next-title{font-family:var(--display);font-size:19px;text-transform:uppercase;letter-spacing:-.005em;color:var(--text)}
+.next-blurb{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted);line-height:1.45}
+.next-cta{margin-top:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--accent-2);padding-top:6px;border-top:1px solid rgba(245,232,216,0.08)}
+.next-drill .next-cta{color:var(--accent-2)}
+.next-invite .next-cta{color:var(--gold)}
+.next-floor .next-cta{color:var(--purple)}
+
+.invite-panel{margin:18px 0 0;padding:18px 22px;background:rgba(251,191,36,0.06);border:1.5px solid rgba(251,191,36,0.30);border-radius:11px;text-align:left}
+.invite-h{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.005em;color:var(--gold);margin-bottom:6px}
+.invite-blurb{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);margin:0 0 12px;line-height:1.5}
+.invite-row{display:flex;gap:10px;align-items:stretch}
+.invite-row input{flex:1;padding:11px 14px;background:rgba(0,0,0,0.30);border:1.5px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:15px}
+.invite-row input:focus{outline:none;border-color:var(--gold)}
+.ml-result{margin-top:12px;font-family:var(--mono);font-size:11.5px;color:var(--accent-2);letter-spacing:.04em;word-break:break-all;line-height:1.5}
+.ml-result a{color:var(--accent-2);text-decoration:underline}
+.ml-result .copy-btn{display:inline-block;margin-left:8px;padding:3px 8px;background:rgba(52,211,153,0.10);border:1px solid var(--accent);border-radius:4px;color:var(--accent-2);cursor:pointer;font-size:10px;letter-spacing:.10em;text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -613,27 +649,90 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
 
   <div id="step-done" class="step-section hide">
     <div class="panel done-panel">
-      <div class="trophy">🏆</div>
-      <h2 class="done-h">HQ ESTABLISHED</h2>
-      <p class="done-sub">Your banner is up. The Phase 0.5 firewall is active. Every closer who joins runs the gauntlet — disclosure, agreement, W-9, DNC, drill cert — and can't claim a real prospect until they pass.</p>
-      <div class="reward-row">
-        <div class="reward-block">
-          <div class="reward-block-lbl">XP earned</div>
-          <div class="reward-block-val" id="done-xp">+350</div>
-        </div>
-        <div class="reward-block">
-          <div class="reward-block-lbl">Badge unlocked</div>
-          <div class="reward-block-val">🪪 FOUNDER</div>
-        </div>
-        <div class="reward-block">
-          <div class="reward-block-lbl">Next</div>
-          <div class="reward-block-val">Invite a closer</div>
-        </div>
+
+      <!-- Finished HQ visual: same iso building but fully revealed + lit -->
+      <div class="done-hq">
+        <svg viewBox="-30 -30 280 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- ground -->
+          <polygon points="120,165 220,115 120,65 20,115" fill="#3a2d1f" stroke="#020410" stroke-width="1.5"/>
+          <polygon points="120,165 220,115 120,165" fill="#2f2419" opacity="0.6"/>
+          <!-- foundation -->
+          <polygon points="120,140 190,105 120,70 50,105" fill="#5b3c2a" stroke="#020410" stroke-width="1.2"/>
+          <!-- walls -->
+          <polygon points="120,130 190,95 190,55 120,90" fill="#7a5712" stroke="#020410" stroke-width="1.2"/>
+          <polygon points="120,130 50,95 50,55 120,90" fill="#5e4310" stroke="#020410" stroke-width="1.2"/>
+          <polygon points="120,90 190,55 120,20 50,55" fill="#92400e" stroke="#020410" stroke-width="1.2"/>
+          <!-- windows (lit) with subtle pulse -->
+          <rect x="98" y="58" width="8" height="8" fill="#fbbf24">
+            <animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="133" y="78" width="8" height="8" fill="#fbbf24">
+            <animate attributeName="opacity" values="0.55;1;0.55" dur="2.4s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="155" y="55" width="8" height="8" fill="#fbbf24">
+            <animate attributeName="opacity" values="1;0.55;1" dur="3s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="74" y="78" width="8" height="8" fill="#fbbf24">
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="2.8s" repeatCount="indefinite"/>
+          </rect>
+          <!-- flagpole + banner -->
+          <line x1="120" y1="20" x2="120" y2="-25" stroke="#020410" stroke-width="1.8"/>
+          <polygon points="120,-25 150,-17 120,-9" fill="#fbbf24" stroke="#020410" stroke-width="0.9">
+            <animate attributeName="points" values="120,-25 150,-17 120,-9; 120,-25 148,-18 120,-10; 120,-25 150,-17 120,-9" dur="3s" repeatCount="indefinite"/>
+          </polygon>
+        </svg>
+        <div class="done-hq-name" id="done-hq-name">Your banner</div>
       </div>
+
+      <h2 class="done-h">HQ ESTABLISHED</h2>
+      <p class="done-sub" id="done-sub">Banner is up. The firewall is live. Time to put the floor to use.</p>
+
+      <!-- Capabilities unlocked — what they can actually DO now -->
+      <div class="cap-grid">
+        <div class="cap"><span class="cap-tick">✓</span><span><strong>Magic-link invites</strong> — issue one-click join URLs</span></div>
+        <div class="cap"><span class="cap-tick">✓</span><span><strong>Closer Agreement template</strong> — auto-rendered per closer</span></div>
+        <div class="cap"><span class="cap-tick">✓</span><span><strong>1099 firewall</strong> — every cert + signature gate enforced</span></div>
+        <div class="cap"><span class="cap-tick">✓</span><span><strong>AI buyer drills</strong> — practice your pitch any time</span></div>
+        <div class="cap"><span class="cap-tick">✓</span><span><strong>Listen-in radio</strong> — hear anyone's drill or call live</span></div>
+        <div class="cap"><span class="cap-tick">✓</span><span id="cap-motions"><strong>Hunt motions</strong> — your picks recorded for the AI</span></div>
+      </div>
+
+      <!-- Three real actions, not abstract XP placeholders -->
+      <div class="next-grid">
+        <a class="next-card next-drill" id="next-drill" href="#">
+          <span class="next-icon">🎯</span>
+          <span class="next-title">Try a drill</span>
+          <span class="next-blurb">Press-to-talk against an AI buyer. 60 seconds.</span>
+          <span class="next-cta">Start drilling →</span>
+        </a>
+        <a class="next-card next-invite" id="next-invite" href="#">
+          <span class="next-icon">🪪</span>
+          <span class="next-title" id="invite-title">Invite a closer</span>
+          <span class="next-blurb" id="invite-blurb">Generate a magic-link a friend pastes to join your floor.</span>
+          <span class="next-cta">Mint a link →</span>
+        </a>
+        <a class="next-card next-floor" id="next-floor" href="#">
+          <span class="next-icon">🌍</span>
+          <span class="next-title">Open your floor</span>
+          <span class="next-blurb">Spawn screen — see open quests + live activity.</span>
+          <span class="next-cta">Walk in →</span>
+        </a>
+      </div>
+
+      <!-- Inline magic-link generator panel (revealed by clicking Invite) -->
+      <div id="invite-panel" class="invite-panel hide">
+        <div class="invite-h">🪪 Mint a magic link</div>
+        <p class="invite-blurb">Enter your friend's name. They click the link, type a display name, hit the floor. No legal docs unless they want to claim real prospects.</p>
+        <div class="invite-row">
+          <input id="ml-friend" placeholder="kelly" maxlength="40">
+          <button class="btn primary" onclick="mintMagicLink()">⚔ Generate →</button>
+        </div>
+        <div id="ml-result" class="ml-result"></div>
+      </div>
+
       <div class="status info" style="margin-top:18px">Before scaling past 5 closers: counsel-review per <code>docs/COMP_AND_LEGAL.md</code>.</div>
       <div class="foot-nav">
         <a href="/app/host.html" class="btn ghost">← Back to host control</a>
-        <a href="/app/spawn.html?b=default&rep=self" class="btn primary">⚔ Open the floor →</a>
       </div>
     </div>
   </div>
@@ -676,6 +775,7 @@ function clear(node){ while(node.firstChild) node.removeChild(node.firstChild); 
 
 function showStep(n){
   if(n === 4){ try { wireMotions(); } catch(e){} }
+  if(n === 'done'){ try { wireDoneActions(); } catch(e){} }
   document.querySelectorAll('.step-section').forEach(e => e.classList.add('hide'));
   const id = n === 'done' ? 'step-done' : 'step-'+n;
   const e2 = document.getElementById(id);
@@ -1233,6 +1333,71 @@ function updateHQ(){
   if(state.classification) reveal('hq-walls');
   if(state.tos) reveal('hq-banner');
   if(state.dnc || completed === 4) reveal('hq-lights');
+}
+
+// Done-page: wire the 3 next-action cards + magic-link minter
+function wireDoneActions(){
+  const q = `?b=${encodeURIComponent(BULLPEN)}&rep=self`;
+  const drill = document.getElementById('next-drill');
+  if(drill) drill.href = `/app/voice.html${q}`;
+  const floor = document.getElementById('next-floor');
+  if(floor) floor.href = `/app/spawn.html${q}`;
+  // Solo mode → relabel the middle card to something useful for solo users
+  const mode = (() => { try { return localStorage.getItem('bullpen-mode'); } catch(e){ return null; } })();
+  if(mode === 'solo'){
+    const t = document.getElementById('invite-title');
+    const b = document.getElementById('invite-blurb');
+    if(t) t.textContent = 'Invite a practice partner';
+    if(b) b.textContent = 'Even solo, you can pull a friend in for sparring. They paste the link, you both drill.';
+  }
+  // The invite card opens the inline minter rather than navigating
+  const inv = document.getElementById('next-invite');
+  if(inv) inv.onclick = (e) => { e.preventDefault();
+    document.getElementById('invite-panel').classList.toggle('hide');
+    document.getElementById('ml-friend')?.focus();
+  };
+  // Show the operator's legal name under the iso HQ
+  const nameEl = document.getElementById('done-hq-name');
+  if(nameEl && state.entity?.legal_name) nameEl.textContent = state.entity.legal_name;
+  // Motions blurb
+  const motionsCap = document.getElementById('cap-motions');
+  if(motionsCap && pickedMotions && pickedMotions.size){
+    motionsCap.innerHTML = `<strong>${pickedMotions.size} hunt motion${pickedMotions.size===1?'':'s'}</strong> — your picks recorded for the AI buyer`;
+  }
+  // Done sub copy gets personalized
+  const subEl = document.getElementById('done-sub');
+  if(subEl){
+    if(mode === 'solo'){
+      subEl.textContent = "You're set up. Drill against an AI buyer, listen in on yourself later, or pull a friend in to spar.";
+    } else {
+      subEl.textContent = "Banner is up. The firewall is live. Ready to bring closers in or sharpen your pitch first.";
+    }
+  }
+}
+
+async function mintMagicLink(){
+  const name = (document.getElementById('ml-friend')?.value || '').trim();
+  const out = document.getElementById('ml-result');
+  if(!out) return;
+  if(!name){ out.innerHTML = '<span style="color:var(--danger)">Type a name first.</span>'; return; }
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  out.textContent = 'Minting…';
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/magic-link?rep=${encodeURIComponent(slug)}`);
+    const d = await r.json();
+    if(!r.ok || !d.magic_link){ throw new Error(d.error || 'mint failed'); }
+    out.innerHTML = '';
+    const a = document.createElement('a');
+    a.href = d.magic_link; a.textContent = d.magic_link; a.target = '_blank'; a.rel='noopener';
+    out.appendChild(document.createTextNode(`🪪 ${name}'s link: `));
+    out.appendChild(a);
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn'; btn.textContent = 'Copy';
+    btn.onclick = () => { navigator.clipboard?.writeText(d.magic_link); btn.textContent = '✓ Copied'; };
+    out.appendChild(btn);
+  } catch(e){
+    out.innerHTML = `<span style="color:var(--danger)">Mint failed: ${e.message || e}</span>`;
+  }
 }
 
 function showQuestToast(name, xp){
