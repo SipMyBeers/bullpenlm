@@ -198,6 +198,35 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
 .q-card.all-done .big-check{font-size:48px;margin-bottom:8px}
 .q-card.all-done .done-h{font-family:var(--display);font-size:28px;text-transform:uppercase;letter-spacing:-.01em;margin:0 0 6px;color:var(--accent-2)}
 .q-card.all-done .done-sub{font-family:var(--serif);font-style:italic;font-size:14.5px;color:var(--muted);line-height:1.55}
+
+/* ── The Oath ──────────────────────────────────────────────── */
+.oath-stack{display:flex;flex-direction:column;gap:10px;margin:18px 0}
+.oath-clause{padding:16px 18px;background:rgba(26,18,8,0.65);border:1.5px solid rgba(245,232,216,0.10);border-radius:11px;cursor:pointer;display:grid;grid-template-columns:32px 1fr;gap:14px;align-items:flex-start;transition:all .15s}
+.oath-clause:hover{border-color:rgba(251,191,36,0.40);background:rgba(251,191,36,0.04);transform:translateY(-1px)}
+.oath-clause.sworn{border-color:var(--gold);background:rgba(251,191,36,0.08)}
+.oath-clause .oath-num{font-family:var(--display);font-size:22px;text-transform:uppercase;letter-spacing:-.01em;color:var(--gold);line-height:1}
+.oath-clause.sworn .oath-num{color:var(--gold)}
+.oath-clause.sworn .oath-num::after{content:" ✓";color:var(--accent-2);font-size:14px}
+.oath-clause .oath-body{display:flex;flex-direction:column;gap:4px}
+.oath-clause .oath-title{font-family:var(--display);font-size:17px;text-transform:uppercase;letter-spacing:-.005em;color:var(--text);line-height:1.2}
+.oath-clause .oath-blurb{font-family:var(--serif);font-style:italic;font-size:13.5px;color:var(--muted);line-height:1.5}
+.oath-clause.sworn .oath-title{color:var(--gold)}
+.oath-tally{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right;margin-top:4px}
+.oath-tally .sworn-n{color:var(--gold);font-weight:700}
+
+.tos-expander{margin:20px 0;border:1px solid rgba(245,232,216,0.10);border-radius:9px;overflow:hidden}
+.tos-expander summary{padding:12px 18px;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:rgba(0,0,0,0.25)}
+.tos-expander summary:hover{color:var(--text)}
+.tos-expander[open] summary{border-bottom:1px solid rgba(245,232,216,0.10)}
+.tos-expander .toc{margin:0;border-radius:0;border:none;max-height:340px}
+
+.sign-block{padding:20px 22px;background:linear-gradient(180deg,rgba(251,191,36,0.06),rgba(10,7,3,0.40));border:1.5px solid rgba(251,191,36,0.30);border-radius:12px;margin-top:14px}
+.sign-label{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:6px}
+.sign-onfile{font-family:var(--display);font-size:24px;letter-spacing:-.01em;color:var(--text);text-transform:uppercase;line-height:1.1;padding:8px 14px;background:rgba(0,0,0,0.40);border:1px dashed rgba(251,191,36,0.40);border-radius:7px;display:inline-block;margin-bottom:8px}
+.sign-instruction{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);line-height:1.5}
+.sign-match{font-family:var(--mono);font-size:11px;letter-spacing:.06em;margin-top:6px;min-height:14px}
+.sign-match.ok{color:var(--accent-2)}
+.sign-match.no{color:var(--danger)}
 </style>
 </head>
 <body>
@@ -294,8 +323,8 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
             <option value="individual">Individual (just me, no formal entity)</option>
           </select>
           <div class="hint">Most operators use an LLC for liability separation.</div></div>
-        <div class="field"><label>Legal name</label><input id="ent-name" placeholder="e.g. KillSesh Industries LLC">
-          <div class="hint">Exact name as on your state registration.</div></div>
+        <div class="field"><label>Business legal name</label><input id="ent-name" placeholder="e.g. KillSesh Industries LLC">
+          <div class="hint">The exact business name as filed with your state — not your personal name. This is what gets printed on every Closer Agreement.</div></div>
 
         <!-- EIN / banking sub-choice -->
         <div class="have-row sub-have">
@@ -418,19 +447,48 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
         </div>
         <div class="quest-reward"><span class="reward-coin"></span><span>+100 XP</span></div>
       </div>
-      <p>BullpenLM is software. <strong>You are the operator.</strong> If a closer gets miscalled or a deal blows up, they sue YOU, not us. The TOS makes that explicit. Read it, then carve your legal name into the line.</p>
-      <div class="toc" id="tos-text">Loading TOS text…</div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="counsel-yes">
-        <label for="counsel-yes">I have consulted with an attorney about my obligations under these Terms and my Closer Agreement template, <strong>OR</strong> I expressly waive consultation with counsel and acknowledge that I am accepting these obligations and risks without legal review.</label>
+      <p>BullpenLM is software. <strong>You are the operator.</strong> If a closer gets miscalled or a deal blows up, they come for <em>you</em>, not us. Acknowledge each clause out loud (figuratively) by tapping it. Then sign.</p>
+
+      <!-- The oath: 4 acknowledgment cards -->
+      <div class="oath-stack" id="oath-stack"></div>
+
+      <!-- Counsel choice as have-row -->
+      <div class="have-row" style="margin-top:24px">
+        <div class="have-row-q">⚖ Has an attorney reviewed your closer agreement template?</div>
+        <div class="have-options">
+          <button class="have-opt" data-counsel="yes" onclick="setCounsel('yes')">
+            <span class="have-icon">✓</span>
+            <span class="have-label">Yes — counsel reviewed</span>
+            <span class="have-sub">An attorney has read this AND my Closer Agreement template.</span>
+          </button>
+          <button class="have-opt" data-counsel="waive" onclick="setCounsel('waive')">
+            <span class="have-icon">⏰</span>
+            <span class="have-label">Waive — I accept the risk</span>
+            <span class="have-sub">I'm proceeding without legal review and I accept the consequences.</span>
+          </button>
+        </div>
       </div>
-      <div class="field"><label>Type your operator legal name to accept</label>
-        <input id="tos-signature">
-        <div class="hint">Must match the legal name from Step 1 exactly.</div></div>
+
+      <!-- Read full TOS expander -->
+      <details class="tos-expander">
+        <summary>📜 Read the full Operator TOS</summary>
+        <div class="toc" id="tos-text">Loading TOS text…</div>
+      </details>
+
+      <!-- Signature — auto-prefilled from step 1 -->
+      <div class="sign-block" id="sign-block">
+        <div class="sign-label">YOUR NAME ON FILE FROM STEP 1</div>
+        <div class="sign-onfile" id="sign-onfile">—</div>
+        <div class="sign-instruction">Type that same name below to sign the oath. It needs to match exactly.</div>
+        <div class="field" style="margin-top:10px">
+          <input id="tos-signature" placeholder="Type your name from above…" autocomplete="off">
+          <div class="sign-match" id="sign-match"></div>
+        </div>
+      </div>
       <div id="tos-status"></div>
       <div class="foot-nav">
         <button class="btn ghost" onclick="showStep(2)">← Edit faction</button>
-        <button class="btn primary" onclick="acceptTos()">⚔ Swear the oath →</button>
+        <button class="btn primary" id="oath-btn" onclick="acceptTos()" disabled>⚔ I SWEAR IT →</button>
       </div>
     </div>
   </div>
@@ -869,20 +927,108 @@ async function saveClassification(){
 }
 
 // ── STEP 3 ────────────────────────────────────────────────────────────
+// The four oath clauses — atmospheric paraphrase of the actual TOS
+// terms. Server-side TOS text is still the source of truth (loaded
+// behind the expander); these are what the operator actually reads.
+const OATH_CLAUSES = [
+  {n:1, title:"BullpenLM is software, not your employer",
+       blurb:"Beers Labs / BullpenLM is the maker of the platform. It is not a party to your contracts with your closers, your customers, or anyone else."},
+  {n:2, title:"You are the operator — and the counterparty",
+       blurb:"Every Closer Agreement is signed under your business. Every check is cut by you. Every dispute or audit comes to you, not to BullpenLM."},
+  {n:3, title:"You'll keep this self-hosted",
+       blurb:"This bullpen runs on your machine, your tunnel, your data. No closer data leaves your hardware unless you choose to ship it out."},
+  {n:4, title:"You'll respect the compliance firewall",
+       blurb:"DNC scrub on every dial. 1099 thresholds enforced. Drill-cert gate before live work. You won't disable, fork, or route around these checks."},
+];
+
+let oathSworn = new Set();
+let counselChoice = null;
+
+function renderOath(){
+  const stack = document.getElementById('oath-stack');
+  if(!stack) return;
+  clear(stack);
+  for(const c of OATH_CLAUSES){
+    const el2 = el('div', {class: 'oath-clause' + (oathSworn.has(c.n) ? ' sworn' : ''),
+                              onClick: () => toggleOath(c.n)});
+    el2.appendChild(el('div', {class:'oath-num', text: String(c.n)}));
+    const body = el('div', {class:'oath-body'});
+    body.appendChild(el('div', {class:'oath-title', text: c.title}));
+    body.appendChild(el('div', {class:'oath-blurb', text: c.blurb}));
+    el2.appendChild(body);
+    stack.appendChild(el2);
+  }
+  const tally = el('div', {class:'oath-tally'});
+  tally.appendChild(el('span', {class:'sworn-n', text: `${oathSworn.size}`}));
+  tally.appendChild(document.createTextNode(` of ${OATH_CLAUSES.length} sworn`));
+  stack.appendChild(tally);
+  updateOathBtn();
+}
+
+function toggleOath(n){
+  if(oathSworn.has(n)) oathSworn.delete(n);
+  else oathSworn.add(n);
+  renderOath();
+}
+
+function setCounsel(choice){
+  counselChoice = choice;
+  document.querySelectorAll('.have-opt[data-counsel]').forEach(b => {
+    b.classList.toggle('selected', b.dataset.counsel === choice);
+  });
+  updateOathBtn();
+}
+
+function updateOathBtn(){
+  // Enable I SWEAR IT only when all clauses tapped + counsel choice
+  // made + signature matches the on-file name.
+  const sig = (document.getElementById('tos-signature')?.value || '').trim().toLowerCase();
+  const onfile = (state.entity?.legal_name || '').trim().toLowerCase();
+  const sigOK = sig && onfile && sig === onfile;
+  const matchEl = document.getElementById('sign-match');
+  if(matchEl){
+    if(!sig) { matchEl.className = 'sign-match'; matchEl.textContent = ''; }
+    else if(sigOK) { matchEl.className = 'sign-match ok'; matchEl.textContent = '✓ Matches'; }
+    else { matchEl.className = 'sign-match no'; matchEl.textContent = '✗ Doesn\'t match yet — keep typing'; }
+  }
+  const btn = document.getElementById('oath-btn');
+  if(btn) btn.disabled = !(oathSworn.size === OATH_CLAUSES.length && counselChoice && sigOK);
+}
+
 async function loadTos(){
+  // Fill the on-file name callout from step 1
+  const onfile = state.entity?.legal_name || '—';
+  const elx = document.getElementById('sign-onfile');
+  if(elx) elx.textContent = onfile;
+  // Render oath stack
+  renderOath();
+  // Wire signature input to live-validate
+  const sigInput = document.getElementById('tos-signature');
+  if(sigInput && !sigInput._wired){
+    sigInput.addEventListener('input', updateOathBtn);
+    sigInput._wired = true;
+  }
+  // Fetch the actual TOS text for the expander
   const r = await api('GET', `/api/b/${BULLPEN}/legal/preview/operator-tos`);
   if(r.ok) document.getElementById('tos-text').textContent = (r.data && r.data.body_md) || '(TOS unavailable)';
 }
 
 async function acceptTos(){
+  if(oathSworn.size !== OATH_CLAUSES.length){
+    return setStatus('tos-status', false, `Tap each of the ${OATH_CLAUSES.length} clauses above to swear them first.`);
+  }
+  if(!counselChoice){
+    return setStatus('tos-status', false, 'Pick the counsel-review path: Yes or Waive.');
+  }
   const sig = document.getElementById('tos-signature').value.trim();
-  const counsel = document.getElementById('counsel-yes').checked;
   if(!sig) return setStatus('tos-status', false, 'Type your operator legal name.');
-  if(state.entity && sig.toLowerCase() !== state.entity.legal_name.toLowerCase()) return setStatus('tos-status', false, 'Typed name must match operator legal name exactly.');
+  if(state.entity && sig.toLowerCase() !== state.entity.legal_name.toLowerCase()){
+    return setStatus('tos-status', false, 'Typed name must match the name on file above exactly.');
+  }
   const r = await api('POST', `/api/b/${BULLPEN}/tos/accept`, {
     operator_legal_name: state.entity.legal_name,
     typed_signature: sig,
-    counsel_consulted: counsel,
+    counsel_consulted: counselChoice === 'yes',
   });
   if(!r.ok) return setStatus('tos-status', false, (r.data && r.data.error) || 'Accept failed.');
   state.tos = r.data;
