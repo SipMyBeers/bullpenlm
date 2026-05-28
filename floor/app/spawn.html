@@ -39,8 +39,9 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 @media(max-width:840px){.spawn-stage{grid-template-columns:1fr}}
 @keyframes fade-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-.terrain{position:relative;border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 50% 70%,rgba(61,44,26,0.5),rgba(10,7,3,0.95) 80%);border:1px solid rgba(245,232,216,0.10);min-height:240px}
-.terrain svg{display:block;width:100%;height:240px}
+.terrain{position:relative;border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 50% 70%,rgba(61,44,26,0.5),rgba(10,7,3,0.95) 80%);border:1px solid rgba(245,232,216,0.10);min-height:300px;cursor:pointer;transition:border-color .15s}
+.terrain:hover{border-color:rgba(251,191,36,0.40)}
+.terrain svg{display:block;width:100%;height:300px}
 .terrain .terrain-label{position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:10px;letter-spacing:.20em;text-transform:uppercase;color:var(--gold);text-shadow:0 1px 2px rgba(0,0,0,0.6)}
 .terrain .you-marker{position:absolute;bottom:14px;left:16px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text);display:flex;align-items:center;gap:6px}
 .terrain .you-marker .dot{width:8px;height:8px;background:var(--gold);border-radius:50%;box-shadow:0 0 12px var(--gold);animation:pulse 1.6s ease-in-out infinite}
@@ -151,12 +152,15 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
   <!-- ── Top portal: terrain (left) + character card (right) ── -->
   <div class="spawn-stage">
 
-    <!-- Mini iso world: showing where the player is on the floor -->
-    <div class="terrain" id="terrain">
-      <div class="terrain-label">⛰ The floor</div>
-      <svg id="terrain-svg" viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
-      <div class="you-marker"><span class="dot"></span><span id="you-here">you spawn here</span></div>
-      <a class="enter-cta" id="enter-cta" href="#">Enter the office →</a>
+    <!-- Mini iso world: showing where the player is on the floor.
+         Same zones as /app/office.html — pit, buyer desks, bell,
+         duo ring, kanban lanes — just compacted. Whole panel is
+         clickable; takes the operator into the full office view. -->
+    <div class="terrain" id="terrain" onclick="enterOffice()">
+      <div class="terrain-label">⛰ The bullpen</div>
+      <svg id="terrain-svg" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+      <div class="you-marker"><span class="dot"></span><span id="you-here">you spawn here · click to open the office</span></div>
+      <a class="enter-cta" id="enter-cta" href="#" onclick="event.stopPropagation()">Open the office →</a>
     </div>
 
     <!-- Character card -->
@@ -218,87 +222,177 @@ function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){
 function svg(t,p,...c){const n=document.createElementNS('http://www.w3.org/2000/svg',t);if(p){for(const k in p)n.setAttribute(k,p[k])}for(const x of c){if(x==null)continue;n.appendChild(x)}return n}
 function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
 
-// ── Terrain mini-iso ────────────────────────────────────────────────
-// Renders a small isometric grid showing the layout of the office:
-// closer pit (bottom), client desks (top-right), kanban (top-left),
-// the bell (right). YOU get a pulsing gold marker on the pit row.
+// ── Terrain: full bullpen iso preview ──────────────────────────────
+// Mirrors /app/office.html — same zones, same prism vocabulary,
+// scaled down so it fits the spawn hero panel. Whole panel is
+// clickable to dive into the full office view.
 function renderTerrain(stats){
   const root = document.getElementById('terrain-svg');
   clear(root);
-  const COLS = 8, ROWS = 5;
-  const TW = 50, TH = 25;            // iso tile half-width / half-height
-  const OX = 300, OY = 50;           // origin offset
+
+  // 12x8 grid — wider than the old 8x5 so the office actually reads
+  // like a floor. Tile size kept small so the whole layout fits in
+  // the 300px-tall hero card.
+  const COLS = 12, ROWS = 8;
+  const TW = 26, TH = 13;               // half-width / half-height
+  const OX = 350, OY = 60;              // origin offset (center horizontally)
   function iso(x,y){ return {x:(x-y)*TW, y:(x+y)*TH}; }
   function diamond(x,y){
     const c = iso(x,y);
     return `${c.x+OX},${c.y+OY-TH} ${c.x+OX+TW},${c.y+OY} ${c.x+OX},${c.y+OY+TH} ${c.x+OX-TW},${c.y+OY}`;
   }
-  // Zone colors mirror office.html so the visual language is consistent
+
+  // ── Zone palette mirrors office.html ──
   const ZONE = {
     pit:     ['#5b3c2a','#4d2f1f'],
     buyers:  ['#2d3a4d','#243043'],
     bell:    ['#4a1f3a','#3d1830'],
-    kanban:  ['#3a2d1f','#2f2419'],
+    kanban_lead:      ['#3a2d1f','#2f2419'],
+    kanban_contacted: ['#3a3a2d','#2f2f1f'],
+    kanban_qualified: ['#3a402d','#2f351f'],
+    kanban_demo:      ['#2d3a35','#1f2f29'],
+    kanban_pilot:     ['#2d353a','#1f292f'],
+    kanban_won:       ['#2d3a2d','#1f2f1f'],
+    duo:     ['#7a5712','#5e4310'],
   };
+
   function zoneFor(x,y){
-    if(y >= ROWS - 2) return 'pit';        // bottom 2 rows
-    if(x >= COLS - 2) return 'buyers';     // right 2 cols
-    if(x === 0 && y === 0) return 'bell';
-    if(y <= 1) return 'kanban';
+    // Kanban: bottom row only
+    if(y === ROWS-1){
+      const stages = ['kanban_lead','kanban_contacted','kanban_qualified','kanban_demo','kanban_pilot','kanban_won'];
+      const idx = Math.min(stages.length-1, Math.floor(x / (COLS/stages.length)));
+      return stages[idx];
+    }
+    // Duo ring: 2x2 center
+    if(x >= 4 && x <= 5 && y >= 3 && y <= 4) return 'duo';
+    // Bell: top-right 2x1
+    if(x >= COLS-2 && y === 0) return 'bell';
+    // Buyer area: right 2 cols, rows 1-5
+    if(x >= COLS-2 && y >= 1 && y <= 5) return 'buyers';
+    // Everything else = closer pit
     return 'pit';
   }
-  // Floor tiles
+
+  // ── Floor tiles ──
   for(let y=0; y<ROWS; y++){
     for(let x=0; x<COLS; x++){
       const z = zoneFor(x,y);
-      const fill = ZONE[z][(x+y)%2];
+      const colors = ZONE[z] || ZONE.pit;
+      const fill = colors[(x+y)%2];
       root.appendChild(svg('polygon', {
-        points: diamond(x,y), fill, stroke:'rgba(0,0,0,0.35)', 'stroke-width':'0.5',
+        points: diamond(x,y), fill, stroke:'rgba(0,0,0,0.35)', 'stroke-width':'0.4',
       }));
     }
   }
-  // Client desk prisms (top-right corner)
-  for(let i=0; i<3; i++){
-    const c = iso(COLS-1-i, 0+i);
+
+  // ── Bell podium (top-right) ──
+  {
+    const c = iso(COLS-1, 0);
     const cx = c.x+OX, cy = c.y+OY;
+    // Bell housing prism
     root.appendChild(svg('polygon', {
-      points: `${cx},${cy-18} ${cx+TW*.6},${cy-6} ${cx+TW*.6},${cy+TH*.3} ${cx},${cy+TH*.3-12}`,
-      fill: '#3a4a63', stroke:'var(--edge)', 'stroke-width':'0.8',
+      points: `${cx-TW*.5},${cy-12} ${cx+TW*.5},${cy-12} ${cx+TW*.4},${cy+TH-2} ${cx-TW*.4},${cy+TH-2}`,
+      fill: '#92400e', stroke:'var(--edge)', 'stroke-width':'0.6',
     }));
+    // Bell itself
     root.appendChild(svg('polygon', {
-      points: `${cx},${cy-18} ${cx-TW*.6},${cy-6} ${cx-TW*.6},${cy+TH*.3} ${cx},${cy+TH*.3-12}`,
-      fill: '#2a374d', stroke:'var(--edge)', 'stroke-width':'0.8',
-    }));
-    root.appendChild(svg('polygon', {
-      points: `${cx},${cy-30} ${cx+TW*.6},${cy-18} ${cx},${cy-6} ${cx-TW*.6},${cy-18}`,
-      fill: '#9ab1d9', stroke:'var(--edge)', 'stroke-width':'0.8',
+      points: `${cx-7},${cy-16} ${cx+7},${cy-16} ${cx+5},${cy-6} ${cx-5},${cy-6}`,
+      fill: 'var(--gold)', stroke:'var(--edge)', 'stroke-width':'0.7',
     }));
   }
-  // YOU pawn — gold, on the pit
-  const youT = iso(2, ROWS-1);
-  const yx = youT.x+OX, yy = youT.y+OY;
-  root.appendChild(svg('ellipse', {
-    cx: yx, cy: yy+6, rx: 10, ry: 3, fill:'rgba(0,0,0,0.5)',
-  }));
+
+  // ── Buyer desks (4 prism buildings on the right side) ──
+  const desks = [
+    {x: COLS-1, y: 2, c:'#5b8def'},
+    {x: COLS-1, y: 4, c:'#a78bfa'},
+    {x: COLS-2, y: 3, c:'#fb7185'},
+    {x: COLS-2, y: 5, c:'#22d3ee'},
+  ];
+  for(const d of desks){
+    const c = iso(d.x, d.y);
+    const cx = c.x+OX, cy = c.y+OY;
+    // Right face (darker)
+    root.appendChild(svg('polygon', {
+      points: `${cx},${cy-2} ${cx+TW*.7},${cy-2-TH*.5} ${cx+TW*.7},${cy+TH*.4-2} ${cx},${cy+TH*.7-2}`,
+      fill: darken(d.c, 0.55), stroke:'var(--edge)', 'stroke-width':'0.6',
+    }));
+    // Left face (mid)
+    root.appendChild(svg('polygon', {
+      points: `${cx},${cy-2} ${cx-TW*.7},${cy-2-TH*.5} ${cx-TW*.7},${cy+TH*.4-2} ${cx},${cy+TH*.7-2}`,
+      fill: darken(d.c, 0.30), stroke:'var(--edge)', 'stroke-width':'0.6',
+    }));
+    // Top face (brightest)
+    root.appendChild(svg('polygon', {
+      points: `${cx},${cy-18} ${cx+TW*.7},${cy-2-TH*.5} ${cx},${cy-2} ${cx-TW*.7},${cy-2-TH*.5}`,
+      fill: d.c, stroke:'var(--edge)', 'stroke-width':'0.6',
+    }));
+  }
+
+  // ── Teammate pawns in the pit (placeholder positions) ──
+  const teammates = [
+    {x: 2, y: 5, c:'#34d399'},
+    {x: 4, y: 6, c:'#a78bfa'},
+    {x: 7, y: 5, c:'#fb7185'},
+  ];
+  for(const m of teammates){
+    drawPawn(root, iso(m.x, m.y), OX, OY, m.c, false);
+  }
+
+  // ── YOU pawn (gold, pulsing) ──
+  const youTile = iso(1, 4);
+  drawPawn(root, youTile, OX, OY, '#fbbf24', true);
+
+  // ── Kanban stack labels (deal counters above each lane) ──
+  const stageLabels = ['LEAD','CTCT','QUAL','DEMO','PILT','WON'];
+  for(let i=0; i<stageLabels.length; i++){
+    const tx = Math.round(i * (COLS/stageLabels.length)) + 1;
+    const c = iso(tx, ROWS-1);
+    const cx = c.x+OX, cy = c.y+OY;
+    root.appendChild(svg('text', {
+      x: cx, y: cy+3, fill:'rgba(245,232,216,0.40)',
+      'font-family':'JetBrains Mono, monospace', 'font-size':'7',
+      'text-anchor':'middle', 'letter-spacing':'0.5',
+    }, document.createTextNode(stageLabels[i])));
+  }
+}
+
+function darken(hex, amt){
+  const c = hex.replace('#','');
+  const r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
+  const m = 1 - amt;
+  return '#' + [r,g,b].map(v => Math.max(0, Math.round(v * m)).toString(16).padStart(2,'0')).join('');
+}
+
+function drawPawn(root, tile, OX, OY, color, isYou){
+  const x = tile.x+OX, y = tile.y+OY;
+  // Shadow
+  root.appendChild(svg('ellipse', {cx:x, cy:y+4, rx:6, ry:2, fill:'rgba(0,0,0,0.5)'}));
+  // Right face
   root.appendChild(svg('polygon', {
-    points: `${yx},${yy-2} ${yx+10},${yy-8} ${yx+10},${yy+2} ${yx},${yy+8}`,
-    fill: '#92400e', stroke:'var(--edge)', 'stroke-width':'1',
+    points: `${x},${y-1} ${x+6},${y-5} ${x+6},${y+1} ${x},${y+5}`,
+    fill: darken(color, 0.45), stroke:'var(--edge)', 'stroke-width':'0.7',
   }));
+  // Left face
   root.appendChild(svg('polygon', {
-    points: `${yx},${yy-2} ${yx-10},${yy-8} ${yx-10},${yy+2} ${yx},${yy+8}`,
-    fill: '#7a3608', stroke:'var(--edge)', 'stroke-width':'1',
+    points: `${x},${y-1} ${x-6},${y-5} ${x-6},${y+1} ${x},${y+5}`,
+    fill: darken(color, 0.25), stroke:'var(--edge)', 'stroke-width':'0.7',
   }));
+  // Top
   root.appendChild(svg('polygon', {
-    points: `${yx},${yy-20} ${yx+10},${yy-8} ${yx},${yy-2} ${yx-10},${yy-8}`,
-    fill: 'var(--gold)', stroke:'var(--edge)', 'stroke-width':'1',
+    points: `${x},${y-12} ${x+6},${y-5} ${x},${y-1} ${x-6},${y-5}`,
+    fill: color, stroke:'var(--edge)', 'stroke-width':'0.7',
   }));
-  // Pulse halo around YOU
-  const halo = svg('circle', {cx:yx, cy:yy-10, r:14, fill:'none',
-                                stroke:'var(--gold)', 'stroke-width':'1.5', opacity:'0.7'});
-  const a1 = svg('animate', {attributeName:'r', from:'14', to:'28', dur:'1.4s', repeatCount:'indefinite'});
-  const a2 = svg('animate', {attributeName:'opacity', from:'0.7', to:'0', dur:'1.4s', repeatCount:'indefinite'});
-  halo.appendChild(a1); halo.appendChild(a2);
-  root.appendChild(halo);
+  if(isYou){
+    const halo = svg('circle', {cx:x, cy:y-6, r:10, fill:'none', stroke:'var(--gold)', 'stroke-width':'1.2', opacity:'0.7'});
+    halo.appendChild(svg('animate', {attributeName:'r', from:'10', to:'20', dur:'1.4s', repeatCount:'indefinite'}));
+    halo.appendChild(svg('animate', {attributeName:'opacity', from:'0.7', to:'0', dur:'1.4s', repeatCount:'indefinite'}));
+    root.appendChild(halo);
+  }
+}
+
+function enterOffice(){
+  const q = `?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`;
+  window.location.href = `/app/office.html${q}`;
 }
 
 // ── Character card ─────────────────────────────────────────────────
