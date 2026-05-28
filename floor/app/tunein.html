@@ -93,7 +93,7 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 
 <script>
 const URLP = new URL(window.location.href);
-const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+const BULLPEN = URLP.searchParams.get('b') || localStorage.getItem('bullpen-slug') || '';
 const POLL_MS = 4000;          // active-calls list refresh
 const CHUNK_POLL_MS = 1500;    // per-call new-chunks refresh
 

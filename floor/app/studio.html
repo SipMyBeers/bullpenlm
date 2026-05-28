@@ -244,7 +244,7 @@ h1{font-family:var(--display);font-size:44px;letter-spacing:-.02em;text-transfor
 
 <script>
 const URLP = new URL(window.location.href);
-const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+const BULLPEN = URLP.searchParams.get('b') || localStorage.getItem('bullpen-slug') || '';
 let REP = URLP.searchParams.get('rep');
 if (!REP) { try { REP = localStorage.getItem('bullpen-rep'); } catch(e){} }
 if (!REP) REP = 'operator';

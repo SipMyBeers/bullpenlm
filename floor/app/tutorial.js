@@ -23,7 +23,7 @@
   const REP = URLP.searchParams.get('rep') || (() => {
     try { return localStorage.getItem('bullpen-rep'); } catch(e) { return null; }
   })();
-  const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+  const BULLPEN = URLP.searchParams.get('b') || localStorage.getItem('bullpen-slug') || '';
 
   if (!REP) return;
   const operatorNames = new Set(['self', 'operator', 'founder', 'host', 'beers']);

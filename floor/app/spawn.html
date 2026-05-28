@@ -14,12 +14,14 @@
   --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;
   --gold:#fbbf24;--gold-dim:#92400e;
   --danger:#f87171;--purple:#a78bfa;
+  --edge:#020410;
   --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
   --sans:"Switzer",-apple-system,sans-serif;
   --serif:"Bespoke Serif",Georgia,serif;
   --display:"Tanker",serif}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+
 header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
 .brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
 .brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
@@ -30,81 +32,98 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 .nav a{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:5px}
 .nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
 
-.wrap{max-width:1100px;margin:0 auto;padding:30px 22px 80px}
-.hero{margin-bottom:30px}
-.hero .you-spawned{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-.hero h1{font-family:var(--display);font-size:54px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 8px;line-height:1}
-.hero .sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:17px;max-width:780px;margin:0}
-.hero .world-id{color:var(--accent-2);font-style:normal}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 22px 60px}
 
-/* ── World state strip ── */
-.world-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:24px 0 28px}
-@media(max-width:880px){.world-strip{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:520px){.world-strip{grid-template-columns:1fr 1fr}}
-.world-tile{padding:14px 16px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:11px}
-.world-tile.zero{border-color:rgba(248,113,113,0.30);background:rgba(248,113,113,0.04)}
-.world-tile.warm{border-color:rgba(251,191,36,0.35);background:rgba(251,191,36,0.04)}
-.world-tile.hot{border-color:rgba(52,211,153,0.40);background:rgba(52,211,153,0.04)}
-.world-tile .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
-.world-tile .val{font-family:var(--display);font-size:30px;letter-spacing:-.01em;line-height:1;color:var(--text)}
-.world-tile.zero .val{color:var(--danger)}
-.world-tile.warm .val{color:var(--gold)}
-.world-tile.hot .val{color:var(--accent-2)}
-.world-tile .meta{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:3px}
+/* ── Spawn portal: terrain + character ────────────────────────────── */
+.spawn-stage{position:relative;display:grid;grid-template-columns:1.3fr 1fr;gap:20px;margin-bottom:30px;animation:fade-in .55s ease-out}
+@media(max-width:840px){.spawn-stage{grid-template-columns:1fr}}
+@keyframes fade-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.terrain{position:relative;border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 50% 70%,rgba(61,44,26,0.5),rgba(10,7,3,0.95) 80%);border:1px solid rgba(245,232,216,0.10);min-height:240px}
+.terrain svg{display:block;width:100%;height:240px}
+.terrain .terrain-label{position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:10px;letter-spacing:.20em;text-transform:uppercase;color:var(--gold);text-shadow:0 1px 2px rgba(0,0,0,0.6)}
+.terrain .you-marker{position:absolute;bottom:14px;left:16px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text);display:flex;align-items:center;gap:6px}
+.terrain .you-marker .dot{width:8px;height:8px;background:var(--gold);border-radius:50%;box-shadow:0 0 12px var(--gold);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.55;transform:scale(1.4)}}
+.terrain .enter-cta{position:absolute;bottom:14px;right:16px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;background:var(--gold);color:#0a1a14;padding:8px 14px;border-radius:6px;text-decoration:none;transition:transform .12s}
+.terrain .enter-cta:hover{transform:translate(0,-2px)}
+
+/* ── Character card ─────────────────────────────────────────────── */
+.character{background:linear-gradient(180deg,rgba(26,18,8,0.85),rgba(10,7,3,0.55));border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:18px 22px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
+.character::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(251,191,36,0.10),transparent 60%);pointer-events:none}
+.character .you-spawned{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+.character .name-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.character h1{font-family:var(--display);font-size:34px;letter-spacing:-.02em;text-transform:uppercase;margin:0;line-height:.95;color:var(--text)}
+.character .in-world{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:14px}
+.character .in-world .world-id{color:var(--gold);font-style:normal;font-weight:600}
+.character .class-row{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.character .class-pill{padding:3px 9px;border:1px solid rgba(251,191,36,0.40);border-radius:5px;background:rgba(251,191,36,0.06);color:var(--gold);font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.character .level-block{display:flex;flex-direction:column;gap:6px;margin-top:auto;padding-top:8px}
+.character .level-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.character .level-row .lvl{color:var(--gold);font-weight:700;font-size:11px}
+.character .level-row .xp{color:var(--accent-2);font-weight:600}
+.character .xp-track{height:8px;background:rgba(0,0,0,0.45);border-radius:5px;overflow:hidden;border:1px solid rgba(245,232,216,0.08)}
+.character .xp-track .bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width .8s cubic-bezier(.4,0,.2,1)}
+.character .ledger-row{display:flex;gap:18px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--muted);margin-top:2px}
+.character .ledger-row .money{color:var(--gold)}
+.character .ledger-row .clout{color:var(--accent-2)}
+.character .ledger-row strong{font-weight:700;color:inherit}
 
 /* ── Section heading ── */
-.section-h{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:32px 0 14px}
-.section-h h2{font-family:var(--display);font-size:26px;letter-spacing:-.01em;text-transform:uppercase;color:var(--text);margin:0}
+.section-h{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:28px 0 14px}
+.section-h h2{font-family:var(--display);font-size:24px;letter-spacing:-.01em;text-transform:uppercase;color:var(--text);margin:0}
 .section-h .meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-
-/* ── Quest cards ── */
-.quest-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-@media(max-width:680px){.quest-grid{grid-template-columns:1fr}}
-.quest{background:rgba(26,18,8,0.65);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;position:relative;text-decoration:none;color:inherit;transition:all .12s}
-.quest:hover{border-color:var(--accent);background:rgba(52,211,153,0.04);transform:translateY(-2px)}
-.quest.high{border-color:rgba(251,191,36,0.30)}
-.quest.high:hover{border-color:var(--gold);background:rgba(251,191,36,0.04)}
-.quest .top-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.quest .kind-pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:5px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);color:var(--muted)}
-.quest.high .kind-pill{color:var(--gold);border-color:var(--gold)}
-.quest.gate .kind-pill{color:var(--danger);border-color:var(--danger);background:rgba(248,113,113,0.06)}
-.quest .impact-pill{font-family:var(--mono);font-size:9px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;padding:2px 7px;border-radius:4px}
-.quest .impact-pill.high{background:rgba(251,191,36,0.10);color:var(--gold);border:1px solid rgba(251,191,36,0.40)}
-.quest .impact-pill.mid{background:rgba(52,211,153,0.10);color:var(--accent-2);border:1px solid rgba(52,211,153,0.40)}
-.quest .impact-pill.low{background:rgba(168,154,135,0.10);color:var(--muted);border:1px solid rgba(168,154,135,0.30)}
-.quest .title{font-family:var(--display);font-size:24px;letter-spacing:-.01em;text-transform:uppercase;line-height:1.05;color:var(--text)}
-.quest .subtitle{font-family:var(--serif);font-size:14px;color:var(--muted);line-height:1.5}
-.quest .footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:12px;border-top:1px solid rgba(245,232,216,0.06)}
-.quest .footer .count{font-family:var(--mono);font-size:11px;color:var(--accent-2);letter-spacing:.06em}
-.quest .footer .xp{font-family:var(--mono);font-size:10.5px;color:var(--gold);letter-spacing:.06em}
-.quest .footer .cta{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--accent-2);background:rgba(52,211,153,0.10);padding:7px 13px;border-radius:6px;border:1px solid rgba(52,211,153,0.40)}
-.quest:hover .footer .cta{background:var(--accent);color:#0a1a14;border-color:var(--accent)}
-.quest.high:hover .footer .cta{background:var(--gold);color:#0a1a14;border-color:var(--gold)}
-
-/* ── Empty state ── */
-.empty-stage{text-align:center;padding:60px 20px;background:rgba(0,0,0,0.20);border:1px dashed rgba(245,232,216,0.15);border-radius:14px}
-.empty-stage .emoji{font-size:48px;margin-bottom:12px}
-.empty-stage h2{font-family:var(--display);font-size:28px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 8px;color:var(--text)}
-.empty-stage p{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:0 0 14px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.55}
-.empty-stage .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
-.empty-stage .btn{padding:10px 18px;border-radius:7px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none}
-.empty-stage .btn.gold{background:var(--gold);color:#0a1a14}
-.empty-stage .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
 
 /* ── Online reps ── */
 .online-strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .online-chip{padding:5px 12px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.30);border-radius:14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--accent-2)}
 
+/* ── Quest cards ── */
+.quest-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(max-width:680px){.quest-grid{grid-template-columns:1fr}}
+.quest{background:rgba(26,18,8,0.65);border:1px solid rgba(245,232,216,0.10);border-radius:13px;padding:18px 20px;display:flex;flex-direction:column;gap:9px;position:relative;text-decoration:none;color:inherit;transition:all .14s;animation:quest-in .35s ease-out backwards}
+.quest:nth-child(1){animation-delay:.06s}.quest:nth-child(2){animation-delay:.10s}.quest:nth-child(3){animation-delay:.14s}.quest:nth-child(4){animation-delay:.18s}.quest:nth-child(5){animation-delay:.22s}.quest:nth-child(6){animation-delay:.26s}.quest:nth-child(7){animation-delay:.30s}.quest:nth-child(8){animation-delay:.34s}
+@keyframes quest-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.quest:hover{border-color:var(--accent);background:rgba(52,211,153,0.04);transform:translateY(-2px)}
+.quest.high{border-color:rgba(251,191,36,0.30)}
+.quest.high:hover{border-color:var(--gold);background:rgba(251,191,36,0.04)}
+.quest.gate{border-color:rgba(248,113,113,0.30);background:rgba(248,113,113,0.03)}
+.quest.gate:hover{border-color:var(--danger);background:rgba(248,113,113,0.06)}
+.quest .top-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.quest .kind-pill{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);color:var(--muted)}
+.quest.high .kind-pill{color:var(--gold);border-color:var(--gold)}
+.quest.gate .kind-pill{color:var(--danger);border-color:var(--danger);background:rgba(248,113,113,0.06)}
+.quest .xp-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;font-weight:700;color:var(--gold);padding:3px 8px;border-radius:11px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.30)}
+.quest .xp-badge .coin{display:inline-block;width:9px;height:9px;background:radial-gradient(circle,var(--gold) 30%,var(--gold-dim));border-radius:50%;box-shadow:inset -1px -1px 1px rgba(0,0,0,0.4)}
+.quest .title{font-family:var(--display);font-size:22px;letter-spacing:-.01em;text-transform:uppercase;line-height:1.05;color:var(--text)}
+.quest .subtitle{font-family:var(--serif);font-size:13.5px;color:var(--muted);line-height:1.5}
+.quest .footer{display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-top:10px;border-top:1px solid rgba(245,232,216,0.06)}
+.quest .footer .count{font-family:var(--mono);font-size:10.5px;color:var(--accent-2);letter-spacing:.06em}
+.quest .footer .cta{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--accent-2);background:rgba(52,211,153,0.10);padding:6px 11px;border-radius:5px;border:1px solid rgba(52,211,153,0.40)}
+.quest:hover .footer .cta{background:var(--accent);color:#0a1a14;border-color:var(--accent)}
+.quest.high:hover .footer .cta{background:var(--gold);color:#0a1a14;border-color:var(--gold)}
+.quest.gate .footer .cta{color:var(--danger);background:rgba(248,113,113,0.08);border-color:rgba(248,113,113,0.40)}
+.quest.gate:hover .footer .cta{background:var(--danger);color:#0a1a14}
+
+/* ── Empty / first-run / no-bullpen states ── */
+.empty-stage{text-align:center;padding:60px 20px;background:rgba(0,0,0,0.20);border:1px dashed rgba(245,232,216,0.15);border-radius:14px}
+.empty-stage .emoji{font-size:42px;margin-bottom:10px}
+.empty-stage h2{font-family:var(--display);font-size:26px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 8px;color:var(--text)}
+.empty-stage p{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:14.5px;margin:0 0 14px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.55}
+.empty-stage .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.empty-stage .btn{padding:10px 18px;border-radius:7px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none}
+.empty-stage .btn.gold{background:var(--gold);color:#0a1a14}
+.empty-stage .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+
 @media(max-width:540px){
   header{padding:10px 14px;flex-wrap:wrap;gap:8px}
   .nav{margin-left:0;width:100%;order:3}
   .brand{font-size:18px}
-  .wrap{padding:18px 14px 60px}
-  .hero h1{font-size:36px}
-  .hero .sub{font-size:14px}
-  .quest{padding:16px 18px}
-  .quest .title{font-size:20px}
-  .section-h h2{font-size:22px}
+  .wrap{padding:16px 14px 60px}
+  .character h1{font-size:26px}
+  .quest{padding:14px 16px}
+  .quest .title{font-size:19px}
+  .section-h h2{font-size:20px}
 }
 </style>
 </head>
@@ -128,93 +147,204 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 </header>
 
 <div class="wrap">
-  <div class="hero">
-    <div class="you-spawned" id="spawn-line">You spawned in</div>
-    <h1 id="world-name">…</h1>
-    <p class="sub" id="hero-sub">Welcome to the bullpen.</p>
+
+  <!-- ── Top portal: terrain (left) + character card (right) ── -->
+  <div class="spawn-stage">
+
+    <!-- Mini iso world: showing where the player is on the floor -->
+    <div class="terrain" id="terrain">
+      <div class="terrain-label">⛰ The floor</div>
+      <svg id="terrain-svg" viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+      <div class="you-marker"><span class="dot"></span><span id="you-here">you spawn here</span></div>
+      <a class="enter-cta" id="enter-cta" href="#">Enter the office →</a>
+    </div>
+
+    <!-- Character card -->
+    <div class="character">
+      <div class="you-spawned">⚔ You spawned in</div>
+      <div class="name-row">
+        <h1 id="rep-name">…</h1>
+        <span class="in-world">of <span class="world-id" id="world-id">…</span></span>
+      </div>
+      <div class="class-row">
+        <span class="class-pill" id="class-pill">CLOSER</span>
+        <span id="class-meta">finding your stance…</span>
+      </div>
+      <div class="level-block">
+        <div class="level-row">
+          <span class="lvl" id="lvl-text">Level 1</span>
+          <span class="xp" id="xp-text">0 XP</span>
+        </div>
+        <div class="xp-track"><div class="bar" id="xp-bar" style="width:1%"></div></div>
+        <div class="ledger-row">
+          <span class="money">💰 <strong id="money-xp">0</strong> money-xp</span>
+          <span class="clout">⚡ <strong id="clout-xp">0</strong> clout-xp</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <div class="section-h">
-    <h2>🌍 The world right now</h2>
-    <div class="meta" id="updated-meta">checking…</div>
-  </div>
-  <div class="world-strip" id="world-strip"></div>
+  <!-- ── Online reps strip ── -->
+  <div id="online-strip-wrap"></div>
 
+  <!-- ── Open work / gap quests ── -->
   <div class="section-h">
     <h2>🪓 Open work — pick one</h2>
     <div class="meta" id="quest-count-meta"></div>
   </div>
-  <div id="online-strip-wrap"></div>
   <div class="quest-grid" id="quest-grid"></div>
   <div id="empty-stage-wrap"></div>
+
 </div>
 
 <script>
 const URLP = new URL(window.location.href);
-const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+const BULLPEN = URLP.searchParams.get('b') || localStorage.getItem('bullpen-slug') || '';
 let REP = URLP.searchParams.get('rep');
 if (!REP) { try { REP = localStorage.getItem('bullpen-rep'); } catch(e){} }
 if (!REP) REP = 'self';
 
+// First-run safety: if we have no bullpen at all, redirect to the
+// operator setup wizard. This stops a brand-new install from rendering
+// a broken empty page.
+if(!BULLPEN){
+  window.location.replace('/app/host.html');
+}
+// Stash the bullpen slug for future page loads on this device
+try { if(BULLPEN) localStorage.setItem('bullpen-slug', BULLPEN); } catch(e){}
+
 function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else if(k==='href')n.setAttribute('href',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function svg(t,p,...c){const n=document.createElementNS('http://www.w3.org/2000/svg',t);if(p){for(const k in p)n.setAttribute(k,p[k])}for(const x of c){if(x==null)continue;n.appendChild(x)}return n}
 function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
 
+// ── Terrain mini-iso ────────────────────────────────────────────────
+// Renders a small isometric grid showing the layout of the office:
+// closer pit (bottom), client desks (top-right), kanban (top-left),
+// the bell (right). YOU get a pulsing gold marker on the pit row.
+function renderTerrain(stats){
+  const root = document.getElementById('terrain-svg');
+  clear(root);
+  const COLS = 8, ROWS = 5;
+  const TW = 50, TH = 25;            // iso tile half-width / half-height
+  const OX = 300, OY = 50;           // origin offset
+  function iso(x,y){ return {x:(x-y)*TW, y:(x+y)*TH}; }
+  function diamond(x,y){
+    const c = iso(x,y);
+    return `${c.x+OX},${c.y+OY-TH} ${c.x+OX+TW},${c.y+OY} ${c.x+OX},${c.y+OY+TH} ${c.x+OX-TW},${c.y+OY}`;
+  }
+  // Zone colors mirror office.html so the visual language is consistent
+  const ZONE = {
+    pit:     ['#5b3c2a','#4d2f1f'],
+    buyers:  ['#2d3a4d','#243043'],
+    bell:    ['#4a1f3a','#3d1830'],
+    kanban:  ['#3a2d1f','#2f2419'],
+  };
+  function zoneFor(x,y){
+    if(y >= ROWS - 2) return 'pit';        // bottom 2 rows
+    if(x >= COLS - 2) return 'buyers';     // right 2 cols
+    if(x === 0 && y === 0) return 'bell';
+    if(y <= 1) return 'kanban';
+    return 'pit';
+  }
+  // Floor tiles
+  for(let y=0; y<ROWS; y++){
+    for(let x=0; x<COLS; x++){
+      const z = zoneFor(x,y);
+      const fill = ZONE[z][(x+y)%2];
+      root.appendChild(svg('polygon', {
+        points: diamond(x,y), fill, stroke:'rgba(0,0,0,0.35)', 'stroke-width':'0.5',
+      }));
+    }
+  }
+  // Client desk prisms (top-right corner)
+  for(let i=0; i<3; i++){
+    const c = iso(COLS-1-i, 0+i);
+    const cx = c.x+OX, cy = c.y+OY;
+    root.appendChild(svg('polygon', {
+      points: `${cx},${cy-18} ${cx+TW*.6},${cy-6} ${cx+TW*.6},${cy+TH*.3} ${cx},${cy+TH*.3-12}`,
+      fill: '#3a4a63', stroke:'var(--edge)', 'stroke-width':'0.8',
+    }));
+    root.appendChild(svg('polygon', {
+      points: `${cx},${cy-18} ${cx-TW*.6},${cy-6} ${cx-TW*.6},${cy+TH*.3} ${cx},${cy+TH*.3-12}`,
+      fill: '#2a374d', stroke:'var(--edge)', 'stroke-width':'0.8',
+    }));
+    root.appendChild(svg('polygon', {
+      points: `${cx},${cy-30} ${cx+TW*.6},${cy-18} ${cx},${cy-6} ${cx-TW*.6},${cy-18}`,
+      fill: '#9ab1d9', stroke:'var(--edge)', 'stroke-width':'0.8',
+    }));
+  }
+  // YOU pawn — gold, on the pit
+  const youT = iso(2, ROWS-1);
+  const yx = youT.x+OX, yy = youT.y+OY;
+  root.appendChild(svg('ellipse', {
+    cx: yx, cy: yy+6, rx: 10, ry: 3, fill:'rgba(0,0,0,0.5)',
+  }));
+  root.appendChild(svg('polygon', {
+    points: `${yx},${yy-2} ${yx+10},${yy-8} ${yx+10},${yy+2} ${yx},${yy+8}`,
+    fill: '#92400e', stroke:'var(--edge)', 'stroke-width':'1',
+  }));
+  root.appendChild(svg('polygon', {
+    points: `${yx},${yy-2} ${yx-10},${yy-8} ${yx-10},${yy+2} ${yx},${yy+8}`,
+    fill: '#7a3608', stroke:'var(--edge)', 'stroke-width':'1',
+  }));
+  root.appendChild(svg('polygon', {
+    points: `${yx},${yy-20} ${yx+10},${yy-8} ${yx},${yy-2} ${yx-10},${yy-8}`,
+    fill: 'var(--gold)', stroke:'var(--edge)', 'stroke-width':'1',
+  }));
+  // Pulse halo around YOU
+  const halo = svg('circle', {cx:yx, cy:yy-10, r:14, fill:'none',
+                                stroke:'var(--gold)', 'stroke-width':'1.5', opacity:'0.7'});
+  const a1 = svg('animate', {attributeName:'r', from:'14', to:'28', dur:'1.4s', repeatCount:'indefinite'});
+  const a2 = svg('animate', {attributeName:'opacity', from:'0.7', to:'0', dur:'1.4s', repeatCount:'indefinite'});
+  halo.appendChild(a1); halo.appendChild(a2);
+  root.appendChild(halo);
+}
+
+// ── Character card ─────────────────────────────────────────────────
+async function renderCharacter(){
+  // Best-effort: pull the rep's profile aggregate. Falls back to zero
+  // state if the endpoint isn't available yet for this rep.
+  let p = {};
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/profile/${encodeURIComponent(REP)}`);
+    if(r.ok) p = await r.json();
+  } catch(e){}
+  document.getElementById('rep-name').textContent = (REP || 'CLOSER').toUpperCase();
+  document.getElementById('world-id').textContent = (BULLPEN || 'BULLPEN').toUpperCase();
+  const money = p.money_xp || 0;
+  const clout = p.clout_xp || 0;
+  const total = money + clout;
+  const lvl = (p.xp_detail && p.xp_detail.level) || Math.max(1, Math.floor(total / 250) + 1);
+  // Level curve: 250 XP per level (Phase 0.5 default — Phase 1+ will
+  // wire this to xp.py's real level table)
+  const intoLevel = total - (lvl-1)*250;
+  const pct = Math.max(2, Math.min(100, Math.round(intoLevel / 250 * 100)));
+  document.getElementById('lvl-text').textContent = `Level ${lvl}`;
+  document.getElementById('xp-text').textContent = `${intoLevel} / 250 XP`;
+  document.getElementById('xp-bar').style.width = pct + '%';
+  document.getElementById('money-xp').textContent = money;
+  document.getElementById('clout-xp').textContent = clout;
+  // Class blurb — defaults to CLOSER for any non-operator. Operators
+  // see HOST. Future Phase 1 wires actual class assignments.
+  const isOperator = ['self','operator','founder','host','beers'].includes((REP || '').toLowerCase());
+  document.getElementById('class-pill').textContent = isOperator ? 'HOST' : 'CLOSER';
+  document.getElementById('class-meta').textContent = isOperator
+    ? 'you run this bullpen — the operator class.'
+    : (lvl >= 3 ? 'cert-tier cleared — real prospects within reach.'
+                : 'drill, dial, deal — your kit unlocks as you train.');
+}
+
+// ── Spawn data ─────────────────────────────────────────────────────
 async function load(){
+  if(!BULLPEN) return;
   const r = await fetch(`/api/b/${BULLPEN}/spawn?rep=${encodeURIComponent(REP)}`);
-  if(!r.ok){ document.getElementById('hero-sub').textContent = 'Spawn check failed.'; return; }
+  if(!r.ok){ return; }
   const d = await r.json();
-  renderHero(d);
-  renderWorld(d.stats || {});
+  renderTerrain(d.stats || {});
   renderQuests(d.quests || []);
   renderOnline(d.stats || {});
-  document.getElementById('updated-meta').textContent = 'as of ' + new Date().toLocaleTimeString();
-}
-
-function renderHero(d){
-  document.getElementById('world-name').textContent = (d.bullpen || 'BULLPEN').toUpperCase();
-  document.getElementById('spawn-line').textContent = `Welcome, ${REP}. You spawned in`;
-  const stats = d.stats || {};
-  const quests = d.quests || [];
-  const high = quests.filter(q => q.impact === 'high').length;
-  let sub;
-  if(stats.deals_total === 0 && stats.posts_total === 0){
-    sub = `The world is empty. No deals, no calls, no posts. Pick a quest below — every action you take fills in part of the map for the rest of the team.`;
-  } else if(quests.length === 0){
-    sub = `Everything's covered for the moment. Drill, duel, or open the office to see who's on.`;
-  } else {
-    sub = `${quests.length} open quest${quests.length===1?'':'s'} on the board${high?', '+high+' high-impact':''}. Anyone can claim any of them. Pick what looks fun.`;
-  }
-  document.getElementById('hero-sub').textContent = sub;
-}
-
-function renderWorld(s){
-  const wrap = document.getElementById('world-strip');
-  clear(wrap);
-  const tiles = [
-    {label:'Prospects', value: s.deals_total || 0, meta: tinySpread(s.deals_by_stage || {})},
-    {label:'Real calls', value: s.calls_total || 0, meta: s.calls_today ? `${s.calls_today} today` : 'none today'},
-    {label:'Drills run', value: s.drills_total || 0, meta: 'practice loops'},
-    {label:'Posts', value: s.posts_total || 0, meta: `${s.clicks_total || 0} clicks`},
-    {label:'Dossiers', value: s.buyers_with_dossier || 0, meta: `${s.chunks_total || 0} chunks`},
-    {label:'Online now', value: s.online_count || 0, meta: `${s.members_total || 0} members`},
-  ];
-  for(const t of tiles){
-    const cls = t.value === 0 ? 'zero' : t.value < 3 ? 'warm' : 'hot';
-    const tile = el('div', {class:`world-tile ${cls}`});
-    tile.appendChild(el('div', {class:'lbl', text: t.label}));
-    tile.appendChild(el('div', {class:'val', text: String(t.value)}));
-    tile.appendChild(el('div', {class:'meta', text: t.meta || ''}));
-    wrap.appendChild(tile);
-  }
-}
-
-function tinySpread(byStage){
-  // "5 lead · 3 contacted · 1 demo"
-  const parts = [];
-  for(const k of ['lead','contacted','qualified','demo','pilot','won']){
-    if(byStage[k]) parts.push(`${byStage[k]} ${k}`);
-  }
-  return parts.join(' · ') || 'none yet';
+  document.getElementById('enter-cta').href = `/app/office.html?b=${BULLPEN}&rep=${encodeURIComponent(REP)}`;
 }
 
 function renderQuests(quests){
@@ -241,7 +371,12 @@ function renderQuests(quests){
                             href: q.href || '#'});
     const top = el('div', {class:'top-row'});
     top.appendChild(el('div', {class:'kind-pill', text: q.kind.toUpperCase()}));
-    top.appendChild(el('div', {class:'impact-pill ' + (q.impact||'low'), text: q.impact || 'low'}));
+    if(q.xp_estimate){
+      const xp = el('div', {class:'xp-badge'});
+      xp.appendChild(el('span', {class:'coin'}));
+      xp.appendChild(el('span', {text: `+${q.xp_estimate} XP`}));
+      top.appendChild(xp);
+    }
     card.appendChild(top);
     card.appendChild(el('div', {class:'title', text: q.title}));
     card.appendChild(el('div', {class:'subtitle', text: q.subtitle}));
@@ -251,7 +386,6 @@ function renderQuests(quests){
     } else {
       foot.appendChild(el('div', {class:'count', text: ''}));
     }
-    foot.appendChild(el('div', {class:'xp', text: q.xp_estimate ? `~${q.xp_estimate} XP` : ''}));
     foot.appendChild(el('div', {class:'cta', text: q.cta || 'GO →'}));
     card.appendChild(foot);
     grid.appendChild(card);
@@ -272,6 +406,10 @@ function renderOnline(s){
   }
 }
 
+// Boot: render character + terrain immediately for snap-fast paint,
+// then fetch spawn data + repaint when it arrives.
+renderCharacter();
+renderTerrain({});
 load();
 setInterval(load, 30000);
 </script>

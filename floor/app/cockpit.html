@@ -192,7 +192,7 @@ h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transfor
 
 <script>
 const URLP = new URL(window.location.href);
-const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+const BULLPEN = URLP.searchParams.get('b') || localStorage.getItem('bullpen-slug') || '';
 function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else if(k==='href')n.setAttribute('href',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
 function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
 

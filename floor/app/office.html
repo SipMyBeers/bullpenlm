@@ -201,7 +201,7 @@ header .nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
 <script>
 // ── Identity ─────────────────────────────────────────────────────
 const url = new URL(window.location.href);
-const BULLPEN = url.searchParams.get('b') || (localStorage.getItem('bullpen-slug') || 'ghengis');
+const BULLPEN = url.searchParams.get('b') || localStorage.getItem('bullpen-slug') || '';
 let REP = url.searchParams.get('rep');
 if (!REP) { try { REP = localStorage.getItem('bullpen-rep'); } catch(e) {} }
 if (!REP) REP = 'self';

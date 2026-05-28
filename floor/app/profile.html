@@ -440,7 +440,7 @@ setInterval(load, 45000);
 <script>
 (function(){
   const params = new URLSearchParams(location.search);
-  const BP = params.get('b') || 'ghengis';
+  const BP = params.get('b') || localStorage.getItem('bullpen-slug') || '';
   const RP = params.get('rep') || (localStorage.getItem('bullpen-rep') || 'beers');
   function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
   function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
