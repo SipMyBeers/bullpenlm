@@ -125,6 +125,26 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
 .quest-toast-label{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:#fbbf24}
 .quest-toast-name{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.005em;color:#f5e8d8}
 .quest-toast-xp{font-family:var(--mono);font-size:13px;color:#fbbf24;font-weight:700;letter-spacing:.06em}
+
+/* ── Have-it-or-defer picker ─────────────────────────────────── */
+.have-row{margin-bottom:22px}
+.have-row.sub-have{margin:18px 0 12px}
+.have-row-q{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:600}
+.have-row-q.sub-q{font-size:10px;letter-spacing:.14em}
+.have-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.have-options.compact{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:540px){.have-options{grid-template-columns:1fr}}
+.have-opt{padding:14px 16px;background:rgba(0,0,0,0.30);border:1.5px solid rgba(245,232,216,0.12);border-radius:10px;cursor:pointer;display:flex;flex-direction:column;gap:4px;text-align:left;font-family:var(--sans);font-size:14px;color:var(--text);transition:all .12s}
+.have-opt:hover{border-color:var(--accent);background:rgba(52,211,153,0.04);transform:translateY(-1px)}
+.have-opt.selected{border-color:var(--accent);background:rgba(52,211,153,0.08);box-shadow:0 0 18px rgba(52,211,153,0.15)}
+.have-opt .have-icon{font-size:18px;line-height:1;color:var(--accent);font-weight:700}
+.have-opt .have-label{font-family:var(--display);font-size:15px;text-transform:uppercase;letter-spacing:-.005em;color:var(--text)}
+.have-opt .have-sub{font-family:var(--serif);font-style:italic;font-size:12.5px;color:var(--muted);line-height:1.4}
+.have-opt.selected .have-icon{color:var(--accent-2)}
+.have-opt.compact{padding:9px 14px;flex-direction:row;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;flex:0 0 auto}
+.defer-banner{padding:14px 18px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.30);border-radius:9px;margin-bottom:18px;font-family:var(--serif);font-size:14.5px;color:var(--text);line-height:1.55}
+.defer-banner strong{color:var(--gold);font-style:normal}
+.defer-banner em{color:var(--gold);font-style:italic}
 </style>
 </head>
 <body>
@@ -191,31 +211,89 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
         </div>
         <div class="quest-reward"><span class="reward-coin"></span><span>+100 XP</span></div>
       </div>
-      <p>Every Closer Agreement is signed under <strong>this entity</strong> — not BullpenLM. It's the party your closers contract with, the party that cuts their checks, and the party they take to court if you ever burn them. So give it your real name.</p>
-      <div class="field"><label>Entity kind</label>
-        <select id="ent-kind">
-          <option value="llc">LLC (single-member or multi-member)</option>
-          <option value="sole_prop">Sole proprietorship</option>
-          <option value="individual">Individual (just me)</option>
-        </select>
-        <div class="hint">Most operators use an LLC for liability separation.</div></div>
-      <div class="field"><label>Legal name</label><input id="ent-name" placeholder="e.g. KillSesh Industries LLC">
-        <div class="hint">Exact name as on your state registration.</div></div>
-      <div class="field"><label>EIN or SSN</label><input id="ent-tin" type="password" autocomplete="off" placeholder="00-0000000 or 000-00-0000">
-        <div class="hint">Hashed locally with a per-bullpen salt. Raw value is NEVER stored on disk.</div></div>
-      <div class="field"><label>Street address</label><input id="ent-street" placeholder="123 Operator Way"></div>
-      <div class="row">
-        <div class="field"><label>City</label><input id="ent-city"></div>
-        <div class="field"><label>State</label><input id="ent-state" maxlength="2" placeholder="OR"></div>
-        <div class="field"><label>ZIP</label><input id="ent-zip"></div>
+      <p>Every Closer Agreement is signed under <strong>this entity</strong> — not BullpenLM. It's the party your closers contract with, the party that cuts their checks, and the party they take to court if you ever burn them.</p>
+
+      <!-- Have-it-or-defer choice -->
+      <div class="have-row">
+        <div class="have-row-q">Do you already have a registered business?</div>
+        <div class="have-options">
+          <button class="have-opt" data-have="yes" onclick="setEntityHave('yes')">
+            <span class="have-icon">✓</span>
+            <span class="have-label">Yes — LLC, S-corp, etc.</span>
+            <span class="have-sub">Already filed with my state.</span>
+          </button>
+          <button class="have-opt" data-have="later" onclick="setEntityHave('later')">
+            <span class="have-icon">⏰</span>
+            <span class="have-label">Not yet — set up later</span>
+            <span class="have-sub">I'll register a business when I'm ready to pay closers.</span>
+          </button>
+        </div>
       </div>
-      <div class="row two">
-        <div class="field"><label>Contact email</label><input id="ent-email" type="email"></div>
-        <div class="field"><label>Contact phone (optional)</label><input id="ent-phone"></div>
+
+      <!-- YES path: full entity form -->
+      <div id="ent-yes-form" class="ent-form hide">
+        <div class="field"><label>Entity kind</label>
+          <select id="ent-kind">
+            <option value="llc">LLC (single-member or multi-member)</option>
+            <option value="sole_prop">Sole proprietorship</option>
+            <option value="s_corp">S-Corp</option>
+            <option value="c_corp">C-Corp</option>
+            <option value="individual">Individual (just me, no formal entity)</option>
+          </select>
+          <div class="hint">Most operators use an LLC for liability separation.</div></div>
+        <div class="field"><label>Legal name</label><input id="ent-name" placeholder="e.g. KillSesh Industries LLC">
+          <div class="hint">Exact name as on your state registration.</div></div>
+
+        <!-- EIN / banking sub-choice -->
+        <div class="have-row sub-have">
+          <div class="have-row-q sub-q">EIN on file?</div>
+          <div class="have-options compact">
+            <button class="have-opt compact" data-have-tin="yes" onclick="setSubHave('tin','yes')">✓ Yes</button>
+            <button class="have-opt compact" data-have-tin="later" onclick="setSubHave('tin','later')">⏰ Not yet</button>
+          </div>
+        </div>
+        <div class="field" id="tin-field">
+          <label>EIN or SSN</label><input id="ent-tin" type="password" autocomplete="off" placeholder="00-0000000 or 000-00-0000">
+          <div class="hint">Hashed locally with a per-bullpen salt. Raw value is NEVER stored on disk.</div></div>
+
+        <div class="have-row sub-have">
+          <div class="have-row-q sub-q">Business bank account?</div>
+          <div class="have-options compact">
+            <button class="have-opt compact" data-have-bank="yes" onclick="setSubHave('bank','yes')">✓ Yes</button>
+            <button class="have-opt compact" data-have-bank="later" onclick="setSubHave('bank','later')">⏰ Not yet</button>
+          </div>
+        </div>
+        <div id="bank-note" class="hide">
+          <div class="hint" style="margin-bottom:14px">Set this up at the cockpit later — it's how 1099 payouts route to your account.</div>
+        </div>
+
+        <div class="field"><label>Street address</label><input id="ent-street" placeholder="123 Operator Way"></div>
+        <div class="row">
+          <div class="field"><label>City</label><input id="ent-city"></div>
+          <div class="field"><label>State</label><input id="ent-state" maxlength="2" placeholder="OR"></div>
+          <div class="field"><label>ZIP</label><input id="ent-zip"></div>
+        </div>
+        <div class="row two">
+          <div class="field"><label>Contact email</label><input id="ent-email" type="email"></div>
+          <div class="field"><label>Contact phone (optional)</label><input id="ent-phone"></div>
+        </div>
+        <div class="warning-box"><strong>Jurisdiction matters.</strong> Phase 0.5 is US-only. The classification coach uses your state for state-specific warnings (CA AB5, NJ ABC, NY/IL/LA Freelance Isn't Free).</div>
       </div>
-      <div class="warning-box"><strong>Jurisdiction matters.</strong> Phase 0.5 is US-only. The classification coach uses your state for state-specific warnings (CA AB5, NJ ABC, NY/IL/LA Freelance Isn't Free).</div>
+
+      <!-- LATER path: just name + state, defer the rest -->
+      <div id="ent-later-form" class="ent-form hide">
+        <div class="defer-banner">
+          <strong>🪪 Got it.</strong> You'll operate as a sole proprietor under your personal name for now. We'll mark this as <em>pending</em> and remind you to register a business before you pay any 1099 closer. You can still <em>practice</em> the platform and invite friends as unpaid practice partners today.
+        </div>
+        <div class="field"><label>Your name</label><input id="ent-name-later" placeholder="Dylan Beers">
+          <div class="hint">For now, contracts use your personal legal name. Update later from the cockpit.</div></div>
+        <div class="field"><label>State (2 letters)</label><input id="ent-state-later" maxlength="2" placeholder="OR">
+          <div class="hint">For state-law warnings only. We don't store any address yet.</div></div>
+        <div class="field"><label>Email</label><input id="ent-email-later" type="email" placeholder="you@example.com"></div>
+      </div>
+
       <div id="ent-status"></div>
-      <div class="foot-nav">
+      <div class="foot-nav" id="ent-foot" style="display:none">
         <a href="/" class="btn ghost">← Back to floor</a>
         <button class="btn primary" onclick="saveEntity()">⚔ Claim it →</button>
       </div>
@@ -397,13 +475,75 @@ function setStatus(id, ok, msg){
   wrap.appendChild(el('div', {class: 'status ' + (ok ? 'ok' : 'err'), text: msg}));
 }
 
+// ── Entity have-it-or-defer branching ────────────────────────────────
+let entityHave = null;   // 'yes' | 'later'
+let tinHave = 'yes';
+let bankHave = 'yes';
+
+function setEntityHave(choice){
+  entityHave = choice;
+  document.querySelectorAll('.have-opt[data-have]').forEach(b => {
+    b.classList.toggle('selected', b.dataset.have === choice);
+  });
+  document.getElementById('ent-yes-form').classList.toggle('hide', choice !== 'yes');
+  document.getElementById('ent-later-form').classList.toggle('hide', choice !== 'later');
+  document.getElementById('ent-foot').style.display = '';
+}
+function setSubHave(kind, choice){
+  const map = {tin: 'tinHave', bank: 'bankHave'};
+  window[map[kind]] = choice;
+  document.querySelectorAll(`.have-opt[data-have-${kind}]`).forEach(b => {
+    b.classList.toggle('selected', b.dataset[`have${kind.charAt(0).toUpperCase()+kind.slice(1)}`] === choice);
+  });
+  if(kind === 'tin'){
+    tinHave = choice;
+    document.getElementById('tin-field').classList.toggle('hide', choice === 'later');
+  } else if(kind === 'bank'){
+    bankHave = choice;
+    document.getElementById('bank-note').classList.toggle('hide', choice !== 'later');
+  }
+}
+
 // ── STEP 1 ────────────────────────────────────────────────────────────
 async function saveEntity(){
+  if(!entityHave){ return setStatus('ent-status', false, 'Pick a path: registered now or set up later.'); }
+
+  // LATER path — sole-prop stub, defer EIN/banking/address until they
+  // actually need to pay a 1099 closer.
+  if(entityHave === 'later'){
+    const name = (document.getElementById('ent-name-later').value || '').trim();
+    const state = (document.getElementById('ent-state-later').value || '').trim().toUpperCase();
+    const email = (document.getElementById('ent-email-later').value || '').trim();
+    if(!name || !state || !email){
+      return setStatus('ent-status', false, 'Need your name, state, and email — even on the deferred path.');
+    }
+    const body = {
+      bullpen: BULLPEN, kind: 'sole_prop', legal_name: name,
+      raw_ein_or_ssn: '',
+      address: {street:'', city:'', state, postal_code:'', country:'US'},
+      jurisdiction: 'US-' + state,
+      contact_email: email, contact_phone: null,
+      deferred: true,
+      deferred_items: ['legal-entity','ein','address','bank-account'],
+    };
+    const r = await api('POST', `/api/b/${BULLPEN}/entity`, body);
+    if(!r.ok) return setStatus('ent-status', false, (r.data && r.data.error) || 'Save failed.');
+    state.entity = r.data.entity;
+    setStatus('ent-status', true, '✓ Operating as sole proprietor for now. Pending items saved.');
+    loadClassificationForm();
+    updateHQ();
+    showQuestToast('STAKE YOUR CLAIM', 100);
+    setTimeout(()=>showStep(2), 1200);
+    return;
+  }
+
+  // YES path — full entity. Allow TIN + address fields to be empty if
+  // marked "later" sub-choices.
   const body = {
     bullpen: BULLPEN,
     kind: document.getElementById('ent-kind').value,
     legal_name: document.getElementById('ent-name').value.trim(),
-    raw_ein_or_ssn: document.getElementById('ent-tin').value.trim(),
+    raw_ein_or_ssn: tinHave === 'later' ? '' : document.getElementById('ent-tin').value.trim(),
     address: {
       street: document.getElementById('ent-street').value.trim(),
       city: document.getElementById('ent-city').value.trim(),
@@ -414,9 +554,13 @@ async function saveEntity(){
     jurisdiction: 'US-' + document.getElementById('ent-state').value.trim().toUpperCase(),
     contact_email: document.getElementById('ent-email').value.trim(),
     contact_phone: document.getElementById('ent-phone').value.trim() || null,
+    deferred_items: [
+      ...(tinHave === 'later' ? ['ein'] : []),
+      ...(bankHave === 'later' ? ['bank-account'] : []),
+    ],
   };
   if(!body.legal_name || !body.address.street || !body.address.city || !body.address.state || !body.contact_email){
-    return setStatus('ent-status', false, 'Fill all required fields.');
+    return setStatus('ent-status', false, 'Fill the required fields. Use the "Not yet" toggles for EIN or bank if you don\'t have them.');
   }
   const r = await api('POST', `/api/b/${BULLPEN}/entity`, body);
   if(!r.ok) return setStatus('ent-status', false, (r.data && r.data.error) || 'Save failed.');

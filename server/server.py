@@ -6038,6 +6038,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     jurisdiction=body.get("jurisdiction"),
                     contact_email=body.get("contact_email"),
                     contact_phone=body.get("contact_phone"),
+                    deferred=bool(body.get("deferred")),
+                    deferred_items=body.get("deferred_items"),
                 )
                 self._send_json(200, {"entity": e})
             except ValueError as e:

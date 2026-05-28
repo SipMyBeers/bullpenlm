@@ -105,14 +105,22 @@ def set_entity(
     contact_email: str,
     contact_phone: Optional[str] = None,
     actor: str = "operator",
+    deferred: bool = False,
+    deferred_items: Optional[list] = None,
 ) -> dict:
     """Set or update the operator entity profile. Validates required
     fields; rejects non-US jurisdictions (Phase 0.5 scope is US-only).
 
     raw_ein_or_ssn is hashed immediately and discarded. Caller must not
     log it, persist it, or pass it onward.
+
+    deferred=True relaxes the address-completeness check so brand-new
+    operators who haven't registered yet can start with a sole-prop stub
+    + legal name + state and fill in the rest later. The platform tracks
+    which fields are pending in `deferred_items` and surfaces them as
+    follow-up quests on the cockpit.
     """
-    if kind not in ("llc", "sole_prop", "individual"):
+    if kind not in ("llc", "sole_prop", "individual", "s_corp", "c_corp"):
         raise ValueError(f"invalid entity kind: {kind!r}")
     if not legal_name or not legal_name.strip():
         raise ValueError("legal_name is required")
@@ -146,6 +154,8 @@ def set_entity(
         "contact_phone": (contact_phone or "").strip() or None,
         "counsel_reviewed_at": existing.get("counsel_reviewed_at"),
         "counsel_name": existing.get("counsel_name"),
+        "deferred": bool(deferred),
+        "deferred_items": list(deferred_items or []),
         "created_at": existing.get("created_at", now),
         "updated_at": now,
     }
