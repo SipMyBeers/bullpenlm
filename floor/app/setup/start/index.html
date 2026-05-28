@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>What are you running? · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
+  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;
+  --gold:#fbbf24;--gold-dim:#92400e;--danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+
+.wrap{max-width:1000px;margin:0 auto;padding:36px 26px 80px}
+.brand{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:-.02em;text-decoration:none;display:inline-block;margin-bottom:32px;color:var(--text)}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+h1{font-family:var(--display);font-size:46px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 10px;line-height:1}
+.lede{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--muted);margin:0 0 36px;max-width:720px;line-height:1.55}
+
+/* Step header */
+.step-h{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+
+/* ── Path cards (Solo vs Team) ────────────────────────────────── */
+.path-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:36px}
+@media(max-width:680px){.path-grid{grid-template-columns:1fr}}
+.path-card{padding:24px 26px;background:rgba(26,18,8,0.65);border:1.5px solid rgba(245,232,216,0.10);border-radius:14px;cursor:pointer;transition:all .15s;position:relative;display:flex;flex-direction:column;gap:10px}
+.path-card:hover{border-color:rgba(52,211,153,0.50);transform:translateY(-2px);background:rgba(52,211,153,0.04)}
+.path-card.selected{border-color:var(--accent);background:rgba(52,211,153,0.06);box-shadow:0 0 30px rgba(52,211,153,0.10)}
+.path-card .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:11px;background:rgba(0,0,0,0.40);border:1px solid rgba(245,232,216,0.15);color:var(--muted);align-self:flex-start}
+.path-card.selected .badge{background:var(--accent);color:#0a1a14;border-color:var(--accent)}
+.path-card .glyph{font-size:32px;line-height:1}
+.path-card .name{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:-.01em;margin:6px 0 4px}
+.path-card .blurb{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:14.5px;line-height:1.55}
+.path-card .meta{margin-top:auto;padding-top:12px;border-top:1px solid rgba(245,232,216,0.06);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--accent-2);display:flex;flex-wrap:wrap;gap:6px}
+.path-card .meta .tag{padding:2px 7px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);border-radius:4px}
+.path-card.team .meta .tag{background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.30);color:var(--gold)}
+
+/* ── Industry pick ─────────────────────────────────────────────── */
+.industry-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+@media(max-width:880px){.industry-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:540px){.industry-grid{grid-template-columns:repeat(2,1fr)}}
+.industry{padding:18px 14px;background:rgba(26,18,8,0.55);border:1.5px solid rgba(245,232,216,0.10);border-radius:11px;cursor:pointer;transition:all .12s;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.industry:hover{border-color:rgba(251,191,36,0.50);background:rgba(251,191,36,0.04);transform:translateY(-2px)}
+.industry.selected{border-color:var(--gold);background:rgba(251,191,36,0.06);box-shadow:0 0 18px rgba(251,191,36,0.15)}
+.industry .icon{font-size:26px;line-height:1}
+.industry .name{font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;color:var(--text);line-height:1.2}
+.industry.selected .name{color:var(--gold)}
+.industry .blurb{font-family:var(--serif);font-style:italic;font-size:12px;color:var(--muted);line-height:1.4}
+
+/* Custom write-in */
+.custom-row{display:flex;align-items:flex-end;gap:10px;margin:6px 0 30px}
+.custom-row .field{flex:1}
+.custom-row label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.custom-row input{width:100%;padding:11px 14px;background:rgba(0,0,0,0.30);border:1.5px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:15px;outline:none}
+.custom-row input:focus{border-color:var(--gold)}
+
+/* Footer CTA */
+.foot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-top:14px;border-top:1px solid rgba(245,232,216,0.10);flex-wrap:wrap}
+.foot .hint{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em;flex:1;min-width:240px}
+.foot .btn{padding:12px 22px;border-radius:8px;font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none;transition:all .12s}
+.foot .btn.gold{background:var(--gold);color:#0a1a14}
+.foot .btn.gold:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(251,191,36,0.30)}
+.foot .btn:disabled{opacity:.45;cursor:not-allowed;background:rgba(245,232,216,0.10);color:var(--muted)}
+
+.err{font-family:var(--mono);font-size:11px;color:var(--danger);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+
+  <div class="eyebrow">⚔ Founder's path · Step 0</div>
+  <h1>What are you running?</h1>
+  <p class="lede">BullpenLM works for any sales motion — software, services, local trades, coaching, real estate. We just need to know <em>two things</em> before the floor opens. Skip what doesn't apply.</p>
+
+  <!-- ── Question 1: Solo or Team ── -->
+  <div class="step-h">① How are you working?</div>
+  <div class="path-grid">
+    <div class="path-card solo" data-path="solo">
+      <div class="badge">Recommended for most</div>
+      <div class="glyph">🎯</div>
+      <div class="name">Just me</div>
+      <div class="blurb">Practice my pitch against an AI buyer, drill objections, sharpen my close. No team, no legal stuff. I might invite a friend later.</div>
+      <div class="meta">
+        <span class="tag">⚡ 60 seconds to start</span>
+        <span class="tag">no legal scaffolding</span>
+        <span class="tag">always available</span>
+      </div>
+    </div>
+    <div class="path-card team" data-path="team">
+      <div class="badge">For teams of 2+</div>
+      <div class="glyph">🏢</div>
+      <div class="name">Building a team</div>
+      <div class="blurb">I'm going to invite closers — friends, contractors, paid sellers — and the platform needs to handle commission, 1099s, and the legal scaffolding for that.</div>
+      <div class="meta">
+        <span class="tag">4-quest HQ setup</span>
+        <span class="tag">closer agreements</span>
+        <span class="tag">compliance firewall</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Question 2: What do you sell ── -->
+  <div class="step-h">② What do you sell?</div>
+  <div class="industry-grid">
+    <div class="industry" data-industry="software"><div class="icon">💻</div><div class="name">Software / SaaS</div><div class="blurb">B2B tools, dev tooling, AI products</div></div>
+    <div class="industry" data-industry="services"><div class="icon">🛠</div><div class="name">Services</div><div class="blurb">Web dev, AI integration, design, consulting</div></div>
+    <div class="industry" data-industry="local"><div class="icon">🚗</div><div class="name">Local Trades</div><div class="blurb">Car wash, lawn, contractors, cleaning, home services</div></div>
+    <div class="industry" data-industry="coaching"><div class="icon">🎓</div><div class="name">Coaching / Courses</div><div class="blurb">1:1 coaching, info products, cohorts</div></div>
+    <div class="industry" data-industry="real-estate"><div class="icon">🏠</div><div class="name">Real Estate</div><div class="blurb">Agents, brokers, investor reach-outs</div></div>
+    <div class="industry" data-industry="insurance"><div class="icon">📜</div><div class="name">Insurance / Financial</div><div class="blurb">Life, P&C, financial advising, RIA</div></div>
+    <div class="industry" data-industry="retail"><div class="icon">🛒</div><div class="name">E-commerce / Retail</div><div class="blurb">DTC, retail, wholesale outreach</div></div>
+    <div class="industry" data-industry="other"><div class="icon">✨</div><div class="name">Other / Custom</div><div class="blurb">Describe it below</div></div>
+  </div>
+
+  <div class="custom-row" id="custom-row" style="display:none">
+    <div class="field">
+      <label>Describe what you sell</label>
+      <input id="custom-industry" placeholder="e.g. mobile dog grooming, podcast production, sleep coaching">
+    </div>
+  </div>
+
+  <!-- ── Foot CTA ── -->
+  <div class="foot">
+    <div class="hint" id="hint">Pick a path + an industry to continue. Your AI buyer will be tuned to the kind of customer you sell.</div>
+    <button class="btn gold" id="go" disabled>⚔ Enter the floor →</button>
+  </div>
+  <div class="err" id="err"></div>
+</div>
+
+<script>
+const URLP = new URL(window.location.href);
+const BULLPEN = URLP.searchParams.get('b') || localStorage.getItem('bullpen-slug') || 'default';
+
+let path = null;
+let industry = null;
+
+document.querySelectorAll('.path-card').forEach(c => {
+  c.addEventListener('click', () => {
+    path = c.dataset.path;
+    document.querySelectorAll('.path-card').forEach(x => x.classList.remove('selected'));
+    c.classList.add('selected');
+    updateCta();
+  });
+});
+
+document.querySelectorAll('.industry').forEach(i => {
+  i.addEventListener('click', () => {
+    industry = i.dataset.industry;
+    document.querySelectorAll('.industry').forEach(x => x.classList.remove('selected'));
+    i.classList.add('selected');
+    document.getElementById('custom-row').style.display = industry === 'other' ? 'flex' : 'none';
+    updateCta();
+  });
+});
+
+function updateCta(){
+  const go = document.getElementById('go');
+  const hint = document.getElementById('hint');
+  const customRequired = industry === 'other' && !(document.getElementById('custom-industry').value || '').trim();
+  if(!path){ hint.textContent = 'Pick a path: Just me, or Building a team.'; go.disabled = true; return; }
+  if(!industry){ hint.textContent = 'Pick what you sell.'; go.disabled = true; return; }
+  if(customRequired){ hint.textContent = 'Describe what you sell in the box below.'; go.disabled = true; return; }
+  if(path === 'solo'){
+    hint.textContent = 'Heading straight to your floor — no legal setup, just the AI buyer + drills.';
+    go.textContent = '⚔ Enter the floor →';
+  } else {
+    hint.textContent = 'Next: 4-quest HQ setup so you can legally onboard closers.';
+    go.textContent = '🏢 Build your HQ →';
+  }
+  go.disabled = false;
+}
+
+document.getElementById('custom-industry').addEventListener('input', updateCta);
+
+document.getElementById('go').addEventListener('click', async () => {
+  if(!path || !industry) return;
+  const customIndustry = industry === 'other' ? (document.getElementById('custom-industry').value || '').trim() : '';
+  // Save the choice — server.py persists it on the bullpen config so
+  // /api/b/<slug>/profile picks it up and any AI-buyer generator can
+  // tune output to the operator's industry. Best-effort; not blocking.
+  try {
+    await fetch(`/api/b/${BULLPEN}/setup/profile`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({mode: path, industry, custom_industry: customIndustry}),
+    });
+  } catch(e){ /* swallow; route anyway */ }
+  // Persist locally for the floor pages
+  try {
+    localStorage.setItem('bullpen-mode', path);
+    localStorage.setItem('bullpen-industry', industry === 'other' ? customIndustry : industry);
+  } catch(e){}
+  if(path === 'solo'){
+    window.location.href = `/app/spawn.html?b=${encodeURIComponent(BULLPEN)}&rep=self&mode=solo`;
+  } else {
+    window.location.href = `/app/setup/?b=${encodeURIComponent(BULLPEN)}`;
+  }
+});
+</script>
+</body>
+</html>

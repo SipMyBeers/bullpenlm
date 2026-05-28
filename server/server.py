@@ -1658,11 +1658,24 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 except Exception:
                     bps = []
                 if bps:
-                    # Open the first / default bullpen the operator runs
+                    # If there's already a bullpen, check if a mode is set.
+                    # No mode = the operator never finished the start fork
+                    # → route them back through it. With mode = open cockpit.
                     first_slug = (bps[0].get("slug") if isinstance(bps[0], dict) else bps[0]) if bps else None
-                    target = f"/app/cockpit.html?b={_q(first_slug or 'default')}&rep=self"
+                    mode = None
+                    try:
+                        from bullpens import get_bullpen
+                        bp_cfg = get_bullpen(first_slug) or {}
+                        mode = (bp_cfg.get("profile") or {}).get("mode")
+                    except Exception: pass
+                    if mode == "solo":
+                        target = f"/app/spawn.html?b={_q(first_slug)}&rep=self&mode=solo"
+                    elif mode == "team":
+                        target = f"/app/cockpit.html?b={_q(first_slug or 'default')}&rep=self"
+                    else:
+                        target = f"/app/setup/start/?b={_q(first_slug or 'default')}"
                 else:
-                    target = "/app/host.html"
+                    target = "/app/setup/start/?b=default"
             else:
                 # Remote visitor (closer over tunnel). If they have a
                 # session cookie we can route to spawn directly; else
@@ -4960,6 +4973,33 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         # ── Team-layer POSTs: claim + release (parse JSON inline since this
         #    block runs before the shared `req = json.loads(raw)` line below) ──
+        # ── Setup start fork: persist mode + industry on bullpen ─────
+        # POST /api/b/<slug>/setup/profile   {mode: "solo"|"team", industry, custom_industry}
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/setup/profile$", self.path)
+        if m:
+            try:
+                from bullpens import set_bullpen_config
+                req = json.loads(raw) if raw else {}
+                mode = (req.get("mode") or "").strip()
+                industry = (req.get("industry") or "").strip()
+                custom = (req.get("custom_industry") or "").strip()
+                if mode not in ("solo", "team"):
+                    self._send_json(400, {"error": "mode must be 'solo' or 'team'"})
+                    return
+                cfg = set_bullpen_config(m.group(1), {"profile": {
+                    "mode": mode,
+                    "industry": industry,
+                    "custom_industry": custom or None,
+                    "set_at": datetime.datetime.now().isoformat(timespec="seconds"),
+                }})
+                if cfg is None:
+                    self._send_json(404, {"error": "bullpen not found"})
+                    return
+                self._send_json(200, {"ok": True, "profile": cfg.get("profile", {})})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Closer: link an email to a (bullpen, rep) slug ────────────
         # POST /api/closer/link-email  {bullpen, rep, email, display_name?}
         if self.path == "/api/closer/link-email":

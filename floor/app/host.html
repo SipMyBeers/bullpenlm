@@ -115,7 +115,7 @@ h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spa
     <details style="margin-top:14px">
       <summary style="cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#a89a87">+ All operator tools</summary>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-        <a href="/app/setup/?b=default" class="btn ghost">📋 Setup wizard</a>
+        <a href="/app/setup/start/?b=default" class="btn ghost">📋 Setup wizard</a>
         <a href="/app/closers.html?b=default" class="btn ghost">👥 Closer roster</a>
         <a href="/app/compliance.html?b=default" class="btn ghost">✅ Compliance</a>
         <a href="/app/dnc.html?b=default" class="btn ghost">📞 DNC</a>
@@ -396,7 +396,7 @@ async function checkInviteReady(){
       // label + a clickable destination so the operator doesn't have to
       // copy-paste a CLI command.
       const STEP_META = {
-        entity:         {label: 'Set up your business',     blurb: 'Legal name, address, EIN — what we put on every Closer Agreement.', href: '/app/setup/?b=' + BP + '&step=entity'},
+        entity:         {label: 'Set up your business',     blurb: 'Legal name, address, EIN — what we put on every Closer Agreement.', href: '/app/setup/start/?b=' + BP},
         classification: {label: 'Classify the relationship', blurb: 'IRS 20-factor: are closers contractors or employees? Sets your tax + state-law footprint.', href: '/app/setup/?b=' + BP + '&step=classification'},
         tos:            {label: 'Accept the Operator TOS',  blurb: 'Plain-English summary of what the platform is and isn\'t — auditable acceptance.', href: '/app/setup/?b=' + BP + '&step=tos'},
         server_running: {label: 'Server running',           blurb: 'BullpenLM is live on this machine.'},
