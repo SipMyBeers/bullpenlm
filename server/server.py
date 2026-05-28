@@ -1688,6 +1688,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Ollama install + model-pull status ──
+        # GET /api/ollama/status — current install + missing models + pull-job state
+        if self.path == "/api/ollama/status":
+            try:
+                from ollama_bootstrap import status as ollama_status
+                self._send_json(200, ollama_status())
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Stripe config status (localhost-only) ──
         if self.path == "/api/stripe/status":
             if not _is_localhost(self.client_address):
@@ -4816,6 +4826,26 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         # ── Team-layer POSTs: claim + release (parse JSON inline since this
         #    block runs before the shared `req = json.loads(raw)` line below) ──
+        # ── Ollama: kick off a background model pull ──
+        # POST /api/ollama/pull   body: {model: "gemma2:9b"}
+        if self.path == "/api/ollama/pull":
+            try:
+                from ollama_bootstrap import start_pull, REQUIRED_MODELS
+                req = json.loads(raw) if raw else {}
+                model = (req.get("model") or "").strip()
+                if not model:
+                    self._send_json(400, {"error": "model required"}); return
+                # Mild guard: only allow pulling models in the required set,
+                # so a malicious request can't slurp the whole library.
+                if model not in REQUIRED_MODELS:
+                    self._send_json(400, {"error": "model not in required set",
+                                          "required": list(REQUIRED_MODELS)})
+                    return
+                self._send_json(200, start_pull(model))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         if self.path in ("/api/team/claim", "/api/team/release"):
             try:
                 team_req = json.loads(raw) if raw else {}

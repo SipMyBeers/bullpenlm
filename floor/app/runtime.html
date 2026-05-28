@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Runtime check · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
+  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;
+  --gold:#fbbf24;--gold-dim:#92400e;
+  --danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.crumb .here{color:var(--accent-2)}
+
+.wrap{max-width:900px;margin:0 auto;padding:30px 22px 80px}
+.hero{margin-bottom:30px}
+.hero h1{font-family:var(--display);font-size:48px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 8px;line-height:1}
+.hero .sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;max-width:780px;margin:0}
+
+.check-row{display:grid;grid-template-columns:36px 1fr auto;gap:14px;align-items:center;padding:16px 18px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:10px;margin-bottom:10px}
+.check-row.ok{border-color:rgba(52,211,153,0.40);background:rgba(52,211,153,0.04)}
+.check-row.missing{border-color:rgba(248,113,113,0.40);background:rgba(248,113,113,0.04)}
+.check-row .icon{font-size:22px}
+.check-row .body{display:flex;flex-direction:column;gap:3px;min-width:0}
+.check-row .lbl{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.005em}
+.check-row .meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.check-row .meta code{background:rgba(0,0,0,0.30);padding:1px 6px;border-radius:3px;color:var(--accent-2);font-size:11px}
+.check-row .actions{display:flex;gap:6px;flex-shrink:0}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:8px 14px;border-radius:6px;cursor:pointer;border:1px solid var(--accent);background:rgba(52,211,153,0.10);color:var(--accent-2);transition:all .12s}
+.btn:hover{background:var(--accent);color:#0a1a14}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.gold{border-color:var(--gold);color:var(--gold);background:rgba(251,191,36,0.06)}
+.btn.gold:hover{background:var(--gold);color:#0a1a14}
+
+.install-hint{margin-top:8px;padding:12px;background:rgba(0,0,0,0.35);border-radius:7px;border:1px dashed rgba(245,232,216,0.15)}
+.install-hint pre{margin:0;font-family:var(--mono);font-size:12px;color:var(--text);white-space:pre-wrap;line-height:1.5}
+
+.progress-track{margin-top:8px;height:10px;background:rgba(0,0,0,0.45);border-radius:6px;overflow:hidden;position:relative}
+.progress-track .bar{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .35s}
+.progress-msg{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:4px;letter-spacing:.04em}
+
+.ready-banner{margin:30px 0 0;padding:28px;border-radius:12px;background:linear-gradient(135deg,rgba(52,211,153,0.10),rgba(110,231,183,0.05));border:1px solid var(--accent);text-align:center}
+.ready-banner.hidden{display:none}
+.ready-banner h2{font-family:var(--display);font-size:32px;text-transform:uppercase;letter-spacing:-.01em;margin:0 0 8px;color:var(--accent-2)}
+.ready-banner p{font-family:var(--serif);font-style:italic;color:var(--text);margin:0 0 16px}
+.ready-banner .links{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.ready-banner .links a{padding:10px 18px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;text-decoration:none;border-radius:7px;background:var(--accent);color:#0a1a14}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <div class="crumb">
+    <a href="/app/spawn.html" style="color:var(--muted);text-decoration:none">Floor</a> /
+    <span class="here">Runtime check</span>
+  </div>
+</header>
+<div class="wrap">
+  <div class="hero">
+    <h1>Runtime check</h1>
+    <p class="sub">BullpenLM runs your own local AI. Before friends can drill, this machine needs Ollama installed and two models pulled. This page tells you what's missing and pulls the rest with one click.</p>
+  </div>
+
+  <div id="checks"></div>
+
+  <div class="ready-banner hidden" id="ready-banner">
+    <h2>✅ READY TO BULLPEN</h2>
+    <p>All runtime deps installed. Friends with magic links can land, drill, and listen in.</p>
+    <div class="links">
+      <a href="/app/spawn.html">Open spawn screen →</a>
+      <a href="/app/cockpit.html">Operator cockpit →</a>
+    </div>
+  </div>
+</div>
+<script>
+function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+
+async function load(){
+  try {
+    const r = await fetch('/api/ollama/status');
+    if(!r.ok) throw new Error('status fetch failed');
+    const s = await r.json();
+    render(s);
+  } catch(e){
+    const root = document.getElementById('checks');
+    clear(root);
+    root.appendChild(el('div', {class:'check-row missing'},
+      el('div', {class:'icon', text:'⚠'}),
+      el('div', {class:'body'},
+        el('div', {class:'lbl', text:'Server unreachable'}),
+        el('div', {class:'meta', text: e.message || 'could not reach /api/ollama/status'}))));
+  }
+}
+
+function render(s){
+  const root = document.getElementById('checks');
+  clear(root);
+
+  // 1. Ollama binary installed
+  const okInstalled = !!s.ollama_installed;
+  const installRow = el('div', {class: 'check-row ' + (okInstalled ? 'ok' : 'missing')},
+    el('div', {class:'icon', text: okInstalled ? '✓' : '✗'}),
+    (() => {
+      const body = el('div', {class:'body'});
+      body.appendChild(el('div', {class:'lbl', text: 'Ollama installed'}));
+      if(okInstalled){
+        body.appendChild(el('div', {class:'meta'}, el('code', {text: s.ollama_version || 'unknown version'})));
+      } else {
+        body.appendChild(el('div', {class:'meta', text:'Not found on $PATH'}));
+        const hint = el('div', {class:'install-hint'});
+        hint.appendChild(el('pre', {text: s.install_hint || 'Install Ollama from https://ollama.com/download'}));
+        body.appendChild(hint);
+      }
+      return body;
+    })(),
+    el('div', {class:'actions'})
+  );
+  root.appendChild(installRow);
+
+  // 2. Ollama running (HTTP API)
+  const okRunning = !!s.ollama_running;
+  const runRow = el('div', {class:'check-row ' + (okRunning ? 'ok' : (okInstalled ? 'missing' : ''))},
+    el('div', {class:'icon', text: okRunning ? '✓' : (okInstalled ? '✗' : '○')}),
+    (() => {
+      const body = el('div', {class:'body'});
+      body.appendChild(el('div', {class:'lbl', text:'Ollama running'}));
+      if(okRunning){
+        body.appendChild(el('div', {class:'meta'}, el('code', {text:'http://localhost:11434'})));
+      } else if(okInstalled){
+        body.appendChild(el('div', {class:'meta', text:'Binary found but daemon not reachable.'}));
+        const hint = el('div', {class:'install-hint'});
+        hint.appendChild(el('pre', {text:'Run in a terminal:\n  ollama serve\nOr enable the launchd / systemd service that the installer set up.'}));
+        body.appendChild(hint);
+      } else {
+        body.appendChild(el('div', {class:'meta', text:'Install Ollama first.'}));
+      }
+      return body;
+    })(),
+    el('div', {class:'actions'})
+  );
+  root.appendChild(runRow);
+
+  // 3. Required models
+  for(const model of s.required_models || []){
+    const installed = !(s.missing_models || []).includes(model);
+    const job = (s.pull_jobs || {})[model];
+    const cls = installed ? 'ok' : (job && job.status === 'running' ? '' : 'missing');
+    const icon = installed ? '✓' : (job && job.status === 'running' ? '⟳' : (job && job.status === 'error' ? '✗' : '○'));
+    const row = el('div', {class:'check-row ' + cls},
+      el('div', {class:'icon', text: icon}),
+      (() => {
+        const body = el('div', {class:'body'});
+        body.appendChild(el('div', {class:'lbl', text: model}));
+        if(installed){
+          const m = (s.installed_models || []).find(x => x.name.split(':')[0] === model.split(':')[0]);
+          const sizeGB = m && m.size_bytes ? (m.size_bytes/(1024**3)).toFixed(1) + ' GB' : '';
+          body.appendChild(el('div', {class:'meta', text: `installed · ${sizeGB}`}));
+        } else if(job && (job.status === 'running' || job.status === 'queued')){
+          body.appendChild(el('div', {class:'meta', text: `pulling… ${job.percent}% · ${job.message || ''}`}));
+          const track = el('div', {class:'progress-track'});
+          track.appendChild(el('div', {class:'bar', style:`width:${Math.max(2, job.percent || 0)}%`}));
+          body.appendChild(track);
+        } else if(job && job.status === 'error'){
+          body.appendChild(el('div', {class:'meta', text: `pull failed: ${job.message || 'unknown error'}`}));
+        } else {
+          body.appendChild(el('div', {class:'meta', text: model.includes('embed') ? 'needed for RAG embeddings (~270 MB)' : 'needed for chat / drills (~5.4 GB)'}));
+        }
+        return body;
+      })(),
+      (() => {
+        const actions = el('div', {class:'actions'});
+        if(!installed && s.ollama_running && (!job || job.status === 'done' || job.status === 'error')){
+          actions.appendChild(el('button', {class:'btn gold', onClick: () => pull(model), text:'Pull now →'}));
+        }
+        return actions;
+      })()
+    );
+    root.appendChild(row);
+  }
+
+  // Ready banner
+  document.getElementById('ready-banner').classList.toggle('hidden', !s.ready);
+}
+
+async function pull(model){
+  try {
+    await fetch('/api/ollama/pull', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model}),
+    });
+  } catch(e){ /* noop */ }
+  load();
+}
+
+load();
+setInterval(load, 2500);
+</script>
+</body>
+</html>

@@ -51,7 +51,7 @@ a = Analysis(
         # These come up via import_module/__import__ in the server code.
         # Kept alphabetized — when you add a new server/<name>.py module,
         # also add it here so `from <name> import ...` survives bundling.
-        'paths',
+        'paths', 'ollama_bootstrap', 'live_audio',
         'achievements', 'activity', 'applications', 'audit', 'brief',
         'briefing', 'buyer_cards', 'bullpens', 'bullpen_quickstart',
         'bumblebee', 'cadence', 'cadence_compose', 'calls', 'classes',
