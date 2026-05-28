@@ -128,6 +128,16 @@ h1{font-family:var(--display);font-size:46px;letter-spacing:-.02em;text-transfor
     </div>
   </div>
 
+  <!-- ── Question 3: Name your floor (creates the bullpen on disk) ── -->
+  <div class="step-h" style="margin-top:24px">③ Name your bullpen <span style="color:var(--dim);text-transform:none;letter-spacing:0;font-size:11px">(this is the folder it lives in on your disk)</span></div>
+  <div class="custom-row" style="display:flex;margin-bottom:32px">
+    <div class="field" style="flex:1">
+      <label>Your floor's name</label>
+      <input id="bullpen-name" placeholder="e.g. Beers Labs Floor, Stix War HQ, Westside Lawn Co">
+      <div id="slug-preview" style="font-family:var(--mono);font-size:10.5px;color:var(--accent-2);letter-spacing:.04em;margin-top:6px"></div>
+    </div>
+  </div>
+
   <!-- ── Foot CTA ── -->
   <div class="foot">
     <div class="hint" id="hint">Pick a path + an industry to continue. Your AI buyer will be tuned to the kind of customer you sell.</div>
@@ -162,46 +172,89 @@ document.querySelectorAll('.industry').forEach(i => {
   });
 });
 
+function slugify(s){
+  return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+}
+
 function updateCta(){
   const go = document.getElementById('go');
   const hint = document.getElementById('hint');
   const customRequired = industry === 'other' && !(document.getElementById('custom-industry').value || '').trim();
+  const nameRaw = (document.getElementById('bullpen-name')?.value || '').trim();
+  const nameSlug = slugify(nameRaw);
+  const preview = document.getElementById('slug-preview');
+  if(preview){
+    preview.textContent = nameSlug
+      ? `→ saved at  bullpens/${nameSlug}/  on your machine`
+      : '';
+  }
   if(!path){ hint.textContent = 'Pick a path: Just me, or Building a team.'; go.disabled = true; return; }
   if(!industry){ hint.textContent = 'Pick what you sell.'; go.disabled = true; return; }
   if(customRequired){ hint.textContent = 'Describe what you sell in the box below.'; go.disabled = true; return; }
+  if(!nameSlug){ hint.textContent = 'Give your floor a name — anything works.'; go.disabled = true; return; }
   if(path === 'solo'){
-    hint.textContent = 'Heading straight to your floor — no legal setup, just the AI buyer + drills.';
+    hint.textContent = `Heading to your floor at bullpens/${nameSlug}/ — no legal setup, just the AI buyer + drills.`;
     go.textContent = '⚔ Enter the floor →';
   } else {
-    hint.textContent = 'Next: 4-quest HQ setup so you can legally onboard closers.';
+    hint.textContent = `Next: 4-quest HQ setup for your bullpen at bullpens/${nameSlug}/.`;
     go.textContent = '🏢 Build your HQ →';
   }
   go.disabled = false;
 }
 
 document.getElementById('custom-industry').addEventListener('input', updateCta);
+document.getElementById('bullpen-name').addEventListener('input', updateCta);
 
 document.getElementById('go').addEventListener('click', async () => {
   if(!path || !industry) return;
   const customIndustry = industry === 'other' ? (document.getElementById('custom-industry').value || '').trim() : '';
-  // Save the choice — server.py persists it on the bullpen config so
-  // /api/b/<slug>/profile picks it up and any AI-buyer generator can
-  // tune output to the operator's industry. Best-effort; not blocking.
+  const nameRaw = (document.getElementById('bullpen-name')?.value || '').trim();
+  const nameSlug = slugify(nameRaw);
+  if(!nameSlug){ document.getElementById('err').textContent = 'Give your floor a name first.'; return; }
+
+  // 1. Create the bullpen on disk (idempotent — if it already exists,
+  //    we just continue with the same slug)
+  const founderRep = 'self';
   try {
-    await fetch(`/api/b/${BULLPEN}/setup/profile`, {
+    const r = await fetch('/api/bullpens', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        slug: nameSlug,
+        display_name: nameRaw,
+        founder_rep: founderRep,
+      }),
+    });
+    // 409 = slug taken; treat as success (operator can reuse the
+    // existing bullpen with that name on their own machine).
+    if(!r.ok && r.status !== 409 && r.status !== 400){
+      const d = await r.json().catch(()=>({}));
+      throw new Error(d.error || `HTTP ${r.status}`);
+    }
+  } catch(e){
+    document.getElementById('err').textContent = `Couldn't create the bullpen: ${e.message}. Trying anyway…`;
+  }
+
+  // 2. Save the profile (mode + industry) on the new bullpen
+  try {
+    await fetch(`/api/b/${nameSlug}/setup/profile`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({mode: path, industry, custom_industry: customIndustry}),
     });
   } catch(e){ /* swallow; route anyway */ }
-  // Persist locally for the floor pages
+
+  // 3. Persist locally so subsequent floor pages know the slug
   try {
+    localStorage.setItem('bullpen-slug', nameSlug);
     localStorage.setItem('bullpen-mode', path);
     localStorage.setItem('bullpen-industry', industry === 'other' ? customIndustry : industry);
+    localStorage.setItem('bullpen-rep', founderRep);
   } catch(e){}
+
+  // 4. Route to the right next page
   if(path === 'solo'){
-    window.location.href = `/app/spawn.html?b=${encodeURIComponent(BULLPEN)}&rep=self&mode=solo`;
+    window.location.href = `/app/office.html?b=${encodeURIComponent(nameSlug)}&rep=${encodeURIComponent(founderRep)}&mode=solo`;
   } else {
-    window.location.href = `/app/setup/?b=${encodeURIComponent(BULLPEN)}`;
+    window.location.href = `/app/setup/?b=${encodeURIComponent(nameSlug)}`;
   }
 });
 </script>

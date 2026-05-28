@@ -174,7 +174,7 @@ header .nav a.nav-add:hover{background:var(--gold);transform:translateY(-1px);bo
 <header>
   <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
   <div class="crumb">
-    <a href="/app/lobby.html">Floor</a>
+    <a href="/app/spawn.html" id="floor-crumb">Floor</a>
     <span> / </span>
     <span class="here">Office</span>
   </div>
@@ -188,7 +188,7 @@ header .nav a.nav-add:hover{background:var(--gold);transform:translateY(-1px);bo
   </div>
   <div class="meta">
     <span class="pill" id="presence-pill"><span class="dot"></span><span id="presence-count">0</span> online</span>
-    <span id="bullpen-name" class="pill">—</span>
+    <span id="bullpen-name" class="pill" title="The on-disk slug for this bullpen — at bullpens/<slug>/ in your data dir">—</span>
   </div>
 </header>
 
@@ -235,7 +235,10 @@ if (!REP) { try { REP = localStorage.getItem('bullpen-rep'); } catch(e) {} }
 if (!REP) REP = 'self';
 try { localStorage.setItem('bullpen-rep', REP); localStorage.setItem('bullpen-slug', BULLPEN); } catch(e) {}
 
-document.getElementById('bullpen-name').textContent = BULLPEN.toUpperCase();
+document.getElementById('bullpen-name').textContent = (BULLPEN || 'NO BULLPEN').toUpperCase();
+// Make the Floor breadcrumb carry the bullpen slug so spawn knows where to land
+const fc = document.getElementById('floor-crumb');
+if (fc && BULLPEN) fc.href = `/app/spawn.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`;
 
 // ── Iso projection ──────────────────────────────────────────────
 const TILE_W = 64, TILE_H = 32;
