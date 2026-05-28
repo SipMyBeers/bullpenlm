@@ -227,6 +227,27 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
 .sign-match{font-family:var(--mono);font-size:11px;letter-spacing:.06em;margin-top:6px;min-height:14px}
 .sign-match.ok{color:var(--accent-2)}
 .sign-match.no{color:var(--danger)}
+
+/* ── Motion picker (Pick Your Hunt) ─────────────────────────────── */
+.motion-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 22px}
+@media(max-width:760px){.motion-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.motion-grid{grid-template-columns:1fr}}
+.motion-card{padding:14px 12px;background:rgba(26,18,8,0.65);border:1.5px solid rgba(245,232,216,0.10);border-radius:11px;cursor:pointer;display:flex;flex-direction:column;gap:5px;align-items:center;text-align:center;transition:all .12s;color:var(--text);font-family:var(--sans);position:relative}
+.motion-card:hover{border-color:rgba(52,211,153,0.50);background:rgba(52,211,153,0.04);transform:translateY(-2px)}
+.motion-card.picked{border-color:var(--accent);background:rgba(52,211,153,0.08);box-shadow:0 0 20px rgba(52,211,153,0.15)}
+.motion-card.picked::after{content:"✓";position:absolute;top:6px;right:8px;color:var(--accent-2);font-size:14px;font-weight:700}
+.motion-icon{font-size:26px;line-height:1}
+.motion-name{font-family:var(--display);font-size:14px;text-transform:uppercase;letter-spacing:-.005em;line-height:1.1}
+.motion-card.picked .motion-name{color:var(--accent-2)}
+.motion-blurb{font-family:var(--serif);font-style:italic;font-size:12px;color:var(--muted);line-height:1.35}
+.motion-tag{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:4px}
+.motion-tag.tag-strict{background:rgba(248,113,113,0.08);color:var(--danger);border:1px solid rgba(248,113,113,0.30)}
+.motion-tag.tag-mid{background:rgba(251,191,36,0.06);color:var(--gold);border:1px solid rgba(251,191,36,0.30)}
+.motion-tag.tag-low{background:rgba(52,211,153,0.06);color:var(--accent-2);border:1px solid rgba(52,211,153,0.30)}
+
+.dnc-collapse{margin:6px 0 18px;padding:18px 20px;background:rgba(248,113,113,0.04);border:1.5px solid rgba(248,113,113,0.30);border-radius:11px}
+.dnc-collapse-h{font-family:var(--display);font-size:17px;text-transform:uppercase;letter-spacing:-.005em;color:var(--danger);margin-bottom:5px}
+.dnc-collapse-sub{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);margin:0 0 10px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -498,26 +519,94 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
       <div class="quest-header">
         <div class="quest-badge"><span class="quest-num">4</span><span class="quest-of">OF 4</span></div>
         <div>
-          <div class="quest-title">SCRUB THE LIST</div>
-          <div class="quest-sub">Purge the do-not-call numbers so your closers can't dial them by accident.</div>
+          <div class="quest-title">PICK YOUR HUNT</div>
+          <div class="quest-sub">How do your closers actually reach prospects? Different motions, different compliance.</div>
         </div>
-        <div class="quest-reward"><span class="reward-coin"></span><span>+50 XP · optional</span></div>
+        <div class="quest-reward"><span class="reward-coin"></span><span>+50 XP</span></div>
       </div>
-      <p>Every real prospect a closer claims gets checked against these lists. No DNC numbers loaded = no real-prospect work. You can do this later from the DNC panel — but you can't dial without it.</p>
-      <div class="warning-box"><strong>The platform doesn't download these lists for you.</strong> donotcall.gov is gated behind operator-specific telemarketing subscriptions. Paste numbers below or upload later from the DNC panel.</div>
-      <div class="field"><label>National DNC list</label>
-        <textarea id="dnc-national" rows="4" placeholder="One phone number per line."></textarea></div>
-      <div class="row two">
-        <div class="field"><label>State code (2 letters)</label><input id="dnc-state-code" maxlength="2"></div>
-        <div class="field"><label>State DNC numbers</label><textarea id="dnc-state" rows="3"></textarea></div>
+      <p>Pick every motion you'll use — multi-select. Each one carries different compliance baggage (or none). The firewall only nags you about the rules your motions actually need.</p>
+
+      <div class="motion-grid" id="motion-grid">
+        <button class="motion-card" data-motion="cold-call">
+          <span class="motion-icon">📞</span>
+          <span class="motion-name">Cold-call phones</span>
+          <span class="motion-blurb">Dialing real phone numbers — strangers.</span>
+          <span class="motion-tag tag-strict">DNC + TCPA</span>
+        </button>
+        <button class="motion-card" data-motion="cold-sms">
+          <span class="motion-icon">📱</span>
+          <span class="motion-name">Cold SMS</span>
+          <span class="motion-blurb">Texting prospects who didn't opt in.</span>
+          <span class="motion-tag tag-strict">DNC + TCPA</span>
+        </button>
+        <button class="motion-card" data-motion="email">
+          <span class="motion-icon">✉</span>
+          <span class="motion-name">Cold email</span>
+          <span class="motion-blurb">Outbound emails to prospects.</span>
+          <span class="motion-tag tag-mid">CAN-SPAM</span>
+        </button>
+        <button class="motion-card" data-motion="linkedin">
+          <span class="motion-icon">💼</span>
+          <span class="motion-name">LinkedIn DMs</span>
+          <span class="motion-blurb">Connection requests + outreach.</span>
+          <span class="motion-tag tag-mid">Platform TOS</span>
+        </button>
+        <button class="motion-card" data-motion="door">
+          <span class="motion-icon">🚪</span>
+          <span class="motion-name">Door-to-door</span>
+          <span class="motion-blurb">Knocking residential or commercial doors.</span>
+          <span class="motion-tag tag-mid">Local ordinance</span>
+        </button>
+        <button class="motion-card" data-motion="inperson">
+          <span class="motion-icon">🤝</span>
+          <span class="motion-name">In-person / networking</span>
+          <span class="motion-blurb">Coffee meetings, walk-ins, events.</span>
+          <span class="motion-tag tag-low">No DNC</span>
+        </button>
+        <button class="motion-card" data-motion="zoom">
+          <span class="motion-icon">💻</span>
+          <span class="motion-name">Zoom / scheduled calls</span>
+          <span class="motion-blurb">They booked the meeting — opted-in.</span>
+          <span class="motion-tag tag-low">No DNC</span>
+        </button>
+        <button class="motion-card" data-motion="tradeshow">
+          <span class="motion-icon">🎪</span>
+          <span class="motion-name">Trade shows / events</span>
+          <span class="motion-blurb">Booth visits, conference floor.</span>
+          <span class="motion-tag tag-low">No DNC</span>
+        </button>
+        <button class="motion-card" data-motion="referral">
+          <span class="motion-icon">🔗</span>
+          <span class="motion-name">Referrals only</span>
+          <span class="motion-blurb">Warm intros — they raised their hand.</span>
+          <span class="motion-tag tag-low">No DNC</span>
+        </button>
       </div>
+
+      <!-- Phone-motion expand: import DNC lists OR defer -->
+      <div id="dnc-collapse" class="dnc-collapse hide">
+        <div class="dnc-collapse-h">📵 Cold phone / SMS chosen — DNC scrub needed</div>
+        <p class="dnc-collapse-sub">Every real number a closer claims gets checked against these lists. You can paste numbers now or load them later from the DNC panel — but you can't dial without them.</p>
+        <div class="have-row sub-have" style="margin:8px 0 14px">
+          <div class="have-options compact">
+            <button class="have-opt compact" data-dnc-now="now" onclick="setDncMode('now')">📥 Paste now</button>
+            <button class="have-opt compact" data-dnc-now="later" onclick="setDncMode('later')">⏰ Load later</button>
+          </div>
+        </div>
+        <div id="dnc-fields" class="hide">
+          <div class="field"><label>National DNC list</label>
+            <textarea id="dnc-national" rows="4" placeholder="One phone number per line."></textarea></div>
+          <div class="row two">
+            <div class="field"><label>State code (2 letters)</label><input id="dnc-state-code" maxlength="2"></div>
+            <div class="field"><label>State DNC numbers</label><textarea id="dnc-state" rows="3"></textarea></div>
+          </div>
+        </div>
+      </div>
+
       <div id="dnc-status"></div>
       <div class="foot-nav">
         <button class="btn ghost" onclick="showStep(3)">← Edit oath</button>
-        <div>
-          <button class="btn ghost" onclick="finishSetup(true)">Skip — scrub later</button>
-          <button class="btn primary" onclick="finishSetup(false)">⚔ Seal the floor →</button>
-        </div>
+        <button class="btn primary" id="hunt-btn" onclick="finishSetup()" disabled>⚔ Seal the floor →</button>
       </div>
     </div>
   </div>
@@ -586,6 +675,7 @@ function el(tag, props, ...kids){
 function clear(node){ while(node.firstChild) node.removeChild(node.firstChild); }
 
 function showStep(n){
+  if(n === 4){ try { wireMotions(); } catch(e){} }
   document.querySelectorAll('.step-section').forEach(e => e.classList.add('hide'));
   const id = n === 'done' ? 'step-done' : 'step-'+n;
   const e2 = document.getElementById(id);
@@ -1038,27 +1128,94 @@ async function acceptTos(){
   setTimeout(()=>showStep(4), 1200);
 }
 
-// ── STEP 4 ────────────────────────────────────────────────────────────
-async function finishSetup(skip){
-  if(!skip){
-    const national = document.getElementById('dnc-national').value.split(/\s+/).filter(Boolean);
-    if(national.length){
-      const r = await api('POST', `/api/b/${BULLPEN}/dnc/import`, {list_name:'national', numbers:national});
-      if(!r.ok) return setStatus('dnc-status', false, (r.data && r.data.error) || 'National DNC import failed.');
+// ── STEP 4 — Pick Your Hunt (motion picker) ──────────────────────────
+let pickedMotions = new Set();
+let dncMode = null;       // 'now' | 'later'
+const STRICT_MOTIONS = new Set(['cold-call', 'cold-sms']);
+
+// Wire motion cards once the step is shown for the first time
+function wireMotions(){
+  const grid = document.getElementById('motion-grid');
+  if(!grid || grid._wired) return;
+  grid._wired = true;
+  grid.querySelectorAll('.motion-card').forEach(c => {
+    c.addEventListener('click', () => {
+      const m = c.dataset.motion;
+      if(pickedMotions.has(m)) pickedMotions.delete(m);
+      else pickedMotions.add(m);
+      c.classList.toggle('picked');
+      updateHuntUi();
+    });
+  });
+}
+
+function setDncMode(mode){
+  dncMode = mode;
+  document.querySelectorAll('.have-opt[data-dnc-now]').forEach(b => {
+    b.classList.toggle('selected', b.dataset.dncNow === mode);
+  });
+  document.getElementById('dnc-fields').classList.toggle('hide', mode !== 'now');
+  updateHuntUi();
+}
+
+function updateHuntUi(){
+  const needsDnc = [...pickedMotions].some(m => STRICT_MOTIONS.has(m));
+  document.getElementById('dnc-collapse').classList.toggle('hide', !needsDnc);
+  const btn = document.getElementById('hunt-btn');
+  // Enable button when: at least one motion picked + (no DNC needed OR
+  // a DNC mode chosen)
+  btn.disabled = !(pickedMotions.size > 0 && (!needsDnc || dncMode));
+}
+
+async function finishSetup(skipArg){
+  // skipArg is only present from the legacy call site (button removed
+  // from UI but keeping the param for safety). Real path: gate on
+  // selected motions + DNC mode.
+  if(!skipArg){
+    wireMotions();
+    if(pickedMotions.size === 0){
+      return setStatus('dnc-status', false, 'Pick at least one motion — how do your closers reach prospects?');
     }
-    const stateCode = document.getElementById('dnc-state-code').value.trim().toUpperCase();
-    const stateNums = document.getElementById('dnc-state').value.split(/\s+/).filter(Boolean);
-    if(stateCode && stateNums.length){
-      const r = await api('POST', `/api/b/${BULLPEN}/dnc/import`, {list_name:'state-'+stateCode, numbers:stateNums});
-      if(!r.ok) return setStatus('dnc-status', false, (r.data && r.data.error) || 'State DNC import failed.');
+    const needsDnc = [...pickedMotions].some(m => STRICT_MOTIONS.has(m));
+    // Persist the chosen motions on the bullpen profile so the rest of
+    // the platform (gate banner, AI buyer, briefing generator) can
+    // tune itself to the operator's actual sales motion.
+    try {
+      await fetch(`/api/b/${BULLPEN}/setup/profile`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          mode: 'team',
+          industry: localStorage.getItem('bullpen-industry') || '',
+          motions: [...pickedMotions],
+          dnc_mode: needsDnc ? dncMode : 'na',
+        }),
+      });
+    } catch(e){}
+    // If they picked phone/SMS AND dncMode='now', actually import what
+    // they pasted into the textareas.
+    if(needsDnc && dncMode === 'now'){
+      const natTxt = document.getElementById('dnc-national')?.value || '';
+      const stCode = (document.getElementById('dnc-state-code')?.value || '').trim().toUpperCase();
+      const stTxt = document.getElementById('dnc-state')?.value || '';
+      const natNums = natTxt.split(/\s+/).filter(Boolean);
+      if(natNums.length){
+        const r = await api('POST', `/api/b/${BULLPEN}/dnc/import`, {list_name:'national', numbers:natNums});
+        if(!r.ok) return setStatus('dnc-status', false, (r.data && r.data.error) || 'National DNC import failed.');
+      }
+      const stNums = stTxt.split(/\s+/).filter(Boolean);
+      if(stCode && stNums.length){
+        const r = await api('POST', `/api/b/${BULLPEN}/dnc/import`, {list_name:'state-'+stCode, numbers:stNums});
+        if(!r.ok) return setStatus('dnc-status', false, (r.data && r.data.error) || 'State DNC import failed.');
+      }
     }
-    setStatus('dnc-status', true, '✓ Imported DNC lists.');
+    setStatus('dnc-status', true, '✓ Hunt locked in.');
   }
   state.dnc = true;
   updateHQ();
-  if(!skip) showQuestToast('SCRUB THE LIST', 50);
+  showQuestToast('PICK YOUR HUNT', 50);
   setTimeout(()=>showStep('done'), 1200);
 }
+
 
 // ── HQ visual progress + quest-complete toast ─────────────────────────
 function updateHQ(){
