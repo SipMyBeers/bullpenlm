@@ -95,20 +95,36 @@ h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spa
     </div>
   </section>
 
-  <!-- PHASE 0.5 FIREWALL NAV -->
+  <!-- DAILY ROUTINE — what an operator actually opens day-to-day -->
   <section class="panel" style="margin-bottom:18px">
-    <h2 style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin:0 0 14px">⚙ OPERATOR SURFACES — PHASE 0.5 FIREWALL</h2>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <a href="/app/setup/?b=default" class="btn gold">📋 Operator setup wizard</a>
-      <a href="/app/cockpit.html?b=default" class="btn gold">🎮 Cockpit (operator dashboard)</a>
-      <a href="/app/studio.html?b=default" class="btn gold">🎬 Studio (RAG + assets)</a>
-      <a href="/app/office.html?b=default" class="btn gold">🏢 The Office (iso view)</a>
-      <a href="/app/closers.html?b=default" class="btn primary">👥 Closer roster</a>
-      <a href="/app/compliance.html?b=default" class="btn primary">✅ Compliance dashboard</a>
-      <a href="/app/dnc.html?b=default" class="btn ghost">📞 DNC management</a>
-      <a href="/app/audit.html?b=default" class="btn ghost">🔗 Audit chain</a>
-      <a href="/app/legal.html?b=default" class="btn ghost">📜 Legal docs</a>
+    <h2 style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin:0 0 14px">🎮 RUN THE BULLPEN</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+      <a href="/app/cockpit.html?b=default" class="btn gold" style="text-align:left;padding:14px 16px;line-height:1.4">
+        🎮 <strong>Cockpit</strong><br>
+        <span style="font-family:'Bespoke Serif',Georgia,serif;font-style:italic;font-size:12px;font-weight:400;opacity:0.8">Today's pipeline + closer pulse</span>
+      </a>
+      <a href="/app/office.html?b=default" class="btn primary" style="text-align:left;padding:14px 16px;line-height:1.4">
+        🏢 <strong>The Office</strong><br>
+        <span style="font-family:'Bespoke Serif',Georgia,serif;font-style:italic;font-size:12px;font-weight:400;opacity:0.8">Iso view — who's on the floor right now</span>
+      </a>
+      <a href="/app/studio.html?b=default" class="btn primary" style="text-align:left;padding:14px 16px;line-height:1.4">
+        🎬 <strong>Studio</strong><br>
+        <span style="font-family:'Bespoke Serif',Georgia,serif;font-style:italic;font-size:12px;font-weight:400;opacity:0.8">Drop sources → generate briefings, flashcards, drills</span>
+      </a>
     </div>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#a89a87">+ All operator tools</summary>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <a href="/app/setup/?b=default" class="btn ghost">📋 Setup wizard</a>
+        <a href="/app/closers.html?b=default" class="btn ghost">👥 Closer roster</a>
+        <a href="/app/compliance.html?b=default" class="btn ghost">✅ Compliance</a>
+        <a href="/app/dnc.html?b=default" class="btn ghost">📞 DNC</a>
+        <a href="/app/audit.html?b=default" class="btn ghost">🔗 Audit chain</a>
+        <a href="/app/legal.html?b=default" class="btn ghost">📜 Legal docs</a>
+        <a href="/app/runtime.html" class="btn ghost">⚙ Runtime check</a>
+        <a href="/app/spawn.html?b=default&rep=self" class="btn ghost">🌍 Spawn</a>
+      </div>
+    </details>
     <p class="helper" style="margin-top:12px">Before inviting your first closer: complete the <strong>setup wizard</strong>. Before scaling beyond 5 closers: <strong>counsel-review</strong> per <code>docs/COMP_AND_LEGAL.md</code>.</p>
   </section>
 
@@ -376,18 +392,56 @@ async function checkInviteReady(){
       detailEl.style.display = 'none';
       formEl.style.display = '';
     } else {
+      // Friendly wizard-style step list. Map each check to a human
+      // label + a clickable destination so the operator doesn't have to
+      // copy-paste a CLI command.
+      const STEP_META = {
+        entity:         {label: 'Set up your business',     blurb: 'Legal name, address, EIN — what we put on every Closer Agreement.', href: '/app/setup/?b=' + BP + '&step=entity'},
+        classification: {label: 'Classify the relationship', blurb: 'IRS 20-factor: are closers contractors or employees? Sets your tax + state-law footprint.', href: '/app/setup/?b=' + BP + '&step=classification'},
+        tos:            {label: 'Accept the Operator TOS',  blurb: 'Plain-English summary of what the platform is and isn\'t — auditable acceptance.', href: '/app/setup/?b=' + BP + '&step=tos'},
+        server_running: {label: 'Server running',           blurb: 'BullpenLM is live on this machine.'},
+        tunnel:         {label: 'Public URL',                blurb: 'Cloudflare tunnel so friends can reach your floor.'},
+        ollama:         {label: 'Ollama',                    blurb: 'Local LLM for AI buyer + drill grading.'},
+        audit_chain:    {label: 'Audit chain',              blurb: 'Hash-chained event log — every signature traceable.'},
+      };
       statusEl.appendChild(safeEl('div', {
-        style: 'padding:11px 16px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.40);border-radius:7px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#fda4a4;letter-spacing:.06em',
-        text: `⛔ NOT READY — ${d.missing.length} blocker(s):`
+        style: 'font-family:"Tanker",serif;font-size:22px;letter-spacing:-.01em;text-transform:uppercase;color:#fbbf24;margin-bottom:4px',
+        text: 'Finish setup'
       }));
+      const progressN = Object.values(d.checks).filter(c => c.ok).length;
+      const progressT = Object.keys(d.checks).length;
+      statusEl.appendChild(safeEl('div', {
+        style: 'font-family:"Bespoke Serif",Georgia,serif;font-style:italic;color:#a89a87;font-size:14px;line-height:1.5;margin-bottom:14px',
+        text: `${d.missing.length} of ${progressT} items still to clear before you can invite a friend.`
+      }));
+
+      // Render only the missing ones as actionable step cards
       detailEl.style.display = '';
+      detailEl.setAttribute('style', 'margin-bottom:14px;display:flex;flex-direction:column;gap:10px');
       clearEl(detailEl);
-      for(const [name, c] of Object.entries(d.checks)){
-        const row = safeEl('div', {style:'display:flex;gap:10px;align-items:center'});
-        row.appendChild(safeEl('span', {style:'width:18px;color:' + (c.ok ? '#6ee7b7' : '#fda4a4'), text: c.ok ? '✓' : '✗'}));
-        row.appendChild(safeEl('span', {style:'min-width:140px;color:#f5e8d8', text:name}));
-        if(c.fix && !c.ok){
-          row.appendChild(safeEl('code', {style:'color:#a89a87;background:rgba(0,0,0,0.30);padding:2px 6px;border-radius:3px', text:c.fix}));
+      const orderedKeys = ['entity', 'classification', 'tos', 'server_running', 'tunnel', 'ollama', 'audit_chain'];
+      for(const name of orderedKeys){
+        const c = d.checks[name];
+        if(!c) continue;
+        const meta = STEP_META[name] || {label: name, blurb: ''};
+        const cardStyle = c.ok
+          ? 'display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;padding:12px 14px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.25);border-radius:9px'
+          : 'display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;padding:14px 16px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.30);border-radius:9px';
+        const row = safeEl('div', {style: cardStyle});
+        row.appendChild(safeEl('span', {style:'font-size:18px;color:' + (c.ok ? '#6ee7b7' : '#fbbf24'), text: c.ok ? '✓' : '○'}));
+        const body = safeEl('div', {style:'display:flex;flex-direction:column;gap:2px;min-width:0'});
+        body.appendChild(safeEl('div', {style:'font-family:"Tanker",serif;font-size:15px;text-transform:uppercase;letter-spacing:-.005em;color:' + (c.ok ? '#f5e8d8' : '#fbbf24'), text: meta.label}));
+        body.appendChild(safeEl('div', {style:'font-family:"Bespoke Serif",Georgia,serif;font-style:italic;color:#a89a87;font-size:13px;line-height:1.4', text: meta.blurb}));
+        row.appendChild(body);
+        if(!c.ok && meta.href){
+          const cta = safeEl('a', {style:'background:#fbbf24;color:#0a1a14;padding:8px 14px;border-radius:6px;text-decoration:none;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;white-space:nowrap'});
+          cta.setAttribute('href', meta.href);
+          cta.appendChild(document.createTextNode('Open →'));
+          row.appendChild(cta);
+        } else if(c.ok){
+          row.appendChild(safeEl('span', {style:'font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6ee7b7;font-weight:700', text: 'done'}));
+        } else {
+          row.appendChild(safeEl('span', {style:'font-family:"JetBrains Mono",monospace;font-size:10px;color:#a89a87', text: 'auto'}));
         }
         detailEl.appendChild(row);
       }
