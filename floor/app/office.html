@@ -39,9 +39,27 @@ header .meta .pill{padding:5px 10px;border:1px solid rgba(245,232,216,0.12);bord
 header .nav{display:flex;gap:6px;margin-left:18px}
 header .nav a{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:5px}
 header .nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+header .nav a.nav-studio{color:var(--purple);border:1px solid rgba(167,139,250,0.30)}
+header .nav a.nav-studio:hover{background:rgba(167,139,250,0.08);color:var(--purple)}
+header .nav a.nav-add{background:var(--gold);color:#0a1a14;font-weight:700}
+header .nav a.nav-add:hover{background:var(--gold);transform:translateY(-1px);box-shadow:0 4px 14px rgba(251,191,36,0.25);color:#0a1a14}
+
+/* ── Drop bar: paste a URL → seed a buyer dossier ─── */
+.drop-bar{position:sticky;top:54px;z-index:25;display:flex;align-items:center;gap:10px;padding:9px 22px;background:rgba(167,139,250,0.06);border-bottom:1px solid rgba(167,139,250,0.18);backdrop-filter:blur(8px)}
+.drop-bar .drop-icon{font-size:16px}
+.drop-bar input{flex:1;padding:9px 12px;background:rgba(0,0,0,0.40);border:1.5px solid rgba(167,139,250,0.25);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:14px;outline:none;transition:border-color .12s}
+.drop-bar input:focus{border-color:var(--purple)}
+.drop-bar button{padding:9px 14px;background:var(--purple);color:#0a1a14;border:none;border-radius:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;cursor:pointer;white-space:nowrap}
+.drop-bar button:hover{transform:translateY(-1px)}
+.drop-bar .drop-bulk{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:9px 12px;border-radius:7px;border:1px solid rgba(245,232,216,0.12)}
+.drop-bar .drop-bulk:hover{color:var(--text);border-color:var(--text)}
+@media(max-width:760px){.drop-bar{flex-wrap:wrap;padding:8px 14px}.drop-bar input{order:3;flex-basis:100%}.drop-bar button{order:4}.drop-bar .drop-bulk{order:5}}
+.drop-result{position:fixed;bottom:24px;left:50%;transform:translate(-50%,80px);opacity:0;background:rgba(10,7,3,0.96);border:1px solid var(--accent);padding:12px 18px;border-radius:9px;font-family:var(--mono);font-size:12px;color:var(--accent-2);box-shadow:0 12px 30px rgba(0,0,0,0.5);transition:all .3s;z-index:200;max-width:90vw}
+.drop-result.show{transform:translate(-50%,0);opacity:1}
+.drop-result.err{border-color:var(--danger);color:var(--danger)}
 
 /* ── Main layout ─────────────────────────────────────────────────── */
-.shell{position:absolute;top:54px;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 320px;gap:0}
+.shell{position:absolute;top:110px;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 320px;gap:0}
 @media(max-width:760px){
   .shell{grid-template-columns:1fr;grid-template-rows:1fr auto;overflow-y:auto}
   .stage{overflow:visible}
@@ -165,12 +183,22 @@ header .nav a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
     <a href="/app/arena.html">Drills</a>
     <a href="/app/deals.html">Deals</a>
     <a href="/app/closers.html">Roster</a>
+    <a href="/app/studio.html" class="nav-studio">🎬 Studio</a>
+    <a href="/app/import.html" class="nav-add">+ Add prospects</a>
   </div>
   <div class="meta">
     <span class="pill" id="presence-pill"><span class="dot"></span><span id="presence-count">0</span> online</span>
     <span id="bullpen-name" class="pill">—</span>
   </div>
 </header>
+
+<!-- Drop-a-link bar — paste any URL (HubSpot deal, company site, LinkedIn) -->
+<div class="drop-bar">
+  <span class="drop-icon">🪝</span>
+  <input id="drop-url" placeholder="Paste a HubSpot deal, company website, LinkedIn profile, CSV link…">
+  <button id="drop-btn" onclick="dropProspectUrl()">Add to floor →</button>
+  <a href="/app/import.html" class="drop-bulk">📦 Bulk CSV import</a>
+</div>
 
 <div class="shell">
   <div class="stage" id="stage">
@@ -459,13 +487,35 @@ function render() {
   for (const desk of BUYER_DESKS) {
     const card = state.buyer_cards.find(c => c.slug === desk.slug);
     if (!card && !desk.slug.startsWith('reserved-')) continue;
-    // Reserved slot → empty desk indicator
+    // Reserved slot → "+ Add a buyer" affordance — clickable.
     if (desk.slug.startsWith('reserved-')) {
       const c = iso(desk.tile.x, desk.tile.y);
-      svg.appendChild(el('text', {
-        x: c.x + OFFSET_X, y: c.y + OFFSET_Y - 4, 'text-anchor': 'middle',
-        class: 'zone-label', text: '— empty —'
+      const cx = c.x + OFFSET_X, cy = c.y + OFFSET_Y;
+      // Dashed empty-slot marker + plus-glyph + click target
+      const g = el('g', {class:'empty-desk', style:'cursor:pointer'});
+      g.addEventListener('click', addBuyerFromEmptyDesk);
+      // Dashed circle on the tile to indicate a slot
+      g.appendChild(el('ellipse', {
+        cx, cy: cy - 4, rx: 16, ry: 6,
+        fill: 'rgba(167,139,250,0.10)',
+        stroke: 'rgba(167,139,250,0.55)', 'stroke-width': '1.5',
+        'stroke-dasharray': '4,3',
       }));
+      // Plus icon
+      g.appendChild(el('text', {
+        x: cx, y: cy - 1, 'text-anchor': 'middle',
+        'font-family': 'JetBrains Mono, monospace', 'font-size': '14',
+        fill: 'var(--purple)', 'font-weight': '700',
+        text: '+',
+      }));
+      // Label
+      g.appendChild(el('text', {
+        x: cx, y: cy + 12, 'text-anchor': 'middle',
+        class: 'zone-label',
+        style: 'fill:var(--purple);font-weight:600',
+        text: 'add a buyer'
+      }));
+      svg.appendChild(g);
       continue;
     }
     const g = pawnGroup(desk.tile.x, desk.tile.y, {
@@ -749,6 +799,64 @@ async function challenge(opponent) {
 }
 
 // ── Data load + live updates ────────────────────────────────────
+// ── Drop a URL → seed a buyer dossier (or prospect contact) ────────
+// One-shot ingestion: paste a HubSpot/Salesforce/LinkedIn link, a
+// company website, or any URL. Server's existing RAG ingest picks up
+// the source. For now we just create a buyer-card stub keyed by URL
+// and toast back; full URL-scraping happens in Studio.
+async function dropProspectUrl(){
+  const inp = document.getElementById('drop-url');
+  const raw = (inp.value || '').trim();
+  if(!raw){ flashDrop('Paste a URL first.', true); return; }
+  let url;
+  try { url = new URL(raw); } catch(e){ flashDrop('That doesn\'t look like a URL.', true); return; }
+  inp.disabled = true;
+  flashDrop('Seeding a buyer dossier…');
+  try {
+    // Best-effort: post to studio's buyer-card create endpoint.
+    // Slug derived from URL hostname; collisions get a counter.
+    const slug = url.hostname.replace(/^www\./, '').split('.')[0].toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const r = await fetch(`/api/b/${BULLPEN}/buyer-cards`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        slug, company: url.hostname, source_url: url.toString(),
+        rep: REP, created_via: 'office-drop-bar',
+      }),
+    });
+    if(!r.ok){
+      const d = await r.json().catch(() => ({}));
+      throw new Error(d.error || `HTTP ${r.status}`);
+    }
+    flashDrop('✓ Buyer seeded — open Studio to add sources.');
+    inp.value = '';
+    setTimeout(loadAll, 600);
+  } catch(e){
+    flashDrop(`Drop failed: ${e.message}`, true);
+  } finally {
+    inp.disabled = false;
+  }
+}
+
+function flashDrop(msg, isErr){
+  let el = document.getElementById('drop-result');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'drop-result';
+    el.className = 'drop-result';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.toggle('err', !!isErr);
+  el.classList.add('show');
+  clearTimeout(window.__drop_t);
+  window.__drop_t = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function addBuyerFromEmptyDesk(){
+  // Route to Studio with a "new buyer" hint
+  window.location.href = `/app/studio.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&new=1`;
+}
+
 async function loadAll() {
   try {
     const [pRes, dRes, cRes, pipeRes, dealsRes, liveRes] = await Promise.all([

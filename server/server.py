@@ -4973,6 +4973,42 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         # ── Team-layer POSTs: claim + release (parse JSON inline since this
         #    block runs before the shared `req = json.loads(raw)` line below) ──
+        # ── Drop a buyer card stub from a URL (office drop-bar) ──────
+        # POST /api/b/<slug>/buyer-cards   {slug, company, source_url, rep, created_via}
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/buyer-cards$", self.path)
+        if m:
+            try:
+                req = json.loads(raw) if raw else {}
+                bullpen = m.group(1)
+                slug = (req.get("slug") or "").strip().lower()
+                if not re.match(r"^[a-z0-9][a-z0-9\-]{0,79}$", slug):
+                    self._send_json(400, {"error": "slug must be a-z, 0-9, -"})
+                    return
+                # Persist a minimal buyer-card stub. The full enrichment
+                # (sources, RAG ingest, dossier generation) happens in
+                # Studio. This just plants the desk on the floor.
+                from pathlib import Path as _P
+                cards_dir = DATA_DIR / "bullpens" / bullpen / "buyer_cards"
+                cards_dir.mkdir(parents=True, exist_ok=True)
+                card_path = cards_dir / f"{slug}.json"
+                if card_path.exists():
+                    self._send_json(409, {"error": "slug already exists"})
+                    return
+                card = {
+                    "slug": slug,
+                    "company": (req.get("company") or slug).strip(),
+                    "source_url": (req.get("source_url") or "").strip(),
+                    "persona": {"name": "", "role": ""},
+                    "created_by": (req.get("rep") or "operator").strip(),
+                    "created_via": (req.get("created_via") or "office-drop-bar"),
+                    "created_at": datetime.datetime.now().isoformat(timespec="seconds"),
+                }
+                card_path.write_text(json.dumps(card, indent=2))
+                self._send_json(200, {"ok": True, "card": card})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Setup start fork: persist mode + industry on bullpen ─────
         # POST /api/b/<slug>/setup/profile   {mode: "solo"|"team", industry, custom_industry}
         m = re.match(r"^/api/b/([a-z0-9\-]+)/setup/profile$", self.path)

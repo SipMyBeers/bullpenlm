@@ -284,6 +284,17 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
 .ml-result{margin-top:12px;font-family:var(--mono);font-size:11.5px;color:var(--accent-2);letter-spacing:.04em;word-break:break-all;line-height:1.5}
 .ml-result a{color:var(--accent-2);text-decoration:underline}
 .ml-result .copy-btn{display:inline-block;margin-left:8px;padding:3px 8px;background:rgba(52,211,153,0.10);border:1px solid var(--accent);border-radius:4px;color:var(--accent-2);cursor:pointer;font-size:10px;letter-spacing:.10em;text-transform:uppercase}
+
+/* ── Single ENTER THE BULLPEN button (replaces 3-card grid) ─── */
+.enter-bullpen-btn{display:flex;align-items:center;gap:18px;padding:22px 30px;margin:24px auto 0;max-width:560px;background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#0a1a14;border-radius:14px;text-decoration:none;transition:all .15s;box-shadow:0 8px 24px rgba(251,191,36,0.25)}
+.enter-bullpen-btn:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(251,191,36,0.40)}
+.ebb-icon{font-size:38px;line-height:1;flex-shrink:0}
+.ebb-text{display:flex;flex-direction:column;gap:3px;text-align:left;flex:1}
+.ebb-title{font-family:var(--display);font-size:26px;text-transform:uppercase;letter-spacing:-.01em;line-height:1;color:#0a1a14}
+.ebb-sub{font-family:var(--serif);font-style:italic;font-size:14px;color:rgba(10,26,20,0.75);line-height:1.4}
+.ebb-arrow{font-family:var(--display);font-size:36px;line-height:1;color:#0a1a14;flex-shrink:0}
+.cap-footnote{margin:20px auto 4px;max-width:620px;font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted);line-height:1.55;text-align:center}
+.cap-footnote code{font-family:var(--mono);font-style:normal;font-size:11px;color:var(--accent-2);background:rgba(0,0,0,0.30);padding:1px 6px;border-radius:3px}
 </style>
 </head>
 <body>
@@ -685,52 +696,23 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
       </div>
 
       <h2 class="done-h">HQ ESTABLISHED</h2>
-      <p class="done-sub" id="done-sub">Banner is up. The firewall is live. Time to put the floor to use.</p>
+      <p class="done-sub" id="done-sub">Banner is up. The firewall is live. Time to walk in.</p>
 
-      <!-- Capabilities unlocked — what they can actually DO now -->
-      <div class="cap-grid">
-        <div class="cap"><span class="cap-tick">✓</span><span><strong>Magic-link invites</strong> — issue one-click join URLs</span></div>
-        <div class="cap"><span class="cap-tick">✓</span><span><strong>Closer Agreement template</strong> — auto-rendered per closer</span></div>
-        <div class="cap"><span class="cap-tick">✓</span><span><strong>1099 firewall</strong> — every cert + signature gate enforced</span></div>
-        <div class="cap"><span class="cap-tick">✓</span><span><strong>AI buyer drills</strong> — practice your pitch any time</span></div>
-        <div class="cap"><span class="cap-tick">✓</span><span><strong>Listen-in radio</strong> — hear anyone's drill or call live</span></div>
-        <div class="cap"><span class="cap-tick">✓</span><span id="cap-motions"><strong>Hunt motions</strong> — your picks recorded for the AI</span></div>
-      </div>
+      <!-- Single primary action — everything else is reachable from inside the bullpen -->
+      <a href="#" id="enter-bullpen-btn" class="enter-bullpen-btn">
+        <span class="ebb-icon">🏢</span>
+        <span class="ebb-text">
+          <span class="ebb-title">Enter the bullpen</span>
+          <span class="ebb-sub">Drill, invite friends, drop in prospects, run calls.</span>
+        </span>
+        <span class="ebb-arrow">→</span>
+      </a>
 
-      <!-- Three real actions, not abstract XP placeholders -->
-      <div class="next-grid">
-        <a class="next-card next-drill" id="next-drill" href="#">
-          <span class="next-icon">🎯</span>
-          <span class="next-title">Try a drill</span>
-          <span class="next-blurb">Press-to-talk against an AI buyer. 60 seconds.</span>
-          <span class="next-cta">Start drilling →</span>
-        </a>
-        <a class="next-card next-invite" id="next-invite" href="#">
-          <span class="next-icon">🪪</span>
-          <span class="next-title" id="invite-title">Invite a closer</span>
-          <span class="next-blurb" id="invite-blurb">Generate a magic-link a friend pastes to join your floor.</span>
-          <span class="next-cta">Mint a link →</span>
-        </a>
-        <a class="next-card next-floor" id="next-floor" href="#">
-          <span class="next-icon">🌍</span>
-          <span class="next-title">Open your floor</span>
-          <span class="next-blurb">Spawn screen — see open quests + live activity.</span>
-          <span class="next-cta">Walk in →</span>
-        </a>
-      </div>
+      <!-- Tiny capabilities footnote — context, not a checklist -->
+      <p class="cap-footnote">
+        Unlocked: magic-link invites · closer agreement template · 1099 firewall · AI buyer drills · listen-in radio · hunt motions tuned to your sales motion. Counsel review per <code>docs/COMP_AND_LEGAL.md</code> before scaling past 5 closers.
+      </p>
 
-      <!-- Inline magic-link generator panel (revealed by clicking Invite) -->
-      <div id="invite-panel" class="invite-panel hide">
-        <div class="invite-h">🪪 Mint a magic link</div>
-        <p class="invite-blurb">Enter your friend's name. They click the link, type a display name, hit the floor. No legal docs unless they want to claim real prospects.</p>
-        <div class="invite-row">
-          <input id="ml-friend" placeholder="kelly" maxlength="40">
-          <button class="btn primary" onclick="mintMagicLink()">⚔ Generate →</button>
-        </div>
-        <div id="ml-result" class="ml-result"></div>
-      </div>
-
-      <div class="status info" style="margin-top:18px">Before scaling past 5 closers: counsel-review per <code>docs/COMP_AND_LEGAL.md</code>.</div>
       <div class="foot-nav">
         <a href="/app/host.html" class="btn ghost">← Back to host control</a>
       </div>
@@ -1335,42 +1317,20 @@ function updateHQ(){
   if(state.dnc || completed === 4) reveal('hq-lights');
 }
 
-// Done-page: wire the 3 next-action cards + magic-link minter
+// Done-page: wire the single Enter-the-bullpen button + caption
 function wireDoneActions(){
   const q = `?b=${encodeURIComponent(BULLPEN)}&rep=self`;
-  const drill = document.getElementById('next-drill');
-  if(drill) drill.href = `/app/voice.html${q}`;
-  const floor = document.getElementById('next-floor');
-  if(floor) floor.href = `/app/spawn.html${q}`;
-  // Solo mode → relabel the middle card to something useful for solo users
+  const ebb = document.getElementById('enter-bullpen-btn');
+  if(ebb) ebb.href = `/app/office.html${q}`;
   const mode = (() => { try { return localStorage.getItem('bullpen-mode'); } catch(e){ return null; } })();
-  if(mode === 'solo'){
-    const t = document.getElementById('invite-title');
-    const b = document.getElementById('invite-blurb');
-    if(t) t.textContent = 'Invite a practice partner';
-    if(b) b.textContent = 'Even solo, you can pull a friend in for sparring. They paste the link, you both drill.';
-  }
-  // The invite card opens the inline minter rather than navigating
-  const inv = document.getElementById('next-invite');
-  if(inv) inv.onclick = (e) => { e.preventDefault();
-    document.getElementById('invite-panel').classList.toggle('hide');
-    document.getElementById('ml-friend')?.focus();
-  };
-  // Show the operator's legal name under the iso HQ
   const nameEl = document.getElementById('done-hq-name');
   if(nameEl && state.entity?.legal_name) nameEl.textContent = state.entity.legal_name;
-  // Motions blurb
-  const motionsCap = document.getElementById('cap-motions');
-  if(motionsCap && pickedMotions && pickedMotions.size){
-    motionsCap.innerHTML = `<strong>${pickedMotions.size} hunt motion${pickedMotions.size===1?'':'s'}</strong> — your picks recorded for the AI buyer`;
-  }
-  // Done sub copy gets personalized
   const subEl = document.getElementById('done-sub');
   if(subEl){
     if(mode === 'solo'){
-      subEl.textContent = "You're set up. Drill against an AI buyer, listen in on yourself later, or pull a friend in to spar.";
+      subEl.textContent = "You're set up. Walk in — drill, drop in prospects, listen to yourself on replay.";
     } else {
-      subEl.textContent = "Banner is up. The firewall is live. Ready to bring closers in or sharpen your pitch first.";
+      subEl.textContent = "Banner is up. The firewall is live. Walk in — invite closers, drop in prospects, run calls.";
     }
   }
 }
