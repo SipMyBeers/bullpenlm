@@ -715,9 +715,33 @@ function renderCurrentCard(){
     const done = el('div', {class:'q-card all-done'});
     done.appendChild(el('div', {class:'big-check', text:'⚒'}));
     done.appendChild(el('div', {class:'done-h', text:'Faction locked in'}));
-    done.appendChild(el('div', {class:'done-sub', text:'Verdict computed below. Hit "Lock the faction" to commit.'}));
+    done.appendChild(el('div', {class:'done-sub', text: presetApplied
+      ? 'All 12 answered with the standard 1099 setup. Review any of them below, or hit "Lock the faction" to commit.'
+      : 'Verdict computed in the meter above. Hit "Lock the faction" to commit.'}));
+    // Review row — list each question with its answer + a "change" toggle
+    const review = el('div', {style:'margin-top:18px;display:flex;flex-direction:column;gap:6px;text-align:left'});
+    review.appendChild(el('div', {style:'font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;text-align:center', text:'Your answers — tap any to flip'}));
+    for(let i=0;i<total;i++){
+      const q = CLASSIFICATION_QUESTIONS[i];
+      const hint = QUESTION_HINTS[q.id] || {plain:q.prompt, yesIsGood:true};
+      const ans = classAnswers[q.id];
+      const isGood = hint.yesIsGood ? ans === true : ans === false;
+      const row = el('button', {
+        style: `display:grid;grid-template-columns:36px 1fr 56px;gap:10px;align-items:center;padding:8px 12px;border-radius:7px;cursor:pointer;background:rgba(0,0,0,0.25);border:1px solid ${isGood ? 'rgba(52,211,153,0.30)' : 'rgba(248,113,113,0.30)'};font-family:var(--sans);text-align:left;color:var(--text)`,
+        onClick: () => { currentCard = i; renderCurrentCard(); }
+      });
+      row.appendChild(el('span', {style:'font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--muted)', text: `#${i+1}`}));
+      row.appendChild(el('span', {style:'font-family:var(--serif);font-size:13.5px;color:var(--text)', text: hint.plain}));
+      row.appendChild(el('span', {style:`font-family:var(--mono);font-size:11px;letter-spacing:.10em;font-weight:700;color:${isGood ? 'var(--accent-2)' : 'var(--danger)'};text-align:right`,
+        text: ans ? '✓ YES' : '✗ NO'}));
+      review.appendChild(row);
+    }
+    done.appendChild(review);
     area.appendChild(done);
     document.getElementById('card-progress-cluster').textContent = 'Done';
+    // Update progress to 100%
+    document.getElementById('card-progress-bar').style.width = '100%';
+    document.getElementById('card-progress-num').textContent = `${total} of ${total}`;
     evaluateVerdict();
     return;
   }
@@ -768,7 +792,9 @@ function pickAnswer(qId, yes){
 }
 
 // Standard contractor preset — pre-fills every question to the
-// contractor-favored answer per QUESTION_HINTS.yesIsGood.
+// contractor-favored answer per QUESTION_HINTS.yesIsGood. Jumps
+// straight to the "Faction locked in" done card. User can hit "review"
+// to flip back through any card and change individual answers.
 function applyContractorPreset(){
   for(const q of CLASSIFICATION_QUESTIONS){
     const hint = QUESTION_HINTS[q.id] || {yesIsGood:true};
@@ -776,7 +802,8 @@ function applyContractorPreset(){
   }
   presetApplied = true;
   document.getElementById('preset-row').style.display = 'none';
-  currentCard = 0;
+  // Jump past all cards to the done state
+  currentCard = CLASSIFICATION_QUESTIONS.length;
   renderCurrentCard();
   updateVerdictMeter();
 }
