@@ -113,6 +113,12 @@ async fn start_host(
     // here. Falls back to the repo dir in dev mode where data lives
     // alongside the source tree.
     let data_dir = platform_data_dir().unwrap_or_else(|| repo.clone());
+    // Create the data dir before exec — Rust's spawn does chdir() before
+    // running the binary, and that fails with "No such file or directory"
+    // if the data dir doesn't exist yet (e.g. first-run launch).
+    if let Err(e) = std::fs::create_dir_all(&data_dir) {
+        log::warn!("Could not create data dir {}: {} — falling back to repo cwd", data_dir.display(), e);
+    }
     log::info!("Sidecar BULLPENLM_HOME={}", data_dir.display());
     let env_vars: Vec<(&str, String)> = vec![
         // PyInstaller bootloader buffers stdout/stderr until exit. We
