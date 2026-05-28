@@ -169,7 +169,7 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
       </div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
         <a class="btn ghost" id="go-briefing">📚 Read briefing first</a>
-        <a class="btn ghost" id="go-lobby">Lobby</a>
+        <a class="btn ghost" id="go-lobby">Spawn screen</a>
       </div>
     </div>
   </div>
@@ -181,7 +181,7 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
       <p>Disclosure, agreement, W-9, DNC, and drill certification — all cleared.</p>
       <div class="status info">Remember: BullpenLM is software, not your employer. All commission comes from the operator. Recruitment earns no XP. Use the DNC scrub on every dial.</div>
       <div class="foot-nav">
-        <a id="done-lobby" class="btn ghost">← Back to lobby</a>
+        <a id="done-lobby" class="btn ghost">← Open spawn screen</a>
         <a id="done-claim" class="btn primary">Claim a prospect →</a>
       </div>
     </div>
@@ -385,8 +385,8 @@ function wireExits(){
   const set = (id, href) => { const el = document.getElementById(id); if(el) el.setAttribute('href', href); };
   set('go-drill-tier1', `/app/spotcheck.html${q}&tcs=cold-open-bfsi`);
   set('go-briefing',    `/app/briefing.html${q}`);
-  set('go-lobby',       `/app/lobby.html${q}`);
-  set('done-lobby',     `/app/lobby.html${q}`);
+  set('go-lobby',       `/app/spawn.html${q}`);
+  set('done-lobby',     `/app/spawn.html${q}`);
   set('done-claim',     `/app/contact.html${q}`);
 }
 
