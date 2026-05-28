@@ -97,8 +97,19 @@ rewrite() {
   done
 }
 
-# Binary's deps live in ./whisper-deps relative to itself
-rewrite "$OUT_BIN" "whisper-deps"
+# Inside the Tauri-built .app the binary lives at Contents/MacOS/whisper-cli
+# and Tauri's `resources` directive puts the deps at
+# Contents/Resources/binaries/whisper-deps/. The path from MacOS to that:
+# `../Resources/binaries/whisper-deps`. We use that as the rpath so the
+# binary works BOTH in dev (when deps live next to it under
+# binaries/whisper-deps) AND inside the packaged .app. To support dev,
+# we ALSO leave a symlink so `./whisper-deps` resolves to the canonical
+# location.
+rewrite "$OUT_BIN" "../Resources/binaries/whisper-deps"
+# Dev-mode fallback: when whisper-cli is invoked directly from
+# binaries/whisper-cli-<triple>, @loader_path/../Resources/... won't
+# resolve. Add a second LC_RPATH that walks back to the binaries dir.
+install_name_tool -add_rpath "@loader_path" "$OUT_BIN" 2>/dev/null || true
 # Dylib-to-dylib deps live in same dir, so use @loader_path/. (no subdir)
 for dylib in "$DEPS_DIR"/*.dylib; do
   [ -f "$dylib" ] || continue
@@ -122,5 +133,13 @@ echo "→ Verify ($OUT_BIN no longer references /opt/homebrew):"
 otool -L "$OUT_BIN" | tail -n +2
 
 echo
+# Dev-mode note: when whisper-cli is invoked directly from
+# binaries/whisper-cli-<triple>, @loader_path/../Resources/... does not
+# resolve. The second LC_RPATH @loader_path/whisper-deps (added above)
+# IS in place — but the dylibs themselves are at $BIN_DIR/whisper-deps/.
+# Don't symlink — Tauri's resource glob treats symlinks as paths and
+# tries to copy the symlink target into the bundle, which fails when
+# the symlink points at its own parent dir.
+
 echo "→ Smoke test:"
 "$OUT_BIN" --version 2>&1 | head -3 || echo "  (version flag may not be supported — try --help)"

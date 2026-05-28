@@ -2848,6 +2848,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
+        m_live_rxns = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/live/([a-zA-Z0-9_\-]+)/reactions(?:\?|$)", self.path)
+        if m_live_rxns:
+            try:
+                from urllib.parse import urlparse as _up, parse_qs as _pq
+                from live_audio import list_reactions
+                qs = _pq(_up(self.path).query)
+                since = int((qs.get("since") or ["-1"])[0])
+                self._send_json(200, {"reactions": list_reactions(
+                    m_live_rxns.group(1), m_live_rxns.group(2), since=since)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         m_live_chunk = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/live/([a-zA-Z0-9_\-]+)/chunk/(\d+)\.webm$", self.path)
         if m_live_chunk:
             try:
@@ -5099,6 +5112,25 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 from live_audio import end_call
                 meta = end_call(m_live_end.group(1), m_live_end.group(2))
                 self._send_json(200, meta)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Listen-in: send a reaction (listener → closer HUD) ────────
+        # POST /api/b/<slug>/live/<call_id>/react  body: {emoji, from_rep}
+        m_live_react = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/live/([a-zA-Z0-9_\-]+)/react$", self.path)
+        if m_live_react:
+            try:
+                from live_audio import add_reaction
+                req = json.loads(raw) if raw else {}
+                ev = add_reaction(
+                    m_live_react.group(1), m_live_react.group(2),
+                    emoji=req.get("emoji", ""),
+                    from_rep=req.get("from_rep", "anon"),
+                )
+                self._send_json(200, ev)
+            except ValueError as e:
+                self._send_json(400, {"error": str(e)})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

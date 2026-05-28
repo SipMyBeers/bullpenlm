@@ -303,11 +303,11 @@ function el(tag, props, ...kids) {
 }
 
 function pawnGroup(tx, ty, opts) {
-  // opts: { rep, name, color, kind ('closer'|'buyer'), inDuo, isYou, onclick }
+  // opts: { rep, name, color, kind ('closer'|'buyer'), inDuo, isYou, isLive, callId, onclick }
   const c = iso(tx, ty);
   const cx = c.x + OFFSET_X, cy = c.y + OFFSET_Y;
 
-  const g = el('g', { class: 'pawn ' + (opts.isYou ? 'you ' : '') + (opts.inDuo ? 'in-duo' : ''),
+  const g = el('g', { class: 'pawn ' + (opts.isYou ? 'you ' : '') + (opts.inDuo ? 'in-duo' : '') + (opts.isLive ? ' is-live' : ''),
                        transform: `translate(${cx}, ${cy})` });
   if (opts.onclick) g.addEventListener('click', opts.onclick);
 
@@ -342,6 +342,32 @@ function pawnGroup(tx, ty, opts) {
     x: -labelW/2, y: 14, width: labelW, height: 14, rx: 3, class: 'pawn-label-bg'
   }));
   g.appendChild(el('text', { x: 0, y: 24, class: 'pawn-label', text: label }));
+
+  // ── Listen-in v2: pulsing 🔴 LIVE pip ───────────────────────────
+  // Anchored above the pawn head; click forwards to /tunein.html with
+  // the call_id pre-selected so the player auto-starts on that call.
+  if (opts.isLive) {
+    const pip = el('g', { class: 'live-pip', transform: 'translate(14, -22)',
+                            style: 'cursor:pointer' });
+    pip.appendChild(el('circle', { cx: 0, cy: 0, r: 5, fill: '#ef4444',
+                                     stroke: '#0a0703', 'stroke-width': '1.5' }));
+    // pulse ring
+    const ring = el('circle', { cx: 0, cy: 0, r: 5, fill: 'none',
+                                  stroke: '#ef4444', 'stroke-width': '1.2',
+                                  opacity: '0.6' });
+    ring.appendChild(el('animate', { attributeName: 'r', from: '5', to: '12',
+                                      dur: '1.4s', repeatCount: 'indefinite' }));
+    ring.appendChild(el('animate', { attributeName: 'opacity', from: '0.6', to: '0',
+                                      dur: '1.4s', repeatCount: 'indefinite' }));
+    pip.appendChild(ring);
+    pip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const q = `b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}` +
+                 (opts.callId ? `&call=${encodeURIComponent(opts.callId)}` : '');
+      window.open(`/app/tunein.html?${q}`, '_blank', 'noopener');
+    });
+    g.appendChild(pip);
+  }
 
   return g;
 }
@@ -466,6 +492,7 @@ function render() {
       tile = closerPosition(p.rep);
     }
     const inDuo = activeDuo && (p.rep === activeDuo.challenger || p.rep === activeDuo.opponent);
+    const liveCall = (state.liveCalls || []).find(c => c.rep === p.rep);
     const g = pawnGroup(tile.x, tile.y, {
       rep: p.rep,
       name: p.rep,
@@ -473,6 +500,8 @@ function render() {
       kind: 'closer',
       inDuo: inDuo,
       isYou: p.rep === REP,
+      isLive: !!liveCall,
+      callId: liveCall ? liveCall.call_id : null,
       onclick: () => showCloser(p)
     });
     svg.appendChild(g);
@@ -722,18 +751,20 @@ async function challenge(opponent) {
 // ── Data load + live updates ────────────────────────────────────
 async function loadAll() {
   try {
-    const [pRes, dRes, cRes, pipeRes, dealsRes] = await Promise.all([
+    const [pRes, dRes, cRes, pipeRes, dealsRes, liveRes] = await Promise.all([
       fetch(`/api/b/${BULLPEN}/presence`).then(r => r.json()).catch(() => ({online:[]})),
       fetch(`/api/b/${BULLPEN}/duos`).then(r => r.json()).catch(() => ({duos:[]})),
       fetch(`/api/b/${BULLPEN}/cards`).then(r => r.ok ? r.json() : {cards:[]}).catch(() => ({cards:[]})),
       fetch(`/api/b/${BULLPEN}/pipeline`).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(`/api/b/${BULLPEN}/deals`).then(r => r.ok ? r.json() : {deals:[]}).catch(() => ({deals:[]})),
+      fetch(`/api/b/${BULLPEN}/live/active`).then(r => r.ok ? r.json() : {calls:[]}).catch(() => ({calls:[]})),
     ]);
     state.presence = pRes.online || [];
     state.duos = Array.isArray(dRes) ? dRes : (dRes.duos || []);
     state.buyer_cards = cRes.cards || [];
     state.pipeline = pipeRes && pipeRes.pipelines ? pipeRes.pipelines[0] : null;
     state.deals = dealsRes.deals || [];
+    state.liveCalls = liveRes.calls || [];   // [{call_id, rep, buyer, kind, ...}]
     render();
   } catch (e) {
     console.warn('load error', e);

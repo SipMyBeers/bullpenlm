@@ -246,8 +246,59 @@ async function startBroadcast(){
     });
     if(!r.ok){ stream.getTracks().forEach(t => t.stop()); return; }
   } catch(e){ stream.getTracks().forEach(t => t.stop()); return; }
-  broadcastState = { stream, callId, seq: 0, stopRequested: false, recorder: null };
+  broadcastState = { stream, callId, seq: 0, stopRequested: false, recorder: null, lastReactionSeq: -1 };
   loopBroadcastChunk();  // fire-and-forget; restarts itself
+  pollReactions();       // fire-and-forget; listener HUD overlay
+}
+
+// ── Listen-in v2: reactions overlay ─────────────────────────────────
+// Listeners on tunein.html tap an emoji; closer's HUD shows a transient
+// floating chip with the emoji + sender's name. Multiple reactions stack.
+const REACTION_POLL_MS = 1800;
+async function pollReactions(){
+  const s = broadcastState;
+  if(!s || s.stopRequested) return;
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/live/${s.callId}/reactions?since=${s.lastReactionSeq}`);
+    if(r.ok){
+      const d = await r.json();
+      for(const ev of d.reactions || []){
+        s.lastReactionSeq = Math.max(s.lastReactionSeq, ev.seq);
+        showReactionChip(ev.emoji, ev.from_rep);
+      }
+    }
+  } catch(e){ /* swallow */ }
+  setTimeout(pollReactions, REACTION_POLL_MS);
+}
+
+function showReactionChip(emoji, fromRep){
+  let host = document.getElementById('reaction-stack');
+  if(!host){
+    host = document.createElement('div');
+    host.id = 'reaction-stack';
+    host.style.cssText = 'position:fixed;top:80px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:200;pointer-events:none';
+    document.body.appendChild(host);
+  }
+  const chip = document.createElement('div');
+  chip.style.cssText = 'background:rgba(26,18,8,0.95);border:1px solid rgba(251,191,36,0.50);border-radius:24px;padding:10px 18px;font-family:"JetBrains Mono",monospace;font-size:14px;color:#fbbf24;letter-spacing:.04em;backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,0.5);display:flex;align-items:center;gap:10px;animation:rxn-in .25s ease-out, rxn-out .4s ease-in 3.6s forwards';
+  const e1 = document.createElement('span');
+  e1.style.fontSize = '22px';
+  e1.textContent = emoji;
+  const e2 = document.createElement('span');
+  e2.style.cssText = 'color:#a89a87';
+  e2.textContent = `from ${fromRep}`;
+  chip.appendChild(e1);
+  chip.appendChild(e2);
+  host.appendChild(chip);
+  setTimeout(() => chip.remove(), 4200);
+}
+
+// Inject the keyframes for the chip animation if not already present
+if(!document.getElementById('rxn-keyframes')){
+  const style = document.createElement('style');
+  style.id = 'rxn-keyframes';
+  style.textContent = '@keyframes rxn-in{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes rxn-out{from{transform:translateX(0);opacity:1}to{transform:translateX(60px);opacity:0}}';
+  document.head.appendChild(style);
 }
 
 function loopBroadcastChunk(){

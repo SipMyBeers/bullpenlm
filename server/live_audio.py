@@ -60,6 +60,7 @@ from paths import DATA_DIR as REPO
 
 
 _VALID_ID = re.compile(r"^[a-zA-Z0-9_\-]{1,80}$")
+_VALID_EMOJI = {"🔥", "💯", "❗", "👀", "🥶", "🤝"}
 
 
 def _root(bullpen: str) -> Path:
@@ -127,6 +128,59 @@ def save_chunk(bullpen: str, call_id: str, seq: int, blob: bytes) -> dict:
     meta["last_chunk_at"] = _now_iso()
     meta_path.write_text(json.dumps(meta, indent=2))
     return meta
+
+
+# ── Reactions ─────────────────────────────────────────────────────────────
+#
+# Listeners on /app/tunein.html tap an emoji button to broadcast a
+# reaction to the closer. The closer's voice.html polls /reactions and
+# pops a transient overlay. Kept tiny on disk — appended to a JSONL file,
+# never grows past the call's lifetime. Each event:
+#   {seq, ts, emoji, from_rep}
+
+def add_reaction(bullpen: str, call_id: str, *, emoji: str,
+                  from_rep: str) -> dict:
+    if emoji not in _VALID_EMOJI:
+        raise ValueError(f"unknown emoji: {emoji!r}")
+    d = _call_dir(bullpen, call_id)
+    meta_path = d / "meta.json"
+    if not meta_path.exists():
+        raise ValueError(f"call not started: {call_id!r}")
+    rxn_path = d / "reactions.jsonl"
+    seq = 0
+    if rxn_path.exists():
+        # Cheap: count lines. Reactions per call are bounded (~dozens) so
+        # this is fine vs. maintaining a counter file.
+        seq = sum(1 for _ in rxn_path.open())
+    event = {
+        "seq": seq,
+        "ts": _now_iso(),
+        "emoji": emoji,
+        "from_rep": (from_rep or "").strip()[:80] or "anon",
+    }
+    with rxn_path.open("a") as f:
+        f.write(json.dumps(event) + "\n")
+    return event
+
+
+def list_reactions(bullpen: str, call_id: str, *, since: int = -1) -> list[dict]:
+    d = _call_dir(bullpen, call_id)
+    rxn_path = d / "reactions.jsonl"
+    if not rxn_path.exists():
+        return []
+    out = []
+    with rxn_path.open() as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                ev = json.loads(line)
+            except Exception:
+                continue
+            if ev.get("seq", -1) > since:
+                out.append(ev)
+    return out
 
 
 def end_call(bullpen: str, call_id: str) -> dict:

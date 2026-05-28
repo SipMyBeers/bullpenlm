@@ -86,11 +86,20 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+# One-file mode: bundle the python runtime + every .pyc + the data dirs
+# all into a single self-extracting executable. Tauri's externalBin
+# directive only copies the named binary into the .app, so one-folder
+# mode (which leaves a sibling _internal/ dir) breaks at runtime
+# ("application has onedir semantics..." but archive not found). One-file
+# adds ~2s to first-launch (PyInstaller bootloader self-extracts into a
+# temp dir) but produces a single portable binary that survives the
+# Tauri bundler's flatten.
 exe = EXE(
     pyz,
     a.scripts,
+    a.binaries,
+    a.datas,
     [],
-    exclude_binaries=True,
     name='bullpenlm-server',
     debug=False,
     bootloader_ignore_signals=False,
@@ -108,13 +117,4 @@ exe = EXE(
     entitlements_file=None,
 )
 
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=False,
-    upx_exclude=[],
-    name='bullpenlm-server',
-)
+# COLLECT step removed — one-file mode puts everything inside EXE.
