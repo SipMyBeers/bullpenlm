@@ -191,6 +191,48 @@ function render(s){
     root.appendChild(row);
   }
 
+  // ── Whisper model row ───────────────────────────────────────
+  // The whisper-cli binary is bundled inside the .app; the model
+  // (~250 MB) downloads on demand from huggingface.
+  fetch('/api/whisper/status').then(r => r.json()).then(ws => {
+    const row = el('div', {class:'check-row ' + (ws.ready ? 'ok' : 'missing')},
+      el('div', {class:'icon', text: ws.ready ? '✓' : '○'}),
+      (() => {
+        const body = el('div', {class:'body'});
+        body.appendChild(el('div', {class:'lbl', text:'Whisper transcription model'}));
+        const active = (ws.available || []).find(m => m.installed && m.active);
+        const preferred = (ws.available || []).find(m => m.name === ws.preferred_model);
+        const job = (ws.download_jobs || {})[ws.preferred_model];
+        if(active){
+          body.appendChild(el('div', {class:'meta'}, el('code', {text: active.name + ' · installed'})));
+        } else if(job && (job.status === 'running' || job.status === 'queued')){
+          body.appendChild(el('div', {class:'meta', text: `downloading… ${job.percent}% · ${job.message || ''}`}));
+          const track = el('div', {class:'progress-track'});
+          track.appendChild(el('div', {class:'bar', style:`width:${Math.max(2, job.percent||0)}%`}));
+          body.appendChild(track);
+        } else if(job && job.status === 'error'){
+          body.appendChild(el('div', {class:'meta', text: `download failed: ${job.message}`}));
+        } else {
+          body.appendChild(el('div', {class:'meta', text: `transcribes your real calls + drill audio (~${preferred ? preferred.size_mb : 250} MB, ${preferred ? preferred.blurb : ''})`}));
+        }
+        return body;
+      })(),
+      (() => {
+        const actions = el('div', {class:'actions'});
+        if(!ws.ready){
+          const job = (ws.download_jobs || {})[ws.preferred_model];
+          if(!job || job.status === 'done' || job.status === 'error'){
+            actions.appendChild(el('button', {class:'btn gold',
+              onClick: () => downloadModel(ws.preferred_model),
+              text:'Download model →'}));
+          }
+        }
+        return actions;
+      })()
+    );
+    root.appendChild(row);
+  }).catch(() => {});
+
   // Ready banner
   document.getElementById('ready-banner').classList.toggle('hidden', !s.ready);
 }
@@ -202,6 +244,16 @@ async function pull(model){
       body: JSON.stringify({model}),
     });
   } catch(e){ /* noop */ }
+  load();
+}
+
+async function downloadModel(model){
+  try {
+    await fetch('/api/whisper/download', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model}),
+    });
+  } catch(e){}
   load();
 }
 

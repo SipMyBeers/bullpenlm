@@ -1699,6 +1699,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Closer: this host's fingerprint + trusted-hosts list ─────
+        if self.path == "/api/closer/host-info":
+            try:
+                from closer_profiles import host_fingerprint, trusted_hosts
+                self._send_json(200, {
+                    "fingerprint": host_fingerprint(),
+                    "label": _host_label_str(),
+                    "trusted_hosts": trusted_hosts(),
+                })
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Host-wide closer profile + portable identity bundle ──────
         # GET /api/closer/profile?email=<addr>
         # GET /api/closer/profile?bullpen=<slug>&rep=<rep>    (resolves email via index)
@@ -1745,6 +1758,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                                   "carried_from": v.get("imported_from")}
                               for k, v in (profile.get("certs") or {}).items()},
                 })
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Whisper model first-run download status ──
+        # GET /api/whisper/status — current models on disk + download job state
+        if self.path == "/api/whisper/status":
+            try:
+                from whisper_bootstrap import status as whisper_status
+                self._send_json(200, whisper_status())
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
@@ -4925,20 +4948,74 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
 
         # ── Closer: import a portable identity bundle ─────────────────
-        # POST /api/closer/import-bundle  {email, bundle}
+        # POST /api/closer/import-bundle  {email, bundle, allow_untrusted?}
         if self.path == "/api/closer/import-bundle":
             try:
-                from closer_profiles import import_bundle
+                from closer_profiles import import_bundle, verify_bundle_signature
                 req = json.loads(raw) if raw else {}
                 email = (req.get("email") or "").strip().lower()
                 bundle = req.get("bundle") or {}
-                profile = import_bundle(bundle, email=email)
+                allow_untrusted = bool(req.get("allow_untrusted"))
+                # Pre-check signature so the UI can surface the issuer +
+                # untrusted flag BEFORE actually merging.
+                sig = verify_bundle_signature(bundle)
+                profile = import_bundle(bundle, email=email, allow_untrusted=allow_untrusted)
                 self._send_json(200, {
                     "ok": True,
                     "carried_certs": list((profile.get("certs") or {}).keys()),
+                    "signature_check": sig,
                 })
             except ValueError as e:
+                # Include the verify result so the UI knows whether to
+                # offer the "trust this host?" prompt.
+                try:
+                    from closer_profiles import verify_bundle_signature
+                    sig = verify_bundle_signature(json.loads(raw or "{}").get("bundle", {}))
+                except Exception:
+                    sig = None
+                self._send_json(400, {"error": str(e), "signature_check": sig})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Closer: trusted-hosts management ──────────────────────────
+        # POST /api/closer/trusted-hosts  {fingerprint, label}
+        # POST /api/closer/trusted-hosts/remove  {fingerprint}
+        if self.path == "/api/closer/trusted-hosts":
+            try:
+                from closer_profiles import add_trusted_host
+                req = json.loads(raw) if raw else {}
+                hosts = add_trusted_host(req.get("fingerprint", ""), req.get("label", ""))
+                self._send_json(200, {"hosts": hosts})
+            except ValueError as e:
                 self._send_json(400, {"error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+        if self.path == "/api/closer/trusted-hosts/remove":
+            try:
+                from closer_profiles import remove_trusted_host
+                req = json.loads(raw) if raw else {}
+                hosts = remove_trusted_host(req.get("fingerprint", ""))
+                self._send_json(200, {"hosts": hosts})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── Whisper: kick off a background model download ──
+        # POST /api/whisper/download   body: {model: "small.en"}
+        if self.path == "/api/whisper/download":
+            try:
+                from whisper_bootstrap import start_download, MODELS
+                req = json.loads(raw) if raw else {}
+                model = (req.get("model") or "").strip()
+                if not model:
+                    self._send_json(400, {"error": "model required"}); return
+                if model not in MODELS:
+                    self._send_json(400, {"error": "model not in supported set",
+                                          "supported": list(MODELS)})
+                    return
+                self._send_json(200, start_download(model))
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

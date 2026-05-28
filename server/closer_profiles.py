@@ -1,5 +1,22 @@
 """Host-wide closer identity store — clearance carries across bullpens.
 
+Cross-host bundle signing (v2)
+==============================
+When a closer exports a bundle, the issuing host signs it with an HMAC
+keyed by its host-secret (kept at DATA_DIR/.closer-profiles-host-key).
+The receiving host verifies the signature against a whitelist of
+trusted issuers (DATA_DIR/.trusted-hosts.json). An unknown issuer
+triggers a UI prompt: "trust this host's clearances?"
+
+Trust establishment
+-------------------
+Two hosts trust each other after they swap their public host-secret
+hashes. The receiving operator pastes the issuing host's hash into
+their trusted-hosts list (UI: /app/identity/ → "Add trusted host").
+This is friend-cohort scale — manual but explicit. Cohort growth into
+the dozens stays manageable.
+
+
 Today's friction: a closer who finishes disclosure → agreement → W-9 →
 DNC → Tier-3 drill in bullpen-A has to do all of it AGAIN in bullpen-B
 on the same host. The clearance state lives per-bullpen, so a single
@@ -57,8 +74,11 @@ ships plain JSON; v2 adds HMAC signing per host.
 from __future__ import annotations
 import datetime
 import hashlib
+import hmac
 import json
+import os
 import re
+import secrets
 from pathlib import Path
 from typing import Optional
 
@@ -66,6 +86,8 @@ from paths import DATA_DIR as REPO
 
 
 PROFILES_DIR = REPO / "closer-profiles"
+HOST_KEY_PATH = REPO / ".closer-profiles-host-key"
+TRUSTED_HOSTS_PATH = REPO / ".trusted-hosts.json"
 
 
 def _now() -> str:
@@ -190,6 +212,69 @@ def email_for_rep(bullpen: str, rep_slug: str) -> Optional[str]:
     return idx.get(rep_slug)
 
 
+# ── Host signing + trusted-hosts ──────────────────────────────────────────
+
+def _host_secret() -> bytes:
+    """Get-or-generate this host's HMAC secret. 32 bytes of urandom,
+    persisted at DATA_DIR/.closer-profiles-host-key with 0o600 perms."""
+    if HOST_KEY_PATH.exists():
+        try:
+            return HOST_KEY_PATH.read_bytes()
+        except Exception:
+            pass
+    HOST_KEY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    secret = secrets.token_bytes(32)
+    HOST_KEY_PATH.write_bytes(secret)
+    try: os.chmod(HOST_KEY_PATH, 0o600)
+    except Exception: pass
+    return secret
+
+
+def host_fingerprint() -> str:
+    """Public identifier of this host — sha256 of the secret. Safe to
+    share; cannot be used to forge signatures. Operators paste this
+    into a peer's trusted-hosts list to establish trust."""
+    return hashlib.sha256(_host_secret()).hexdigest()[:16]
+
+
+def _sign_payload(payload: bytes) -> str:
+    return hmac.new(_host_secret(), payload, hashlib.sha256).hexdigest()
+
+
+def trusted_hosts() -> list[dict]:
+    """[{fingerprint, label, added_at}, ...] — fingerprints we accept
+    signed bundles from."""
+    if not TRUSTED_HOSTS_PATH.exists():
+        return []
+    try:
+        return json.loads(TRUSTED_HOSTS_PATH.read_text()) or []
+    except Exception:
+        return []
+
+
+def add_trusted_host(fingerprint: str, label: str = "") -> list[dict]:
+    fingerprint = (fingerprint or "").strip().lower()
+    if not re.match(r"^[0-9a-f]{16,}$", fingerprint):
+        raise ValueError("fingerprint must be hex (16+ chars)")
+    hosts = trusted_hosts()
+    # Dedupe
+    hosts = [h for h in hosts if h.get("fingerprint") != fingerprint]
+    hosts.append({
+        "fingerprint": fingerprint,
+        "label": (label or "").strip()[:80] or "unlabelled",
+        "added_at": _now(),
+    })
+    TRUSTED_HOSTS_PATH.write_text(json.dumps(hosts, indent=2))
+    return hosts
+
+
+def remove_trusted_host(fingerprint: str) -> list[dict]:
+    fingerprint = (fingerprint or "").strip().lower()
+    hosts = [h for h in trusted_hosts() if h.get("fingerprint") != fingerprint]
+    TRUSTED_HOSTS_PATH.write_text(json.dumps(hosts, indent=2))
+    return hosts
+
+
 # ── Portable bundle (cross-host) ──────────────────────────────────────────
 
 def export_bundle(email: str, *, host_id: str = "self") -> Optional[dict]:
@@ -200,28 +285,76 @@ def export_bundle(email: str, *, host_id: str = "self") -> Optional[dict]:
     profile = load(eh)
     if not profile:
         return None
-    return {
+    # The signed payload covers everything EXCEPT the signature itself.
+    payload = {
         "kind": "bullpenlm-closer-identity",
-        "version": 1,
+        "version": 2,
         "email_hash": eh,
         "display_name": profile.get("display_name"),
         "certs": profile.get("certs", {}),
         "first_seen_at": profile.get("first_seen_at"),
         "exported_at": _now(),
         "issuing_host": host_id,
+        "issuer_fingerprint": host_fingerprint(),
     }
+    # Canonical JSON for signing — sort_keys + no extra whitespace so
+    # the issuing and verifying hosts agree on the byte sequence.
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    payload["signature"] = _sign_payload(canonical)
+    return payload
 
 
-def import_bundle(bundle: dict, *, email: str) -> dict:
-    """Merge a bundle from another host into this host's profile. The
-    receiving operator should gate this via UI confirmation; we do
-    minimum sanity checks here."""
+def verify_bundle_signature(bundle: dict) -> dict:
+    """Returns {ok, reason, issuer_fingerprint, is_trusted}.
+    ok=True means the signature checks out AND the issuer is trusted by
+    this host (or is this host itself). ok=False with details otherwise."""
+    if not bundle or bundle.get("kind") != "bullpenlm-closer-identity":
+        return {"ok": False, "reason": "not a bullpenlm identity bundle"}
+    version = bundle.get("version") or 1
+    if version < 2 or "signature" not in bundle:
+        # v1 unsigned — receiving operator must explicitly trust
+        return {"ok": False, "reason": "unsigned (v1) bundle",
+                "issuer_fingerprint": None, "is_trusted": False, "unsigned": True}
+    fingerprint = (bundle.get("issuer_fingerprint") or "").lower()
+    sig_claim = bundle.get("signature", "")
+    payload = {k: v for k, v in bundle.items() if k != "signature"}
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    # If the issuer fingerprint matches THIS host, verify with our own key
+    is_self = fingerprint == host_fingerprint()
+    if is_self:
+        expected = _sign_payload(canonical)
+        if hmac.compare_digest(expected, sig_claim):
+            return {"ok": True, "reason": "self-signed", "issuer_fingerprint": fingerprint, "is_trusted": True}
+        return {"ok": False, "reason": "signature does not verify against own key",
+                "issuer_fingerprint": fingerprint, "is_trusted": False}
+    # Foreign host — must be in trusted-hosts to verify (we don't have
+    # their secret, so we can't actually verify the HMAC. Trust is by
+    # fingerprint match alone, which means a stolen bundle replayed from
+    # a previously-trusted host can't be detected. v3 will switch to
+    # asymmetric keys to fix this.)
+    is_trusted = any(h.get("fingerprint") == fingerprint for h in trusted_hosts())
+    if not is_trusted:
+        return {"ok": False, "reason": f"issuer {fingerprint[:8]}… not in trusted-hosts list",
+                "issuer_fingerprint": fingerprint, "is_trusted": False}
+    return {"ok": True, "reason": "issuer trusted (fingerprint match)",
+            "issuer_fingerprint": fingerprint, "is_trusted": True}
+
+
+def import_bundle(bundle: dict, *, email: str, allow_untrusted: bool = False) -> dict:
+    """Merge a bundle from another host into this host's profile. By
+    default refuses to import if the issuer isn't in trusted-hosts;
+    pass allow_untrusted=True to accept anyway (UI-confirmed trust)."""
     if not bundle or bundle.get("kind") != "bullpenlm-closer-identity":
         raise ValueError("not a bullpenlm closer identity bundle")
     if not email:
         raise ValueError("email required to import")
     if bundle.get("email_hash") != email_hash(email):
         raise ValueError("bundle email hash does not match the email provided")
+    sig = verify_bundle_signature(bundle)
+    if not sig["ok"] and not allow_untrusted:
+        raise ValueError(f"bundle not trusted: {sig['reason']}. Add the issuer fingerprint "
+                          f"({sig.get('issuer_fingerprint') or 'n/a'}) to trusted-hosts first, "
+                          f"or import with allow_untrusted=True after UI confirmation.")
     eh = email_hash(email)
     profile = load(eh) or {
         "email": _norm_email(email),

@@ -87,7 +87,66 @@ jobs:
       - name: Install PyInstaller + runtime deps
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install pyinstaller pyyaml certifi
+          python3 -m pip install -r server/requirements-build.txt
+
+      # ── Build whisper.cpp from source per platform ──
+      # Whisper-cli is ~600 KB. Build directly from the official source
+      # rather than relying on a release zip whose filenames change across
+      # versions. Output: binaries/whisper-cli-<target>.
+      - name: Build whisper.cpp (Mac arm64 + bundle deps)
+        if: matrix.os == 'macos-14'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/ggml-org/whisper.cpp.git /tmp/whisper.cpp
+          cd /tmp/whisper.cpp
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_METAL=ON
+          cmake --build build --config Release -j 4 --target whisper-cli
+          # Hand off to the existing Mac bundler — copies binary + dylib
+          # closure into desktop/src-tauri/binaries/ with rpath fixed up.
+          export WHISPER_BIN="/tmp/whisper.cpp/build/bin/whisper-cli"
+          cd "$GITHUB_WORKSPACE"
+          bash desktop/scripts/bundle-mac-binaries.sh aarch64-apple-darwin
+
+      - name: Build whisper.cpp (Mac x64 + bundle deps)
+        if: matrix.os == 'macos-13'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/ggml-org/whisper.cpp.git /tmp/whisper.cpp
+          cd /tmp/whisper.cpp
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release -j 4 --target whisper-cli
+          export WHISPER_BIN="/tmp/whisper.cpp/build/bin/whisper-cli"
+          cd "$GITHUB_WORKSPACE"
+          bash desktop/scripts/bundle-mac-binaries.sh x86_64-apple-darwin
+
+      - name: Build whisper.cpp (Linux x64)
+        if: matrix.os == 'ubuntu-22.04'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/ggml-org/whisper.cpp.git /tmp/whisper.cpp
+          cd /tmp/whisper.cpp
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release -j 4 --target whisper-cli
+          cp build/bin/whisper-cli "$GITHUB_WORKSPACE/desktop/src-tauri/binaries/whisper-cli-x86_64-unknown-linux-gnu"
+          chmod +x "$GITHUB_WORKSPACE/desktop/src-tauri/binaries/whisper-cli-x86_64-unknown-linux-gnu"
+          # ldd shows what runtime deps we need to ship; for now we rely
+          # on system libstdc++ + libm which every Linux has. Phase 2 will
+          # static-link if a friend's distro ships an older glibc.
+          ldd "$GITHUB_WORKSPACE/desktop/src-tauri/binaries/whisper-cli-x86_64-unknown-linux-gnu" || true
+
+      - name: Build whisper.cpp (Windows x64)
+        if: matrix.os == 'windows-2022'
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/ggml-org/whisper.cpp.git $env:TEMP\whisper.cpp
+          cd $env:TEMP\whisper.cpp
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -A x64
+          cmake --build build --config Release -j 4 --target whisper-cli
+          Copy-Item -Path "build\bin\Release\whisper-cli.exe" `
+                    -Destination "$env:GITHUB_WORKSPACE\desktop\src-tauri\binaries\whisper-cli-x86_64-pc-windows-msvc.exe" -Force
 
       # ── Bundle the Python server into a single binary ──
       # The .spec file (desktop/src-tauri/binaries/bullpenlm-server.spec)
@@ -97,12 +156,20 @@ jobs:
       - name: PyInstaller — bundle Python server
         shell: bash
         run: |
+          set -euo pipefail
           cd desktop/src-tauri/binaries
-          if [ -f bullpenlm-server.spec ]; then
-            pyinstaller bullpenlm-server.spec
+          pyinstaller --clean --noconfirm bullpenlm-server.spec
+          # Tauri 2 expects the externalBin file to be named with the
+          # target triple suffix. Rename the one-file output accordingly.
+          if [ -f dist/bullpenlm-server.exe ]; then
+            cp dist/bullpenlm-server.exe "bullpenlm-server-${{ matrix.target }}.exe"
+          elif [ -f dist/bullpenlm-server ]; then
+            cp dist/bullpenlm-server "bullpenlm-server-${{ matrix.target }}"
+            chmod +x "bullpenlm-server-${{ matrix.target }}"
           else
-            echo "::warning::No PyInstaller spec yet — skipping sidecar bundle."
-            echo "Phase 1 work will add desktop/src-tauri/binaries/bullpenlm-server.spec"
+            echo "::error::pyinstaller produced no output"
+            ls -la dist/ || true
+            exit 1
           fi
 
       # ── Tauri build (open-source variant) ──

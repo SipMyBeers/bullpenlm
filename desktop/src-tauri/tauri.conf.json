@@ -45,6 +45,12 @@
       "../../server/**/*.py",
       "../../personas/_sample/**/*",
       "binaries/whisper-deps/*"
-    ]
+    ],
+    "macOS": {
+      "signingIdentity": "Developer ID Application: Dylan Beers (NV5993W4T4)",
+      "hardenedRuntime": true,
+      "entitlements": "Entitlements.plist",
+      "minimumSystemVersion": "11.0"
+    }
   }
 }

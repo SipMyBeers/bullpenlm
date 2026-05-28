@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTD/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Mic for drill voice mode + real-call broadcasts. -->
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+
+    <!-- Outbound network: Ollama on localhost, Cloudflare tunnel, model
+         downloads from huggingface.co, marketing-link tracking, etc. -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!-- Inbound network: the embedded Python server binds 127.0.0.1:7878
+         AND when the operator runs `cloudflared tunnel`, listening
+         sockets for the tunnel control channel. -->
+    <key>com.apple.security.network.server</key>
+    <true/>
+
+    <!-- File access: bullpens/, training-runs/, organizations/ under
+         ~/Library/Application Support/BullpenLM. Operator-selected
+         CSV imports + audio uploads use the standard open-file dialog. -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+
+    <!-- PyInstaller bootloader needs JIT-ish self-extraction permissions.
+         Allow-jit covers the Python interpreter's bytecode loader on
+         Apple Silicon under hardened runtime. -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>
