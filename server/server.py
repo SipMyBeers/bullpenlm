@@ -3062,6 +3062,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Voice mode — serve per-turn AIFF replies ─────────────────
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/voice/([a-zA-Z0-9_\-]+)/([a-zA-Z0-9_\-\.]+\.aiff)$", self.path)
+        if m:
+            try:
+                from pathlib import Path as _P
+                p = _P(__file__).parent.parent / "bullpens" / m.group(1) / "voice" / m.group(2) / m.group(3)
+                resolved = p.resolve(strict=True)
+                root = (_P(__file__).parent.parent / "bullpens" / m.group(1) / "voice" / m.group(2)).resolve(strict=True)
+                resolved.relative_to(root)
+                body = resolved.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "audio/x-aiff")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Accept-Ranges", "bytes")
+                self._cors()
+                self.end_headers()
+                self.wfile.write(body)
+            except FileNotFoundError:
+                self._send_json(404, {"error": "voice turn not found"})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Studio artifact static serve (audio briefings, etc.) ──
         m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/artifacts/([a-zA-Z0-9_\-]+)/([a-zA-Z0-9_\-\.]+)$", self.path)
         if m:
@@ -4797,6 +4820,121 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # /api/upload-call also takes binary audio. Path: /api/upload-call?org=<slug>
         # Saves to organizations/<slug>/calls/<timestamp>/recording.wav and
         # optionally auto-runs the debrief.
+        # ── Voice-mode chat turn (audio in → text+audio out) ─────────
+        # POST /api/b/<slug>/voice-chat?buyer=<slug>&rep=<rep>
+        # body: audio/* (whatever MediaRecorder produced)
+        # Query params:
+        #   buyer: persona slug (required)
+        #   rep:   closer doing the drill (optional, default 'self')
+        #   history: omitted — we keep history in a session file so the
+        #            UI doesn't need to re-send the whole convo each turn
+        #   opening: '1' if this is the first turn (AI just picks up)
+        if self.path.startswith("/api/b/") and "/voice-chat" in self.path:
+            from urllib.parse import urlparse as _up, parse_qs as _pq
+            mm = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/voice-chat(?:\?|$)", self.path)
+            if mm:
+                try:
+                    bullpen = mm.group(1)
+                    qs = _pq(_up(self.path).query)
+                    buyer = (qs.get("buyer") or [""])[0]
+                    rep = (qs.get("rep") or ["self"])[0]
+                    is_opening = (qs.get("opening") or ["0"])[0] == "1"
+                    history_id = (qs.get("history_id") or [datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")])[0]
+                    if not buyer:
+                        self._send_json(400, {"error": "buyer query param required"}); return
+                    if buyer not in PERSONAS and (not _USE_FILE_PERSONAS or buyer not in _runtime_personas):
+                        _refresh_personas() if _USE_FILE_PERSONAS else None
+                        if buyer not in PERSONAS and buyer not in _runtime_personas:
+                            self._send_json(404, {"error": f"unknown buyer: {buyer}"}); return
+
+                    # Persist session history per (bullpen, buyer, history_id, rep)
+                    from pathlib import Path as _P
+                    sess_dir = _P(__file__).parent.parent / "bullpens" / bullpen / "voice-sessions" / buyer
+                    sess_dir.mkdir(parents=True, exist_ok=True)
+                    sess_file = sess_dir / f"{rep}__{history_id}.json"
+                    history = []
+                    if sess_file.exists():
+                        try: history = json.loads(sess_file.read_text())
+                        except Exception: history = []
+
+                    closer_text = ""
+                    if not is_opening:
+                        # Transcribe what the closer just said
+                        if not raw:
+                            self._send_json(400, {"error": "audio body required"}); return
+                        try:
+                            closer_text = transcribe_wav(raw).strip()
+                        except Exception as e:
+                            self._send_json(500, {"error": f"transcribe_failed: {e}"}); return
+                        if not closer_text:
+                            self._send_json(200, {"closer_text": "", "buyer_text": "",
+                                                    "audio_url": None,
+                                                    "note": "no speech detected — try again"})
+                            return
+                        history.append({"role": "user", "content": closer_text})
+
+                    # Build the AI buyer reply
+                    sys_prompt = persona_system_prompt(buyer, difficulty="intermediate", bullpen=bullpen)
+                    # RAG context for the last user message
+                    if not is_opening and bullpen and history:
+                        try:
+                            from rag import context as _ctx
+                            ctx = _ctx(bullpen, buyer, closer_text, max_chars=1600)
+                            if ctx:
+                                sys_prompt = sys_prompt + "\n\n" + ctx + (
+                                    "\n\nStay in character. Use the reference material only "
+                                    "to inform authentic responses. Never quote it verbatim."
+                                )
+                        except Exception:
+                            pass
+                    msgs = [{"role": "system", "content": sys_prompt}] + history
+                    if is_opening:
+                        msgs.append({"role": "user",
+                                       "content": "[The phone is ringing. You just picked up. Answer in 1-4 words.]"})
+                    try:
+                        reply = ollama_chat(msgs)
+                        reply = re.sub(r"^\s*\*[^*]+\*\s*", "", reply).strip()
+                    except Exception as e:
+                        self._send_json(500, {"error": f"chat_failed: {e}"}); return
+
+                    history.append({"role": "assistant", "content": reply})
+                    sess_file.write_text(json.dumps(history, indent=2))
+
+                    # TTS the buyer's reply with a persona-mapped voice
+                    audio = None
+                    try:
+                        from voice import tts_reply
+                        p = PERSONAS.get(buyer) or _runtime_personas.get(buyer)
+                        persona_name = None
+                        if p and isinstance(p, dict):
+                            persona_name = (p.get("persona") or {}).get("name")
+                        elif p:
+                            persona_name = getattr(p, "name", None) or getattr(p, "persona_name", None)
+                        audio = tts_reply(bullpen, buyer, reply, persona_name=persona_name)
+                    except Exception:
+                        audio = None
+
+                    # Audit the turn
+                    try:
+                        from audit import append as _audit
+                        _audit(bullpen, rep, "voice_turn",
+                                payload={"buyer": buyer, "closer_text_len": len(closer_text),
+                                          "buyer_text_len": len(reply), "history_id": history_id})
+                    except Exception:
+                        pass
+
+                    self._send_json(200, {
+                        "history_id": history_id,
+                        "closer_text": closer_text,
+                        "buyer_text": reply,
+                        "audio_url": (audio or {}).get("url"),
+                        "voice": (audio or {}).get("voice"),
+                        "duration_estimate_sec": (audio or {}).get("duration_estimate_sec"),
+                    })
+                except Exception as e:
+                    self._send_json(500, {"error": str(e)})
+                return
+
         if self.path.startswith("/api/upload-call"):
             try:
                 from urllib.parse import urlparse, parse_qs

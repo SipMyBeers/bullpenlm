@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voice mode · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
+  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
+  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--gold-dim:#92400e;
+  --danger:#f87171;--purple:#a78bfa;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;
+  --display:"Tanker",serif}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
+.brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
+.crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}
+.crumb .here{color:var(--gold)}
+.wrap{max-width:760px;margin:0 auto;padding:30px 22px 80px}
+h1{font-family:var(--display);font-size:38px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 4px}
+.lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:0 0 24px}
+.picker{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.picker .chip{padding:8px 16px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:20px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;color:var(--muted)}
+.picker .chip.active{background:rgba(52,211,153,0.10);border-color:var(--accent);color:var(--accent-2)}
+.picker .chip:hover{color:var(--text)}
+.phone-stage{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:18px;padding:36px 28px;text-align:center;margin-bottom:18px;min-height:360px;display:flex;flex-direction:column;justify-content:center}
+.persona-card{margin-bottom:24px}
+.persona-card .name{font-family:var(--display);font-size:32px;letter-spacing:-.01em;text-transform:uppercase;color:var(--text)}
+.persona-card .role{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+.persona-card .voice{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-top:8px}
+.dial-button{width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,var(--accent) 0%,var(--accent-dim) 100%);border:none;color:#0a1a14;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;margin:0 auto;display:block;box-shadow:0 0 30px rgba(52,211,153,0.45);transition:all .15s}
+.dial-button:hover{transform:scale(1.05);box-shadow:0 0 40px rgba(52,211,153,0.65)}
+.dial-button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.dial-button.recording{background:radial-gradient(circle,var(--danger) 0%,#7f1d1d 100%);box-shadow:0 0 30px rgba(248,113,113,0.55);animation:pulse-red 1.2s ease-in-out infinite}
+.dial-button.thinking{background:radial-gradient(circle,var(--gold) 0%,var(--gold-dim) 100%);box-shadow:0 0 30px rgba(251,191,36,0.55)}
+.dial-button.playing{background:radial-gradient(circle,var(--purple) 0%,#5b21b6 100%);box-shadow:0 0 30px rgba(167,139,250,0.55)}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 30px rgba(248,113,113,0.55)}50%{box-shadow:0 0 50px rgba(248,113,113,0.85)}}
+.dial-status{margin-top:18px;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.dial-status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:8px;vertical-align:middle;box-shadow:0 0 8px var(--accent)}
+.transcript{background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.08);border-radius:12px;padding:18px 22px;font-family:var(--serif);font-size:14.5px;line-height:1.6;min-height:80px}
+.transcript .turn{padding:8px 0;border-bottom:1px solid rgba(245,232,216,0.06)}
+.transcript .turn:last-child{border-bottom:none}
+.transcript .speaker{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;margin-right:8px}
+.transcript .speaker.you{color:var(--gold)}
+.transcript .speaker.buyer{color:var(--accent-2)}
+.transcript .turn-text{color:var(--text)}
+.controls-row{display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap}
+.btn{padding:10px 18px;border-radius:7px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none;text-align:center}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.btn.ghost:hover{color:var(--text);border-color:var(--text)}
+.error{padding:11px 14px;background:rgba(248,113,113,0.10);border:1px solid rgba(248,113,113,0.40);border-radius:8px;font-family:var(--mono);font-size:11.5px;color:var(--danger);margin:10px 0}
+@media(max-width:540px){
+  header{padding:10px 14px;flex-wrap:wrap;gap:8px}
+  .brand{font-size:18px}
+  .wrap{padding:18px 14px 60px}
+  h1{font-size:28px}
+  .phone-stage{padding:24px 18px;min-height:300px}
+  .dial-button{width:120px;height:120px;font-size:12px}
+  .persona-card .name{font-size:24px}
+}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <div class="crumb">
+    <a href="/app/lobby.html">Floor</a> <span> / </span>
+    <a href="/app/arena.html">Arena</a> <span> / </span>
+    <span class="here">Voice drill</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <h1>Voice drill</h1>
+  <p class="lede">Press to talk. Release to send. The AI buyer answers in voice using a persona-matched voice. RAG-grounded if there's a dossier.</p>
+
+  <div class="picker" id="picker"></div>
+
+  <div class="phone-stage" id="stage">
+    <div class="persona-card" id="persona-card">
+      <div class="name" id="p-name">—</div>
+      <div class="role" id="p-role">pick a buyer above</div>
+      <div class="voice" id="p-voice"></div>
+    </div>
+    <button class="dial-button" id="dial-btn" disabled>📞 Pick up</button>
+    <div class="dial-status" id="dial-status">choose a buyer first</div>
+  </div>
+
+  <div class="transcript" id="transcript">
+    <div style="color:var(--muted);font-style:italic;text-align:center;padding:24px">No conversation yet.</div>
+  </div>
+
+  <div class="controls-row">
+    <button class="btn ghost" id="reset-btn">↺ Reset session</button>
+    <a class="btn ghost" href="/app/contact.html">Switch to text mode</a>
+  </div>
+
+  <div id="error-area"></div>
+</div>
+
+<audio id="player" style="display:none"></audio>
+
+<script>
+const URLP = new URL(window.location.href);
+const BULLPEN = URLP.searchParams.get('b') || 'ghengis';
+let REP = URLP.searchParams.get('rep');
+if (!REP) { try { REP = localStorage.getItem('bullpen-rep'); } catch(e){} }
+if (!REP) REP = 'self';
+
+let CURRENT_BUYER = URLP.searchParams.get('slug') || null;
+let HISTORY_ID = null;
+let STATE = 'idle';
+let mediaRecorder = null;
+let recordedChunks = [];
+let buyerCard = null;
+
+function el(t,p,...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+function showError(msg){const w=document.getElementById('error-area');clear(w);w.appendChild(el('div',{class:'error',text:msg}));setTimeout(()=>clear(w),5000)}
+
+async function loadBuyers(){
+  const r = await fetch(`/api/b/${BULLPEN}/cards`);
+  const d = await r.json();
+  const cards = (d && d.cards) || [];
+  const wrap = document.getElementById('picker');
+  clear(wrap);
+  for(const c of cards){
+    const chip = el('div', {class:'chip' + (c.slug === CURRENT_BUYER ? ' active' : ''),
+                              'data-slug': c.slug,
+                              onClick: ()=>selectBuyer(c.slug, c)});
+    chip.textContent = c.company || c.slug;
+    wrap.appendChild(chip);
+  }
+  if(CURRENT_BUYER){
+    const card = cards.find(c => c.slug === CURRENT_BUYER);
+    if(card) selectBuyer(CURRENT_BUYER, card);
+  }
+}
+
+function selectBuyer(slug, card){
+  CURRENT_BUYER = slug;
+  buyerCard = card;
+  HISTORY_ID = null;
+  document.querySelectorAll('.picker .chip').forEach(c => c.classList.toggle('active', c.getAttribute('data-slug') === slug));
+  const persona = (card && card.persona) || {};
+  document.getElementById('p-name').textContent = persona.name || card.company || slug;
+  document.getElementById('p-role').textContent = card.role || '';
+  const voiceMap = {'accenture-mainframe':'Tom','allstate':'Paulina','cigna':'Samantha'};
+  const voice = voiceMap[slug] || (persona.name && /^(sarah|kelly|samantha|sofia|jennifer|lisa|mary|emily|olivia|ava|emma)/i.test(persona.name) ? 'Samantha' : 'Tom');
+  document.getElementById('p-voice').textContent = '🎤 voice: ' + voice;
+  document.getElementById('dial-btn').disabled = false;
+  document.getElementById('dial-status').textContent = 'tap to pick up the phone';
+  clearTranscript();
+  setState('idle');
+}
+
+function clearTranscript(){
+  const t = document.getElementById('transcript');
+  clear(t);
+  t.appendChild(el('div', {style:'color:var(--muted);font-style:italic;text-align:center;padding:24px', text:'No conversation yet — pick up the phone above.'}));
+}
+
+function appendTurn(speaker, text){
+  const t = document.getElementById('transcript');
+  if(t.firstChild && t.firstChild.style && t.firstChild.style.fontStyle === 'italic'){
+    clear(t);
+  }
+  const turn = el('div', {class:'turn'});
+  turn.appendChild(el('span', {class:'speaker ' + (speaker === 'YOU' ? 'you' : 'buyer'), text: speaker + ':'}));
+  turn.appendChild(el('span', {class:'turn-text', text: text}));
+  t.appendChild(turn);
+  t.scrollTop = t.scrollHeight;
+}
+
+function setState(newState){
+  STATE = newState;
+  const btn = document.getElementById('dial-btn');
+  const status = document.getElementById('dial-status');
+  btn.classList.remove('recording','thinking','playing');
+  if (newState === 'idle')          { btn.disabled = !CURRENT_BUYER; btn.textContent = '📞 Pick up'; status.textContent = 'tap to call'; }
+  else if (newState === 'opening')  { btn.disabled = true; btn.classList.add('thinking'); btn.textContent = '☎ ringing'; status.textContent = "they're picking up…"; }
+  else if (newState === 'press_talk'){ btn.disabled = false; btn.textContent = '🎤 Press to talk'; clear(status); status.appendChild(el('span',{class:'dot'})); status.appendChild(document.createTextNode('line is open')); }
+  else if (newState === 'recording'){ btn.disabled = false; btn.classList.add('recording'); btn.textContent = '⏹ Release'; status.textContent = 'recording — release to send'; }
+  else if (newState === 'thinking') { btn.disabled = true; btn.classList.add('thinking'); btn.textContent = '⏳ thinking'; status.textContent = "they're responding…"; }
+  else if (newState === 'playing')  { btn.disabled = true; btn.classList.add('playing'); btn.textContent = '🔊 listening'; status.textContent = "they're talking…"; }
+}
+
+function getBuyerLabel(){
+  const persona = (buyerCard && buyerCard.persona) || {};
+  return (persona.name || (buyerCard && buyerCard.company) || CURRENT_BUYER || 'BUYER').toUpperCase();
+}
+
+async function pickUp(){
+  if(!CURRENT_BUYER){ showError('Pick a buyer first'); return; }
+  setState('opening');
+  const r = await fetch(`/api/b/${BULLPEN}/voice-chat?buyer=${encodeURIComponent(CURRENT_BUYER)}&rep=${encodeURIComponent(REP)}&opening=1`, {
+    method:'POST', headers:{'Content-Type':'application/octet-stream'}, body: new ArrayBuffer(0),
+  });
+  const d = await r.json();
+  if(!r.ok){ showError(d.error || 'opening failed'); setState('idle'); return; }
+  HISTORY_ID = d.history_id;
+  if(d.buyer_text) appendTurn(getBuyerLabel(), d.buyer_text);
+  if(d.audio_url){ await playAudio(d.audio_url); }
+  setState('press_talk');
+}
+
+async function startRecording(){
+  if(!CURRENT_BUYER){ showError('Pick a buyer first'); return; }
+  if(STATE === 'idle' || !HISTORY_ID){ await pickUp(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    let mime = 'audio/webm;codecs=opus';
+    if (!MediaRecorder.isTypeSupported(mime)) mime = 'audio/mp4';
+    if (!MediaRecorder.isTypeSupported(mime)) mime = '';
+    mediaRecorder = new MediaRecorder(stream, mime ? {mimeType:mime} : {});
+    recordedChunks = [];
+    mediaRecorder.ondataavailable = (e) => { if(e.data && e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(recordedChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+      await sendTurn(blob);
+    };
+    mediaRecorder.start();
+    setState('recording');
+  } catch(e){
+    showError('Mic access blocked: ' + e.message);
+    setState('press_talk');
+  }
+}
+
+function stopRecording(){
+  if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+}
+
+async function sendTurn(blob){
+  setState('thinking');
+  const buf = await blob.arrayBuffer();
+  const r = await fetch(`/api/b/${BULLPEN}/voice-chat?buyer=${encodeURIComponent(CURRENT_BUYER)}&rep=${encodeURIComponent(REP)}&history_id=${encodeURIComponent(HISTORY_ID||'')}`, {
+    method:'POST', headers:{'Content-Type': blob.type || 'application/octet-stream'}, body: buf,
+  });
+  const d = await r.json();
+  if(!r.ok){ showError(d.error || 'send failed'); setState('press_talk'); return; }
+  if(d.closer_text){ appendTurn('YOU', d.closer_text); }
+  if(d.buyer_text){ appendTurn(getBuyerLabel(), d.buyer_text); }
+  if(d.note){ showError(d.note); }
+  if(d.audio_url){ await playAudio(d.audio_url); }
+  setState('press_talk');
+}
+
+function playAudio(url){
+  return new Promise((resolve) => {
+    setState('playing');
+    const player = document.getElementById('player');
+    player.src = url;
+    player.onended = () => resolve();
+    player.onerror = () => resolve();
+    player.play().catch(() => resolve());
+  });
+}
+
+let pressActive = false;
+const btn = document.getElementById('dial-btn');
+btn.addEventListener('mousedown', (e) => { e.preventDefault(); pressActive = true; startRecording(); });
+btn.addEventListener('touchstart', (e) => { e.preventDefault(); pressActive = true; startRecording(); }, {passive:false});
+btn.addEventListener('mouseup', () => { if(pressActive){ pressActive = false; stopRecording(); } });
+btn.addEventListener('touchend', () => { if(pressActive){ pressActive = false; stopRecording(); } });
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  HISTORY_ID = null; clearTranscript(); setState('idle');
+});
+
+setState('idle');
+loadBuyers();
+</script>
+</body>
+</html>
