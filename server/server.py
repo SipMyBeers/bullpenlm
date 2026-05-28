@@ -1643,7 +1643,44 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(200, {"ok": True})
             return
 
+        # ── / is a smart router ──
+        # Operator on localhost → cockpit (or host.html for first-run)
+        # Closer arriving via tunnel → quickstart or spawn depending on
+        # whether they've identified yet
         if self.path == "/" or self.path.startswith("/?"):
+            from urllib.parse import quote as _q
+            # Localhost = the operator on their own machine. Route them
+            # to cockpit if any bullpens exist, else to host setup.
+            if _is_localhost(self.client_address):
+                try:
+                    from bullpens import list_bullpens
+                    bps = list_bullpens()
+                except Exception:
+                    bps = []
+                if bps:
+                    # Open the first / default bullpen the operator runs
+                    first_slug = (bps[0].get("slug") if isinstance(bps[0], dict) else bps[0]) if bps else None
+                    target = f"/app/cockpit.html?b={_q(first_slug or 'default')}&rep=self"
+                else:
+                    target = "/app/host.html"
+            else:
+                # Remote visitor (closer over tunnel). If they have a
+                # session cookie we can route to spawn directly; else
+                # the quickstart entry.
+                rep = self._current_rep()
+                if rep:
+                    target = f"/app/spawn.html?rep={_q(rep)}"
+                else:
+                    target = "/app/quickstart/"
+            self.send_response(302)
+            self.send_header("Location", target)
+            self._cors()
+            self.end_headers()
+            return
+
+        # Legacy /trainer kept for direct access to the original AI
+        # 1v1 training UI — power users only.
+        if self.path == "/trainer" or self.path.startswith("/trainer?"):
             body = HTML_PAGE.encode()
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -3955,7 +3992,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     "slug": slug,
                     "name": cfg.get("name") or slug,
                     "founder_rep": founder_rep,
-                    "app_url": f"/app/today.html?b={slug}&rep={founder_rep}",
+                    "app_url": f"/app/spawn.html?b={slug}&rep={founder_rep}",
                     "share_url": f"/b/{slug}",
                     "tunnel_url": tunnel_url,
                     "invite_link": invite_link,
