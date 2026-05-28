@@ -145,6 +145,59 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
 .defer-banner{padding:14px 18px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.30);border-radius:9px;margin-bottom:18px;font-family:var(--serif);font-size:14.5px;color:var(--text);line-height:1.55}
 .defer-banner strong{color:var(--gold);font-style:normal}
 .defer-banner em{color:var(--gold);font-style:italic}
+
+/* ── Classification: card swipe + verdict meter ──────────────────── */
+.preset-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.25);border-radius:9px;margin-bottom:18px;flex-wrap:wrap}
+.preset-row-q{font-family:var(--serif);font-style:italic;font-size:14.5px;color:var(--text);flex:1;min-width:240px}
+.preset-btn{padding:10px 16px;background:var(--purple);color:#0a1a14;border:none;border-radius:7px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:transform .12s}
+.preset-btn:hover{transform:translateY(-1px)}
+
+.verdict-meter{margin-bottom:18px;padding:14px 18px;background:rgba(0,0,0,0.35);border:1px solid rgba(245,232,216,0.10);border-radius:11px}
+.vm-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.vm-label{font-weight:700}
+.vm-label.vm-employee{color:var(--danger)}
+.vm-label.vm-contractor{color:var(--accent-2)}
+.vm-pct{font-family:var(--display);font-size:18px;letter-spacing:-.01em;color:var(--gold)}
+.vm-track{position:relative;height:14px;background:rgba(0,0,0,0.45);border-radius:7px;overflow:hidden;border:1px solid rgba(245,232,216,0.08)}
+.vm-zone{position:absolute;top:0;bottom:0;opacity:.4}
+.vm-zone-emp{left:0;width:38%;background:rgba(248,113,113,0.40)}
+.vm-zone-mid{left:38%;width:24%;background:rgba(251,191,36,0.30)}
+.vm-zone-con{left:62%;width:38%;background:rgba(52,211,153,0.40)}
+.vm-needle{position:absolute;top:-3px;bottom:-3px;width:3px;background:var(--gold);box-shadow:0 0 10px var(--gold);transition:left .55s cubic-bezier(.34,1.56,.64,1);transform:translateX(-50%);border-radius:2px}
+.vm-status{margin-top:8px;font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted);line-height:1.45}
+.vm-status .verdict-contractor{color:var(--accent-2);font-weight:600;font-style:normal}
+.vm-status .verdict-borderline{color:var(--gold);font-weight:600;font-style:normal}
+.vm-status .verdict-employee{color:var(--danger);font-weight:600;font-style:normal}
+
+.card-stage{margin-bottom:18px}
+.card-progress{margin-bottom:14px}
+.card-progress-row{display:flex;justify-content:space-between;margin-bottom:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.card-progress-row #card-progress-cluster{color:var(--accent-2)}
+.card-progress-track{height:6px;background:rgba(0,0,0,0.45);border-radius:4px;overflow:hidden}
+.card-progress-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width .5s cubic-bezier(.4,0,.2,1)}
+.card-area{position:relative;min-height:280px}
+.q-card{padding:30px 32px;background:linear-gradient(180deg,rgba(26,18,8,0.92),rgba(10,7,3,0.65));border:1.5px solid rgba(245,232,216,0.15);border-radius:14px;display:flex;flex-direction:column;gap:18px;box-shadow:0 10px 30px rgba(0,0,0,0.40);animation:card-slide-in .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes card-slide-in{from{opacity:0;transform:translateX(40px) scale(.98)}to{opacity:1;transform:none}}
+.q-card.leaving{animation:card-slide-out .25s ease-in forwards}
+@keyframes card-slide-out{to{opacity:0;transform:translateX(-40px) scale(.98)}}
+.q-card .q-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.q-card .q-prompt{font-family:var(--display);font-size:24px;line-height:1.2;letter-spacing:-.005em;text-transform:none;color:var(--text)}
+.q-card .q-hint{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);line-height:1.5}
+.q-card .q-pillrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.q-pill{padding:18px 14px;background:rgba(0,0,0,0.35);border:2px solid rgba(245,232,216,0.20);border-radius:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:all .12s;font-family:var(--display);font-size:22px;letter-spacing:.04em;color:var(--text)}
+.q-pill:hover{transform:translateY(-2px);border-color:var(--accent);background:rgba(52,211,153,0.05)}
+.q-pill.choose-yes:hover{border-color:var(--accent-2)}
+.q-pill.choose-no:hover{border-color:var(--accent-2)}
+.q-pill .pill-sub{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);font-weight:400;text-transform:uppercase}
+.q-pill.active{transform:scale(0.96);border-color:var(--gold);background:rgba(251,191,36,0.10);box-shadow:0 0 22px rgba(251,191,36,0.25)}
+.q-card .q-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;color:var(--muted)}
+.q-card .q-foot a{color:var(--muted);text-decoration:none;cursor:pointer}
+.q-card .q-foot a:hover{color:var(--text)}
+
+.q-card.all-done{text-align:center;padding:42px 26px}
+.q-card.all-done .big-check{font-size:48px;margin-bottom:8px}
+.q-card.all-done .done-h{font-family:var(--display);font-size:28px;text-transform:uppercase;letter-spacing:-.01em;margin:0 0 6px;color:var(--accent-2)}
+.q-card.all-done .done-sub{font-family:var(--serif);font-style:italic;font-size:14.5px;color:var(--muted);line-height:1.55}
 </style>
 </head>
 <body>
@@ -310,14 +363,47 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
         </div>
         <div class="quest-reward"><span class="reward-coin"></span><span>+100 XP</span></div>
       </div>
-      <p>Answer honest. If your answers describe an <strong>employee</strong>, the firewall refuses to render a 1099 agreement — that's the wall between you and a state DOL audit. The IRS has 20 questions. We ask them so you don't get hit with them later.</p>
-      <div class="warning-box"><strong>Not legal advice.</strong> This catches obvious patterns. NOT a substitute for an attorney's classification opinion.</div>
-      <div id="classification-form"></div>
+      <p>The IRS scoring you fills out 20 questions before they bless your 1099 setup. We ask 9 of them — one at a time. If your answers look like an <strong>employee</strong>, the firewall refuses to render a 1099 agreement (that's the wall between you and a state DOL audit).</p>
+
+      <!-- Preset shortcut -->
+      <div id="preset-row" class="preset-row">
+        <div class="preset-row-q">First time? Use the standard 1099 setup → review it card by card.</div>
+        <button class="btn preset-btn" onclick="applyContractorPreset()">⚡ Auto-fill standard 1099 →</button>
+      </div>
+
+      <!-- Verdict meter -->
+      <div id="verdict-meter" class="verdict-meter hide">
+        <div class="vm-row">
+          <span class="vm-label vm-employee">👔 Employee</span>
+          <span class="vm-pct" id="vm-pct">—</span>
+          <span class="vm-label vm-contractor">⚒ Contractor</span>
+        </div>
+        <div class="vm-track">
+          <div class="vm-needle" id="vm-needle" style="left:50%"></div>
+          <div class="vm-zone vm-zone-emp"></div>
+          <div class="vm-zone vm-zone-mid"></div>
+          <div class="vm-zone vm-zone-con"></div>
+        </div>
+        <div class="vm-status" id="vm-status">Pick an answer to start the meter</div>
+      </div>
+
+      <!-- Card-stack swipe UI -->
+      <div id="classification-stage" class="card-stage">
+        <div id="card-progress" class="card-progress">
+          <div class="card-progress-row">
+            <span id="card-progress-num">0 of 0</span>
+            <span id="card-progress-cluster">Loading…</span>
+          </div>
+          <div class="card-progress-track"><div class="card-progress-bar" id="card-progress-bar" style="width:2%"></div></div>
+        </div>
+        <div id="card-area" class="card-area"></div>
+      </div>
+
       <div id="verdict-area"></div>
       <div id="class-status"></div>
       <div class="foot-nav">
         <button class="btn ghost" onclick="showStep(1)">← Edit your house</button>
-        <button class="btn primary" id="class-continue" onclick="saveClassification()">⚔ Lock the faction →</button>
+        <button class="btn primary" id="class-continue" onclick="saveClassification()" disabled>⚔ Lock the faction →</button>
       </div>
     </div>
   </div>
@@ -585,56 +671,158 @@ async function loadClassificationForm(){
   }
 }
 
+// Plain-English rewordings + the "contractor-friendly" answer for each
+// IRS test. yesIsGood = answering YES tilts toward contractor; the
+// preset uses these values to one-tap pre-fill the safe path.
+const QUESTION_HINTS = {
+  // Behavioral
+  'closer_sets_own_hours':       {plain:'Can closers pick their own hours?',           hint:'No fixed shifts or required start/end times.',                                          yesIsGood:true},
+  'closer_required_training':    {plain:'Will you require closers to attend training you create?', hint:'Beyond optional drills (those are fine — required is the issue).', yesIsGood:false},
+  'closer_free_to_work_for_others': {plain:'Can closers also work for other operators?', hint:'No exclusivity clause — they can sell for someone else too.',                          yesIsGood:true},
+  'closer_directed_how':         {plain:'Will you dictate HOW closers work?',           hint:'Specific scripts, required call cadence, mandated tools.',                              yesIsGood:false},
+  // Financial
+  'closer_owns_tools':           {plain:'Do closers supply their own laptop + phone?',  hint:'They bring their own gear — you don\'t issue equipment.',                              yesIsGood:true},
+  'commission_only':             {plain:'Is comp commission-only?',                     hint:'No salary, no hourly, no guaranteed minimum.',                                          yesIsGood:true},
+  'reimburse_expenses':          {plain:'Will you reimburse closer expenses?',          hint:'Mileage, phone bill, internet — reimbursement reads like employment.',                  yesIsGood:false},
+  'profit_or_loss':              {plain:'Can closers make a profit or take a loss?',    hint:'They can spend their own money on ads/leads → upside on their decisions.',             yesIsGood:true},
+  // Relationship
+  'written_contractor_agreement': {plain:'Will every closer sign a 1099 Agreement?',    hint:'Platform handles this — answer YES.',                                                   yesIsGood:true},
+  'work_is_indefinite':          {plain:'Will the engagement be open-ended (no end date)?', hint:'Indefinite is fine for contractors as long as they\'re free to leave.',          yesIsGood:false},
+  'closer_provides_to_others':   {plain:'Do closers offer this service to other clients?', hint:'Do they have a real business of their own beyond your bullpen?',                  yesIsGood:true},
+  'work_is_key_activity':        {plain:'Is this work the closer\'s ONLY income?',      hint:'If they ONLY work for you, the IRS sees employment.',                                  yesIsGood:false},
+};
+
+let currentCard = 0;        // index into CLASSIFICATION_QUESTIONS
+let presetApplied = false;
+
 function renderClassificationForm(){
-  const form = document.getElementById('classification-form');
-  clear(form);
-  const groups = {behavioral:'Behavioral control', financial:'Financial control', relationship:'Type of relationship'};
-  for(const cluster of Object.keys(groups)){
-    form.appendChild(el('h4', {style:'font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px', text: groups[cluster]}));
-    for(const q of CLASSIFICATION_QUESTIONS.filter(qq=>qq.cluster===cluster)){
-      const row = el('div', {class:'q-row', 'data-q': q.id});
-      row.appendChild(el('div', {class:'prompt', text: q.prompt}));
-      const yes = el('button', {class:'pill yes', text:'Yes', onClick:()=>setAnswer(q.id, true)});
-      const no = el('button', {class:'pill no', text:'No', onClick:()=>setAnswer(q.id, false)});
-      row.appendChild(yes); row.appendChild(no);
-      form.appendChild(row);
-    }
-  }
+  currentCard = 0;
+  renderCurrentCard();
 }
 
-function setAnswer(qId, yes){
+function renderCurrentCard(){
+  const area = document.getElementById('card-area');
+  clear(area);
+  const total = CLASSIFICATION_QUESTIONS.length;
+  // Update progress
+  const answered = Object.keys(classAnswers).length;
+  const pct = Math.max(2, Math.round(answered / Math.max(1,total) * 100));
+  document.getElementById('card-progress-bar').style.width = pct + '%';
+  document.getElementById('card-progress-num').textContent = `${answered} of ${total}`;
+
+  if(currentCard >= total){
+    // All answered — show the done card and run final verdict
+    const done = el('div', {class:'q-card all-done'});
+    done.appendChild(el('div', {class:'big-check', text:'⚒'}));
+    done.appendChild(el('div', {class:'done-h', text:'Faction locked in'}));
+    done.appendChild(el('div', {class:'done-sub', text:'Verdict computed below. Hit "Lock the faction" to commit.'}));
+    area.appendChild(done);
+    document.getElementById('card-progress-cluster').textContent = 'Done';
+    evaluateVerdict();
+    return;
+  }
+  const q = CLASSIFICATION_QUESTIONS[currentCard];
+  const hint = QUESTION_HINTS[q.id] || {plain:q.prompt, hint:'', yesIsGood:true};
+  const cluster = {behavioral:'Behavioral control', financial:'Financial control', relationship:'Type of relationship'}[q.cluster] || q.cluster;
+  document.getElementById('card-progress-cluster').textContent = cluster;
+
+  const card = el('div', {class:'q-card', 'data-q': q.id});
+  card.appendChild(el('div', {class:'q-tag', text: `Question ${currentCard+1} of ${total} · ${cluster}`}));
+  card.appendChild(el('div', {class:'q-prompt', text: hint.plain}));
+  if(hint.hint) card.appendChild(el('div', {class:'q-hint', text: hint.hint}));
+  const pillrow = el('div', {class:'q-pillrow'});
+  const yes = el('button', {class:'q-pill choose-yes', onClick: () => pickAnswer(q.id, true)});
+  yes.appendChild(el('span', {text:'✓ YES'}));
+  yes.appendChild(el('span', {class:'pill-sub', text: hint.yesIsGood ? 'safer for 1099' : 'pulls toward employee'}));
+  pillrow.appendChild(yes);
+  const no = el('button', {class:'q-pill choose-no', onClick: () => pickAnswer(q.id, false)});
+  no.appendChild(el('span', {text:'✗ NO'}));
+  no.appendChild(el('span', {class:'pill-sub', text: hint.yesIsGood ? 'pulls toward employee' : 'safer for 1099'}));
+  pillrow.appendChild(no);
+  card.appendChild(pillrow);
+
+  const foot = el('div', {class:'q-foot'});
+  if(currentCard > 0){
+    const back = el('a', {onClick:(e)=>{e.preventDefault();currentCard--;renderCurrentCard();}, text:'← back'});
+    foot.appendChild(back);
+  } else { foot.appendChild(el('span')); }
+  foot.appendChild(el('span', {text: `${Math.round((currentCard/total)*100)}% through the IRS test`}));
+  card.appendChild(foot);
+  area.appendChild(card);
+}
+
+function pickAnswer(qId, yes){
   classAnswers[qId] = yes;
-  const row = document.querySelector(`.q-row[data-q="${qId}"]`);
-  row.querySelector('.pill.yes').classList.toggle('active', yes === true);
-  row.querySelector('.pill.no').classList.toggle('active', yes === false);
-  evaluateVerdict();
+  // Bounce + slide-out animation
+  const card = document.querySelector(`.q-card[data-q="${qId}"]`);
+  const chosen = card && card.querySelector(yes ? '.choose-yes' : '.choose-no');
+  if(chosen) chosen.classList.add('active');
+  setTimeout(() => {
+    if(card) card.classList.add('leaving');
+    setTimeout(() => {
+      currentCard++;
+      renderCurrentCard();
+      updateVerdictMeter();
+    }, 250);
+  }, 180);
+}
+
+// Standard contractor preset — pre-fills every question to the
+// contractor-favored answer per QUESTION_HINTS.yesIsGood.
+function applyContractorPreset(){
+  for(const q of CLASSIFICATION_QUESTIONS){
+    const hint = QUESTION_HINTS[q.id] || {yesIsGood:true};
+    classAnswers[q.id] = !!hint.yesIsGood;
+  }
+  presetApplied = true;
+  document.getElementById('preset-row').style.display = 'none';
+  currentCard = 0;
+  renderCurrentCard();
+  updateVerdictMeter();
+}
+
+// Verdict meter — live preview as answers come in. Once we have at
+// least 3 answers, fetch the score from /preview and animate the needle.
+async function updateVerdictMeter(){
+  const answered = Object.keys(classAnswers).length;
+  const meter = document.getElementById('verdict-meter');
+  if(answered < 2) return;
+  meter.classList.remove('hide');
+  const opState = state.entity ? state.entity.address.state : '';
+  let r;
+  try { r = await api('POST', `/api/b/${BULLPEN}/classification/preview`, {answers:classAnswers, operator_state:opState}); }
+  catch(e){ return; }
+  if(!r.ok) return;
+  const v = r.data;
+  // Score → 0-100 needle position. Server returns total_score plus
+  // by_cluster details. Map verdict to a coarse position so the needle
+  // lands inside the right zone.
+  const pos = v.verdict === 'contractor' ? 80
+            : v.verdict === 'borderline' ? 50
+            : 22;
+  document.getElementById('vm-needle').style.left = pos + '%';
+  document.getElementById('vm-pct').textContent = `${pos}% ${v.verdict === 'contractor' ? 'CONTRACTOR' : v.verdict === 'borderline' ? 'BORDERLINE' : 'EMPLOYEE'}`;
+  const statusEl = document.getElementById('vm-status');
+  clear(statusEl);
+  if(v.verdict === 'contractor'){
+    statusEl.appendChild(el('span', {class:'verdict-contractor', text:'✓ Independent Contractor'}));
+    statusEl.appendChild(document.createTextNode(' — the platform will render 1099 agreements.'));
+  } else if(v.verdict === 'borderline'){
+    statusEl.appendChild(el('span', {class:'verdict-borderline', text:'⚠ Borderline'}));
+    statusEl.appendChild(document.createTextNode(' — answer the rest, or consult counsel.'));
+  } else {
+    statusEl.appendChild(el('span', {class:'verdict-employee', text:'✗ Employee-leaning'}));
+    statusEl.appendChild(document.createTextNode(' — the firewall will NOT render a 1099 agreement.'));
+  }
+  // Enable "Lock the faction" only when everything's answered AND we're contractor
+  const total = CLASSIFICATION_QUESTIONS.length;
+  document.getElementById('class-continue').disabled = !(answered >= total && v.verdict === 'contractor');
 }
 
 async function evaluateVerdict(){
-  const wrap = document.getElementById('verdict-area');
-  clear(wrap);
-  if(Object.keys(classAnswers).length < CLASSIFICATION_QUESTIONS.length) return;
-  const opState = state.entity ? state.entity.address.state : '';
-  const r = await api('POST', `/api/b/${BULLPEN}/classification/preview`, {answers:classAnswers, operator_state:opState});
-  if(!r.ok) return;
-  const v = r.data;
-  const cls = v.verdict;
-  const heading = cls === 'contractor' ? 'Verdict: Independent Contractor ✓'
-                : cls === 'borderline' ? 'Verdict: Borderline — review or consult counsel'
-                : 'Verdict: Employee-leaning — platform will NOT render a 1099 Agreement';
-  const card = el('div', {class:'verdict-card ' + cls});
-  card.appendChild(el('h4', {text: heading}));
-  card.appendChild(el('div', {style:'font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em',
-    text: `Total score: ${v.total_score} · Behavioral ${v.by_cluster.behavioral} · Financial ${v.by_cluster.financial} · Relationship ${v.by_cluster.relationship}`}));
-  if((v.veto_failures||[]).length){
-    card.appendChild(el('p', {style:'margin:6px 0 0;color:var(--danger);font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.10em',
-      text: 'VETO fired: ' + v.veto_failures.join(', ')}));
-  }
-  for(const w of (v.warnings||[])){
-    card.appendChild(el('p', {style:'margin:6px 0 0;font-family:var(--serif);font-size:13.5px', text:w}));
-  }
-  wrap.appendChild(card);
-  document.getElementById('class-continue').disabled = !(cls === 'contractor');
+  // Final verdict card shown below the question stage once all
+  // answered. Just calls the meter — the meter now handles the body.
+  await updateVerdictMeter();
 }
 
 async function saveClassification(){
