@@ -39,11 +39,12 @@
     "category": "Productivity",
     "shortDescription": "Multiplayer sales CRM where building a business is the meta-game.",
     "longDescription": "Self-hosted multiplayer sales CRM. Run your own bullpen, invite closers with one click, train against AI buyers, and compete on a live leaderboard. Open source, no cloud, no subscription.",
-    "externalBin": ["binaries/bullpenlm-server"],
+    "externalBin": ["binaries/bullpenlm-server", "binaries/whisper-cli"],
     "resources": [
       "../../templates/**/*",
       "../../server/**/*.py",
-      "../../personas/_sample/**/*"
+      "../../personas/_sample/**/*",
+      "binaries/whisper-deps/*"
     ]
   }
 }

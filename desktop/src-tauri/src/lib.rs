@@ -26,6 +26,11 @@ mod steam;
 
 const SERVER_PORT: u16 = 7878;
 const SERVER_READY_MARKER: &str = "BullpenLM · trainer";
+// The bundled PyInstaller sidecar's bootloader buffers stdout until
+// process exit, which makes the stdout-marker pattern unreliable for
+// "is it ready?" detection. We HTTP-probe this endpoint instead.
+const HEALTH_PATH: &str = "/api/ollama/status";
+const READY_TIMEOUT_SECS: u64 = 30;
 
 #[derive(Default)]
 struct AppState {
@@ -103,15 +108,33 @@ async fn start_host(
     log::info!("Starting Python server with cwd={}", repo.display());
 
     let shell = app.shell();
+    // Per-OS user-data root. paths.py inside the sidecar respects
+    // BULLPENLM_HOME, so we plumb the right platform default through
+    // here. Falls back to the repo dir in dev mode where data lives
+    // alongside the source tree.
+    let data_dir = platform_data_dir().unwrap_or_else(|| repo.clone());
+    log::info!("Sidecar BULLPENLM_HOME={}", data_dir.display());
+    let env_vars: Vec<(&str, String)> = vec![
+        // PyInstaller bootloader buffers stdout/stderr until exit. We
+        // need real-time logs to surface server-ready / errors, so force
+        // unbuffered mode.
+        ("PYTHONUNBUFFERED", "1".to_string()),
+        // User data goes here (bullpens/, training-runs/, organizations/).
+        // Read-only assets stay in the bundle's _MEIPASS dir; paths.py
+        // seeds them into BULLPENLM_HOME on first run.
+        ("BULLPENLM_HOME", data_dir.to_string_lossy().to_string()),
+    ];
+
     // Phase 1: try the PyInstaller-bundled sidecar first. If `sidecar(...)`
     // resolves (the binary is in the .app's resources from `externalBin`
     // in tauri.conf.json), spawn that. Otherwise fall back to system
     // `python3` (Phase 0 dev mode — repo must be on disk + Python 3
     // installed).
     let (mut rx, child) = match shell.sidecar("bullpenlm-server") {
-        Ok(cmd) => {
+        Ok(mut cmd) => {
             log::info!("Spawning bundled sidecar bullpenlm-server");
-            cmd.current_dir(&repo)
+            for (k, v) in &env_vars { cmd = cmd.env(k, v); }
+            cmd.current_dir(&data_dir)
                .spawn()
                .map_err(|e| ErrorResult {
                    ok: false,
@@ -120,10 +143,9 @@ async fn start_host(
         }
         Err(sidecar_err) => {
             log::info!("Sidecar not available ({}), falling back to system python3", sidecar_err);
-            shell
-                .command("python3")
-                .args(["-u", "server/server.py"])
-                .current_dir(&repo)
+            let mut cmd = shell.command("python3").args(["-u", "server/server.py"]);
+            for (k, v) in &env_vars { cmd = cmd.env(k, v); }
+            cmd.current_dir(&repo)
                 .spawn()
                 .map_err(|e| ErrorResult {
                     ok: false,
@@ -166,11 +188,18 @@ async fn start_host(
         }
     });
 
-    // Port-poll until the server accepts connections (12s max).
+    // HTTP-probe the server until it answers (READY_TIMEOUT_SECS max).
+    // TCP-connect would say "ready" the moment the socket binds but that
+    // happens before main() finishes wiring routes; an HTTP 200 from the
+    // health endpoint means the route table is actually live.
     let url = format!("http://127.0.0.1:{}", SERVER_PORT);
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(12);
+    let health_url = format!("{}{}", url, HEALTH_PATH);
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(READY_TIMEOUT_SECS);
     while std::time::Instant::now() < deadline {
-        if tokio::net::TcpStream::connect(("127.0.0.1", SERVER_PORT)).await.is_ok() {
+        // Cheap reqwest-free HTTP probe via TcpStream + raw GET. Avoids
+        // adding the reqwest dep just for one health check.
+        if http_ok(&health_url).await {
+            let _ = app.emit("server-ready", ());
             return Ok(StartHostResult {
                 ok: true,
                 port: SERVER_PORT,
@@ -178,13 +207,73 @@ async fn start_host(
                 repo_path: repo.to_string_lossy().to_string(),
             });
         }
-        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(400)).await;
     }
 
     Err(ErrorResult {
         ok: false,
-        error: format!("Server didn't bind to 127.0.0.1:{} within 12s. Check logs.", SERVER_PORT),
+        error: format!(
+            "Server didn't respond on {} within {}s. Check logs.",
+            health_url, READY_TIMEOUT_SECS,
+        ),
     })
+}
+
+/// Lightweight HTTP-GET probe. Returns true on any 2xx response.
+async fn http_ok(url: &str) -> bool {
+    let parsed: url::Url = match url.parse() { Ok(u) => u, Err(_) => return false };
+    let host = match parsed.host_str() { Some(h) => h, None => return false };
+    let port = parsed.port_or_known_default().unwrap_or(80);
+    let path = if parsed.path().is_empty() { "/" } else { parsed.path() };
+    let mut stream = match tokio::time::timeout(
+        std::time::Duration::from_millis(800),
+        tokio::net::TcpStream::connect((host, port)),
+    ).await {
+        Ok(Ok(s)) => s,
+        _ => return false,
+    };
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let req = format!(
+        "GET {} HTTP/1.0\r\nHost: {}:{}\r\nConnection: close\r\n\r\n",
+        path, host, port,
+    );
+    if stream.write_all(req.as_bytes()).await.is_err() { return false; }
+    let mut head = [0u8; 16];
+    if tokio::time::timeout(std::time::Duration::from_millis(800),
+                             stream.read(&mut head)).await.is_err() {
+        return false;
+    }
+    // HTTP/1.0 2xx ... — check the status digit
+    head.starts_with(b"HTTP/1.0 2") || head.starts_with(b"HTTP/1.1 2")
+}
+
+/// Pick the right writable data dir per platform. Mirrors the logic
+/// inside server/paths.py so dev mode and bundled mode agree on where
+/// `bullpens/` etc. live.
+fn platform_data_dir() -> Option<PathBuf> {
+    if let Some(env_override) = std::env::var_os("BULLPENLM_HOME") {
+        return Some(PathBuf::from(env_override));
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let home = std::env::var_os("HOME")?;
+        return Some(PathBuf::from(home)
+            .join("Library").join("Application Support").join("BullpenLM"));
+    }
+    #[cfg(target_os = "windows")]
+    {
+        let appdata = std::env::var_os("APPDATA")
+            .or_else(|| std::env::var_os("USERPROFILE"))?;
+        return Some(PathBuf::from(appdata).join("BullpenLM"));
+    }
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    {
+        let home = std::env::var_os("HOME")?;
+        let xdg = std::env::var_os("XDG_DATA_HOME")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from(&home).join(".local").join("share"));
+        return Some(xdg.join("bullpenlm"));
+    }
 }
 
 #[tauri::command]
@@ -233,6 +322,21 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::default())
+        .setup(|app| {
+            // Auto-spawn the bundled sidecar on app launch so the very
+            // first window paints over a server that's already coming up.
+            // The picker UI listens for `server-ready` and unblocks its
+            // "Continue" button when the event fires.
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                let state: tauri::State<'_, AppState> = app_handle.state();
+                match start_host(app_handle.clone(), state).await {
+                    Ok(r) => log::info!("Server auto-started on {}", r.url),
+                    Err(e) => log::warn!("Server auto-start failed: {}", e.error),
+                }
+            });
+            Ok(())
+        })
         .invoke_handler({
             // Open-source self-host handlers are always wired. Steam-only
             // commands are registered in a feature-gated branch so the
