@@ -3435,7 +3435,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
 
         # /api/b/<slug>/magic-link?rep=<name>&note=<text>
-        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/magic-link$", self.path)
+        m = re.match(r"^/api/b/([a-zA-Z0-9\-]+)/magic-link(?:\?|$)", self.path)
         if m:
             try:
                 from urllib.parse import urlparse as _up, parse_qs as _pq
