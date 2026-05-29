@@ -68,6 +68,14 @@ h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spa
 
 .helper{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:10px;letter-spacing:.04em;line-height:1.7}
 .helper code{background:rgba(0,0,0,0.30);padding:1px 6px;border-radius:3px;color:var(--accent-2);font-size:10.5px}
+
+/* ── Back-to-the-bullpen primary CTA ─────────────────────────── */
+.back-to-office{display:flex;align-items:center;gap:14px;margin:24px 0 0;padding:14px 20px;background:#fbbf24;border:2px solid #92400e;border-radius:11px;color:#0a1a14;text-decoration:none;transition:all .14s;box-shadow:0 6px 18px rgba(251,191,36,0.30),inset 0 -3px 0 rgba(0,0,0,0.15);max-width:520px}
+.back-to-office:hover{transform:translateY(-2px);background:#fde68a;box-shadow:0 10px 24px rgba(251,191,36,0.40),inset 0 -3px 0 rgba(0,0,0,0.15)}
+.bto-icon{font-size:26px;line-height:1}
+.bto-text{display:flex;flex-direction:column;gap:2px}
+.bto-title{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.005em;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,0.30)}
+.bto-sub{font-family:var(--serif);font-style:italic;font-size:12.5px;color:#3d2c1a;line-height:1.3}
 </style>
 </head>
 <body>
@@ -75,12 +83,20 @@ h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spa
 <main class="wrap">
   <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
 
-  <h1>Host control</h1>
-  <p class="sub">Publish your floor to the internet. Generate invite codes. Charge for entry if you want.</p>
+  <!-- Back-to-bullpen primary action — always available at top -->
+  <a href="/app/office.html" id="back-to-office" class="back-to-office">
+    <span class="bto-icon">🏢</span>
+    <span class="bto-text">
+      <span class="bto-title">← Back to the bullpen</span>
+      <span class="bto-sub">Drill, walk the floor, talk to buyers, run calls.</span>
+    </span>
+  </a>
 
-  <!-- INVITE-READY DIAGNOSTIC + MAGIC LINK -->
+  <h1 style="margin-top:32px">Invite a friend</h1>
+  <p class="sub">Mint a one-click magic link — they paste it, type a name, hit your floor.</p>
+
+  <!-- INVITE-READY DIAGNOSTIC + MAGIC LINK — the only reason this page exists -->
   <section class="panel" style="margin-bottom:18px;border-color:rgba(52,211,153,0.30)">
-    <h2 style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin:0 0 14px">🚀 INVITE A FRIEND — TONIGHT</h2>
     <div id="invite-ready-status" style="margin-bottom:14px">Checking…</div>
     <div id="invite-ready-detail" style="margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#a89a87;line-height:1.8;display:none"></div>
     <div id="magic-link-form" style="display:none">
@@ -95,39 +111,6 @@ h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spa
     </div>
   </section>
 
-  <!-- DAILY ROUTINE — what an operator actually opens day-to-day -->
-  <section class="panel" style="margin-bottom:18px">
-    <h2 style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin:0 0 14px">🎮 RUN THE BULLPEN</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
-      <a href="/app/cockpit.html?b=default" class="btn gold" style="text-align:left;padding:14px 16px;line-height:1.4">
-        🎮 <strong>Cockpit</strong><br>
-        <span style="font-family:'Bespoke Serif',Georgia,serif;font-style:italic;font-size:12px;font-weight:400;opacity:0.8">Today's pipeline + closer pulse</span>
-      </a>
-      <a href="/app/office.html?b=default" class="btn primary" style="text-align:left;padding:14px 16px;line-height:1.4">
-        🏢 <strong>The Office</strong><br>
-        <span style="font-family:'Bespoke Serif',Georgia,serif;font-style:italic;font-size:12px;font-weight:400;opacity:0.8">Iso view — who's on the floor right now</span>
-      </a>
-      <a href="/app/studio.html?b=default" class="btn primary" style="text-align:left;padding:14px 16px;line-height:1.4">
-        🎬 <strong>Studio</strong><br>
-        <span style="font-family:'Bespoke Serif',Georgia,serif;font-style:italic;font-size:12px;font-weight:400;opacity:0.8">Drop sources → generate briefings, flashcards, drills</span>
-      </a>
-    </div>
-    <details style="margin-top:14px">
-      <summary style="cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#a89a87">+ All operator tools</summary>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-        <a href="/app/setup/start/?b=default" class="btn ghost">📋 Setup wizard</a>
-        <a href="/app/closers.html?b=default" class="btn ghost">👥 Closer roster</a>
-        <a href="/app/compliance.html?b=default" class="btn ghost">✅ Compliance</a>
-        <a href="/app/dnc.html?b=default" class="btn ghost">📞 DNC</a>
-        <a href="/app/audit.html?b=default" class="btn ghost">🔗 Audit chain</a>
-        <a href="/app/legal.html?b=default" class="btn ghost">📜 Legal docs</a>
-        <a href="/app/runtime.html" class="btn ghost">⚙ Runtime check</a>
-        <a href="/app/spawn.html?b=default&rep=self" class="btn ghost">🌍 Spawn</a>
-      </div>
-    </details>
-    <p class="helper" style="margin-top:12px">Before inviting your first closer: complete the <strong>setup wizard</strong>. Before scaling beyond 5 closers: <strong>counsel-review</strong> per <code>docs/COMP_AND_LEGAL.md</code>.</p>
-  </section>
-
   <!-- TUNNEL PANEL -->
   <section class="panel" id="tunnelPanel">
     <h2 id="tunnelTitle"><span class="off" id="tunnelDot"></span> Public URL</h2>
@@ -139,36 +122,39 @@ h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spa
     </p>
   </section>
 
-  <!-- INVITE CREATE PANEL -->
-  <section class="panel" id="createPanel">
-    <h2><span class="live"></span> Create an invite</h2>
-    <div class="row">
-      <div class="field">
-        <label>Rep name</label>
-        <input id="invRep" type="text" placeholder="dylan" maxlength="40">
-      </div>
-      <div class="field">
-        <label>Note (optional)</label>
-        <input id="invNote" type="text" placeholder="met at gym" maxlength="120">
-      </div>
-      <div class="field">
-        <label>Price USD (optional)</label>
-        <input id="invPrice" type="number" min="0" step="1" placeholder="0 = free">
-      </div>
-    </div>
-    <button class="btn gold" id="createBtn">Generate code →</button>
-    <p class="helper">
-      Free codes work the second you share them. Paid codes route through Stripe Checkout — closer pays you, then gets in.
-    </p>
-  </section>
+  <!-- ADVANCED — power-user invites + tunnel control, collapsed by default -->
+  <details style="margin-top:24px">
+    <summary style="cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:10px 0">+ Advanced invites + tunnel + tools</summary>
 
-  <!-- INVITES LIST PANEL -->
-  <section class="panel">
-    <h2><span class="live"></span> Live invites</h2>
-    <div id="invitesList" class="invites-list">
-      <div class="empty">Loading…</div>
-    </div>
-  </section>
+    <section class="panel" id="createPanel">
+      <h2><span class="live"></span> Create a coded invite</h2>
+      <p class="helper" style="margin-bottom:14px">Paid codes route through Stripe — closer pays you, then gets in. Notes are private to you.</p>
+      <div class="row">
+        <div class="field">
+          <label>Rep name</label>
+          <input id="invRep" type="text" placeholder="dylan" maxlength="40">
+        </div>
+        <div class="field">
+          <label>Note (optional)</label>
+          <input id="invNote" type="text" placeholder="met at gym" maxlength="120">
+        </div>
+        <div class="field">
+          <label>Price USD (optional)</label>
+          <input id="invPrice" type="number" min="0" step="1" placeholder="0 = free">
+        </div>
+      </div>
+      <button class="btn gold" id="createBtn">Generate code →</button>
+    </section>
+
+    <section class="panel">
+      <h2><span class="live"></span> Live invites</h2>
+      <div id="invitesList" class="invites-list">
+        <div class="empty">Loading…</div>
+      </div>
+    </section>
+
+    <p class="helper" style="margin-top:18px">Before scaling beyond 5 closers: <strong>counsel-review</strong> per <code>docs/COMP_AND_LEGAL.md</code>.</p>
+  </details>
 </main>
 
 <div class="toast" id="toast"></div>
@@ -358,7 +344,14 @@ renderTunnel();
 renderInvites();
 
 // ── Invite-ready diagnostic + magic-link generator ──
-const BP = 'default';
+const BP = (new URLSearchParams(window.location.search)).get('b')
+        || (() => { try { return localStorage.getItem('bullpen-slug'); } catch(e){ return null; } })()
+        || 'default';
+// Wire the back-to-bullpen button to carry the current slug
+(function(){
+  const btn = document.getElementById('back-to-office');
+  if(btn) btn.href = `/app/office.html?b=${encodeURIComponent(BP)}&rep=self`;
+})();
 function safeEl(t, props, ...kids){
   const n = document.createElement(t);
   if(props) for(const k in props){
