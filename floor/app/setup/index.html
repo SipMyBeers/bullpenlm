@@ -420,8 +420,29 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
         <div class="field"><label>Street address</label><input id="ent-street" placeholder="123 Operator Way"></div>
         <div class="row">
           <div class="field"><label>City</label><input id="ent-city"></div>
-          <div class="field"><label>State</label><input id="ent-state" maxlength="2" placeholder="OR"></div>
-          <div class="field"><label>ZIP</label><input id="ent-zip"></div>
+          <div class="field"><label>State</label>
+            <select id="ent-state"></select>
+          </div>
+          <div class="field"><label>ZIP</label><input id="ent-zip" placeholder="97013"></div>
+        </div>
+        <div class="row two">
+          <div class="field"><label>Country</label>
+            <select id="ent-country">
+              <option value="US">United States</option>
+              <option value="" disabled>— More coming in Phase 2 —</option>
+              <option value="CA" disabled>Canada (coming soon)</option>
+              <option value="GB" disabled>United Kingdom (coming soon)</option>
+              <option value="AU" disabled>Australia (coming soon)</option>
+            </select>
+          </div>
+          <div class="field"><label>Commission rate <span style="color:var(--accent-2);text-transform:none;letter-spacing:0">⭐ recommended 35%</span></label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input id="ent-commission" type="range" min="10" max="50" step="1" value="35" style="flex:1">
+              <input id="ent-commission-num" type="number" min="10" max="50" step="1" value="35" style="width:74px;text-align:right">
+              <span style="font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:700">%</span>
+            </div>
+            <div class="hint" id="commission-hint">Closers keep <strong style="color:var(--gold)">35%</strong> of every deal they close. Industry typical: 20–40%. Below 20% = recruiting harder; above 40% = you keep less per sale.</div>
+          </div>
         </div>
         <div class="row two">
           <div class="field"><label>Contact email</label><input id="ent-email" type="email"></div>
@@ -437,7 +458,8 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
         </div>
         <div class="field"><label>Your name</label><input id="ent-name-later" placeholder="Dylan Beers">
           <div class="hint">For now, contracts use your personal legal name. Update later from the cockpit.</div></div>
-        <div class="field"><label>State (2 letters)</label><input id="ent-state-later" maxlength="2" placeholder="OR">
+        <div class="field"><label>State</label>
+          <select id="ent-state-later"></select>
           <div class="hint">For state-law warnings only. We don't store any address yet.</div></div>
         <div class="field"><label>Email</label><input id="ent-email-later" type="email" placeholder="you@example.com"></div>
       </div>
@@ -455,8 +477,8 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
       <div class="quest-header">
         <div class="quest-badge"><span class="quest-num">2</span><span class="quest-of">OF 4</span></div>
         <div>
-          <div class="quest-title">PICK YOUR FACTION</div>
-          <div class="quest-sub">Contractors or henchmen — and how the IRS sees you.</div>
+          <div class="quest-title">PROVE THE 1099</div>
+          <div class="quest-sub">Show the IRS your closers really are contractors — not employees in disguise.</div>
         </div>
         <div class="quest-reward"><span class="reward-coin"></span><span>+100 XP</span></div>
       </div>
@@ -500,7 +522,7 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
       <div id="class-status"></div>
       <div class="foot-nav">
         <button class="btn ghost" onclick="showStep(1)">← Edit your house</button>
-        <button class="btn primary" id="class-continue" onclick="saveClassification()" disabled>⚔ Lock the faction →</button>
+        <button class="btn primary" id="class-continue" onclick="saveClassification()" disabled>⚔ Lock it in →</button>
       </div>
     </div>
   </div>
@@ -791,6 +813,58 @@ function setStatus(id, ok, msg){
   wrap.appendChild(el('div', {class: 'status ' + (ok ? 'ok' : 'err'), text: msg}));
 }
 
+// All 50 US states + DC + key territories — populates the state <select>s
+const US_STATES = [
+  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
+  ['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['DC','District of Columbia'],
+  ['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],
+  ['IN','Indiana'],['IA','Iowa'],['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],
+  ['ME','Maine'],['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],
+  ['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],
+  ['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],['NY','New York'],
+  ['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],['OK','Oklahoma'],['OR','Oregon'],
+  ['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],['SD','South Dakota'],
+  ['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],['VA','Virginia'],
+  ['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
+  ['PR','Puerto Rico'],['VI','U.S. Virgin Islands'],['GU','Guam'],
+];
+function fillStateSelect(selectEl, defaultCode){
+  if(!selectEl) return;
+  selectEl.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = ''; placeholder.textContent = 'Pick a state…';
+  selectEl.appendChild(placeholder);
+  for(const [code, name] of US_STATES){
+    const opt = document.createElement('option');
+    opt.value = code; opt.textContent = `${name} (${code})`;
+    if(defaultCode && code === defaultCode.toUpperCase()) opt.selected = true;
+    selectEl.appendChild(opt);
+  }
+}
+// Populate on script load
+fillStateSelect(document.getElementById('ent-state'));
+fillStateSelect(document.getElementById('ent-state-later'));
+
+// ── Commission rate slider + number input wired together ──
+(function wireCommission(){
+  const slider = document.getElementById('ent-commission');
+  const num = document.getElementById('ent-commission-num');
+  const hint = document.getElementById('commission-hint');
+  if(!slider || !num || !hint) return;
+  function sync(val){
+    val = Math.max(10, Math.min(50, parseInt(val,10) || 35));
+    slider.value = val; num.value = val;
+    const vibe = val < 20 ? 'aggressive for the operator — recruiting harder.'
+               : val < 30 ? 'below market — better unit economics for you, slim for closers.'
+               : val <= 40 ? 'in the sweet spot — closers feel paid, you keep most.'
+               : 'generous for closers — easier to recruit, thinner per-deal margin for you.';
+    hint.innerHTML = `Closers keep <strong style="color:var(--gold)">${val}%</strong> of every deal they close. ${vibe}`;
+  }
+  slider.addEventListener('input', e => sync(e.target.value));
+  num.addEventListener('input', e => sync(e.target.value));
+  sync(35);
+})();
+
 // ── Entity have-it-or-defer branching ────────────────────────────────
 let entityHave = null;   // 'yes' | 'later'
 let tinHave = 'yes';
@@ -881,7 +955,15 @@ async function saveEntity(){
   const r = await api('POST', `/api/b/${BULLPEN}/entity`, body);
   if(!r.ok) return setStatus('ent-status', false, (r.data && r.data.error) || 'Save failed.');
   state.entity = r.data.entity;
-  setStatus('ent-status', true, '✓ Entity saved. SHA bound to all generated legal docs.');
+  // Persist commission rate on bullpen.json (separate from entity)
+  const commissionPct = parseInt(document.getElementById('ent-commission')?.value || '35', 10);
+  try {
+    await fetch(`/api/b/${BULLPEN}/config`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({commission_rate: commissionPct / 100}),
+    });
+  } catch(e){ /* non-fatal */ }
+  setStatus('ent-status', true, `✓ Entity saved. Commission rate locked at ${commissionPct}%.`);
   loadClassificationForm();
   updateHQ();
   showQuestToast('STAKE YOUR CLAIM', 100);
@@ -1094,7 +1176,7 @@ async function saveClassification(){
   setStatus('class-status', true, '✓ Classification saved as Contractor.');
   loadTos();
   updateHQ();
-  showQuestToast('PICK YOUR FACTION', 100);
+  showQuestToast('PROVE THE 1099', 100);
   setTimeout(()=>showStep(3), 1200);
 }
 
