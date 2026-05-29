@@ -116,13 +116,25 @@ h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transfor
 .presence-chip .page{color:var(--muted);margin-left:6px;font-size:9.5px}
 
 .empty{font-family:var(--serif);font-style:italic;color:var(--muted);text-align:center;padding:18px;font-size:13px}
+
+/* ── Back-to-bullpen primary CTA ──────────────────────────── */
+.back-to-office{display:flex;align-items:center;gap:14px;margin:14px 0 26px;padding:14px 20px;background:#fbbf24;border:2px solid #92400e;border-radius:11px;color:#0a1a14;text-decoration:none;transition:all .14s;box-shadow:0 6px 18px rgba(251,191,36,0.30),inset 0 -3px 0 rgba(0,0,0,0.15);max-width:540px}
+.back-to-office:hover{transform:translateY(-2px);background:#fde68a;box-shadow:0 10px 24px rgba(251,191,36,0.40),inset 0 -3px 0 rgba(0,0,0,0.15)}
+.bto-icon{font-size:26px;line-height:1}
+.bto-text{display:flex;flex-direction:column;gap:2px}
+.bto-title{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.005em;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,0.30)}
+.bto-sub{font-family:var(--serif);font-style:italic;font-size:12.5px;color:#3d2c1a;line-height:1.3}
+
+/* ── Bridge eyebrow ── */
+.bridge-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.bridge-eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(251,191,36,0.5),transparent)}
 </style>
 </head>
 <body>
 <header>
   <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
   <div class="crumb">
-    <a href="/app/lobby.html">Floor</a> <span> / </span>
+    <a href="/app/office.html">Floor</a> <span> / </span>
     <span class="here">Cockpit</span>
   </div>
   <div class="nav">
@@ -138,8 +150,19 @@ h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transfor
 </header>
 
 <div class="wrap">
-  <h1>Cockpit</h1>
-  <p class="lede">Everything that matters in one screen. Updates live. Operator's morning home.</p>
+
+  <!-- Back-to-the-bullpen primary action — always at top -->
+  <a href="/app/office.html" id="back-to-office" class="back-to-office">
+    <span class="bto-icon">🏢</span>
+    <span class="bto-text">
+      <span class="bto-title">← Back to the bullpen</span>
+      <span class="bto-sub">Walk the floor. Talk to buyers. Run calls.</span>
+    </span>
+  </a>
+
+  <div class="bridge-eyebrow">⚙ OPERATOR · COMMAND BRIDGE</div>
+  <h1>Command bridge</h1>
+  <p class="lede">Every system. Every closer. Every signal. Live — no refresh needed.</p>
 
   <div class="status-banner" id="status-banner">
     <div>
@@ -156,34 +179,34 @@ h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transfor
   <div class="shell">
     <div>
       <div class="panel">
-        <h2>🏆 XP LEADERBOARD <a href="/app/profile.html">view profiles →</a></h2>
+        <h2>🏆 ROSTER STANDINGS <a href="/app/profile.html">view profiles →</a></h2>
         <div class="leaderboard" id="leaderboard"></div>
       </div>
 
       <div class="panel">
-        <h2>👥 CLOSER ROSTER <span class="count" id="closer-count">0</span></h2>
+        <h2>👥 CREW MANIFEST <span class="count" id="closer-count">0</span></h2>
         <div id="closer-list"></div>
       </div>
 
       <div class="panel">
-        <h2>⏰ DUE CADENCE STEPS <a href="/app/cadences.html">all →</a></h2>
+        <h2>⏰ INCOMING CADENCE STEPS <a href="/app/cadences.html">all →</a></h2>
         <div id="cadence-list"></div>
       </div>
     </div>
 
     <div>
       <div class="panel">
-        <h2>🟢 ON THE FLOOR <span class="count" id="presence-count">0</span></h2>
+        <h2>🟢 CREW ON DECK <span class="count" id="presence-count">0</span></h2>
         <div class="presence-chips" id="presence-chips"></div>
       </div>
 
       <div class="panel">
-        <h2>📊 RAG CORPUS</h2>
+        <h2>📊 INTEL CACHE</h2>
         <div id="rag-stats"></div>
       </div>
 
       <div class="panel">
-        <h2>📡 LIVE AUDIT FEED</h2>
+        <h2>📡 LIVE TRANSMISSIONS</h2>
         <div class="audit-feed" id="audit-feed"></div>
       </div>
     </div>
@@ -253,15 +276,15 @@ function renderBanner(d){
   banner.classList.remove('ready','partial','broken');
   if(ir.ready){
     banner.classList.add('ready');
-    title.textContent = '✓ Bullpen is invite-ready';
-    blockers.textContent = 'Every operational check is green. Magic links work. Phase 0.5 firewall active.';
-    pill.textContent = 'READY';
+    title.textContent = '✓ ALL SYSTEMS NOMINAL';
+    blockers.textContent = 'Magic links live · Firewall green · Tunnel up · Intel cache responsive. Standing by.';
+    pill.textContent = 'NOMINAL';
   } else if(ir.missing && ir.missing.length){
     const isOnlyEntity = ir.missing.length <= 2 && ir.missing.every(m => ['ollama','tunnel'].includes(m));
     banner.classList.add(isOnlyEntity ? 'partial' : 'broken');
-    title.textContent = `⛔ ${ir.missing.length} blocker${ir.missing.length>1?'s':''}`;
+    title.textContent = `⚠ ${ir.missing.length} system${ir.missing.length>1?'s':''} flagged`;
     blockers.textContent = ir.missing.join(' · ');
-    pill.textContent = 'NOT READY';
+    pill.textContent = 'STAND-BY';
   } else {
     banner.classList.add('partial');
     title.textContent = 'Status unknown';
