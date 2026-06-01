@@ -6,7 +6,13 @@
 // URL. This script auto-applies on DOMContentLoaded.
 (function() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('embed') !== '1') return;
+  // Trigger embed mode either via explicit ?embed=1 OR when the page
+  // is rendered inside any iframe (so internal links inside embedded
+  // pages stay chrome-less without having to rewrite every href).
+  const inIframe = (function() {
+    try { return window.self !== window.top; } catch(e) { return true; }
+  })();
+  if (params.get('embed') !== '1' && !inIframe) return;
 
   // Inject embed-mode CSS — runs as early as possible to avoid flash
   const css = `
