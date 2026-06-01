@@ -46,8 +46,12 @@ header .meta .pill{padding:5px 10px;border:1px solid rgba(245,232,216,0.18);bord
 .world-modal .wm-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .world-modal .wm-eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(251,191,36,0.4),transparent)}
 .world-modal h2{font-family:var(--display);font-size:30px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 14px;color:var(--text)}
-.world-modal .wm-close{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:6px;line-height:1}
+.world-modal .wm-close{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:6px;line-height:1;z-index:5}
 .world-modal .wm-close:hover{color:var(--text);background:rgba(255,255,255,0.06)}
+/* Embed variant — larger box, iframe takes the body */
+.world-modal .wm-box.wm-embed{width:min(1180px,96vw);max-height:92vh;padding:18px 22px 14px;display:flex;flex-direction:column}
+.world-modal .wm-box.wm-embed h2{font-size:24px;margin:0 0 8px}
+.world-modal .wm-embed-frame{flex:1;width:100%;border:1px solid rgba(245,232,216,0.10);border-radius:9px;background:rgba(10,7,3,0.55);min-height:560px}
 .wm-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .wm-list .wm-row{display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(245,232,216,0.04);border:1px solid rgba(245,232,216,0.08);border-radius:9px;cursor:pointer;transition:background .12s,border-color .12s}
 .wm-list .wm-row:hover{background:rgba(245,232,216,0.07);border-color:rgba(245,232,216,0.18)}
@@ -456,6 +460,44 @@ function closeWorldModal() {
   if (modal) modal.classList.remove('show');
 }
 
+// Embedded-page overlay — loads any /app/*.html inside an iframe with
+// ?embed=1 so its own chrome is hidden and it renders as an in-world
+// panel rather than a navigation away.
+function openEmbed(url, title, eyebrow) {
+  let modal = document.getElementById('world-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'world-modal'; modal.className = 'world-modal';
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeWorldModal(); });
+    document.body.appendChild(modal);
+  }
+  while (modal.firstChild) modal.removeChild(modal.firstChild);
+  const box = document.createElement('div'); box.className = 'wm-box wm-embed';
+  const close = document.createElement('button');
+  close.className = 'wm-close'; close.textContent = '×';
+  close.addEventListener('click', closeWorldModal);
+  box.appendChild(close);
+  if (eyebrow) {
+    const eb = document.createElement('div'); eb.className = 'wm-eyebrow';
+    eb.textContent = eyebrow; box.appendChild(eb);
+  }
+  const h = document.createElement('h2'); h.textContent = title; box.appendChild(h);
+  const iframe = document.createElement('iframe');
+  iframe.className = 'wm-embed-frame';
+  // Inject ?embed=1 so the page knows to hide its own chrome
+  const sep = url.includes('?') ? '&' : '?';
+  iframe.src = url + sep + 'embed=1';
+  iframe.allow = 'microphone; clipboard-read; clipboard-write';
+  box.appendChild(iframe);
+  modal.appendChild(box);
+  modal.classList.add('show');
+}
+
+// Listen for embed pages reporting they want to close (e.g., duo ended)
+window.addEventListener('message', (ev) => {
+  if (ev.data && ev.data.kind === 'bullpen-embed-close') closeWorldModal();
+});
+
 // Roster — every closer currently on the floor
 function openRosterModal() {
   openWorldModal('Crew manifest', 'THE PIT · ROSTER', (body) => {
@@ -511,11 +553,12 @@ function openDuoModal() {
     solo.style.cssText = 'margin-top:14px;padding:11px 16px;background:var(--gold);color:#0a1a14;border:none;border-radius:7px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer';
     solo.textContent = '→ Solo drill (vs AI)';
     solo.addEventListener('click', () => {
-      closeWorldModal();
-      // Pick first buyer card if there is one, otherwise show buyer-list modal
       const card = state.buyer_cards[0];
-      if (card) window.location.href = `/app/contact.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`;
-      else openBuyerListModal();
+      if (!card) { closeWorldModal(); openBuyerListModal(); return; }
+      openEmbed(
+        `/app/contact.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
+        card.company || card.slug, '🎙 SOLO DRILL'
+      );
     });
     body.appendChild(solo);
   });
@@ -1072,8 +1115,16 @@ function showBuyer(card) {
       ['Approach',  persona.decision_style || '—'],
     ],
     [
-      { label: '🎙 Roleplay (solo)', style: 'primary', href: `/app/contact.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}` },
-      { label: '📄 Read briefing',   href: `/app/briefing.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}` },
+      { label: '🎙 Roleplay (solo)', style: 'primary',
+        onClick: () => openEmbed(
+          `/app/contact.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
+          card.company || card.slug, '🎙 LIVE ROLEPLAY'
+        ) },
+      { label: '📄 Read briefing',
+        onClick: () => openEmbed(
+          `/app/briefing.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
+          (card.company || card.slug) + ' · briefing', '📄 DOSSIER'
+        ) },
     ]
   );
 }
@@ -1092,7 +1143,10 @@ async function challenge(opponent) {
     });
     const d = await r.json();
     if (d.id) {
-      window.location.href = `/app/duo.html?b=${BULLPEN}&rep=${REP}&duo_id=${d.id}`;
+      openEmbed(
+        `/app/duo.html?b=${BULLPEN}&rep=${REP}&duo_id=${d.id}`,
+        `Duo vs ${opponent}`, '⚔ DUO RING · LIVE'
+      );
     } else {
       alert('Challenge failed: ' + (d.error || 'unknown'));
     }
@@ -1156,8 +1210,12 @@ function flashDrop(msg, isErr){
 }
 
 function addBuyerFromEmptyDesk(){
-  // Route to Studio with a "new buyer" hint
-  window.location.href = `/app/studio.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&new=1`;
+  // Open Studio in an embedded panel so the buyer-card workshop lives
+  // inside the office, not as a page navigation.
+  openEmbed(
+    `/app/studio.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&new=1`,
+    'Studio · new buyer card', '🎬 STUDIO'
+  );
 }
 
 async function loadAll() {
