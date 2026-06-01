@@ -34,6 +34,8 @@ header.hud > *{pointer-events:auto}
 header .meta{margin-left:auto;display:flex;gap:10px;align-items:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 header .meta .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;box-shadow:0 0 8px var(--accent)}
 header .meta .pill{padding:5px 10px;border:1px solid rgba(245,232,216,0.18);border-radius:16px;color:var(--text);background:rgba(10,7,3,0.55);backdrop-filter:blur(6px)}
+header .meta .hud-btn{cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;transition:border-color .12s,color .12s,transform .12s}
+header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-1px)}
 
 .drop-result{position:fixed;bottom:24px;left:50%;transform:translate(-50%,80px);opacity:0;background:rgba(10,7,3,0.96);border:1px solid var(--accent);padding:12px 18px;border-radius:9px;font-family:var(--mono);font-size:12px;color:var(--accent-2);box-shadow:0 12px 30px rgba(0,0,0,0.5);transition:all .3s;z-index:200;max-width:90vw}
 .drop-result.show{transform:translate(-50%,0);opacity:1}
@@ -199,6 +201,8 @@ header .meta .pill{padding:5px 10px;border:1px solid rgba(245,232,216,0.18);bord
 <header class="hud">
   <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
   <div class="meta">
+    <button class="pill hud-btn" id="hud-bridge" title="Operator dashboard — roster, audit, intel cache">📊 Bridge</button>
+    <button class="pill hud-btn" id="hud-host" title="Magic-link invites for closers">📨 Invite</button>
     <span class="pill" id="presence-pill"><span class="dot"></span><span id="presence-count">0</span> online</span>
     <span id="bullpen-name" class="pill" title="On-disk slug for this bullpen">—</span>
   </div>
@@ -257,6 +261,14 @@ if (!REP) REP = 'self';
 try { localStorage.setItem('bullpen-rep', REP); localStorage.setItem('bullpen-slug', BULLPEN); } catch(e) {}
 
 document.getElementById('bullpen-name').textContent = (BULLPEN || 'NO BULLPEN').toUpperCase();
+document.getElementById('hud-bridge').addEventListener('click', () => openEmbed(
+  `/app/cockpit.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`,
+  'Command bridge', '📊 OPERATOR DASHBOARD'
+));
+document.getElementById('hud-host').addEventListener('click', () => openEmbed(
+  `/app/host.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`,
+  'Invite a closer', '📨 MAGIC LINK'
+));
 
 // ── Iso projection ──────────────────────────────────────────────
 const TILE_W = 64, TILE_H = 32;

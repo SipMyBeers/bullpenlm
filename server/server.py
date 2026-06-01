@@ -1668,10 +1668,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         bp_cfg = get_bullpen(first_slug) or {}
                         mode = (bp_cfg.get("profile") or {}).get("mode")
                     except Exception: pass
-                    if mode == "solo":
-                        target = f"/app/spawn.html?b={_q(first_slug)}&rep=self&mode=solo"
-                    elif mode == "team":
-                        target = f"/app/cockpit.html?b={_q(first_slug or 'default')}&rep=self"
+                    if mode == "solo" or mode == "team":
+                        # Both modes land in the office — the bullpen IS the
+                        # app. Team-mode operators get the cockpit data as an
+                        # in-world bridge overlay rather than its own page.
+                        target = f"/app/office.html?b={_q(first_slug or 'default')}&rep=self"
                     else:
                         target = f"/app/setup/start/?b={_q(first_slug or 'default')}"
                 else:

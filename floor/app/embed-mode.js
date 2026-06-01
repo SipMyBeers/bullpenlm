@@ -11,10 +11,12 @@
   // Inject embed-mode CSS — runs as early as possible to avoid flash
   const css = `
     html, body { background: transparent !important; }
-    header.top { display: none !important; }
+    /* Any page chrome — header, crumb, gate strip, back-to-bullpen pill */
+    header, header.top, .crumb { display: none !important; }
+    .back-to-office, .bridge-eyebrow { display: none !important; }
     .gate-banner, #gate-banner, .gate-strip { display: none !important; }
     .tutorial-overlay, #tutorial-overlay { display: none !important; }
-    main.wrap, main { padding-top: 14px !important; }
+    main.wrap, main, .wrap { padding-top: 14px !important; }
     /* Compact spacing so the panel fits in the modal box */
     body { font-size: 13px; }
   `;
