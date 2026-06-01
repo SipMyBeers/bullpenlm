@@ -183,7 +183,16 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
 .pawn.you .pawn-top{fill:var(--gold)}
 .pawn.you .pawn-side{fill:var(--gold-dim)}
 .pawn.you .pawn-label{fill:var(--gold)}
+.pawn.you{filter:drop-shadow(0 0 6px rgba(251,191,36,0.30))}
 .pawn.in-duo .pawn-top{filter:drop-shadow(0 0 4px var(--gold))}
+/* Smooth movement on the YOU pawn — animate the translate transform */
+.pawn.you{transition:transform .14s cubic-bezier(0.22,1,0.36,1)}
+/* Brief zone-enter pulse so walking into a new zone has feedback */
+@keyframes zone-pulse {
+  0%   { filter: brightness(1.6) drop-shadow(0 0 6px var(--gold)); }
+  100% { filter: none; }
+}
+.tile.zone-just-entered{animation:zone-pulse .55s ease-out 1}
 .bell{cursor:default}
 .bell-top{fill:var(--gold);stroke:var(--edge);stroke-width:1.2}
 .bell-side{fill:var(--gold-dim);stroke:var(--edge);stroke-width:1.2}
@@ -378,6 +387,7 @@ function getMyPos() {
 function setMyPos(p) {
   try { localStorage.setItem(`pos-${BULLPEN}-${REP}`, JSON.stringify(p)); } catch(e) {}
 }
+let _lastZone = null;
 function moveMyPawn(dx, dy) {
   const p = getMyPos();
   const nx = p.x + dx, ny = p.y + dy;
@@ -385,6 +395,18 @@ function moveMyPawn(dx, dy) {
   setMyPos({ x: nx, y: ny });
   render();
   updateZoneTip();
+  // Zone-entered pulse: if the YOU pawn crossed a zone boundary,
+  // briefly flash the tile under it for game feedback.
+  const newZone = zoneFor(nx, ny);
+  if (newZone !== _lastZone) {
+    _lastZone = newZone;
+    const tile = document.querySelector(`#office polygon[points="${tileDiamond(nx, ny)}"]`);
+    if (tile) {
+      tile.classList.remove('zone-just-entered');
+      void tile.getBoundingClientRect();
+      tile.classList.add('zone-just-entered');
+    }
+  }
 }
 function currentZone() {
   const p = getMyPos();
@@ -728,8 +750,9 @@ function pawnGroup(tx, ty, opts) {
     fill: color, class: 'pawn-top'
   }));
 
-  // Name label
-  const label = (opts.name || opts.rep || '?').toUpperCase().slice(0, 14);
+  // Name label — gold pawn always reads "YOU"
+  const rawLabel = opts.isYou ? 'YOU' : (opts.name || opts.rep || '?');
+  const label = rawLabel.toUpperCase().slice(0, 14);
   const labelW = label.length * 6 + 10;
   g.appendChild(el('rect', {
     x: -labelW/2, y: 14, width: labelW, height: 14, rx: 3, class: 'pawn-label-bg'
