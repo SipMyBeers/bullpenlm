@@ -438,6 +438,43 @@ def persona_system_prompt(slug, difficulty: str = "intermediate",
         if slug in _runtime_personas:
             base = _build_persona_prompt(_runtime_personas[slug], bullpen=bullpen)
             return base + ("\n" + mod if mod else "")
+    # Fall back to the bullpen's own buyer_cards/ dir for slugs that
+    # don't appear in PERSONAS or the file-loaded registry — these are
+    # the ones the office "auto-seed" / Studio writes per bullpen.
+    if bullpen and slug not in PERSONAS:
+        try:
+            card_path = DATA_DIR / "bullpens" / bullpen / "buyer_cards" / f"{slug}.json"
+            if card_path.exists():
+                card = json.loads(card_path.read_text())
+                persona = card.get("persona") or {}
+                sv_in = _seller_vars_for(bullpen)
+                return f"""You are roleplaying as a real human picking up a cold call. {sv_in['seller_name']} from {sv_in['brand_name']} is the caller. You are NOT an assistant. You are NOT a chatbot.
+
+WHO YOU ARE
+───────────
+Name: {persona.get('name') or '(invent a plausible last name and stick with it)'}
+Role: {persona.get('role') or card.get('company') or slug}
+Company: {card.get('company') or slug}
+Vertical: {card.get('vertical') or 'general'}
+
+YOUR INTERNAL STATE
+───────────────────
+Tone: {persona.get('tone') or 'professional, time-poor'}
+Decision style: {persona.get('decision_style') or 'pragmatic; cares about ROI'}
+
+WHAT THE CALLER IS SELLING
+──────────────────────────
+{sv_in['product']}. They want a 15-minute briefing with you (or the name of the right decision-maker).
+
+HOW REAL PHONE CALLS WORK
+─────────────────────────
+First turn: pick up with a neutral "Hello?" / "[Lastname]." / "Yes?" — do NOT volunteer that you're busy.
+Turns 2-3: stay neutral, listen, 1-2 short sentences ("Okay." / "Go ahead.").
+Turn 4+: react based on quality. If they're specific about a pain you have, warm up. If generic, push back skeptically. If aggressive or jargon-dumpy, get short. End the call if they earn it.
+
+Stay in character. One short paragraph per turn. No assistant-voice ("Sure, I can help with that!"). Real humans don't help cold callers — they decide whether to give them a meeting.{(' ' + mod) if mod else ''}"""
+        except Exception:
+            pass
     p = PERSONAS[slug]
     pushbacks_block = "\n".join(f"  - \"{q}\"" for q in p["pushbacks"])
     speech = p.get("speech_profile", "")
@@ -5325,7 +5362,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     if buyer not in PERSONAS and (not _USE_FILE_PERSONAS or buyer not in _runtime_personas):
                         _refresh_personas() if _USE_FILE_PERSONAS else None
                         if buyer not in PERSONAS and buyer not in _runtime_personas:
-                            self._send_json(404, {"error": f"unknown buyer: {buyer}"}); return
+                            # Last-chance fallback: per-bullpen buyer card
+                            # (auto-seeded or Studio-created). persona_system_prompt
+                            # also reads from bullpens/<slug>/buyer_cards/<slug>.json
+                            # so if that file exists, the roleplay is valid.
+                            card_p = DATA_DIR / "bullpens" / bullpen / "buyer_cards" / f"{buyer}.json"
+                            if not card_p.exists():
+                                self._send_json(404, {"error": f"unknown buyer: {buyer}"}); return
 
                     # Persist session history per (bullpen, buyer, history_id, rep)
                     from pathlib import Path as _P

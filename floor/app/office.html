@@ -942,8 +942,8 @@ function openDuoModal() {
       const card = state.buyer_cards[0];
       if (!card) { closeWorldModal(); openBuyerListModal(); return; }
       openEmbed(
-        `/app/contact.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
-        card.company || card.slug, '🎙 SOLO DRILL'
+        `/app/voice.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
+        card.company || card.slug, '🎙 SOLO DRILL · voice'
       );
     });
     body.appendChild(solo);
@@ -1634,8 +1634,11 @@ function showBuyer(card) {
     [
       { label: '🎙 Roleplay (solo)', style: 'primary',
         onClick: () => openEmbed(
-          `/app/contact.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
-          card.company || card.slug, '🎙 LIVE ROLEPLAY'
+          // voice.html is the actual AI roleplay surface — voice in,
+          // voice out, RAG-grounded persona. contact.html was a wrong
+          // wire-up to a CRM contact-detail page, not chat.
+          `/app/voice.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
+          card.company || card.slug, '🎙 LIVE ROLEPLAY · voice'
         ) },
       { label: '🎨 Open in Studio',
         onClick: () => openEmbed(
