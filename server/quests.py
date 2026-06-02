@@ -188,18 +188,22 @@ def progress(bullpen: str, rep: str) -> dict:
         payload = event.get("payload") or {}
         return all(payload.get(k) == v for k, v in match.items())
 
+    claimed_path = _quests_dir(bullpen) / "progress" / rep
     def _quest_progress(quest: dict) -> dict:
         pred = quest.get("predicate") or {}
         target = int(pred.get("count") or 1)
         matching = [e for e in events
                     if _matches(e, pred, quest.get("starts_at"))]
         if pred.get("distinct_phase"):
-            # Special predicate flag: count distinct phase values
             phases = {(e.get("payload") or {}).get("phase") for e in matching}
             current = len(phases - {None})
         else:
             current = len(matching)
         completed = current >= target
+        # Has this quest already been claimed? Marker is written by
+        # claim_rewards() below — we surface the flag so the UI can
+        # show "✓ done" vs "✓ READY · CLAIM" distinctly.
+        claimed = (claimed_path / f"{quest['id']}.json").exists() if claimed_path.exists() else False
         return {
             "id": quest["id"],
             "name": quest["name"],
@@ -208,6 +212,7 @@ def progress(bullpen: str, rep: str) -> dict:
             "target": target,
             "pct": min(1.0, round(current / max(1, target), 3)),
             "completed": completed,
+            "claimed": claimed,
             "xp_reward": quest.get("xp_reward", 0),
             "expires_at": quest.get("expires_at"),
         }

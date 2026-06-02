@@ -167,9 +167,16 @@ body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }
 .qb-quest .qb-q-name.done{color:var(--accent-2);text-decoration:line-through}
 .qb-quest .qb-q-meta{display:flex;align-items:center;gap:8px;margin-top:3px;font-family:var(--mono);font-size:10px;color:var(--muted)}
 .qb-quest .qb-q-bar{flex:1;height:3px;background:rgba(245,232,216,0.10);border-radius:2px;overflow:hidden}
-.qb-quest .qb-q-bar > i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.qb-quest{cursor:pointer;transition:background .12s}
+.qb-quest:hover{background:rgba(245,232,216,0.04);margin:0 -12px;padding-left:12px;padding-right:12px}
+.qb-quest .qb-q-bar > i{display:block;height:100%;background:var(--accent);border-radius:2px;max-width:100%}
 .qb-quest .qb-q-bar > i.done{background:var(--gold)}
 .qb-quest .qb-q-xp{color:var(--gold);font-weight:600}
+.qb-quest .qb-q-claim{display:inline-block;margin-left:8px;padding:1px 6px;background:var(--gold);color:#0a1a14;border-radius:3px;font-weight:700;font-size:9px;letter-spacing:.14em;animation:claim-pulse 1.4s ease-in-out infinite}
+@keyframes claim-pulse {
+  0%, 100% { box-shadow:0 0 0 rgba(251,191,36,0.6) }
+  50%      { box-shadow:0 0 10px rgba(251,191,36,0.85) }
+}
 .qb-empty{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:12px;padding:14px 6px;text-align:center}
 
 /* ── Floating legend (bottom-right, collapsible) ──────────── */
@@ -619,9 +626,15 @@ function renderQuestBoard() {
     gh.appendChild(head);
     for (const it of grp.items) {
       const row = document.createElement('div'); row.className = 'qb-quest';
+      row.addEventListener('click', () => openQuestDetails(it));
       const name = document.createElement('div');
       name.className = 'qb-q-name' + (it.completed ? ' done' : '');
       name.textContent = (it.completed ? '✓ ' : '') + (it.name || it.id || 'Objective');
+      if (it.completed && !it.claimed) {
+        const claim = document.createElement('span'); claim.className = 'qb-q-claim';
+        claim.textContent = 'CLAIM';
+        name.appendChild(claim);
+      }
       row.appendChild(name);
       const meta = document.createElement('div'); meta.className = 'qb-q-meta';
       const bar = document.createElement('div'); bar.className = 'qb-q-bar';
@@ -631,7 +644,9 @@ function renderQuestBoard() {
       if (it.completed) inner.classList.add('done');
       bar.appendChild(inner);
       const counts = document.createElement('span');
-      counts.textContent = `${it.current ?? 0}/${it.target ?? 1}`;
+      // Cap displayed count at target so "3/1" doesn't read as a bug
+      const shown = Math.min(it.current ?? 0, it.target ?? 1);
+      counts.textContent = `${shown}/${it.target ?? 1}`;
       const xp = document.createElement('span'); xp.className = 'qb-q-xp';
       xp.textContent = `+${it.xp_reward || 0} XP`;
       meta.appendChild(bar); meta.appendChild(counts); meta.appendChild(xp);
@@ -640,6 +655,136 @@ function renderQuestBoard() {
     }
     body.appendChild(gh);
   }
+}
+
+// Quest details — name-pattern → richer copy (descriptions, sub-steps, tips)
+const QUEST_LORE = {
+  'Advance 1 deal': {
+    desc: 'Move one deal forward through the pipeline — any stage transition counts (lead → contacted → qualified → demo → pilot → won).',
+    steps: ['Pick any deal on the FLOOR kanban',
+            'Move it one column to the right (drag card or update stage)',
+            'XP fires the moment the stage commits'],
+    tips: ['Move stale deals to the next real stage — don\'t fake-advance',
+           'Even a single nudge per day keeps the pipeline alive'] },
+  'Claim a fresh prospect': {
+    desc: 'Plant a new buyer on the floor. Either drop a URL into Studio\'s intake tube, or click an empty desk to seat a new persona.',
+    steps: ['Open Studio from any buyer or empty desk',
+            'Drop a URL / file / text source',
+            'The new buyer card seats at the next free desk'] },
+  'Extract a new contact from a call': {
+    desc: 'After a real-call roleplay or live call, surface a NEW human contact (name + role) you didn\'t have before.',
+    steps: ['Run a roleplay or upload a real call recording',
+            'Open the transcript → highlight a name mention',
+            'Save it as a contact on the buyer card'] },
+  'Pass all 7 Gauntlet phases this week': {
+    desc: 'The Gauntlet is the 7-phase certification: cold-open · gatekeeper · pain · discovery · objection · close · followup. Pass each one once this week.',
+    steps: ['Open the ARENA voice drill',
+            'Pick a phase to drill against the AI buyer',
+            'Score >70% to mark the phase passed',
+            'Repeat for all 7 phases before Sunday'] },
+  'Create 5 new deals': {
+    desc: 'Five net-new deals opened this week. Each deal = one prospect you decided to actively pursue (a buyer-card + opened pipeline entry).',
+    steps: ['Walk to a buyer desk in the office',
+            'Click "Roleplay (solo)" or open in Studio',
+            'On the FLOOR tab, click "+ NEW DEAL IN LEAD"',
+            'Pick the buyer and set the amount'] },
+};
+function questDetails(quest) {
+  const lore = QUEST_LORE[quest.name] || {};
+  return {
+    desc: lore.desc || 'Complete the objective shown on the quest board.',
+    steps: lore.steps || [`Do "${quest.name}" — progress fires when the matching event lands.`],
+    tips: lore.tips || [],
+  };
+}
+function openQuestDetails(quest) {
+  const det = questDetails(quest);
+  openWorldModal(quest.name, (quest.scope || 'OBJECTIVE').toUpperCase(), (body) => {
+    const desc = document.createElement('p');
+    desc.style.cssText = 'font-family:var(--serif);font-style:italic;color:var(--text);font-size:15px;line-height:1.5;margin:6px 0 18px';
+    desc.textContent = det.desc;
+    body.appendChild(desc);
+
+    // Progress
+    const prog = document.createElement('div');
+    prog.style.cssText = 'display:flex;align-items:center;gap:12px;margin:0 0 18px';
+    const pbar = document.createElement('div');
+    pbar.style.cssText = 'flex:1;height:6px;background:rgba(245,232,216,0.10);border-radius:3px;overflow:hidden';
+    const pinner = document.createElement('div');
+    const pct = Math.max(0, Math.min(1, quest.pct || 0));
+    pinner.style.cssText = `height:100%;width:${pct*100}%;background:${quest.completed?'var(--gold)':'var(--accent)'};border-radius:3px;transition:width .3s`;
+    pbar.appendChild(pinner);
+    const pcount = document.createElement('div');
+    pcount.style.cssText = 'font-family:var(--mono);font-size:11px;color:var(--muted);min-width:60px;text-align:right';
+    const shown = Math.min(quest.current ?? 0, quest.target ?? 1);
+    pcount.textContent = `${shown} / ${quest.target ?? 1}`;
+    prog.appendChild(pbar); prog.appendChild(pcount);
+    body.appendChild(prog);
+
+    // Steps
+    const stepsHead = document.createElement('h3');
+    stepsHead.style.cssText = 'font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px';
+    stepsHead.textContent = 'How to complete';
+    body.appendChild(stepsHead);
+    const ol = document.createElement('ol');
+    ol.style.cssText = 'padding-left:20px;font-family:var(--serif);color:var(--text);font-size:14px;line-height:1.55;margin:0 0 16px';
+    for (const s of det.steps) {
+      const li = document.createElement('li');
+      li.style.cssText = 'margin-bottom:6px';
+      li.textContent = s;
+      ol.appendChild(li);
+    }
+    body.appendChild(ol);
+
+    // Tips
+    if (det.tips && det.tips.length) {
+      const tipHead = document.createElement('h3');
+      tipHead.style.cssText = 'font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px';
+      tipHead.textContent = '💡 Tips';
+      body.appendChild(tipHead);
+      for (const t of det.tips) {
+        const p = document.createElement('p');
+        p.style.cssText = 'font-family:var(--serif);font-style:italic;color:var(--muted);font-size:13.5px;line-height:1.5;margin:0 0 6px';
+        p.textContent = '— ' + t;
+        body.appendChild(p);
+      }
+    }
+
+    // Reward + claim
+    const footer = document.createElement('div');
+    footer.style.cssText = 'display:flex;align-items:center;gap:12px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(245,232,216,0.08)';
+    const reward = document.createElement('div');
+    reward.style.cssText = 'font-family:var(--mono);font-size:13px;letter-spacing:.14em;color:var(--gold);font-weight:700';
+    reward.textContent = `🏆 REWARD · +${quest.xp_reward || 0} XP`;
+    footer.appendChild(reward);
+    const spacer = document.createElement('div'); spacer.style.flex = '1'; footer.appendChild(spacer);
+    if (quest.completed) {
+      const claim = document.createElement('button');
+      claim.style.cssText = 'padding:10px 18px;background:var(--gold);color:#0a1a14;border:none;border-radius:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;cursor:pointer';
+      claim.textContent = `✓ Claim +${quest.xp_reward || 0} XP →`;
+      claim.addEventListener('click', async () => {
+        claim.disabled = true; claim.textContent = 'Claiming…';
+        try {
+          await fetch(`/api/b/${BULLPEN}/quests/claim`, {
+            method: 'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({rep: REP}),
+          });
+          closeWorldModal();
+          fireXpToast(quest.xp_reward || 0, quest.name);
+          setTimeout(loadAll, 500);
+        } catch(e) {
+          claim.textContent = 'Failed — retry'; claim.disabled = false;
+        }
+      });
+      footer.appendChild(claim);
+    } else {
+      const status = document.createElement('div');
+      status.style.cssText = 'font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase';
+      status.textContent = `${shown} of ${quest.target} done`;
+      footer.appendChild(status);
+    }
+    body.appendChild(footer);
+  });
 }
 
 // ── Mode tabs: ARENA / FLOOR / OUTREACH ──────────────────────────
@@ -665,7 +810,9 @@ function setMode(mode) {
     if (!panel.dataset.mode || panel.dataset.mode !== 'floor') {
       while (panel.firstChild) panel.removeChild(panel.firstChild);
       const f = document.createElement('iframe');
-      f.src = `/app/deals.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&embed=1`;
+      // slim=1 → embed-mode.js hides marketing banners, footers, hero
+      // sections, and tightens grid gaps so the page fits the panel.
+      f.src = `/app/deals.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&embed=1&slim=1`;
       f.allow = 'microphone; clipboard-read; clipboard-write';
       panel.appendChild(f);
       panel.dataset.mode = 'floor';
@@ -674,7 +821,7 @@ function setMode(mode) {
     if (!panel.dataset.mode || panel.dataset.mode !== 'outreach') {
       while (panel.firstChild) panel.removeChild(panel.firstChild);
       const f = document.createElement('iframe');
-      f.src = `/app/marketing.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&embed=1`;
+      f.src = `/app/marketing.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&embed=1&slim=1`;
       panel.appendChild(f);
       panel.dataset.mode = 'outreach';
     }

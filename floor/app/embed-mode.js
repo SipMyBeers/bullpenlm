@@ -15,6 +15,7 @@
   if (params.get('embed') !== '1' && !inIframe) return;
 
   // Inject embed-mode CSS — runs as early as possible to avoid flash
+  const slim = params.get('slim') === '1';
   const css = `
     html, body { background: transparent !important; }
     /* Any page chrome — header, crumb, gate strip, back-to-bullpen pill */
@@ -22,9 +23,22 @@
     .back-to-office, .bridge-eyebrow { display: none !important; }
     .gate-banner, #gate-banner, .gate-strip { display: none !important; }
     .tutorial-overlay, #tutorial-overlay { display: none !important; }
-    main.wrap, main, .wrap { padding-top: 14px !important; }
-    /* Compact spacing so the panel fits in the modal box */
+    main.wrap, main, .wrap { padding-top: 14px !important; max-width: 100% !important; }
     body { font-size: 13px; }
+    ${slim ? `
+      /* SLIM mode — used by office.html mode-tab embeds (FLOOR/OUTREACH).
+         Strip secondary panels, big banners, footer, marketing copy. */
+      .marketing-banner, .promo, .upgrade-banner,
+      .ad-creative-engine, .hero, .footer, footer { display: none !important; }
+      .grid-3, .grid-4 { gap: 12px !important; }
+      .stat-card, .panel { padding: 14px !important; }
+      h1 { font-size: 26px !important; margin-bottom: 8px !important; }
+      h2 { font-size: 14px !important; }
+      .lede, .sub, .blurb { font-size: 12.5px !important; line-height:1.4 !important; }
+      /* Tighten the kanban/pipeline grid so 5+ columns fit */
+      .kanban, .pipeline, .stages { gap: 6px !important; }
+      .kanban-col, .stage-col, .pipeline-col { min-width: 0 !important; padding: 10px !important; }
+    ` : ''}
   `;
   const style = document.createElement('style');
   style.id = 'embed-mode-style';
