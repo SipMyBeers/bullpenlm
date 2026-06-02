@@ -256,13 +256,12 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
       </div>
     </div>
 
-    <!-- Intake — paste any URL to seed a buyer dossier on the floor -->
-    <div class="intake-card">
-      <h2>📥 Intake tube</h2>
-      <p class="ic-sub">Paste a HubSpot deal, company site, LinkedIn URL — seeds a buyer dossier at a free desk.</p>
-      <input id="drop-url" placeholder="https://…">
-      <button onclick="dropProspectUrl()">Drop on the floor →</button>
-      <a href="#" id="intake-bulk" style="display:block;margin-top:8px;text-align:center;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none">📦 Bulk CSV import →</a>
+    <!-- Intake lives inside Studio now — walk to an empty desk and
+         click "+ Add a buyer", or open Studio from any buyer's card to
+         drop URLs / files / CSVs there. One surface, not three. -->
+    <div style="margin-top:18px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);line-height:1.7">
+      Drop URLs · files · CSVs inside <span style="color:var(--purple)">Studio</span><br>
+      Walk to an empty desk → +&nbsp;Add a buyer
     </div>
   </aside>
 </div>
@@ -285,13 +284,6 @@ document.getElementById('hud-host').addEventListener('click', () => openEmbed(
   `/app/host.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`,
   'Invite a closer', '📨 MAGIC LINK'
 ));
-document.getElementById('intake-bulk').addEventListener('click', (ev) => {
-  ev.preventDefault();
-  openEmbed(
-    `/app/import.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`,
-    'Bulk CSV import', '📦 INTAKE · CSV'
-  );
-});
 
 // ── Iso projection ──────────────────────────────────────────────
 const TILE_W = 64, TILE_H = 32;
@@ -1279,6 +1271,11 @@ function showBuyer(card) {
         onClick: () => openEmbed(
           `/app/contact.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
           card.company || card.slug, '🎙 LIVE ROLEPLAY'
+        ) },
+      { label: '🎨 Open in Studio',
+        onClick: () => openEmbed(
+          `/app/studio.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
+          (card.company || card.slug) + ' · studio', '🎨 STUDIO · sources + dossier'
         ) },
       { label: '📄 Read briefing',
         onClick: () => openEmbed(

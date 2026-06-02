@@ -194,6 +194,24 @@ h1{font-family:var(--display);font-size:44px;letter-spacing:-.02em;text-transfor
       </div>
       <div id="ingest-status"></div>
       <div id="source-list" style="margin-top:14px"></div>
+      <!-- Bulk CSV — a different shape of intake (rows of prospects) but
+           lives here in Studio so all source/intake paths are one place. -->
+      <a href="#" id="studio-bulk-csv" style="display:block;margin-top:14px;padding:10px;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px dashed rgba(245,232,216,0.18);border-radius:7px">📦 Bulk CSV import — many prospects at once</a>
+      <script>
+        document.getElementById('studio-bulk-csv').addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const params = new URLSearchParams(window.location.search);
+          const b = params.get('b') || '';
+          const rep = params.get('rep') || 'self';
+          // If we're already inside an iframe (the office embed), navigate
+          // this iframe to import. Otherwise open a new tab.
+          const url = `/app/import.html?b=${encodeURIComponent(b)}&rep=${encodeURIComponent(rep)}`;
+          try {
+            if (window.self !== window.top) { window.location.href = url; return; }
+          } catch(e) {}
+          window.open(url, '_blank');
+        });
+      </script>
     </div>
 
     <div class="col">
