@@ -1684,6 +1684,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Operator on localhost → cockpit (or host.html for first-run)
         # Closer arriving via tunnel → quickstart or spawn depending on
         # whether they've identified yet
+        # GET /api/b/<slug>/leaderboard — multi-axis lane ranking.
+        # Seven lanes: cold_open / discovery / closer / hunter / marketer
+        # / researcher / overall. Each lane has its own ranked list so
+        # multi-jobbed closers get recognition wherever they're strongest.
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/leaderboard(?:$|\?)", self.path)
+        if m:
+            try:
+                from leaderboard import compute as lb_compute
+                self._send_json(200, lb_compute(m.group(1)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # GET /api/me?email=X — global wallet + per-bullpen rep map +
         # aggregated XP across every bullpen this email is linked to.
         # Falls back to the host-self user if email is omitted.
@@ -5053,6 +5066,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                            stage_id=req2.get("stage", "lead"),
                            source_call_id=req2.get("source_call_id"),
                            notes=req2.get("notes", ""))
+                try: __import__("xp").invalidate(bullpen)
+                except Exception: pass
                 self._send_json(200, d)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
@@ -5068,7 +5083,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 rep = (req2.get("rep") or "").strip() or "self"
                 if not new_stage:
                     self._send_json(400, {"error": "stage required"}); return
-                self._send_json(200, move_stage(bullpen, deal_id, new_stage, rep))
+                res = move_stage(bullpen, deal_id, new_stage, rep)
+                # Invalidate XP cache so the leaderboard / quest progress
+                # reflect the stage move + close-won within one request.
+                # Also fire the Discord wins webhook for close-won.
+                try: __import__("xp").invalidate(bullpen)
+                except Exception: pass
+                if new_stage == "won":
+                    try:
+                        from discord_wins import maybe_post_close_won
+                        maybe_post_close_won(bullpen, rep, res.get("deal") or {})
+                    except Exception: pass
+                self._send_json(200, res)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

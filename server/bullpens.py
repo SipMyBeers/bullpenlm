@@ -262,7 +262,8 @@ def set_bullpen_config(bullpen: str, updates: dict) -> Optional[dict]:
                "commission_tiers", "company_entity", "company_entity_type",
                "jurisdiction_state", "jurisdiction_county",
                "host_location", "payout_methods",
-               "profile"}  # {mode: solo|team, industry: software|services|local|...}
+               "profile",  # {mode: solo|team, industry: software|services|local|...}
+               "webhooks"}  # {discord_wins_url, ...}
     VALID_ACCESS = {"public", "invite_only", "paid"}
     p = _bullpen_json(bullpen)
     if not p.exists():
