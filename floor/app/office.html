@@ -44,9 +44,15 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
 .mode-tabs button.active{background:var(--gold);color:#0a1a14}
 
 /* When a non-arena mode is active, hide the iso world + show the
-   full-bleed mode panel. Quest board / HUD / community / legend stay. */
+   full-bleed mode panel. Also hide all ARENA-only chrome (WASD HUD,
+   zone tip, floating legend, side panel toggle) so it doesn't float
+   over the FLOOR / OUTREACH iframe content. */
 body.mode-floor .stage, body.mode-outreach .stage,
-body.mode-floor .side, body.mode-outreach .side { display:none }
+body.mode-floor .side, body.mode-outreach .side,
+body.mode-floor .controls-hud, body.mode-outreach .controls-hud,
+body.mode-floor .zone-tip, body.mode-outreach .zone-tip,
+body.mode-floor #legend-float, body.mode-outreach #legend-float,
+body.mode-floor #side-toggle, body.mode-outreach #side-toggle { display:none }
 body.mode-arena #mode-panel { display:none }
 #mode-panel{position:absolute;top:48px;left:0;right:0;bottom:0;display:none;flex-direction:column;background:radial-gradient(ellipse at 50% 0%,var(--bg-2),var(--bg-1) 70%,var(--bg-0) 100%)}
 body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }

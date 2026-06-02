@@ -38,6 +38,10 @@
       /* Tighten the kanban/pipeline grid so 5+ columns fit */
       .kanban, .pipeline, .stages { gap: 6px !important; }
       .kanban-col, .stage-col, .pipeline-col { min-width: 0 !important; padding: 10px !important; }
+      /* Make sure the iframe's body scrolls internally — and leave
+         padding at the bottom so the last row isn't kissed by the edge */
+      html, body { height: 100% !important; overflow: auto !important; }
+      main.wrap, main, .wrap { padding-bottom: 80px !important; }
     ` : ''}
   `;
   const style = document.createElement('style');
