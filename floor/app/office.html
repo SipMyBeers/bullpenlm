@@ -68,6 +68,25 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
 .wm-kanban .wm-card:hover{background:rgba(167,139,250,0.18)}
 .wm-kanban .wm-card .wm-card-amt{color:var(--gold);font-weight:700;display:block;margin-top:3px}
 
+/* ── Welcome / "What is this?" overlay ─────────────────────────── */
+.welcome-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,4,16,0.84);backdrop-filter:blur(10px);z-index:80;padding:24px}
+.welcome-overlay.show{display:flex}
+.welcome-box{position:relative;width:min(680px,94vw);max-height:90vh;overflow:auto;background:linear-gradient(180deg, var(--bg-2), var(--bg-1));border:1.5px solid var(--gold);border-radius:14px;box-shadow:0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(245,232,216,0.10);padding:32px 36px}
+.welcome-box .wb-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.welcome-box h2{font-family:var(--display);font-size:38px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 16px;line-height:.96}
+.welcome-box .wb-lede{font-family:var(--serif);font-style:italic;color:var(--text);font-size:17px;line-height:1.55;margin:0 0 22px}
+.welcome-box .wb-rows{display:flex;flex-direction:column;gap:11px;margin-bottom:24px}
+.welcome-box .wb-row{display:flex;gap:14px;align-items:flex-start;padding:12px 14px;background:rgba(245,232,216,0.04);border:1px solid rgba(245,232,216,0.08);border-radius:9px}
+.welcome-box .wb-row .wb-icon{font-size:22px;line-height:1;width:30px;text-align:center;flex-shrink:0}
+.welcome-box .wb-row .wb-txt{flex:1}
+.welcome-box .wb-row .wb-t{font-family:var(--display);font-size:15px;letter-spacing:-.005em;text-transform:uppercase;color:var(--text);margin-bottom:3px}
+.welcome-box .wb-row .wb-d{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:13.5px;line-height:1.45}
+.welcome-box .wb-row .wb-d kbd{font-family:var(--mono);font-style:normal;background:rgba(0,0,0,0.40);border:1px solid rgba(245,232,216,0.20);border-radius:3px;padding:1px 5px;color:var(--text);font-size:11px}
+.welcome-box .wb-go{display:block;width:100%;padding:14px 18px;background:var(--gold);color:#0a1a14;border:none;border-radius:9px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.welcome-box .wb-go:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(251,191,36,0.30)}
+.welcome-box .wb-close{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:6px;line-height:1}
+.welcome-box .wb-close:hover{color:var(--text);background:rgba(255,255,255,0.06)}
+
 /* In-side-panel intake card */
 .intake-card{margin-top:22px;padding:14px;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.28);border-radius:10px}
 .intake-card h2{color:var(--purple) !important;margin-bottom:6px !important}
@@ -216,12 +235,63 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
 <header class="hud">
   <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
   <div class="meta">
+    <button class="pill hud-btn" id="hud-help" title="What is this? How do I use it?">❔ Help</button>
     <button class="pill hud-btn" id="hud-bridge" title="Operator dashboard — roster, audit, intel cache">📊 Bridge</button>
     <button class="pill hud-btn" id="hud-host" title="Magic-link invites for closers">📨 Invite</button>
     <span class="pill" id="presence-pill"><span class="dot"></span><span id="presence-count">0</span> online</span>
     <a href="/app/bullpen-picker.html" id="bullpen-name" class="pill hud-btn" title="Switch bullpens — pick a different floor">—</a>
   </div>
 </header>
+
+<!-- Welcome / "What is this?" — opens on first load, summonable via ❔ Help -->
+<div class="welcome-overlay" id="welcome-overlay">
+  <div class="welcome-box">
+    <button class="wb-close" id="welcome-close" title="Close">×</button>
+    <div class="wb-eyebrow">🏢 BULLPENLM · WHAT IS THIS?</div>
+    <h2>This is your sales floor.</h2>
+    <p class="wb-lede">You're the gold person. The other figures are AI buyer prospects sitting at their desks. You walk over, press a key, and pitch them out loud — they push back like real prospects. That's how you train before dialing a real Fortune-500 buyer.</p>
+
+    <div class="wb-rows">
+      <div class="wb-row">
+        <div class="wb-icon">🟡</div>
+        <div class="wb-txt">
+          <div class="wb-t">That's you</div>
+          <div class="wb-d">Walk around with <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>. Press <kbd>E</kbd> to interact with whatever zone you're standing in.</div>
+        </div>
+      </div>
+      <div class="wb-row">
+        <div class="wb-icon">💼</div>
+        <div class="wb-txt">
+          <div class="wb-t">Client desks → roleplay</div>
+          <div class="wb-d">Walk to a buyer (Mark Adler · CISO and Dana Pruitt · HVAC owner come pre-seated). Click <strong>Roleplay (solo)</strong> on the right panel. The AI plays the buyer; you sell.</div>
+        </div>
+      </div>
+      <div class="wb-row">
+        <div class="wb-icon">🎨</div>
+        <div class="wb-txt">
+          <div class="wb-t">Studio → teach the AI who they are</div>
+          <div class="wb-d">Click <strong>Open in Studio</strong> on any buyer. Drop a URL, file, transcript, or notes — Studio feeds it into a RAG dossier so the AI knows the deal, pain points, and quotes.</div>
+        </div>
+      </div>
+      <div class="wb-row">
+        <div class="wb-icon">⚔</div>
+        <div class="wb-txt">
+          <div class="wb-t">Duo ring → challenge a teammate</div>
+          <div class="wb-d">Once you've invited friends, stand on the gold tiles in the middle and press <kbd>E</kbd> to challenge a closer to a live 1v1 against the same AI buyer. Loser pays.</div>
+        </div>
+      </div>
+      <div class="wb-row">
+        <div class="wb-icon">📊</div>
+        <div class="wb-txt">
+          <div class="wb-t">Bridge + Invite (top right)</div>
+          <div class="wb-d"><strong>📊 Bridge</strong> = your operator dashboard (roster, audit, intel). <strong>📨 Invite</strong> = mint a magic link so friends can join. Open the help (<strong>❔</strong>) anytime.</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="wb-go" id="welcome-go">Got it — let me train →</button>
+  </div>
+</div>
 
 <!-- Zone tip — appears when you walk into a zone with an available action -->
 <div class="zone-tip" id="zone-tip"></div>
@@ -284,6 +354,25 @@ document.getElementById('hud-host').addEventListener('click', () => openEmbed(
   `/app/host.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`,
   'Invite a closer', '📨 MAGIC LINK'
 ));
+// Welcome overlay — opens on first office load per bullpen, summonable
+// anytime via the ❔ Help HUD pill. Esc closes too.
+function openWelcome() { document.getElementById('welcome-overlay').classList.add('show'); }
+function closeWelcome() {
+  document.getElementById('welcome-overlay').classList.remove('show');
+  try { localStorage.setItem(`welcomed-${BULLPEN}`, '1'); } catch(e) {}
+}
+document.getElementById('hud-help').addEventListener('click', openWelcome);
+document.getElementById('welcome-close').addEventListener('click', closeWelcome);
+document.getElementById('welcome-go').addEventListener('click', closeWelcome);
+document.getElementById('welcome-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'welcome-overlay') closeWelcome();
+});
+// First-run: show the welcome unless the user has dismissed it before
+try {
+  if (!localStorage.getItem(`welcomed-${BULLPEN}`)) {
+    setTimeout(openWelcome, 350);
+  }
+} catch(e) { setTimeout(openWelcome, 350); }
 
 // ── Iso projection ──────────────────────────────────────────────
 const TILE_W = 64, TILE_H = 32;
@@ -485,7 +574,7 @@ document.addEventListener('keydown', (ev) => {
   else if (k === 'a' || k === 'arrowleft')  { moveMyPawn(-1, 0); ev.preventDefault(); }
   else if (k === 'd' || k === 'arrowright') { moveMyPawn(1,  0); ev.preventDefault(); }
   else if (k === 'e' || k === 'enter')      { actContextual(); ev.preventDefault(); }
-  else if (k === 'escape')                  { closeWorldModal(); }
+  else if (k === 'escape')                  { closeWorldModal(); closeWelcome(); }
 });
 
 // ── In-world modal — overlays that look like in-game panels ─────
