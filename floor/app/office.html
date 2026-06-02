@@ -1241,6 +1241,150 @@ function pawnGroup(tx, ty, opts) {
   return g;
 }
 
+// ── Iso furniture + room atmosphere ──────────────────────────────
+// All of these return an SVG <g> that the render pass appends. Keeping
+// them as functions (not inline) so the render() loop stays scannable.
+
+function deskPrism(tx, ty) {
+  // A small dark desk under the buyer pawn — flat top, two faces for
+  // iso depth, plus a tiny cyan monitor glow so the desk reads as a
+  // workstation rather than a generic prop.
+  const c = iso(tx, ty);
+  const cx = c.x + OFFSET_X, cy = c.y + OFFSET_Y;
+  const g = el('g', { class: 'desk', transform: `translate(${cx}, ${cy})` });
+  // Shadow
+  g.appendChild(el('ellipse', { cx: 0, cy: 11, rx: 18, ry: 5, fill: 'rgba(0,0,0,0.40)' }));
+  // Front face
+  g.appendChild(el('polygon', {
+    points: '-18,0 18,0 18,8 -18,8',
+    fill: '#1a1208', stroke: 'var(--edge)', 'stroke-width': '0.8',
+  }));
+  // Side face (right-shaded)
+  g.appendChild(el('polygon', {
+    points: '18,0 22,-3 22,5 18,8',
+    fill: '#0f0a04', stroke: 'var(--edge)', 'stroke-width': '0.8',
+  }));
+  // Top (slightly lighter)
+  g.appendChild(el('polygon', {
+    points: '-18,0 18,0 22,-3 -14,-3',
+    fill: '#2a1d10', stroke: 'var(--edge)', 'stroke-width': '0.8',
+  }));
+  // Monitor — small rect glowing cyan
+  g.appendChild(el('rect', { x: -7, y: -10, width: 14, height: 8, rx: 1,
+    fill: '#0a1a14', stroke: '#34d399', 'stroke-width': '0.7' }));
+  g.appendChild(el('rect', { x: -5.5, y: -9, width: 11, height: 5,
+    fill: 'rgba(52,211,153,0.30)' }));
+  // Stand
+  g.appendChild(el('rect', { x: -1.5, y: -2, width: 3, height: 2, fill: '#1a1208' }));
+  return g;
+}
+
+function renderWalls() {
+  // Baseboard along the back edges of the iso floor — a thin dark band
+  // hugging the y=0 row and the x=COLS-1 column to define the room.
+  const g = el('g', { class: 'walls' });
+  // North wall (y = -0.5, x = 0..COLS)
+  for (let x = 0; x < COLS; x++) {
+    const c = iso(x, -0.5);
+    g.appendChild(el('polygon', {
+      points: `${c.x},${c.y - TILE_H/2 + OFFSET_Y}
+               ${c.x + TILE_W/2},${c.y + OFFSET_Y}
+               ${c.x + TILE_W/2},${c.y + OFFSET_Y - 18}
+               ${c.x},${c.y - TILE_H/2 + OFFSET_Y - 18}`
+        .split(/\s+/).join(' ').trim()
+        .split(' ').map(p => p.split(',').map(n => parseFloat(n) + (p === p.split(',')[0] ? 0 : 0)).join(',')).join(' '),
+      fill: 'rgba(20,12,5,0.92)', stroke: 'var(--edge)', 'stroke-width': '0.8',
+    }));
+    // adjust transform — easier: use a translate group below
+  }
+  // The polygon math above got ugly. Replace with a simpler baseboard
+  // approach: a dark trapezoidal band along the north + west edges.
+  while (g.firstChild) g.removeChild(g.firstChild);
+  const drawWallSegment = (ax, ay, bx, by, h = 14) => {
+    const a = iso(ax, ay), b = iso(bx, by);
+    const ax_ = a.x + OFFSET_X, ay_ = a.y + OFFSET_Y;
+    const bx_ = b.x + OFFSET_X, by_ = b.y + OFFSET_Y;
+    g.appendChild(el('polygon', {
+      points: `${ax_},${ay_} ${bx_},${by_} ${bx_},${by_ - h} ${ax_},${ay_ - h}`,
+      fill: 'rgba(15,9,4,0.95)', stroke: 'var(--edge)', 'stroke-width': '0.9',
+    }));
+  };
+  // North wall — from (0,0) corner to (COLS, 0)
+  drawWallSegment(0, 0, COLS, 0, 16);
+  // West wall — from (0,0) to (0, ROWS)
+  drawWallSegment(0, 0, 0, ROWS, 12);
+  return g;
+}
+
+function renderProps() {
+  // Three atmosphere objects: a coffee station, a water cooler, and a
+  // plant. Small iso prisms placed off the active walking zones.
+  const g = el('g', { class: 'props' });
+
+  const prism = (tx, ty, color, h, w = 8) => {
+    const c = iso(tx, ty);
+    const cx = c.x + OFFSET_X, cy = c.y + OFFSET_Y;
+    const sub = el('g', { transform: `translate(${cx}, ${cy})` });
+    sub.appendChild(el('ellipse', { cx: 0, cy: 6, rx: w*0.8, ry: 3, fill: 'rgba(0,0,0,0.40)' }));
+    // Front
+    sub.appendChild(el('polygon', { points: `-${w},0 ${w},0 ${w},${-h+8} -${w},${-h+8}`,
+      fill: color, stroke: 'var(--edge)', 'stroke-width': '0.8' }));
+    // Side
+    sub.appendChild(el('polygon', { points: `${w},0 ${w+4},-3 ${w+4},${-h+5} ${w},${-h+8}`,
+      fill: darken(color, 0.30), stroke: 'var(--edge)', 'stroke-width': '0.8' }));
+    // Top
+    sub.appendChild(el('polygon', { points: `-${w},0 ${w},0 ${w+4},-3 -${w-4},-3`,
+      fill: lighten(color, 0.10), stroke: 'var(--edge)', 'stroke-width': '0.8' }));
+    return sub;
+  };
+
+  // Water cooler — blue, near the bell (top-right corner of the pit)
+  const cooler = prism(9, 0.5, '#3b6e9c', 24, 6);
+  cooler.appendChild((function() {
+    // Big jug on top — translucent blue
+    const c = iso(9, 0.5);
+    const top = el('rect', {
+      x: c.x + OFFSET_X - 4, y: c.y + OFFSET_Y - 32,
+      width: 8, height: 8, rx: 1.5,
+      fill: 'rgba(110,231,183,0.50)', stroke: 'var(--edge)', 'stroke-width': '0.7',
+    });
+    return top;
+  })());
+  g.appendChild(cooler);
+
+  // Coffee station — dark brown, in the pit's northwest
+  const coffee = prism(0.5, 1, '#3d2c1a', 18, 7);
+  // Cup glow
+  coffee.appendChild((function() {
+    const c = iso(0.5, 1);
+    return el('circle', {
+      cx: c.x + OFFSET_X, cy: c.y + OFFSET_Y - 22, r: 3,
+      fill: 'rgba(251,191,36,0.45)', stroke: 'var(--gold)', 'stroke-width': '0.6',
+    });
+  })());
+  g.appendChild(coffee);
+
+  // Plant — green, between PIT and BUYER DESKS
+  const plant = prism(9.5, 4, '#3a4d2c', 12, 5);
+  // Leaves
+  plant.appendChild((function() {
+    const c = iso(9.5, 4);
+    const leaves = el('g');
+    leaves.appendChild(el('ellipse', {
+      cx: c.x + OFFSET_X, cy: c.y + OFFSET_Y - 16, rx: 8, ry: 6,
+      fill: '#34d399', opacity: '0.78', stroke: 'var(--edge)', 'stroke-width': '0.7',
+    }));
+    leaves.appendChild(el('ellipse', {
+      cx: c.x + OFFSET_X - 3, cy: c.y + OFFSET_Y - 19, rx: 5, ry: 4,
+      fill: '#6ee7b7', opacity: '0.65', stroke: 'var(--edge)', 'stroke-width': '0.5',
+    }));
+    return leaves;
+  })());
+  g.appendChild(plant);
+
+  return g;
+}
+
 function darken(hex, amt) {
   const c = hex.replace('#','');
   const r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
@@ -1329,12 +1473,23 @@ function render() {
   bell.appendChild(el('polygon', { points: '0,-14 10,-22 10,-18 0,-10', class: 'bell-side' }));
   svg.appendChild(bell);
 
+  // ── 3b. Room walls / baseboard — defines the floor as a room ──
+  svg.appendChild(renderWalls());
+
+  // ── 3c. Atmosphere props — plant, water cooler, coffee station ──
+  svg.appendChild(renderProps());
+
   // ── 4. AI buyer pawns at their desks ──
   // Recompute desk assignments from current buyer_cards every render.
   BUYER_DESKS = currentDesks();
   for (const desk of BUYER_DESKS) {
     const card = desk.card;
     if (!card && !desk.slug.startsWith('reserved-')) continue;
+    // Render an iso desk prism under every desk tile (filled or empty)
+    // so the right side of the floor reads as a row of workstations.
+    if (!desk.slug.startsWith('reserved-')) {
+      svg.appendChild(deskPrism(desk.tile.x, desk.tile.y));
+    }
     // Reserved slot → small dashed marker, click to seat a buyer.
     // The big "add a buyer" floating text overlapped badly with 10
     // desks crammed together; we now keep it minimal — a tiny dashed
@@ -1375,41 +1530,46 @@ function render() {
     svg.appendChild(g);
   }
 
-  // ── 5. Closer pawns from presence (THE PIT or DUO RING if active) ──
+  // ── 5. Closer pawns ──
+  // YOU is ALWAYS rendered, independent of presence — the first
+  // presence/beat round-trip takes 15s otherwise, leaving the player
+  // invisible until then. Peers come from state.presence with their
+  // broadcast pos (falling back to a hash slot before their first beat).
   const activeDuo = state.duos.find(d => d.status === 'accepted' || d.status === 'in_progress');
+  const renderedReps = new Set();
+  const meInDuo = activeDuo && (activeDuo.challenger === REP || activeDuo.opponent === REP);
+  {
+    const myTile = meInDuo
+      ? (activeDuo.challenger === REP ? { x: 6, y: 4 } : { x: 7, y: 4 })
+      : getMyPos();
+    const myLive = (state.liveCalls || []).find(c => c.rep === REP);
+    const meP = (state.presence || []).find(p => p.rep === REP) || { rep: REP, page: 'office' };
+    svg.appendChild(pawnGroup(myTile.x, myTile.y, {
+      rep: REP, name: REP, color: '#fbbf24',
+      kind: 'closer', inDuo: !!meInDuo, isYou: true,
+      isLive: !!myLive, callId: myLive ? myLive.call_id : null,
+      onclick: () => showCloser(meP),
+    }));
+    renderedReps.add(REP);
+  }
   for (const p of state.presence) {
+    if (p.rep === REP || renderedReps.has(p.rep)) continue;
     let tile;
     if (activeDuo && (p.rep === activeDuo.challenger || p.rep === activeDuo.opponent)) {
-      // Duelists face each other in the ring
-      tile = p.rep === activeDuo.challenger
-        ? { x: 6, y: 4 }
-        : { x: 7, y: 4 };
+      tile = p.rep === activeDuo.challenger ? { x: 6, y: 4 } : { x: 7, y: 4 };
     } else {
-      // YOU pawn uses the walk-around position; everyone else uses
-      // the deterministic hash-based slot.
-      // Self uses local position; peers use their broadcast pos if
-      // present (real-time walk), falling back to deterministic hash
-      // so first-load before their first beat still renders sensibly.
-      tile = (p.rep === REP)
-        ? getMyPos()
-        : (p.pos && Number.isFinite(p.pos.x) && Number.isFinite(p.pos.y)
-            ? p.pos
-            : closerPosition(p.rep));
+      tile = (p.pos && Number.isFinite(p.pos.x) && Number.isFinite(p.pos.y))
+        ? p.pos : closerPosition(p.rep);
     }
     const inDuo = activeDuo && (p.rep === activeDuo.challenger || p.rep === activeDuo.opponent);
     const liveCall = (state.liveCalls || []).find(c => c.rep === p.rep);
-    const g = pawnGroup(tile.x, tile.y, {
-      rep: p.rep,
-      name: p.rep,
-      color: colorFor(p.rep),
-      kind: 'closer',
-      inDuo: inDuo,
-      isYou: p.rep === REP,
-      isLive: !!liveCall,
-      callId: liveCall ? liveCall.call_id : null,
-      onclick: () => showCloser(p)
-    });
-    svg.appendChild(g);
+    svg.appendChild(pawnGroup(tile.x, tile.y, {
+      rep: p.rep, name: p.rep, color: colorFor(p.rep),
+      kind: 'closer', inDuo, isYou: false,
+      isLive: !!liveCall, callId: liveCall ? liveCall.call_id : null,
+      onclick: () => showCloser(p),
+    }));
+    renderedReps.add(p.rep);
   }
 
   // ── 6. Pending challenges floating between desks ──
