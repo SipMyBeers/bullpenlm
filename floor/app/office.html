@@ -180,11 +180,9 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
 .pawn-shadow{fill:rgba(0,0,0,0.45)}
 .pawn-label{font-family:var(--mono);font-size:9px;letter-spacing:.10em;text-transform:uppercase;fill:var(--text);pointer-events:none;text-anchor:middle}
 .pawn-label-bg{fill:rgba(10,7,3,0.78);stroke:none;rx:3}
-.pawn.you .pawn-top{fill:var(--gold)}
-.pawn.you .pawn-side{fill:var(--gold-dim)}
 .pawn.you .pawn-label{fill:var(--gold)}
 .pawn.you{filter:drop-shadow(0 0 6px rgba(251,191,36,0.30))}
-.pawn.in-duo .pawn-top{filter:drop-shadow(0 0 4px var(--gold))}
+.pawn.in-duo{filter:drop-shadow(0 0 4px var(--gold))}
 /* Smooth movement on any pawn — animate the translate transform */
 .pawn{transition:transform .22s cubic-bezier(0.22,1,0.36,1)}
 /* Idle bob — gentle breathing so the world feels alive */
@@ -694,9 +692,74 @@ function openKanbanModal() {
 function openBuyerListModal() {
   openWorldModal('Client desks', 'CLIENT DESKS · BUYERS', (body) => {
     if (!state.buyer_cards.length) {
-      const e = document.createElement('div'); e.className = 'wm-empty';
-      e.textContent = 'No buyers seeded yet. Drop a URL in the intake tube →';
-      body.appendChild(e); return;
+      const intro = document.createElement('p');
+      intro.style.cssText = 'font-family:var(--serif);font-style:italic;color:var(--muted);font-size:14px;line-height:1.5;margin:6px 0 18px';
+      intro.textContent = "Client desks are where your AI buyers sit. Each one is a different roleplay persona — pitch them, hear how they push back, learn the call before you dial a real prospect. Spin one up to start drilling.";
+      body.appendChild(intro);
+
+      // Quick-seed starter personas — covers Beers's actual sales targets
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:18px';
+      const STARTERS = [
+        { slug: 'killsesh-cisco', company: 'CISO at a regional insurer',
+          vertical: 'enterprise security', icon: '🛡',
+          persona: { name: 'Mark Adler', role: 'CISO',
+                     tone: 'skeptical, time-poor, has seen 20 vendors this year',
+                     decision_style: 'data-driven, wants proof of breach reduction' },
+          blurb: 'KillSesh prospect — buys breach-scanning + kill-switch for legacy ACORD shops' },
+        { slug: 'webdev-smb-owner', company: 'Owner of a 12-person HVAC company',
+          vertical: 'web dev / SMB owner', icon: '🌐',
+          persona: { name: 'Dana Pruitt', role: 'Owner',
+                     tone: 'plain-spoken, allergic to jargon, cares about leads not features',
+                     decision_style: 'asks "what will this do for my Google ranking" three times' },
+          blurb: 'Website prospect — sole decision-maker, $5–15k website + GBP work' },
+      ];
+      for (const sp of STARTERS) {
+        const btn = document.createElement('button');
+        btn.style.cssText = 'display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:rgba(167,139,250,0.06);border:1.5px solid rgba(167,139,250,0.28);border-radius:9px;color:var(--text);cursor:pointer;text-align:left;font-family:inherit;transition:border-color .12s,background .12s';
+        btn.addEventListener('mouseenter', () => { btn.style.borderColor = 'var(--purple)'; btn.style.background = 'rgba(167,139,250,0.12)'; });
+        btn.addEventListener('mouseleave', () => { btn.style.borderColor = 'rgba(167,139,250,0.28)'; btn.style.background = 'rgba(167,139,250,0.06)'; });
+        const ic = document.createElement('div'); ic.style.cssText = 'font-size:22px;line-height:1'; ic.textContent = sp.icon;
+        const txt = document.createElement('div'); txt.style.flex = '1';
+        const t = document.createElement('div'); t.style.cssText = 'font-family:var(--display);font-size:16px;text-transform:uppercase;letter-spacing:-.005em;line-height:1.1'; t.textContent = sp.company;
+        const s = document.createElement('div'); s.style.cssText = 'font-family:var(--serif);font-style:italic;color:var(--muted);font-size:12.5px;margin-top:4px;line-height:1.35'; s.textContent = sp.blurb;
+        txt.appendChild(t); txt.appendChild(s);
+        const r = document.createElement('div'); r.style.cssText = 'font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--purple);align-self:center'; r.textContent = '+ SEAT';
+        btn.appendChild(ic); btn.appendChild(txt); btn.appendChild(r);
+        btn.addEventListener('click', async () => {
+          btn.disabled = true; r.textContent = 'SEATING…';
+          try {
+            const res = await fetch(`/api/b/${BULLPEN}/buyer-cards`, {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({
+                slug: sp.slug, company: sp.company, vertical: sp.vertical,
+                persona: sp.persona, rep: REP, created_via: 'starter-persona',
+              }),
+            });
+            if (!res.ok) {
+              const d = await res.json().catch(() => ({}));
+              if (res.status === 409) {
+                // Already seeded — just close + reload so the desk shows
+                closeWorldModal(); loadAll(); return;
+              }
+              throw new Error(d.error || `HTTP ${res.status}`);
+            }
+            closeWorldModal();
+            loadAll();
+          } catch(e) {
+            r.textContent = 'failed'; r.style.color = 'var(--danger)';
+            console.warn('seed failed', e);
+          }
+        });
+        grid.appendChild(btn);
+      }
+      body.appendChild(grid);
+
+      const hint = document.createElement('div');
+      hint.style.cssText = 'font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase';
+      hint.textContent = '— or paste a HubSpot/LinkedIn URL in the intake tube to seed a real prospect';
+      body.appendChild(hint);
+      return;
     }
     const list = document.createElement('div'); list.className = 'wm-list';
     for (const c of state.buyer_cards) {
@@ -738,32 +801,40 @@ function pawnGroup(tx, ty, opts) {
   if (opts.onclick) g.addEventListener('click', opts.onclick);
 
   // Shadow under the pawn (stays still — doesn't bob with the body)
-  g.appendChild(el('ellipse', { cx: 0, cy: 6, rx: 12, ry: 4, class: 'pawn-shadow' }));
+  g.appendChild(el('ellipse', { cx: 0, cy: 9, rx: 9, ry: 3, class: 'pawn-shadow' }));
 
-  // Body — wrapped in a group that runs the idle-bob animation so the
-  // shadow stays put. Per-rep phase offset so the room doesn't move
-  // in unison.
+  // Humanoid figure — head + torso, wrapped in a group that runs the
+  // idle-bob animation so the shadow stays put. Per-rep phase offset
+  // so the room doesn't breathe in unison.
   const refName = opts.rep || opts.name || '?';
   let bobHash = 0; for (const c of refName) bobHash = (bobHash * 31 + c.charCodeAt(0)) % 3400;
   const body = el('g', { class: 'body-bob', style: `animation-delay:-${bobHash}ms` });
   const color = opts.color || '#34d399';
-  const colorDim = darken(color, 0.35);
-  const colorDarker = darken(color, 0.55);
-  // Right face
+  const colorDim = darken(color, 0.30);
+  const colorDarker = darken(color, 0.50);
+
+  // Torso — slightly trapezoid (broader shoulders, narrower waist).
+  // The right side is shaded a hair darker to suggest iso 3/4 lighting.
   body.appendChild(el('polygon', {
-    points: `0,-2 12,-10 12,2 0,10`,
-    fill: colorDim, class: 'pawn-side'
+    points: '-7,-9 7,-9 6,7 -6,7',
+    fill: color, class: 'pawn-torso',
+    stroke: 'var(--edge)', 'stroke-width': '1.1', 'stroke-linejoin': 'round',
   }));
-  // Left face
+  // Right-side shade strip on the torso
   body.appendChild(el('polygon', {
-    points: `0,-2 -12,-10 -12,2 0,10`,
-    fill: colorDarker, class: 'pawn-side'
+    points: '7,-9 3,-9 3,7 6,7',
+    fill: colorDim, opacity: '0.85',
   }));
-  // Top — head
-  body.appendChild(el('polygon', {
-    points: `0,-22 12,-10 0,-2 -12,-10`,
-    fill: color, class: 'pawn-top'
+  // Head — round, fills with a slightly lifted tone so faces read at
+  // small zoom. Outlined in the same dark edge as everything else.
+  body.appendChild(el('circle', {
+    cx: 0, cy: -14, r: 5.5,
+    fill: lighten(color, 0.20),
+    stroke: 'var(--edge)', 'stroke-width': '1.1',
+    class: 'pawn-head',
   }));
+  // Tiny eye dot — gives the pawn a sense of facing forward
+  body.appendChild(el('circle', { cx: 1.6, cy: -14, r: 0.9, fill: 'var(--edge)' }));
   g.appendChild(body);
 
   // Name label — gold pawn always reads "YOU"
@@ -809,6 +880,11 @@ function darken(hex, amt) {
   const r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
   const m = 1 - amt;
   return '#' + [r,g,b].map(v => Math.max(0, Math.round(v * m)).toString(16).padStart(2,'0')).join('');
+}
+function lighten(hex, amt) {
+  const c = hex.replace('#','');
+  const r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
+  return '#' + [r,g,b].map(v => Math.min(255, Math.round(v + (255-v) * amt)).toString(16).padStart(2,'0')).join('');
 }
 
 function render() {

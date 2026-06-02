@@ -4998,11 +4998,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 if card_path.exists():
                     self._send_json(409, {"error": "slug already exists"})
                     return
+                # Accept persona + vertical from starter-persona seeders;
+                # fall back to empty defaults for the URL-drop path.
+                persona_in = req.get("persona") or {}
+                if not isinstance(persona_in, dict):
+                    persona_in = {}
                 card = {
                     "slug": slug,
                     "company": (req.get("company") or slug).strip(),
+                    "vertical": (req.get("vertical") or "").strip(),
                     "source_url": (req.get("source_url") or "").strip(),
-                    "persona": {"name": "", "role": ""},
+                    "persona": {
+                        "name":           (persona_in.get("name") or "").strip(),
+                        "role":           (persona_in.get("role") or "").strip(),
+                        "tone":           (persona_in.get("tone") or "").strip(),
+                        "decision_style": (persona_in.get("decision_style") or "").strip(),
+                    },
                     "created_by": (req.get("rep") or "operator").strip(),
                     "created_via": (req.get("created_via") or "office-drop-bar"),
                     "created_at": datetime.datetime.now().isoformat(timespec="seconds"),
