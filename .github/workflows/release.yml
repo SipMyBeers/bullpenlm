@@ -198,6 +198,28 @@ jobs:
           prerelease: false
           args: --target ${{ matrix.target }}
 
+      # ── Verify Mac notarization stapled — fail loudly if it didn't.
+      # Without this, a release could silently ship un-notarized .dmgs
+      # that Gatekeeper would block on a fresh Mac.
+      - name: Verify notarization (macOS)
+        if: startsWith(matrix.os, 'macos-')
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          bundles="desktop/src-tauri/target/${{ matrix.target }}/release/bundle"
+          fail=0
+          for f in "$bundles"/macos/*.app "$bundles"/dmg/*.dmg; do
+            [ -e "$f" ] || continue
+            if ! xcrun stapler validate "$f"; then
+              echo "::error::notarization ticket NOT stapled to $f — APPLE_* secrets missing or notarytool failed"
+              fail=1
+            else
+              echo "✓ stapled: $f"
+            fi
+          done
+          [ "$fail" -eq 0 ]
+
       # ── Upload raw artifacts for the steam-deploy job to consume ──
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
