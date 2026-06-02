@@ -2588,11 +2588,37 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
 
         # ── Buyer cards ──
+        # Merge two sources:
+        #   1. bullpens/<slug>/buyer_cards/*.json (per-bullpen cards, what
+        #      the office "intake tube" + starter-persona seeders write to)
+        #   2. organizations/*/org.json (legacy Phase 0 prospects)
+        # Bullpen-specific cards take priority on slug collision.
         m = re.match(r"^/api/b/([a-z0-9\-]+)/cards(?:$|\?)", self.path)
         if m:
             try:
-                from buyer_cards import list_available
-                self._send_json(200, {"cards": list_available()})
+                bullpen = m.group(1)
+                cards_dir = DATA_DIR / "bullpens" / bullpen / "buyer_cards"
+                ordered = []  # bullpen-specific cards come FIRST so they
+                              # get the visible desk slots in the office
+                seen = set()
+                if cards_dir.exists():
+                    for f in sorted(cards_dir.glob("*.json"), key=lambda p: p.stat().st_mtime):
+                        try:
+                            c = json.loads(f.read_text())
+                            if c.get("slug") and c["slug"] not in seen:
+                                ordered.append(c); seen.add(c["slug"])
+                        except Exception:
+                            continue
+                # Phase 0 orgs as a long-tail catalog (won't render at
+                # desks unless seats free up, but still surface in Studio)
+                try:
+                    from buyer_cards import list_available
+                    for c in list_available():
+                        if c.get("slug") and c["slug"] not in seen:
+                            ordered.append(c); seen.add(c["slug"])
+                except Exception:
+                    pass
+                self._send_json(200, {"cards": ordered})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return

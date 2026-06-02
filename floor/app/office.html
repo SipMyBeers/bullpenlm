@@ -341,13 +341,29 @@ function kanbanLaneFor(stageId) {
   return { x: startCol, y: 10, w: 2, h: 2, idx };
 }
 
-// Fixed positions for buyer desks (the AI buyers sit at these tiles)
-const BUYER_DESKS = [
-  { tile: { x: 11, y: 5 }, slug: 'accenture-mainframe' },
-  { tile: { x: 11, y: 7 }, slug: 'allstate' },
-  { tile: { x: 13, y: 5 }, slug: 'reserved-3' },
-  { tile: { x: 13, y: 7 }, slug: 'reserved-4' },
+// Buyer-desk tile slots — whatever cards exist in state.buyer_cards
+// get seated here in order. Unfilled slots render as "+ Add a buyer"
+// affordances. Used to be hardcoded slugs which left desks empty until
+// matching cards happened to be seeded; the new approach means every
+// buyer card lands on the floor automatically.
+const DESK_TILES = [
+  { x: 11, y: 5 },
+  { x: 13, y: 5 },
+  { x: 11, y: 7 },
+  { x: 13, y: 7 },
 ];
+function currentDesks() {
+  // /cards now returns bullpen-specific cards FIRST in mtime order;
+  // honour that ordering and place them at the four visible desks.
+  const cards = (state.buyer_cards || []);
+  return DESK_TILES.map((tile, i) => {
+    const card = cards[i];
+    return card ? { tile, slug: card.slug, card } : { tile, slug: `reserved-${i}`, card: null };
+  });
+}
+// Legacy alias kept so existing references (nearestBuyerDeskTo, render)
+// don't break. Recomputed lazily.
+let BUYER_DESKS = [];
 
 // Color hash from rep name → palette accent
 const PALETTE = ['#34d399','#a78bfa','#fb7185','#60a5fa','#fbbf24','#22d3ee','#f472b6','#34d399'];
@@ -964,8 +980,10 @@ function render() {
   svg.appendChild(bell);
 
   // ── 4. AI buyer pawns at their desks ──
+  // Recompute desk assignments from current buyer_cards every render.
+  BUYER_DESKS = currentDesks();
   for (const desk of BUYER_DESKS) {
-    const card = state.buyer_cards.find(c => c.slug === desk.slug);
+    const card = desk.card;
     if (!card && !desk.slug.startsWith('reserved-')) continue;
     // Reserved slot → "+ Add a buyer" affordance — clickable.
     if (desk.slug.startsWith('reserved-')) {
@@ -1360,6 +1378,41 @@ function addBuyerFromEmptyDesk(){
   );
 }
 
+// Default practice buyers — seeded automatically on first office load
+// for any bullpen so client desks are populated and the closer can walk
+// straight up to someone and press E to roleplay. Matched to Beers's
+// actual sales lanes (KillSesh + website work) so the training reps
+// transfer to real calls.
+const STARTER_BUYERS = [
+  { slug: 'killsesh-ciso', company: 'CISO at a regional insurer',
+    vertical: 'enterprise security',
+    persona: { name: 'Mark Adler', role: 'CISO',
+               tone: 'skeptical, time-poor, has seen 20 vendors this year',
+               decision_style: 'data-driven, wants proof of breach reduction' } },
+  { slug: 'webdev-smb-owner', company: 'Owner of a 12-person HVAC company',
+    vertical: 'web dev / SMB owner',
+    persona: { name: 'Dana Pruitt', role: 'Owner',
+               tone: 'plain-spoken, allergic to jargon, cares about leads not features',
+               decision_style: 'asks what this will do for Google ranking three times' } },
+];
+async function autoSeedBuyers() {
+  const flagKey = `seeded-${BULLPEN}`;
+  try { if (localStorage.getItem(flagKey)) return; } catch(e) {}
+  if (state.buyer_cards.length) {
+    try { localStorage.setItem(flagKey, '1'); } catch(e) {}
+    return;
+  }
+  for (const sp of STARTER_BUYERS) {
+    try {
+      await fetch(`/api/b/${BULLPEN}/buyer-cards`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ ...sp, rep: REP, created_via: 'auto-seed-first-load' }),
+      });
+    } catch(e) {}
+  }
+  try { localStorage.setItem(flagKey, '1'); } catch(e) {}
+}
+
 async function loadAll() {
   try {
     const [pRes, dRes, cRes, pipeRes, dealsRes, liveRes] = await Promise.all([
@@ -1376,6 +1429,16 @@ async function loadAll() {
     state.pipeline = pipeRes && pipeRes.pipelines ? pipeRes.pipelines[0] : null;
     state.deals = dealsRes.deals || [];
     state.liveCalls = liveRes.calls || [];   // [{call_id, rep, buyer, kind, ...}]
+    // First-load: if no buyers exist, seed two starter personas so the
+    // client desks aren't empty and the closer can walk up + press E.
+    if (!state.buyer_cards.length) {
+      await autoSeedBuyers();
+      // Re-fetch cards so they render at desks immediately
+      try {
+        const c2 = await fetch(`/api/b/${BULLPEN}/cards`).then(r => r.ok ? r.json() : {cards:[]});
+        state.buyer_cards = c2.cards || [];
+      } catch(e) {}
+    }
     render();
   } catch (e) {
     console.warn('load error', e);
