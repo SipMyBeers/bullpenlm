@@ -1684,6 +1684,39 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Operator on localhost → cockpit (or host.html for first-run)
         # Closer arriving via tunnel → quickstart or spawn depending on
         # whether they've identified yet
+        # GET /api/me?email=X — global wallet + per-bullpen rep map +
+        # aggregated XP across every bullpen this email is linked to.
+        # Falls back to the host-self user if email is omitted.
+        if self.path.startswith("/api/me"):
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from closer_profiles import (load, email_hash, global_xp,
+                                              ensure as cp_ensure)
+                qs = parse_qs(urlparse(self.path).query)
+                email = (qs.get("email") or [None])[0]
+                if not email:
+                    # Default to the canonical host identity if present.
+                    # closer-profiles lives at DATA_DIR — inside the bundled
+                    # .app that's ~/Library/Application Support/BullpenLM/.
+                    profiles = DATA_DIR / "closer-profiles"
+                    if profiles.exists():
+                        first = next(iter(sorted(profiles.glob("*.json"))), None)
+                        if first:
+                            try:
+                                d = json.loads(first.read_text())
+                                email = d.get("email")
+                            except Exception:
+                                pass
+                if not email:
+                    self._send_json(200, {"error": "no_wallet"}); return
+                prof = load(email_hash(email)) or {}
+                gxp = global_xp(email)
+                out = {"email": email, "profile": prof, "global_xp": gxp}
+                self._send_json(200, out)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         if self.path == "/" or self.path.startswith("/?"):
             from urllib.parse import quote as _q
             # Localhost = the operator on their own machine. Route them

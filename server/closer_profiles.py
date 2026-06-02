@@ -201,6 +201,56 @@ def link_rep_to_email(bullpen: str, rep_slug: str, email: str) -> None:
     idx_path.write_text(json.dumps(idx, indent=2))
 
 
+def global_xp(email: str) -> dict:
+    """Aggregate XP across every bullpen this email is linked to.
+
+    Walks every bullpens/<slug>/rep-emails.json, finds the rep slug
+    for this email, then reads that bullpen's xp ledger. Returns
+    {money_xp, clout_xp, total_xp, level, bullpens:[{slug,rep,xp}]}.
+    """
+    from paths import DATA_DIR as _DD
+    out = {"email": email, "money_xp": 0, "clout_xp": 0, "total_xp": 0,
+           "level": 1, "bullpens": []}
+    bullpens_root = _DD / "bullpens"
+    if not bullpens_root.exists():
+        return out
+    try:
+        import xp as _xp
+    except Exception:
+        _xp = None
+    norm = _norm_email(email)
+    for bp_dir in bullpens_root.iterdir():
+        if not bp_dir.is_dir(): continue
+        idx_path = bp_dir / "rep-emails.json"
+        if not idx_path.exists(): continue
+        try:
+            idx = json.loads(idx_path.read_text())
+        except Exception:
+            continue
+        for rep_slug, e in idx.items():
+            if _norm_email(e) != norm: continue
+            m = c = 0
+            if _xp:
+                try:
+                    m = _xp.get_money_xp(bp_dir.name, rep_slug)
+                    c = _xp.get_clout_xp(bp_dir.name, rep_slug)
+                except Exception:
+                    pass
+            out["money_xp"] += m
+            out["clout_xp"] += c
+            out["bullpens"].append({"slug": bp_dir.name, "rep": rep_slug,
+                                      "money_xp": m, "clout_xp": c})
+            break
+    out["total_xp"] = out["money_xp"] + out["clout_xp"]
+    try:
+        from xp import level_for_xp, progress_to_next
+        out["level"] = level_for_xp(out["total_xp"])
+        out.update(progress_to_next(out["total_xp"]))
+    except Exception:
+        pass
+    return out
+
+
 def email_for_rep(bullpen: str, rep_slug: str) -> Optional[str]:
     idx_path = _index_path(bullpen)
     if not idx_path.exists():

@@ -74,8 +74,10 @@ def get(bullpen: str, name: str = "default") -> Optional[dict]:
 
 def list_pipelines(bullpen: str) -> list[dict]:
     d = _pipeline_dir(bullpen)
-    if not d.exists():
-        # Auto-create default on first access
+    # Auto-create default when dir is missing OR exists but empty —
+    # bullpens that completed setup before the auto-seed lands with an
+    # empty pipelines/ dir, which blocks deal advancement until fixed.
+    if not d.exists() or not any(d.glob("*.json")):
         ensure_default(bullpen)
     out = []
     for p in sorted(d.glob("*.json")):
