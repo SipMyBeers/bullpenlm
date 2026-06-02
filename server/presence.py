@@ -21,11 +21,26 @@ _presence: dict[tuple[str, str], dict] = {}
 
 
 def beat(bullpen: str, rep: str, page: Optional[str] = None,
-         status: Optional[str] = None, color: Optional[str] = None) -> dict:
-    """Record a heartbeat. Returns the freshly stored record."""
+         status: Optional[str] = None, color: Optional[str] = None,
+         pos: Optional[dict] = None) -> dict:
+    """Record a heartbeat. Returns the freshly stored record.
+
+    `pos` is an optional {"x": int, "y": int} broadcast from the office
+    walk-around so other clients can render this rep's pawn at the live
+    tile coordinate instead of the hash-derived default position.
+    """
     with _lock:
         now = datetime.datetime.now()
         prior = _presence.get((bullpen, rep), {})
+        # Sanitize pos: must be a small int pair inside the office grid
+        new_pos = prior.get("pos")
+        if isinstance(pos, dict):
+            try:
+                px, py = int(pos.get("x")), int(pos.get("y"))
+                if 0 <= px < 64 and 0 <= py < 64:
+                    new_pos = {"x": px, "y": py}
+            except (TypeError, ValueError):
+                pass
         rec = {
             "rep": rep,
             "bullpen": bullpen,
@@ -34,6 +49,7 @@ def beat(bullpen: str, rep: str, page: Optional[str] = None,
             "page": page or prior.get("page") or "floor",
             "status": status if status is not None else prior.get("status") or "",
             "color": color or prior.get("color"),
+            "pos": new_pos,
         }
         _presence[(bullpen, rep)] = rec
         return rec

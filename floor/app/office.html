@@ -34,7 +34,7 @@ header.hud > *{pointer-events:auto}
 header .meta{margin-left:auto;display:flex;gap:10px;align-items:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 header .meta .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;box-shadow:0 0 8px var(--accent)}
 header .meta .pill{padding:5px 10px;border:1px solid rgba(245,232,216,0.18);border-radius:16px;color:var(--text);background:rgba(10,7,3,0.55);backdrop-filter:blur(6px)}
-header .meta .hud-btn{cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;transition:border-color .12s,color .12s,transform .12s}
+header .meta .hud-btn{cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;transition:border-color .12s,color .12s,transform .12s}
 header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-1px)}
 
 .drop-result{position:fixed;bottom:24px;left:50%;transform:translate(-50%,80px);opacity:0;background:rgba(10,7,3,0.96);border:1px solid var(--accent);padding:12px 18px;border-radius:9px;font-family:var(--mono);font-size:12px;color:var(--accent-2);box-shadow:0 12px 30px rgba(0,0,0,0.5);transition:all .3s;z-index:200;max-width:90vw}
@@ -185,8 +185,16 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
 .pawn.you .pawn-label{fill:var(--gold)}
 .pawn.you{filter:drop-shadow(0 0 6px rgba(251,191,36,0.30))}
 .pawn.in-duo .pawn-top{filter:drop-shadow(0 0 4px var(--gold))}
-/* Smooth movement on the YOU pawn — animate the translate transform */
-.pawn.you{transition:transform .14s cubic-bezier(0.22,1,0.36,1)}
+/* Smooth movement on any pawn — animate the translate transform */
+.pawn{transition:transform .22s cubic-bezier(0.22,1,0.36,1)}
+/* Idle bob — gentle breathing so the world feels alive */
+@keyframes idle-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+.pawn .pawn-body, .pawn-body{transform-origin:center}
+.pawn .body-bob{animation:idle-bob 3.4s ease-in-out infinite}
+.pawn.you .body-bob{animation-duration:3.0s}
 /* Brief zone-enter pulse so walking into a new zone has feedback */
 @keyframes zone-pulse {
   0%   { filter: brightness(1.6) drop-shadow(0 0 6px var(--gold)); }
@@ -213,7 +221,7 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
     <button class="pill hud-btn" id="hud-bridge" title="Operator dashboard — roster, audit, intel cache">📊 Bridge</button>
     <button class="pill hud-btn" id="hud-host" title="Magic-link invites for closers">📨 Invite</button>
     <span class="pill" id="presence-pill"><span class="dot"></span><span id="presence-count">0</span> online</span>
-    <span id="bullpen-name" class="pill" title="On-disk slug for this bullpen">—</span>
+    <a href="/app/bullpen-picker.html" id="bullpen-name" class="pill hud-btn" title="Switch bullpens — pick a different floor">—</a>
   </div>
 </header>
 
@@ -395,6 +403,9 @@ function moveMyPawn(dx, dy) {
   setMyPos({ x: nx, y: ny });
   render();
   updateZoneTip();
+  // Coalesced position broadcast — peers see motion within ~1.5s
+  clearTimeout(window.__pos_beat);
+  window.__pos_beat = setTimeout(() => beatNow(), 1500);
   // Zone-entered pulse: if the YOU pawn crossed a zone boundary,
   // briefly flash the tile under it for game feedback.
   const newZone = zoneFor(nx, ny);
@@ -726,29 +737,34 @@ function pawnGroup(tx, ty, opts) {
                        transform: `translate(${cx}, ${cy})` });
   if (opts.onclick) g.addEventListener('click', opts.onclick);
 
-  // Shadow under the pawn
+  // Shadow under the pawn (stays still — doesn't bob with the body)
   g.appendChild(el('ellipse', { cx: 0, cy: 6, rx: 12, ry: 4, class: 'pawn-shadow' }));
 
-  // Body — iso prism with dark edges (palette per rep)
+  // Body — wrapped in a group that runs the idle-bob animation so the
+  // shadow stays put. Per-rep phase offset so the room doesn't move
+  // in unison.
+  const refName = opts.rep || opts.name || '?';
+  let bobHash = 0; for (const c of refName) bobHash = (bobHash * 31 + c.charCodeAt(0)) % 3400;
+  const body = el('g', { class: 'body-bob', style: `animation-delay:-${bobHash}ms` });
   const color = opts.color || '#34d399';
   const colorDim = darken(color, 0.35);
   const colorDarker = darken(color, 0.55);
-
   // Right face
-  g.appendChild(el('polygon', {
+  body.appendChild(el('polygon', {
     points: `0,-2 12,-10 12,2 0,10`,
     fill: colorDim, class: 'pawn-side'
   }));
   // Left face
-  g.appendChild(el('polygon', {
+  body.appendChild(el('polygon', {
     points: `0,-2 -12,-10 -12,2 0,10`,
     fill: colorDarker, class: 'pawn-side'
   }));
   // Top — head
-  g.appendChild(el('polygon', {
+  body.appendChild(el('polygon', {
     points: `0,-22 12,-10 0,-2 -12,-10`,
     fill: color, class: 'pawn-top'
   }));
+  g.appendChild(body);
 
   // Name label — gold pawn always reads "YOU"
   const rawLabel = opts.isYou ? 'YOU' : (opts.name || opts.rep || '?');
@@ -929,7 +945,14 @@ function render() {
     } else {
       // YOU pawn uses the walk-around position; everyone else uses
       // the deterministic hash-based slot.
-      tile = (p.rep === REP) ? getMyPos() : closerPosition(p.rep);
+      // Self uses local position; peers use their broadcast pos if
+      // present (real-time walk), falling back to deterministic hash
+      // so first-load before their first beat still renders sensibly.
+      tile = (p.rep === REP)
+        ? getMyPos()
+        : (p.pos && Number.isFinite(p.pos.x) && Number.isFinite(p.pos.y)
+            ? p.pos
+            : closerPosition(p.rep));
     }
     const inDuo = activeDuo && (p.rep === activeDuo.challenger || p.rep === activeDuo.opponent);
     const liveCall = (state.liveCalls || []).find(c => c.rep === p.rep);
@@ -1313,9 +1336,15 @@ function subscribeSSE() {
 function beat() {
   fetch(`/api/b/${BULLPEN}/presence/beat`, {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({rep: REP, page: 'office', status: 'in the office'}),
+    body: JSON.stringify({
+      rep: REP, page: 'office', status: 'in the office',
+      // Broadcast tile coords so peers can render this pawn live as it walks
+      pos: getMyPos(),
+    }),
   }).catch(() => {});
 }
+// Walking ticks a faster beat so peers see motion in ~1.5s instead of 25s
+function beatNow() { beat(); }
 
 loadAll();
 beat();

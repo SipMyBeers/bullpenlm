@@ -1658,23 +1658,25 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 except Exception:
                     bps = []
                 if bps:
-                    # If there's already a bullpen, check if a mode is set.
-                    # No mode = the operator never finished the start fork
-                    # → route them back through it. With mode = open cockpit.
-                    first_slug = (bps[0].get("slug") if isinstance(bps[0], dict) else bps[0]) if bps else None
-                    mode = None
-                    try:
-                        from bullpens import get_bullpen
-                        bp_cfg = get_bullpen(first_slug) or {}
-                        mode = (bp_cfg.get("profile") or {}).get("mode")
-                    except Exception: pass
-                    if mode == "solo" or mode == "team":
-                        # Both modes land in the office — the bullpen IS the
-                        # app. Team-mode operators get the cockpit data as an
-                        # in-world bridge overlay rather than its own page.
-                        target = f"/app/office.html?b={_q(first_slug or 'default')}&rep=self"
+                    # Multiple bullpens → show the picker so the operator
+                    # chooses which floor to walk into. One bullpen → drop
+                    # them straight in if mode is set.
+                    if len(bps) > 1:
+                        target = "/app/bullpen-picker.html"
                     else:
-                        target = f"/app/setup/start/?b={_q(first_slug or 'default')}"
+                        first_slug = (bps[0].get("slug") if isinstance(bps[0], dict) else bps[0])
+                        mode = None
+                        try:
+                            from bullpens import get_bullpen
+                            bp_cfg = get_bullpen(first_slug) or {}
+                            mode = (bp_cfg.get("profile") or {}).get("mode")
+                        except Exception: pass
+                        if mode == "solo" or mode == "team":
+                            # The bullpen IS the app. Team-mode operators
+                            # get cockpit data as the Bridge HUD overlay.
+                            target = f"/app/office.html?b={_q(first_slug or 'default')}&rep=self"
+                        else:
+                            target = f"/app/setup/start/?b={_q(first_slug or 'default')}"
                 else:
                     target = "/app/setup/start/?b=default"
             else:
@@ -4530,7 +4532,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                            rep=(req2.get("rep") or self._current_rep() or "self").strip(),
                            page=req2.get("page"),
                            status=req2.get("status"),
-                           color=req2.get("color"))
+                           color=req2.get("color"),
+                           pos=req2.get("pos"))
                 self._send_json(200, rec)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
