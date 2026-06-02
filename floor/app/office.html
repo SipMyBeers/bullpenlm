@@ -105,6 +105,11 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
 .qb-head .qb-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700}
 .qb-head .qb-count{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto}
 .qb-head .qb-caret{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:6px}
+.qb-tabs{display:flex;border-bottom:1px solid rgba(245,232,216,0.10)}
+.quest-board.collapsed .qb-tabs{display:none}
+.qb-tab{flex:1;padding:8px 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;font-weight:700;cursor:pointer;transition:color .12s,border-color .12s}
+.qb-tab:hover{color:var(--text)}
+.qb-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
 .qb-body{overflow-y:auto;padding:8px 12px 12px}
 .qb-group{margin-top:8px}
 .qb-group:first-child{margin-top:2px}
@@ -138,7 +143,11 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
 .zone-tip.show{transform:translate(-50%,0);opacity:1}
 
 /* ── Main layout ─────────────────────────────────────────────────── */
-.shell{position:absolute;top:0;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 320px;gap:0;padding-top:48px}
+.shell{position:absolute;top:0;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 320px;gap:0;padding-top:48px;transition:grid-template-columns .18s}
+.shell.no-side{grid-template-columns:1fr 0}
+.side-toggle{position:fixed;top:62px;right:8px;z-index:25;width:30px;height:30px;border-radius:50%;background:rgba(10,7,3,0.78);border:1px solid rgba(245,232,216,0.20);color:var(--muted);font-family:var(--mono);font-size:14px;cursor:pointer;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;transition:right .18s,color .12s,border-color .12s}
+.side-toggle:hover{color:var(--gold);border-color:var(--gold)}
+.side-toggle.open{right:328px}
 @media(max-width:760px){
   .shell{grid-template-columns:1fr;grid-template-rows:1fr auto;overflow-y:auto}
   .stage{overflow:visible}
@@ -269,6 +278,7 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
   <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
   <div class="meta">
     <button class="pill hud-btn" id="hud-help" title="What is this? How do I use it?">❔ Help</button>
+    <button class="pill hud-btn" id="hud-community" title="Discord, site, chat">💬 Community</button>
     <button class="pill hud-btn" id="hud-bridge" title="Operator dashboard — roster, audit, intel cache">📊 Bridge</button>
     <button class="pill hud-btn" id="hud-host" title="Magic-link invites for closers">📨 Invite</button>
     <span class="pill" id="presence-pill"><span class="dot"></span><span id="presence-count">0</span> online</span>
@@ -326,17 +336,24 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
   </div>
 </div>
 
-<!-- Quest board — top-left, collapsible group/personal objectives -->
+<!-- Quest board — top-left, collapsible. Personal vs Group tabs. -->
 <div class="quest-board" id="quest-board">
   <div class="qb-head" onclick="toggleQuestBoard()">
     <span class="qb-title">📜 Objectives</span>
     <span class="qb-count" id="qb-count"></span>
     <span class="qb-caret" id="qb-caret">▾</span>
   </div>
+  <div class="qb-tabs">
+    <button class="qb-tab active" id="qb-tab-personal" onclick="event.stopPropagation();setQuestTab('personal')">PERSONAL</button>
+    <button class="qb-tab" id="qb-tab-group" onclick="event.stopPropagation();setQuestTab('group')">GROUP</button>
+  </div>
   <div class="qb-body" id="qb-body">
     <div class="qb-empty">Loading objectives…</div>
   </div>
 </div>
+
+<!-- Side panel toggle — sits at the seam between iso world + side -->
+<button class="side-toggle" id="side-toggle" onclick="toggleSide()" title="Show/hide details panel">›</button>
 
 <!-- Floating legend — bottom-right, collapsed by default -->
 <div class="legend-float collapsed" id="legend-float">
@@ -414,6 +431,69 @@ function toggleLegend() {
   document.getElementById('lf-caret').textContent = lf.classList.contains('collapsed') ? '▸' : '▾';
 }
 
+// Side panel — collapsed by default, opens when you tap a pawn/deal.
+let _sideOpen = false;
+function setSideOpen(open) {
+  _sideOpen = open;
+  const shell = document.querySelector('.shell');
+  const tgl = document.getElementById('side-toggle');
+  shell.classList.toggle('no-side', !open);
+  tgl.classList.toggle('open', open);
+  tgl.textContent = open ? '›' : '‹';
+}
+function toggleSide() { setSideOpen(!_sideOpen); }
+
+// Personal vs Group quest tabs — personal = daily+weekly, group = raids
+let _questTab = 'personal';
+function setQuestTab(tab) {
+  _questTab = tab;
+  document.getElementById('qb-tab-personal').classList.toggle('active', tab === 'personal');
+  document.getElementById('qb-tab-group').classList.toggle('active', tab === 'group');
+  renderQuestBoard();
+}
+
+// Community modal — Discord + site + chat links
+function openCommunity() {
+  openWorldModal('Bullpen community', '💬 LINKS', (body) => {
+    const sub = document.createElement('p');
+    sub.style.cssText = 'font-family:var(--serif);font-style:italic;color:var(--muted);font-size:14px;line-height:1.5;margin:6px 0 18px';
+    sub.textContent = 'Other places to find the bullpen — for support, banter, launches, and to grab the latest install.';
+    body.appendChild(sub);
+    const links = [
+      { icon: '🌐', name: 'BullpenLM.com',
+        sub: 'Marketing site, download links, release notes',
+        url: 'https://bullpenlm.com' },
+      { icon: '💬', name: 'Discord — #alpha-waitlist',
+        sub: 'Live chat with founder + alpha closers. Drop bugs, post wins.',
+        url: 'https://discord.gg/bullpenlm' },
+      { icon: '📨', name: 'Invite a friend',
+        sub: 'Mint a magic link so a closer can join this bullpen',
+        action: () => { closeWorldModal(); document.getElementById('hud-host').click(); } },
+    ];
+    const list = document.createElement('div'); list.className = 'wm-list';
+    for (const lk of links) {
+      const row = document.createElement('div'); row.className = 'wm-row';
+      const ic = document.createElement('div');
+      ic.style.cssText = 'font-size:22px;line-height:1;width:30px;text-align:center;flex-shrink:0';
+      ic.textContent = lk.icon;
+      const txt = document.createElement('div'); txt.style.flex = '1';
+      const t = document.createElement('div'); t.className = 'wm-row-title'; t.textContent = lk.name;
+      const s = document.createElement('div'); s.className = 'wm-row-sub'; s.textContent = lk.sub;
+      txt.appendChild(t); txt.appendChild(s);
+      const r = document.createElement('div'); r.className = 'wm-row-r'; r.textContent = lk.url ? 'OPEN →' : 'GO →';
+      row.appendChild(ic); row.appendChild(txt); row.appendChild(r);
+      row.addEventListener('click', () => {
+        if (lk.action) { lk.action(); return; }
+        // Tauri webview honours window.open(url, '_blank') by opening
+        // in the system browser via the wry plugin (default behaviour).
+        try { window.open(lk.url, '_blank'); } catch(e) {}
+      });
+      list.appendChild(row);
+    }
+    body.appendChild(list);
+  });
+}
+
 function renderQuestBoard() {
   const body = document.getElementById('qb-body');
   while (body.firstChild) body.removeChild(body.firstChild);
@@ -421,18 +501,25 @@ function renderQuestBoard() {
   const daily = (q.daily || []);
   const weekly = (q.weekly || []);
   const raids = (q.raids || []);
+  // Open count covers BOTH tabs so the chip is honest at a glance
   const allOpen = [...daily, ...weekly].filter(x => !x.completed).length + raids.length;
   document.getElementById('qb-count').textContent = allOpen ? `${allOpen} open` : '';
-  if (!daily.length && !weekly.length && !raids.length) {
+
+  // Show personal or group depending on active tab
+  const groups = (_questTab === 'group')
+    ? [{ title: 'Group raids', items: raids }]
+    : [
+        { title: 'Today',     items: daily },
+        { title: 'This week', items: weekly },
+      ];
+  const hasAny = groups.some(g => g.items.length);
+  if (!hasAny) {
     const e = document.createElement('div'); e.className = 'qb-empty';
-    e.textContent = 'No objectives yet — quests appear here as you take actions.';
+    e.textContent = _questTab === 'group'
+      ? 'No group raids yet. Operators spin up team objectives from the Bridge.'
+      : 'No personal objectives yet.';
     body.appendChild(e); return;
   }
-  const groups = [
-    { title: 'Today',  items: daily },
-    { title: 'This week', items: weekly },
-    { title: 'Group raids', items: raids },
-  ];
   for (const grp of groups) {
     if (!grp.items.length) continue;
     const gh = document.createElement('div'); gh.className = 'qb-group';
@@ -471,6 +558,7 @@ function closeWelcome() {
   try { localStorage.setItem(`welcomed-${BULLPEN}`, '1'); } catch(e) {}
 }
 document.getElementById('hud-help').addEventListener('click', openWelcome);
+document.getElementById('hud-community').addEventListener('click', openCommunity);
 document.getElementById('welcome-close').addEventListener('click', closeWelcome);
 document.getElementById('welcome-go').addEventListener('click', closeWelcome);
 document.getElementById('welcome-overlay').addEventListener('click', (e) => {
@@ -531,16 +619,17 @@ function kanbanLaneFor(stageId) {
   return { x: startCol, y: 10, w: 2, h: 2, idx };
 }
 
-// Buyer-desk tile slots — whatever cards exist in state.buyer_cards
-// get seated here in order. Unfilled slots render as "+ Add a buyer"
-// affordances. Used to be hardcoded slugs which left desks empty until
-// matching cards happened to be seeded; the new approach means every
-// buyer card lands on the floor automatically.
+// Buyer-desk tile slots — two columns of desks running the right side
+// of the floor, like a real bullpen. Cards seat in order; unfilled
+// slots render as "+ Add a buyer" affordances. Expand here when you
+// want a denser bullpen (matched against the CLIENT DESKS zone bounds
+// in zoneFor — currently x=10..13, y=4..8).
 const DESK_TILES = [
-  { x: 11, y: 5 },
-  { x: 13, y: 5 },
-  { x: 11, y: 7 },
-  { x: 13, y: 7 },
+  { x: 11, y: 4 }, { x: 13, y: 4 },
+  { x: 11, y: 5 }, { x: 13, y: 5 },
+  { x: 11, y: 6 }, { x: 13, y: 6 },
+  { x: 11, y: 7 }, { x: 13, y: 7 },
+  { x: 11, y: 8 }, { x: 13, y: 8 },
 ];
 function currentDesks() {
   // /cards now returns bullpen-specific cards FIRST in mtime order;
@@ -1455,6 +1544,9 @@ function ringBell(deal) {
 
 // ── Side panel ────────────────────────────────────────────────────
 function setSide(title, sub, detailRows, actions) {
+  // Opening a card auto-expands the panel — no surprise behaviour, you
+  // tapped a pawn so the detail is what you wanted.
+  setSideOpen(true);
   document.getElementById('side-title').textContent = title;
   document.getElementById('side-sub').textContent = sub || '';
   const detail = document.getElementById('side-detail');
@@ -1733,6 +1825,9 @@ function beat() {
 // Walking ticks a faster beat so peers see motion in ~1.5s instead of 25s
 function beatNow() { beat(); }
 
+// Start with the side panel collapsed — opens automatically when a
+// pawn/desk/deal is clicked. Keeps the iso world unobstructed by default.
+setSideOpen(false);
 loadAll();
 beat();
 updateZoneTip();
