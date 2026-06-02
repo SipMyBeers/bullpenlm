@@ -472,7 +472,9 @@ function openCommunity() {
     ];
     const list = document.createElement('div'); list.className = 'wm-list';
     for (const lk of links) {
-      const row = document.createElement('div'); row.className = 'wm-row';
+      const row = document.createElement('div');
+      row.className = 'wm-row';
+      row.style.cursor = 'pointer';
       const ic = document.createElement('div');
       ic.style.cssText = 'font-size:22px;line-height:1;width:30px;text-align:center;flex-shrink:0';
       ic.textContent = lk.icon;
@@ -482,16 +484,37 @@ function openCommunity() {
       txt.appendChild(t); txt.appendChild(s);
       const r = document.createElement('div'); r.className = 'wm-row-r'; r.textContent = lk.url ? 'OPEN →' : 'GO →';
       row.appendChild(ic); row.appendChild(txt); row.appendChild(r);
-      row.addEventListener('click', () => {
+      row.addEventListener('click', (ev) => {
+        ev.preventDefault();
         if (lk.action) { lk.action(); return; }
-        // Tauri webview honours window.open(url, '_blank') by opening
-        // in the system browser via the wry plugin (default behaviour).
-        try { window.open(lk.url, '_blank'); } catch(e) {}
+        if (lk.url) openExternalUrl(lk.url);
       });
       list.appendChild(row);
     }
     body.appendChild(list);
   });
+}
+
+// Open an external URL in the system browser. window.open() is
+// unreliable in Tauri's WKWebView; the tauri-plugin-opener with
+// opener:allow-open-url capability is the path that actually works.
+function openExternalUrl(url) {
+  try {
+    const t = window.__TAURI__;
+    if (t && t.opener && typeof t.opener.openUrl === 'function') {
+      t.opener.openUrl(url);
+      return;
+    }
+    // Tauri 2 may also expose this via core.invoke
+    if (t && t.core && typeof t.core.invoke === 'function') {
+      t.core.invoke('plugin:opener|open_url', { url }).catch(() => {
+        window.open(url, '_blank');
+      });
+      return;
+    }
+  } catch(e) {}
+  // Fallback for plain-browser visits
+  window.open(url, '_blank');
 }
 
 function renderQuestBoard() {
@@ -1312,33 +1335,31 @@ function render() {
   for (const desk of BUYER_DESKS) {
     const card = desk.card;
     if (!card && !desk.slug.startsWith('reserved-')) continue;
-    // Reserved slot → "+ Add a buyer" affordance — clickable.
+    // Reserved slot → small dashed marker, click to seat a buyer.
+    // The big "add a buyer" floating text overlapped badly with 10
+    // desks crammed together; we now keep it minimal — a tiny dashed
+    // circle + faint "+" — and let the user click anywhere on it to
+    // open Studio for a new buyer.
     if (desk.slug.startsWith('reserved-')) {
       const c = iso(desk.tile.x, desk.tile.y);
       const cx = c.x + OFFSET_X, cy = c.y + OFFSET_Y;
-      // Dashed empty-slot marker + plus-glyph + click target
-      const g = el('g', {class:'empty-desk', style:'cursor:pointer'});
+      const g = el('g', { class: 'empty-desk', style: 'cursor:pointer;opacity:0.55' });
       g.addEventListener('click', addBuyerFromEmptyDesk);
-      // Dashed circle on the tile to indicate a slot
-      g.appendChild(el('ellipse', {
-        cx, cy: cy - 4, rx: 16, ry: 6,
-        fill: 'rgba(167,139,250,0.10)',
-        stroke: 'rgba(167,139,250,0.55)', 'stroke-width': '1.5',
-        'stroke-dasharray': '4,3',
+      g.addEventListener('mouseenter', () => g.style.opacity = '1');
+      g.addEventListener('mouseleave', () => g.style.opacity = '0.55');
+      // Small dashed ring on the tile
+      g.appendChild(el('circle', {
+        cx, cy: cy - 2, r: 6,
+        fill: 'rgba(167,139,250,0.06)',
+        stroke: 'rgba(167,139,250,0.55)', 'stroke-width': '1',
+        'stroke-dasharray': '2,2',
       }));
-      // Plus icon
+      // Subtle plus
       g.appendChild(el('text', {
-        x: cx, y: cy - 1, 'text-anchor': 'middle',
-        'font-family': 'JetBrains Mono, monospace', 'font-size': '14',
+        x: cx, y: cy + 2, 'text-anchor': 'middle',
+        'font-family': 'JetBrains Mono, monospace', 'font-size': '9',
         fill: 'var(--purple)', 'font-weight': '700',
         text: '+',
-      }));
-      // Label
-      g.appendChild(el('text', {
-        x: cx, y: cy + 12, 'text-anchor': 'middle',
-        class: 'zone-label',
-        style: 'fill:var(--purple);font-weight:600',
-        text: 'add a buyer'
       }));
       svg.appendChild(g);
       continue;
