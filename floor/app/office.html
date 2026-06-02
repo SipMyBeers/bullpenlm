@@ -96,6 +96,39 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
 .intake-card button{width:100%;padding:8px;background:var(--purple);color:#0a1a14;border:none;border-radius:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;cursor:pointer}
 .intake-card button:hover{transform:translateY(-1px)}
 
+/* ── Quest board (top-left, collapsible) ─────────────────── */
+.quest-board{position:fixed;top:64px;left:16px;width:280px;max-height:calc(100vh - 96px);background:rgba(10,7,3,0.82);border:1px solid rgba(245,232,216,0.15);border-radius:11px;box-shadow:0 6px 20px rgba(0,0,0,0.40);backdrop-filter:blur(8px);z-index:24;overflow:hidden;display:flex;flex-direction:column}
+.quest-board.collapsed{width:auto}
+.quest-board.collapsed .qb-body{display:none}
+.qb-head{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;border-bottom:1px solid rgba(245,232,216,0.10)}
+.quest-board.collapsed .qb-head{border-bottom:none;padding:7px 12px}
+.qb-head .qb-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.qb-head .qb-count{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto}
+.qb-head .qb-caret{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:6px}
+.qb-body{overflow-y:auto;padding:8px 12px 12px}
+.qb-group{margin-top:8px}
+.qb-group:first-child{margin-top:2px}
+.qb-group-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:6px 0 4px}
+.qb-quest{padding:7px 0;border-top:1px solid rgba(245,232,216,0.06)}
+.qb-quest:first-child{border-top:none}
+.qb-quest .qb-q-name{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--text);line-height:1.3}
+.qb-quest .qb-q-name.done{color:var(--accent-2);text-decoration:line-through}
+.qb-quest .qb-q-meta{display:flex;align-items:center;gap:8px;margin-top:3px;font-family:var(--mono);font-size:10px;color:var(--muted)}
+.qb-quest .qb-q-bar{flex:1;height:3px;background:rgba(245,232,216,0.10);border-radius:2px;overflow:hidden}
+.qb-quest .qb-q-bar > i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.qb-quest .qb-q-bar > i.done{background:var(--gold)}
+.qb-quest .qb-q-xp{color:var(--gold);font-weight:600}
+.qb-empty{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:12px;padding:14px 6px;text-align:center}
+
+/* ── Floating legend (bottom-right, collapsible) ──────────── */
+.legend-float{position:fixed;bottom:16px;right:16px;background:rgba(10,7,3,0.82);border:1px solid rgba(245,232,216,0.15);border-radius:10px;backdrop-filter:blur(8px);z-index:24;max-width:240px}
+.legend-float.collapsed .lf-body{display:none}
+.lf-head{display:flex;align-items:center;gap:7px;padding:7px 12px;cursor:pointer;user-select:none}
+.lf-head .lf-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.lf-head .lf-caret{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:6px}
+.lf-body{padding:4px 12px 10px;border-top:1px solid rgba(245,232,216,0.10);font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;line-height:1.9;color:var(--muted)}
+.lf-body .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px;vertical-align:middle}
+
 /* ── Walk-around controls HUD ──────────────────────────────── */
 .controls-hud{position:fixed;bottom:16px;left:16px;display:flex;flex-direction:column;gap:8px;z-index:25;pointer-events:none}
 .controls-hud .ch-row{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted)}
@@ -293,6 +326,36 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
   </div>
 </div>
 
+<!-- Quest board — top-left, collapsible group/personal objectives -->
+<div class="quest-board" id="quest-board">
+  <div class="qb-head" onclick="toggleQuestBoard()">
+    <span class="qb-title">📜 Objectives</span>
+    <span class="qb-count" id="qb-count"></span>
+    <span class="qb-caret" id="qb-caret">▾</span>
+  </div>
+  <div class="qb-body" id="qb-body">
+    <div class="qb-empty">Loading objectives…</div>
+  </div>
+</div>
+
+<!-- Floating legend — bottom-right, collapsed by default -->
+<div class="legend-float collapsed" id="legend-float">
+  <div class="lf-head" onclick="toggleLegend()">
+    <span class="lf-title">🗺 Legend</span>
+    <span class="lf-caret" id="lf-caret">▸</span>
+  </div>
+  <div class="lf-body">
+    <div><span class="swatch" style="background:#5b3c2a"></span> THE PIT — closers</div>
+    <div><span class="swatch" style="background:#7a5712;border:1px solid var(--gold)"></span> DUO RING — live 1v1s</div>
+    <div><span class="swatch" style="background:#2d3a4d"></span> CLIENT DESKS — AI buyers</div>
+    <div><span class="swatch" style="background:#4a1f3a"></span> THE BELL — deal-close ring</div>
+    <div><span class="swatch" style="background:#3a2d1f;border:1px solid var(--accent)"></span> KANBAN — pipeline</div>
+    <div><span class="swatch" style="background:var(--gold)"></span> YOU</div>
+    <div><span class="swatch" style="background:#34d399"></span> teammate</div>
+    <div><span class="swatch" style="background:#9ab1d9"></span> AI buyer</div>
+  </div>
+</div>
+
 <!-- Zone tip — appears when you walk into a zone with an available action -->
 <div class="zone-tip" id="zone-tip"></div>
 
@@ -312,23 +375,8 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
     <p class="sub" id="side-sub">Walk with W A S D. Press E to interact with the zone you're standing in. Click any pawn to inspect.</p>
     <div id="side-detail"></div>
 
-    <div style="margin-top:24px">
-      <h2>Legend</h2>
-      <div class="legend">
-        <div><span class="swatch zone-pit"></span> THE PIT — closers</div>
-        <div><span class="swatch zone-duo"></span> DUO RING — live 1v1s</div>
-        <div><span class="swatch zone-buyers"></span> CLIENT DESKS — AI buyers</div>
-        <div><span class="swatch zone-bell"></span> THE BELL — deal-close ring</div>
-        <div><span class="swatch zone-kanban"></span> KANBAN — deal pipeline</div>
-        <div><span class="swatch you"></span> YOU</div>
-        <div><span class="swatch closer"></span> teammate</div>
-        <div><span class="swatch buyer"></span> AI buyer</div>
-      </div>
-    </div>
-
-    <!-- Intake lives inside Studio now — walk to an empty desk and
-         click "+ Add a buyer", or open Studio from any buyer's card to
-         drop URLs / files / CSVs there. One surface, not three. -->
+    <!-- Intake lives inside Studio — walk to an empty desk or click
+         "🎨 Open in Studio" on any buyer. -->
     <div style="margin-top:18px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);line-height:1.7">
       Drop URLs · files · CSVs inside <span style="color:var(--purple)">Studio</span><br>
       Walk to an empty desk → +&nbsp;Add a buyer
@@ -354,6 +402,67 @@ document.getElementById('hud-host').addEventListener('click', () => openEmbed(
   `/app/host.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`,
   'Invite a closer', '📨 MAGIC LINK'
 ));
+// Quest board + legend collapsible toggles
+function toggleQuestBoard() {
+  const qb = document.getElementById('quest-board');
+  qb.classList.toggle('collapsed');
+  document.getElementById('qb-caret').textContent = qb.classList.contains('collapsed') ? '▸' : '▾';
+}
+function toggleLegend() {
+  const lf = document.getElementById('legend-float');
+  lf.classList.toggle('collapsed');
+  document.getElementById('lf-caret').textContent = lf.classList.contains('collapsed') ? '▸' : '▾';
+}
+
+function renderQuestBoard() {
+  const body = document.getElementById('qb-body');
+  while (body.firstChild) body.removeChild(body.firstChild);
+  const q = state.quests || {};
+  const daily = (q.daily || []);
+  const weekly = (q.weekly || []);
+  const raids = (q.raids || []);
+  const allOpen = [...daily, ...weekly].filter(x => !x.completed).length + raids.length;
+  document.getElementById('qb-count').textContent = allOpen ? `${allOpen} open` : '';
+  if (!daily.length && !weekly.length && !raids.length) {
+    const e = document.createElement('div'); e.className = 'qb-empty';
+    e.textContent = 'No objectives yet — quests appear here as you take actions.';
+    body.appendChild(e); return;
+  }
+  const groups = [
+    { title: 'Today',  items: daily },
+    { title: 'This week', items: weekly },
+    { title: 'Group raids', items: raids },
+  ];
+  for (const grp of groups) {
+    if (!grp.items.length) continue;
+    const gh = document.createElement('div'); gh.className = 'qb-group';
+    const head = document.createElement('div'); head.className = 'qb-group-h'; head.textContent = grp.title;
+    gh.appendChild(head);
+    for (const it of grp.items) {
+      const row = document.createElement('div'); row.className = 'qb-quest';
+      const name = document.createElement('div');
+      name.className = 'qb-q-name' + (it.completed ? ' done' : '');
+      name.textContent = (it.completed ? '✓ ' : '') + (it.name || it.id || 'Objective');
+      row.appendChild(name);
+      const meta = document.createElement('div'); meta.className = 'qb-q-meta';
+      const bar = document.createElement('div'); bar.className = 'qb-q-bar';
+      const inner = document.createElement('i');
+      const pct = Math.max(0, Math.min(1, it.pct || 0));
+      inner.style.width = (pct * 100) + '%';
+      if (it.completed) inner.classList.add('done');
+      bar.appendChild(inner);
+      const counts = document.createElement('span');
+      counts.textContent = `${it.current ?? 0}/${it.target ?? 1}`;
+      const xp = document.createElement('span'); xp.className = 'qb-q-xp';
+      xp.textContent = `+${it.xp_reward || 0} XP`;
+      meta.appendChild(bar); meta.appendChild(counts); meta.appendChild(xp);
+      row.appendChild(meta);
+      gh.appendChild(row);
+    }
+    body.appendChild(gh);
+  }
+}
+
 // Welcome overlay — opens on first office load per bullpen, summonable
 // anytime via the ❔ Help HUD pill. Esc closes too.
 function openWelcome() { document.getElementById('welcome-overlay').classList.add('show'); }
@@ -461,7 +570,24 @@ const state = {
   buyer_cards: [],    // [{slug, name, company, ...}]
   pipeline: null,     // {stages: [...]}
   deals: [],          // [{id, name, stage, amount, rep, contact_slug, ...}]
+  xp: { level: 1, xp: 0, pct_to_next: 0 },
+  quests: { daily: [], weekly: [], raids: [] },
 };
+
+// Title ladder — level → in-world rank shown above the YOU pawn.
+// Reads more like a video game progression than corporate titles.
+const TITLE_LADDER = [
+  [1, 'ROOKIE'], [3, 'GRINDER'], [5, 'CLOSER'],
+  [7, 'TOP DOG'], [9, 'KILLSHOT'], [12, 'WHALE HUNTER'],
+  [16, 'LEGEND'], [21, 'GHOST'],
+];
+function titleFor(level) {
+  let t = 'ROOKIE';
+  for (const [minLvl, name] of TITLE_LADDER) {
+    if (level >= minLvl) t = name;
+  }
+  return t;
+}
 
 // Deterministic placement: closer pawn position from rep hash
 function closerPosition(rep) {
@@ -942,6 +1068,37 @@ function pawnGroup(tx, ty, opts) {
     x: -labelW/2, y: 14, width: labelW, height: 14, rx: 3, class: 'pawn-label-bg'
   }));
   g.appendChild(el('text', { x: 0, y: 24, class: 'pawn-label', text: label }));
+
+  // Level + title floats above the head for the YOU pawn so the player
+  // sees their own progression in the world (not just the cockpit).
+  if (opts.isYou && state.xp && Number.isFinite(state.xp.level)) {
+    const lvl = state.xp.level;
+    const title = titleFor(lvl);
+    const tag = `LVL ${lvl} · ${title}`;
+    const tagW = tag.length * 5.6 + 12;
+    g.appendChild(el('rect', {
+      x: -tagW/2, y: -38, width: tagW, height: 13, rx: 2.5,
+      fill: 'rgba(10,7,3,0.92)', stroke: 'var(--gold)', 'stroke-width': '0.8',
+    }));
+    g.appendChild(el('text', {
+      x: 0, y: -29, 'text-anchor': 'middle',
+      'font-family': 'JetBrains Mono, monospace', 'font-size': '8',
+      'letter-spacing': '0.10em', fill: 'var(--gold)', 'font-weight': '700',
+      text: tag,
+    }));
+    // XP progress bar — only render if progress data is present
+    const pct = Math.max(0, Math.min(1, (state.xp.pct_to_next || 0)));
+    g.appendChild(el('rect', {
+      x: -tagW/2, y: -24, width: tagW, height: 2, rx: 1,
+      fill: 'rgba(245,232,216,0.10)',
+    }));
+    if (pct > 0) {
+      g.appendChild(el('rect', {
+        x: -tagW/2, y: -24, width: tagW * pct, height: 2, rx: 1,
+        fill: 'var(--gold)',
+      }));
+    }
+  }
 
   // ── Listen-in v2: pulsing 🔴 LIVE pip ───────────────────────────
   // Anchored above the pawn head; click forwards to /tunein.html with
@@ -1501,13 +1658,15 @@ async function autoSeedBuyers() {
 
 async function loadAll() {
   try {
-    const [pRes, dRes, cRes, pipeRes, dealsRes, liveRes] = await Promise.all([
+    const [pRes, dRes, cRes, pipeRes, dealsRes, liveRes, xpRes, qRes] = await Promise.all([
       fetch(`/api/b/${BULLPEN}/presence`).then(r => r.json()).catch(() => ({online:[]})),
       fetch(`/api/b/${BULLPEN}/duos`).then(r => r.json()).catch(() => ({duos:[]})),
       fetch(`/api/b/${BULLPEN}/cards`).then(r => r.ok ? r.json() : {cards:[]}).catch(() => ({cards:[]})),
       fetch(`/api/b/${BULLPEN}/pipeline`).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(`/api/b/${BULLPEN}/deals`).then(r => r.ok ? r.json() : {deals:[]}).catch(() => ({deals:[]})),
       fetch(`/api/b/${BULLPEN}/live/active`).then(r => r.ok ? r.json() : {calls:[]}).catch(() => ({calls:[]})),
+      fetch(`/api/b/${BULLPEN}/xp/${encodeURIComponent(REP)}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/b/${BULLPEN}/quests?rep=${encodeURIComponent(REP)}`).then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
     state.presence = pRes.online || [];
     state.duos = Array.isArray(dRes) ? dRes : (dRes.duos || []);
@@ -1515,6 +1674,9 @@ async function loadAll() {
     state.pipeline = pipeRes && pipeRes.pipelines ? pipeRes.pipelines[0] : null;
     state.deals = dealsRes.deals || [];
     state.liveCalls = liveRes.calls || [];   // [{call_id, rep, buyer, kind, ...}]
+    if (xpRes) state.xp = xpRes;
+    if (qRes) state.quests = qRes;
+    renderQuestBoard();
     // First-load: if no buyers exist, seed two starter personas so the
     // client desks aren't empty and the closer can walk up + press E.
     if (!state.buyer_cards.length) {
