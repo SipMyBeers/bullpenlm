@@ -37,6 +37,22 @@ header .meta .pill{padding:5px 10px;border:1px solid rgba(245,232,216,0.18);bord
 header .meta .hud-btn{cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;transition:border-color .12s,color .12s,transform .12s}
 header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-1px)}
 
+/* ── Mode tabs (top center): ARENA · FLOOR · OUTREACH ────── */
+.mode-tabs{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:31;display:flex;gap:2px;padding:4px;background:rgba(10,7,3,0.75);border:1px solid rgba(245,232,216,0.14);border-radius:11px;backdrop-filter:blur(10px)}
+.mode-tabs button{padding:6px 14px;background:none;border:none;border-radius:7px;color:var(--muted);font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:background .12s,color .12s}
+.mode-tabs button:hover{color:var(--text)}
+.mode-tabs button.active{background:var(--gold);color:#0a1a14}
+
+/* When a non-arena mode is active, hide the iso world + show the
+   full-bleed mode panel. Quest board / HUD / community / legend stay. */
+body.mode-floor .stage, body.mode-outreach .stage,
+body.mode-floor .side, body.mode-outreach .side { display:none }
+body.mode-arena #mode-panel { display:none }
+#mode-panel{position:absolute;top:48px;left:0;right:0;bottom:0;display:none;flex-direction:column;background:radial-gradient(ellipse at 50% 0%,var(--bg-2),var(--bg-1) 70%,var(--bg-0) 100%)}
+body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }
+#mode-panel iframe{flex:1;width:100%;border:none;background:transparent}
+#mode-panel .mp-empty{flex:1;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;padding:40px}
+
 .drop-result{position:fixed;bottom:24px;left:50%;transform:translate(-50%,80px);opacity:0;background:rgba(10,7,3,0.96);border:1px solid var(--accent);padding:12px 18px;border-radius:9px;font-family:var(--mono);font-size:12px;color:var(--accent-2);box-shadow:0 12px 30px rgba(0,0,0,0.5);transition:all .3s;z-index:200;max-width:90vw}
 .drop-result.show{transform:translate(-50%,0);opacity:1}
 .drop-result.err{border-color:var(--danger);color:var(--danger)}
@@ -273,6 +289,16 @@ header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform
 <script src="/app/tutorial.js" defer></script>
 </head>
 <body>
+<!-- Mode tabs: ARENA (training) · FLOOR (real grind) · OUTREACH (marketing) -->
+<nav class="mode-tabs" id="mode-tabs">
+  <button data-mode="arena" class="active">🛡 Arena</button>
+  <button data-mode="floor">💼 Floor</button>
+  <button data-mode="outreach">📡 Outreach</button>
+</nav>
+
+<!-- Mode panel — filled by JS for floor/outreach -->
+<div id="mode-panel"></div>
+
 <!-- Minimal in-game HUD — no page nav. The office IS the bullpen. -->
 <header class="hud">
   <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
@@ -571,6 +597,48 @@ function renderQuestBoard() {
     }
     body.appendChild(gh);
   }
+}
+
+// ── Mode tabs: ARENA / FLOOR / OUTREACH ──────────────────────────
+// Lightweight tabs that swap which top-level surface is showing.
+//   arena    → the iso world (current default)
+//   floor    → full-bleed embed of /app/deals.html (real CRM)
+//   outreach → full-bleed embed of /app/marketing.html (top of funnel)
+// The HUD pills, quest board, community modal, side panel all persist
+// across modes — these are scope-of-bullpen, not scope-of-mode.
+function setMode(mode) {
+  if (!['arena','floor','outreach'].includes(mode)) mode = 'arena';
+  document.body.classList.remove('mode-arena','mode-floor','mode-outreach');
+  document.body.classList.add('mode-' + mode);
+  try { localStorage.setItem(`mode-${BULLPEN}`, mode); } catch(e) {}
+  for (const btn of document.querySelectorAll('#mode-tabs button')) {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  }
+  const panel = document.getElementById('mode-panel');
+  if (mode === 'arena') {
+    // iso shell handles itself; clear the panel so memory isn't pinned
+    while (panel.firstChild) panel.removeChild(panel.firstChild);
+  } else if (mode === 'floor') {
+    if (!panel.dataset.mode || panel.dataset.mode !== 'floor') {
+      while (panel.firstChild) panel.removeChild(panel.firstChild);
+      const f = document.createElement('iframe');
+      f.src = `/app/deals.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&embed=1`;
+      f.allow = 'microphone; clipboard-read; clipboard-write';
+      panel.appendChild(f);
+      panel.dataset.mode = 'floor';
+    }
+  } else if (mode === 'outreach') {
+    if (!panel.dataset.mode || panel.dataset.mode !== 'outreach') {
+      while (panel.firstChild) panel.removeChild(panel.firstChild);
+      const f = document.createElement('iframe');
+      f.src = `/app/marketing.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&embed=1`;
+      panel.appendChild(f);
+      panel.dataset.mode = 'outreach';
+    }
+  }
+}
+for (const btn of document.querySelectorAll('#mode-tabs button')) {
+  btn.addEventListener('click', () => setMode(btn.dataset.mode));
 }
 
 // Welcome overlay — opens on first office load per bullpen, summonable
@@ -1858,6 +1926,9 @@ function beatNow() { beat(); }
 // Start with the side panel collapsed — opens automatically when a
 // pawn/desk/deal is clicked. Keeps the iso world unobstructed by default.
 setSideOpen(false);
+// Restore the last-used mode for this bullpen (default arena)
+try { setMode(localStorage.getItem(`mode-${BULLPEN}`) || 'arena'); }
+catch(e) { setMode('arena'); }
 loadAll();
 beat();
 updateZoneTip();

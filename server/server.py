@@ -3769,6 +3769,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     self._send_json(400, result)
                     return
                 rep = result["rep"]
+                # Auto-mint global wallet if the closer supplied an email
+                # at redeem time. Lets per-bullpen XP roll up to the same
+                # cross-bullpen identity for every floor they join.
+                email = (req.get("email") or "").strip()
+                if email:
+                    try:
+                        from closer_profiles import (ensure as cp_ensure,
+                                                       link_rep_to_email)
+                        display = (req.get("display_name") or rep).strip()
+                        bullpen = (result.get("bullpen") or "").strip()
+                        cp_ensure(email, display_name=display, rep_slug=rep)
+                        if bullpen:
+                            link_rep_to_email(bullpen, rep, email)
+                    except Exception:
+                        pass
                 cookie_val = make_session_cookie(rep)
                 # Set-Cookie: 30-day expiry, HttpOnly, secure-if-https,
                 # Lax SameSite so the cookie survives the redirect to /floor
