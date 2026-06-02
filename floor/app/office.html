@@ -84,6 +84,37 @@ body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }
 .wm-kanban .wm-card:hover{background:rgba(167,139,250,0.18)}
 .wm-kanban .wm-card .wm-card-amt{color:var(--gold);font-weight:700;display:block;margin-top:3px}
 
+/* ── Fanfare — full-screen celebration on deal_closed_won ─────── */
+.fanfare{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:90;pointer-events:none}
+.fanfare.show{display:flex}
+.fanfare .ff-burst{position:absolute;width:200vmax;height:200vmax;border-radius:50%;background:radial-gradient(circle,rgba(251,191,36,0.32) 0%,rgba(251,191,36,0.10) 25%,transparent 60%);transform:scale(0);animation:ff-burst 1.2s ease-out forwards}
+@keyframes ff-burst {
+  0%   { transform:scale(0);   opacity:0; }
+  20%  { transform:scale(0.3); opacity:1; }
+  100% { transform:scale(1);   opacity:0; }
+}
+.fanfare .ff-card{position:relative;text-align:center;animation:ff-rise 2.4s cubic-bezier(0.22,1,0.36,1) forwards}
+@keyframes ff-rise {
+  0%   { transform:translateY(60px) scale(0.6); opacity:0; }
+  15%  { transform:translateY(0)    scale(1.05); opacity:1; }
+  85%  { transform:translateY(0)    scale(1);    opacity:1; }
+  100% { transform:translateY(-30px) scale(1);   opacity:0; }
+}
+.fanfare .ff-eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;text-shadow:0 0 12px rgba(251,191,36,0.7)}
+.fanfare .ff-title{font-family:var(--display);font-size:90px;letter-spacing:-.02em;text-transform:uppercase;color:var(--gold);line-height:.95;text-shadow:0 0 24px rgba(251,191,36,0.8), 0 8px 30px rgba(0,0,0,0.7)}
+.fanfare .ff-amount{font-family:var(--display);font-size:64px;color:var(--accent-2);margin-top:6px;text-shadow:0 0 18px rgba(110,231,183,0.7), 0 6px 24px rgba(0,0,0,0.6)}
+.fanfare .ff-sub{font-family:var(--serif);font-style:italic;font-size:20px;color:var(--text);margin-top:14px;opacity:0.92}
+.fanfare .ff-xp{display:inline-block;margin-top:18px;padding:8px 18px;background:rgba(10,7,3,0.85);border:2px solid var(--gold);border-radius:9px;font-family:var(--mono);font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700}
+
+/* +XP toast — small floater above the YOU pawn after any XP-firing event */
+.xp-toast{position:fixed;left:50%;top:55%;transform:translateX(-50%) translateY(0);padding:10px 18px;background:rgba(10,7,3,0.92);border:1.5px solid var(--gold);border-radius:8px;font-family:var(--mono);font-size:15px;letter-spacing:.14em;color:var(--gold);font-weight:700;text-transform:uppercase;box-shadow:0 8px 24px rgba(251,191,36,0.4);z-index:35;opacity:0;animation:xp-toast 2.2s ease-out forwards;pointer-events:none}
+@keyframes xp-toast {
+  0%   { opacity:0; transform:translateX(-50%) translateY(20px); }
+  15%  { opacity:1; transform:translateX(-50%) translateY(0); }
+  80%  { opacity:1; transform:translateX(-50%) translateY(-40px); }
+  100% { opacity:0; transform:translateX(-50%) translateY(-80px); }
+}
+
 /* ── Welcome / "What is this?" overlay ─────────────────────────── */
 .welcome-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,4,16,0.84);backdrop-filter:blur(10px);z-index:80;padding:24px}
 .welcome-overlay.show{display:flex}
@@ -311,6 +342,18 @@ body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }
     <a href="/app/bullpen-picker.html" id="bullpen-name" class="pill hud-btn" title="Switch bullpens — pick a different floor">—</a>
   </div>
 </header>
+
+<!-- Fanfare — full-screen celebration on deal_closed_won -->
+<div class="fanfare" id="fanfare">
+  <div class="ff-burst"></div>
+  <div class="ff-card">
+    <div class="ff-eyebrow">🔔 CLOSED · WON</div>
+    <div class="ff-title" id="ff-rep">CLOSED</div>
+    <div class="ff-amount" id="ff-amount">$0</div>
+    <div class="ff-sub" id="ff-sub">vs. The Boss</div>
+    <div class="ff-xp" id="ff-xp">+0 XP</div>
+  </div>
+</div>
 
 <!-- Welcome / "What is this?" — opens on first load, summonable via ❔ Help -->
 <div class="welcome-overlay" id="welcome-overlay">
@@ -1883,6 +1926,27 @@ async function loadAll() {
   }
 }
 
+function fireFanfare(rep, amount, prospect, xpGained) {
+  const fan = document.getElementById('fanfare');
+  if (!fan) return;
+  document.getElementById('ff-rep').textContent = (rep || 'YOU').toUpperCase();
+  document.getElementById('ff-amount').textContent = amount ? formatAmount(amount) : 'WON';
+  document.getElementById('ff-sub').textContent = prospect ? `vs. ${prospect}` : 'vs. the boss';
+  document.getElementById('ff-xp').textContent = `+${xpGained || 250} XP · LVL ${state.xp?.level || 1}`;
+  fan.classList.remove('show');
+  void fan.offsetWidth;  // restart animation
+  fan.classList.add('show');
+  setTimeout(() => fan.classList.remove('show'), 2600);
+}
+
+function fireXpToast(amount, label) {
+  const t = document.createElement('div');
+  t.className = 'xp-toast';
+  t.textContent = `+${amount} XP · ${label || 'progress'}`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2400);
+}
+
 function subscribeSSE() {
   try {
     const es = new EventSource(`/api/b/${BULLPEN}/stream`);
@@ -1894,9 +1958,33 @@ function subscribeSSE() {
           const deal = (event.payload && event.payload.deal) || event.payload || {};
           deal.rep = event.actor;
           ringBell(deal);
+          // Full-screen fanfare so wins are felt, not just logged
+          const prevXp = state.xp?.xp || 0;
+          fetch(`/api/b/${BULLPEN}/xp/${encodeURIComponent(REP)}`).then(r => r.json())
+            .then(d => {
+              const gained = (d.xp || 0) - prevXp;
+              state.xp = d;
+              fireFanfare(event.actor, deal.amount || event.payload?.amount,
+                            deal.prospect_slug || event.payload?.prospect,
+                            gained > 0 ? gained : 250);
+            }).catch(() => {
+              fireFanfare(event.actor, event.payload?.amount, event.payload?.prospect, 250);
+            });
           clearTimeout(window.__office_reload);
           window.__office_reload = setTimeout(loadAll, 800);
           return;
+        }
+        // Smaller XP gains (stage moves, quest progress) get a toast
+        if (['deal_stage_moved','deal_created','quest_completed',
+              'drill_passed','rag_source_ingested'].includes(event.kind)) {
+          const prevXp = state.xp?.xp || 0;
+          fetch(`/api/b/${BULLPEN}/xp/${encodeURIComponent(REP)}`).then(r => r.json())
+            .then(d => {
+              const gained = (d.xp || 0) - prevXp;
+              state.xp = d;
+              if (gained > 0) fireXpToast(gained, event.kind.replace(/_/g, ' '));
+              render(); // re-render YOU label / LVL pill with new XP
+            }).catch(() => {});
         }
         if (['presence_change','duo_challenged','duo_accepted','duo_ended','duo_msg',
              'deal_created','deal_stage_moved','deal_amount','deal_closed_lost'].includes(event.kind)) {
