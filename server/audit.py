@@ -137,6 +137,14 @@ def append(bullpen: str, actor_rep: Optional[str] = None, kind: Optional[str] = 
     except Exception:
         pass
 
+    # Mobile push fan-out (APNs) — notifies operators tracking this bullpen
+    # from the iOS app. No-op if no devices registered or no APNs key set.
+    try:
+        from push import on_audit_event as _push_hook
+        _push_hook(bullpen, entry)
+    except Exception:
+        pass
+
     return entry
 
 

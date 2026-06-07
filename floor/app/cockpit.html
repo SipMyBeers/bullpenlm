@@ -72,6 +72,17 @@ h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transfor
 .panel h2 a{color:var(--gold);text-decoration:none;font-size:10px;letter-spacing:.14em}
 .panel h2 a:hover{text-decoration:underline}
 
+/* ── Multi-axis lane leaderboard ─────────────────────────── */
+.lane-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.lane-card{padding:10px 12px;background:rgba(245,232,216,0.04);border:1px solid rgba(245,232,216,0.10);border-radius:9px}
+.lane-card .lc-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.lane-card .lc-icon{font-size:16px;line-height:1}
+.lane-card .lc-name{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);flex:1}
+.lane-card .lc-rep{font-family:var(--display);font-size:18px;letter-spacing:-.005em;text-transform:uppercase;color:var(--gold);line-height:1}
+.lane-card .lc-score{font-family:var(--mono);font-size:11px;color:var(--accent-2);margin-top:3px;letter-spacing:.06em}
+.lane-card.empty .lc-rep{color:var(--dim);font-family:var(--serif);font-style:italic;font-size:14px;text-transform:none}
+.lane-card.empty .lc-score{color:var(--dim)}
+
 /* ── XP leaderboard ──────────────────────────────────────── */
 .leaderboard{display:flex;gap:14px;flex-wrap:wrap}
 .leader-col{flex:1;min-width:240px}
@@ -154,14 +165,13 @@ h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transfor
 
   <!-- Back-to-the-bullpen primary action — always at top -->
   <a href="/app/office.html" id="back-to-office" class="back-to-office">
-    <span class="bto-icon">🏢</span>
     <span class="bto-text">
       <span class="bto-title">← Back to the bullpen</span>
       <span class="bto-sub">Walk the floor. Talk to buyers. Run calls.</span>
     </span>
   </a>
 
-  <div class="bridge-eyebrow">⚙ OPERATOR · COMMAND BRIDGE</div>
+  <div class="bridge-eyebrow">OPERATOR · COMMAND BRIDGE</div>
   <h1>Command bridge</h1>
   <p class="lede">Every system. Every closer. Every signal. Live — no refresh needed.</p>
 
@@ -180,34 +190,39 @@ h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transfor
   <div class="shell">
     <div>
       <div class="panel">
-        <h2>🏆 ROSTER STANDINGS <a href="/app/profile.html">view profiles →</a></h2>
+        <h2>ROSTER STANDINGS <a href="/app/profile.html">view profiles →</a></h2>
         <div class="leaderboard" id="leaderboard"></div>
       </div>
 
       <div class="panel">
-        <h2>👥 CREW MANIFEST <span class="count" id="closer-count">0</span></h2>
+        <h2>TOP IN EACH LANE — multi-axis ranking</h2>
+        <div id="lane-leaderboard"></div>
+      </div>
+
+      <div class="panel">
+        <h2>CREW MANIFEST <span class="count" id="closer-count">0</span></h2>
         <div id="closer-list"></div>
       </div>
 
       <div class="panel">
-        <h2>⏰ INCOMING CADENCE STEPS <a href="/app/cadences.html">all →</a></h2>
+        <h2>INCOMING CADENCE STEPS <a href="/app/cadences.html">all →</a></h2>
         <div id="cadence-list"></div>
       </div>
     </div>
 
     <div>
       <div class="panel">
-        <h2>🟢 CREW ON DECK <span class="count" id="presence-count">0</span></h2>
+        <h2>CREW ON DECK <span class="count" id="presence-count">0</span></h2>
         <div class="presence-chips" id="presence-chips"></div>
       </div>
 
       <div class="panel">
-        <h2>📊 INTEL CACHE</h2>
+        <h2>INTEL CACHE</h2>
         <div id="rag-stats"></div>
       </div>
 
       <div class="panel">
-        <h2>📡 LIVE TRANSMISSIONS</h2>
+        <h2>LIVE TRANSMISSIONS</h2>
         <div class="audit-feed" id="audit-feed"></div>
       </div>
     </div>
@@ -283,7 +298,7 @@ function renderBanner(d){
   } else if(ir.missing && ir.missing.length){
     const isOnlyEntity = ir.missing.length <= 2 && ir.missing.every(m => ['ollama','tunnel'].includes(m));
     banner.classList.add(isOnlyEntity ? 'partial' : 'broken');
-    title.textContent = `⚠ ${ir.missing.length} system${ir.missing.length>1?'s':''} flagged`;
+    title.textContent = `${ir.missing.length} system${ir.missing.length>1?'s':''} flagged`;
     blockers.textContent = ir.missing.join(' · ');
     pill.textContent = 'STAND-BY';
   } else {
@@ -303,16 +318,15 @@ function renderTiles(d){
   const mk = d.marketing || {total:{posts:0,clicks:0,leads:0,deals:0}};
   const cad = d.cadence || {active:0,completed:0,due_72h:[]};
   const tiles = [
-    {label:'💰 MONEY-XP TOTAL', value: totalMoney, meta: 'sum across reps', icon:'💰'},
-    {label:'⚡ CLOUT-XP TOTAL', value: totalClout, meta: 'study + social', icon:'⚡'},
-    {label:'📢 MARKETING CLICKS', value: (mk.total||{}).clicks || 0, meta: `${(mk.total||{}).leads||0} leads · ${(mk.total||{}).deals||0} deals`, icon:'📢'},
-    {label:'⏰ CADENCE DUE 72H', value: (cad.due_72h||[]).length, meta: `${cad.active} active · ${cad.completed} done`, icon:'⏰'},
+    {label:'MONEY-XP TOTAL', value: totalMoney, meta: 'sum across reps'},
+    {label:'CLOUT-XP TOTAL', value: totalClout, meta: 'study + social'},
+    {label:'MARKETING CLICKS', value: (mk.total||{}).clicks || 0, meta: `${(mk.total||{}).leads||0} leads · ${(mk.total||{}).deals||0} deals`},
+    {label:'CADENCE DUE 72H', value: (cad.due_72h||[]).length, meta: `${cad.active} active · ${cad.completed} done`},
   ];
   for(const t of tiles){
     const tile = el('div', {class:'tile'});
     const lab = el('div', {class:'label'});
-    lab.appendChild(el('span', {class:'icon', text:t.icon}));
-    lab.appendChild(el('span', {text:t.label.replace(/^[^A-Z]+/, '')}));
+    lab.appendChild(el('span', {text:t.label}));
     tile.appendChild(lab);
     tile.appendChild(el('div', {class:'value', text:String(t.value)}));
     tile.appendChild(el('div', {class:'meta', text:t.meta}));
@@ -326,7 +340,7 @@ function renderLeaderboard(d){
   const reps = (d.xp || {}).reps || [];
 
   const money = el('div', {class:'leader-col money'});
-  money.appendChild(el('h3', {text:'💰 MONEY-XP (closed deals + cert tier + outcomes)'}));
+  money.appendChild(el('h3', {text:'MONEY-XP (closed deals + cert tier + outcomes)'}));
   const byMoney = [...reps].sort((a,b) => (b.money_xp||0) - (a.money_xp||0)).slice(0, 8);
   if(!byMoney.length){
     money.appendChild(el('div', {class:'empty', text:'No XP yet.'}));
@@ -342,7 +356,7 @@ function renderLeaderboard(d){
   wrap.appendChild(money);
 
   const clout = el('div', {class:'leader-col clout'});
-  clout.appendChild(el('h3', {text:'⚡ CLOUT-XP (study + social + cadence)'}));
+  clout.appendChild(el('h3', {text:'CLOUT-XP (study + social + cadence)'}));
   const byClout = [...reps].sort((a,b) => (b.clout_xp||0) - (a.clout_xp||0)).slice(0, 8);
   if(!byClout.length){
     clout.appendChild(el('div', {class:'empty', text:'No XP yet.'}));
@@ -351,7 +365,7 @@ function renderLeaderboard(d){
       const row = el('div', {class:'lb-row'});
       row.appendChild(el('span', {class: 'rank' + (i===0?' gold':''), text: `#${i+1}`}));
       row.appendChild(el('span', {class:'rep', text: r.rep || '?'}));
-      row.appendChild(el('span', {class:'val', text: `⚡${r.clout_xp || 0}`}));
+      row.appendChild(el('span', {class:'val', text: `${r.clout_xp || 0}`}));
       clout.appendChild(row);
     });
   }
@@ -377,7 +391,7 @@ function renderClosers(d){
     } else {
       const m = (c.missing || []).slice(0,2).map(x => x.replace(/_/g,' ').replace(/^closer /, '').replace(/^not /, '')).join(' · ');
       row.appendChild(el('span', {class:'missing', text: m || 'gated'}));
-      row.appendChild(el('span', {class:'pill gated', text:'⛔ GATED'}));
+      row.appendChild(el('span', {class:'pill gated', text:'GATED'}));
     }
     wrap.appendChild(row);
   }

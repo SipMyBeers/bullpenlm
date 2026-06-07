@@ -107,7 +107,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 }
 .bell .card{padding:50px 70px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border-radius:20px;border:4px solid #0a1a14;box-shadow:0 20px 80px rgba(0,0,0,0.6);text-align:center;animation:bellSlam .35s cubic-bezier(.34,1.56,.64,1)}
 @keyframes bellSlam{0%{transform:scale(.3) rotate(-12deg)}100%{transform:scale(1) rotate(0)}}
-.bell .card .emoji{font-size:64px;line-height:1;margin-bottom:8px}
+.bell .card .emoji{font-family:var(--display);font-size:28px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#0a1a14;line-height:1;margin-bottom:8px}
 .bell .card .who{font-family:var(--display);font-size:64px;color:#0a1a14;text-transform:uppercase;letter-spacing:-.02em;line-height:1}
 .bell .card .what{font-family:var(--display);font-size:44px;color:#0a1a14;margin-top:6px;letter-spacing:-.01em;text-transform:uppercase}
 .bell .card .amt{font-family:var(--display);font-size:90px;color:#0a1a14;margin-top:14px;letter-spacing:-.03em;line-height:1}
@@ -176,7 +176,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 
 <div class="bell" id="bell">
   <div class="card">
-    <div class="emoji">🔔</div>
+    <div class="emoji">RING THE BELL</div>
     <div class="who" id="bell-who">—</div>
     <div class="what">CLOSED</div>
     <div class="amt" id="bell-amt">$0</div>
@@ -416,7 +416,7 @@ const VISIBLE_KINDS = new Set([
   'raid_authored','raid_joined','raid_left','sprint_started','duel_challenged',
   'duel_accepted','call','claim','reaction',
 ]);
-const REACTION_EMOJIS = ['🔥','👏','💰','🏆','🎯'];
+const REACTION_EMOJIS = ['FIRE','CLAP','CASH','WIN','NICE'];
 
 function describe(e){
   const p = e.payload || {};

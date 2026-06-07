@@ -1,0 +1,50 @@
+name: BullpenLM
+options:
+  bundleIdPrefix: com.beerslabs
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: FS29CS8T5Q
+    CODE_SIGN_STYLE: Automatic
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    ENABLE_BITCODE: "NO"
+
+targets:
+  BullpenLM:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: BullpenLM
+        excludes:
+          - "**/*.md"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.beerslabs.bullpenlm
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+    entitlements:
+      path: BullpenLM/BullpenLM.entitlements
+      properties:
+        aps-environment: development
+    info:
+      path: BullpenLM/Info.plist
+      properties:
+        CFBundleDisplayName: Bullpen
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        UILaunchScreen:
+          UIColorName: LaunchBG
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIStatusBarStyle: UIStatusBarStyleLightContent
+        ITSAppUsesNonExemptEncryption: false
+        NSMicrophoneUsageDescription: "Bullpen uses your microphone for live voice role-play drills against AI buyers."
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: false

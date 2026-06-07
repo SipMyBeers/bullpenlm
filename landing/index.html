@@ -455,6 +455,22 @@
   .red-eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.32em;
     text-transform:uppercase; color:#f87171; margin-bottom:18px}
   .red-eyebrow::before{content:"●  "}
+
+  /* ── ink.css highlight accents (inlined — landing is a separate host
+     from /app, so we can't link /app/ink.css). Marker-highlight + accent
+     keyword styling lifted from the floor design system. ── */
+  .hl{position:relative; color:#fff; white-space:nowrap; padding:0 .04em;
+    background:linear-gradient(120deg, rgba(251,191,36,0.30) 0%, rgba(251,191,36,0.20) 100%);
+    box-shadow:inset 0 -0.46em 0 rgba(251,191,36,0.22);
+    border-radius:2px}
+  .hl.hl-mint{
+    background:linear-gradient(120deg, rgba(52,211,153,0.30) 0%, rgba(52,211,153,0.18) 100%);
+    box-shadow:inset 0 -0.46em 0 rgba(52,211,153,0.20)}
+  .kw{color:#fbbf24; font-weight:inherit}
+  .kw.kw-mint{color:var(--accent-2)}
+  .strike-on{position:relative; color:var(--muted)}
+  .strike-on::after{content:""; position:absolute; left:-2%; right:-2%; top:54%;
+    height:2px; background:#f87171; transform:rotate(-3deg)}
 </style>
 </head>
 <body>
@@ -470,7 +486,7 @@
     <a href="#team">Multiplayer</a>
     <a href="#demo">Live floor</a>
     <a href="https://github.com/SipMyBeers/bullpenlm" target="_blank" rel="noopener">GitHub</a>
-    <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener">💬 Discord</a>
+    <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener">Discord</a>
     <a href="https://github.com/SipMyBeers/bullpenlm#quick-start-host-your-own" target="_blank" rel="noopener" class="cta">Get the app →</a>
   </div>
 </nav>
@@ -516,7 +532,7 @@
   </p>
 
   <div class="cta-row">
-    <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener" class="btn-primary">🚀 Join the alpha &rarr;</a>
+    <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener" class="btn-primary">Join the alpha &rarr;</a>
     <a href="https://github.com/SipMyBeers/bullpenlm#quick-start-host-your-own" target="_blank" rel="noopener" class="btn-ghost">Self-host now</a>
     <a href="https://github.com/SipMyBeers/bullpenlm" target="_blank" rel="noopener" class="btn-ghost">View on GitHub</a>
   </div>
@@ -530,13 +546,65 @@
 
 </section>
 
+<!-- ── PLAY-NOW band — sits directly below the hero gifs. Lets a visitor
+     drop straight onto the live floor with zero install, with a quiet
+     "host your own" path underneath for founders. ── -->
+<section class="playnow" id="playnow">
+  <div class="playnow-inner">
+    <p class="playnow-line">
+      Drill <span class="hl">real cold calls</span> against an <span class="kw kw-mint">AI buyer</span> &mdash;
+      <span class="hl hl-mint">no download</span>, no signup. The floor opens the second you click.
+    </p>
+    <div class="playnow-cta">
+      <a href="https://app.bullpenlm.com/app/quickstart/?b=default" class="btn-playnow">
+        Play now <span class="pn-sub">— no download</span>
+      </a>
+      <a href="#access" class="playnow-secondary">Host your own bullpen</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .playnow{position:relative; z-index:3; max-width:1200px; margin:0 auto;
+    padding:34px 32px 8px}
+  .playnow-inner{display:flex; flex-direction:column; align-items:center;
+    gap:20px; padding:32px 30px;
+    background:linear-gradient(180deg, rgba(52,211,153,0.07), rgba(42,29,16,0.45));
+    border:1px solid rgba(52,211,153,0.22);
+    border-radius:12px; text-align:center}
+  .playnow-line{font-family:var(--serif); font-size:clamp(18px,2.4vw,24px);
+    line-height:1.45; color:var(--text); max-width:60ch; margin:0; font-weight:400}
+  .playnow-cta{display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    justify-content:center}
+  .btn-playnow{display:inline-flex; align-items:baseline; gap:8px;
+    padding:16px 34px; border-radius:6px; border:1px solid var(--accent);
+    background:linear-gradient(180deg, var(--accent), #2bbd87);
+    color:#06291c; font-family:var(--mono); font-size:13.5px; letter-spacing:.12em;
+    text-transform:uppercase; font-weight:700; text-decoration:none; cursor:pointer;
+    box-shadow:0 10px 30px -8px rgba(52,211,153,0.55);
+    transition:transform .15s, box-shadow .15s}
+  .btn-playnow:hover{transform:translateY(-2px); box-shadow:0 16px 40px -8px rgba(52,211,153,0.7)}
+  .btn-playnow .pn-sub{font-size:10.5px; letter-spacing:.10em; opacity:.78; font-weight:600}
+  .playnow-secondary{font-family:var(--mono); font-size:11px; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--muted); text-decoration:none;
+    border-bottom:1px solid rgba(168,154,135,0.35); padding-bottom:2px;
+    transition:color .15s, border-color .15s}
+  .playnow-secondary:hover{color:var(--text); border-bottom-color:var(--text)}
+  @media (max-width:760px){
+    .playnow{padding:24px 22px 0}
+    .playnow-inner{padding:24px 20px; gap:16px}
+    .playnow-cta{flex-direction:column; gap:14px}
+    .btn-playnow{width:100%; justify-content:center}
+  }
+</style>
+
 <!-- "What is this thing?" — the plain-English explainer.
      Sits between the hero and the demo. Three giant steps,
      no jargon, anyone gets it in 10 seconds. -->
 <section class="what-is" id="how">
   <p class="what-eyebrow">The actual deal</p>
   <h2 class="what-headline">
-    Three reasons people <em>join the bullpen.</em>
+    Three reasons people <span class="hl">join the bullpen.</span>
   </h2>
   <p class="what-sub">
     You pick the one that lights you up. Most people end up in for all three.
@@ -544,20 +612,20 @@
 
   <div class="how-steps">
     <div class="how-step">
-      <div class="step-num">💰</div>
-      <h3>Make actual money</h3>
-      <p>Every account you originate pays out. <strong>50% of every commission</strong> on first pilots, expansion, renewals &mdash; 24-month window per account. Pilot deals run $15K&ndash;$50K. The math isn't a secret &mdash; it's signed into the agreement before you start.</p>
+      <div class="step-num">I</div>
+      <h3>Make <span class="hl hl-mint">actual money</span></h3>
+      <p>Every account you originate pays out. <strong>Half of every commission</strong> on first pilots, expansion, renewals &mdash; a two-year window per account. Pilot deals land in the five-figure range. The math isn't a secret &mdash; it's signed into the agreement before you start.</p>
     </div>
     <div class="how-arrow" aria-hidden="true">&rarr;</div>
     <div class="how-step">
-      <div class="step-num">📞</div>
-      <h3>Learn enterprise sales</h3>
-      <p>Selling to Fortune-500 BFSI buyers is a skill. We teach it. <strong>7 plays</strong> &mdash; cold-open, gatekeeper, voicemail, qualification, demo, pricing, pilot-close &mdash; each one a Task/Conditions/Standards card you drill until it's reflex. Pop quizzes from the founder grade you on the spot.</p>
+      <div class="step-num">II</div>
+      <h3>Learn <span class="kw">enterprise sales</span></h3>
+      <p>Selling to Fortune-500 BFSI buyers is a skill. We teach it. <strong>Seven plays</strong> &mdash; cold-open, gatekeeper, voicemail, qualification, demo, pricing, pilot-close &mdash; each one a Task/Conditions/Standards card you drill until it's reflex. Pop quizzes from the founder grade you on the spot.</p>
     </div>
     <div class="how-arrow" aria-hidden="true">&rarr;</div>
     <div class="how-step">
-      <div class="step-num">⚔</div>
-      <h3>Compete with your friends</h3>
+      <div class="step-num">III</div>
+      <h3>Compete with your <span class="hl">friends</span></h3>
       <p>Live leaderboard. Squad XP bonuses. 1v1 practice duels where one of you plays a real Fortune-500 buyer. PvP sprints. Raid quests with shared rewards. The bell rings on every close &mdash; everyone hears it, every screen flashes gold.</p>
     </div>
   </div>
@@ -587,10 +655,11 @@
     border-radius:8px; text-align:left;
     transition:border-color .15s, transform .15s}
   .how-step:hover{border-color:var(--accent); transform:translateY(-3px)}
-  .step-num{width:42px; height:42px; border-radius:50%;
+  .step-num{min-width:42px; height:42px; padding:0 12px; border-radius:21px;
     background:var(--accent); color:var(--bg-0);
-    display:flex; align-items:center; justify-content:center;
-    font-family:var(--mono); font-size:18px; font-weight:700; margin-bottom:16px}
+    display:inline-flex; align-items:center; justify-content:center; width:auto;
+    font-family:var(--serif); font-size:18px; font-weight:700; letter-spacing:.04em;
+    margin-bottom:16px}
   .how-step h3{font-family:var(--serif); font-weight:600; font-size:21px;
     color:#fff; margin:0 0 8px; line-height:1.2}
   .how-step p{margin:0; color:var(--text); font-size:14.5px; line-height:1.6}
@@ -634,7 +703,7 @@
 
 <section class="section" id="roadmap">
   <div class="section-eyebrow">The Gauntlet</div>
-  <h2>7 phases of a sales call.<br><em>Survive each one to unlock the next.</em></h2>
+  <h2>Seven phases of a sales call.<br><span class="hl">Survive each one</span> to unlock the next.</h2>
   <p class="roadmap-hint">Click any phase to preview the drill</p>
 
   <div class="roadmap-grid">
@@ -694,7 +763,7 @@
      Sits right after the Gauntlet so visitors see what they're working toward. -->
 <section class="section" id="ranks">
   <div class="section-eyebrow">What you become</div>
-  <h2>Six ranks. <em>One ladder.</em></h2>
+  <h2>Six ranks. <span class="hl hl-mint">One ladder.</span></h2>
   <p class="ranks-lede">Stack phase badges → climb the ladder. Every rank is permanent on your rep profile and visible on the team leaderboard.</p>
 
   <ol class="ranks-ladder">
@@ -1023,7 +1092,7 @@
 
       if (d.badge) {
         const badgeRow = document.createElement("div"); badgeRow.className = "earn-row";
-        const bIcon = document.createElement("span"); bIcon.className = "earn-icon"; bIcon.textContent = "◆";
+        const bIcon = document.createElement("span"); bIcon.className = "earn-icon"; bIcon.textContent = "";
         const bBlock = document.createElement("div");
         const bLbl = document.createElement("div"); bLbl.className = "earn-lbl"; bLbl.textContent = "Badge";
         const bVal = document.createElement("div"); bVal.className = "earn-val"; bVal.textContent = d.badge;
@@ -1083,28 +1152,29 @@
 
 <section class="section" id="metrics">
   <div class="section-eyebrow">What gets measured</div>
-  <h2>Numbers, <em>not vibes</em>.</h2>
+  <h2>Coached on the <span class="hl">things real reps lose deals on</span>.</h2>
+  <p class="ranks-lede">Every practice call is graded the way a sales manager actually listens &mdash; not on vibes, on the four habits that separate a closer from a talker.</p>
 
   <div class="metrics-grid">
     <div class="metric">
-      <div class="m-num">43%</div>
-      <div class="m-label">Talk ratio</div>
-      <p>Top-rep target.</p>
+      <div class="m-kicker">Talk ratio</div>
+      <div class="m-label">Let the buyer speak</div>
+      <p>The best reps listen more than they pitch. We track it call over call.</p>
     </div>
     <div class="metric">
-      <div class="m-num">11-14</div>
-      <div class="m-label">Questions / discovery</div>
-      <p>Qualifying vs pitching.</p>
+      <div class="m-kicker">Discovery</div>
+      <div class="m-label">Qualify, don't pitch</div>
+      <p>Real questions before the demo. Graded on whether you actually dug in.</p>
     </div>
     <div class="metric">
-      <div class="m-num">&lt;2</div>
-      <div class="m-label">Fillers / 100 words</div>
-      <p>"Um," "like," "basically."</p>
+      <div class="m-kicker">Filler discipline</div>
+      <div class="m-label">Cut the "um, like, basically"</div>
+      <p>Crutch words leak confidence. The transcript counts every one.</p>
     </div>
     <div class="metric">
-      <div class="m-num">&lt;80</div>
-      <div class="m-label">Longest monologue</div>
-      <p>Over 80, you lost them.</p>
+      <div class="m-kicker">Monologue length</div>
+      <div class="m-label">Don't lose the room</div>
+      <p>Ramble too long and the buyer checks out. We flag it the moment you do.</p>
     </div>
   </div>
 </section>
@@ -1113,22 +1183,22 @@
      shared CRM, live leaderboard. -->
 <section class="section" id="team">
   <div class="section-eyebrow">Multiplayer</div>
-  <h2>One bullpen.<br><em>Your whole team in it.</em></h2>
+  <h2>One bullpen.<br><span class="hl">Your whole team</span> in it.</h2>
   <p class="ranks-lede">Run it solo on your laptop, or host it for the team like a co-op dungeon. Everyone shares the CRM, claims their own prospects, and shows up on a live leaderboard.</p>
 
   <div class="mp-steps">
     <div class="mp-card">
-      <div class="mp-num">①</div>
+      <div class="mp-num">01</div>
       <h3>One host downloads</h3>
       <p>The operator double-clicks the app, picks <em>Start a bullpen</em>, and the floor is live on their machine. No Docker, no Tailscale, no terminal. The CRM, AI buyers, leaderboard, and live transcripts all run locally.</p>
     </div>
     <div class="mp-card">
-      <div class="mp-num">②</div>
+      <div class="mp-num">02</div>
       <h3>Closers join with one click</h3>
       <p>The app generates a Cloudflare-backed invite link automatically. The operator sends it. Closers download the same app, paste the link, and they're on the floor in seconds.</p>
     </div>
     <div class="mp-card">
-      <div class="mp-num">③</div>
+      <div class="mp-num">03</div>
       <h3>Climb together</h3>
       <p>Each rep claims their own prospects ("claimed by Brad" locks the account for 14 days). All calls log to one CRM. Leaderboard ranks everyone by badges + total calls + signed deals.</p>
     </div>
@@ -1136,28 +1206,28 @@
 
   <div class="mp-features">
     <div class="mp-feature">
-      <span class="mp-icon" aria-hidden="true">⚔</span>
+      <span class="mp-icon" aria-hidden="true"></span>
       <div>
         <h4>Territory claims</h4>
         <p>One rep, one prospect at a time. Auto-releases after 14 days if no activity — no squatting on the whole list.</p>
       </div>
     </div>
     <div class="mp-feature">
-      <span class="mp-icon" aria-hidden="true">📡</span>
+      <span class="mp-icon" aria-hidden="true"></span>
       <div>
         <h4>Live activity feed</h4>
         <p>"Brad just passed Phase II on Allstate." "Mike booked a meeting at Cigna." Real-time scroll so the team feels each other working.</p>
       </div>
     </div>
     <div class="mp-feature">
-      <span class="mp-icon" aria-hidden="true">🏆</span>
+      <span class="mp-icon" aria-hidden="true"></span>
       <div>
         <h4>Shared leaderboard</h4>
         <p>Every rep's badges, rank, and call count visible to the whole team. Friendly pressure beats Slack reminders.</p>
       </div>
     </div>
     <div class="mp-feature">
-      <span class="mp-icon" aria-hidden="true">🔒</span>
+      <span class="mp-icon" aria-hidden="true"></span>
       <div>
         <h4>Your data, your machine</h4>
         <p>The CRM file lives on your host. Teammates connect to it; they don't get their own copy. One source of truth, you control the door.</p>
@@ -1166,7 +1236,7 @@
   </div>
 
   <pre class="mp-shell"><span class="mp-comment"># 1. Download BullpenLM for Mac · Windows · Linux</span>
-<span class="mp-prompt">↓</span> bullpenlm.com/app
+<span class="mp-prompt"></span> bullpenlm.com/app
 <span class="mp-comment"># 2. Open the app → click "Start a bullpen"</span>
 <span class="mp-comment"># 3. App generates a Cloudflare link automatically</span>
 <span class="mp-prompt">→</span> https://&lt;your-floor&gt;.trycloudflare.com</pre>
@@ -1201,7 +1271,7 @@
 
 <section class="section" id="features">
   <div class="section-eyebrow">What you also get</div>
-  <h2>The whole stack.<br><em>Zero SaaS rent.</em></h2>
+  <h2>The whole stack.<br><span class="hl hl-mint">Zero SaaS rent.</span></h2>
   <div class="features">
     <div class="feature">
       <div class="ico">Auto-debrief</div>
@@ -1238,31 +1308,33 @@
   .metrics-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:18px}
   .metric{padding:24px 22px; background:rgba(42,29,16,0.5); border:1px solid rgba(245,232,216,0.08); border-radius:8px; text-align:left}
   .metric .m-num{font-family:var(--serif); font-size:48px; font-weight:600; line-height:1; color:var(--accent-2); margin-bottom:6px; letter-spacing:-.02em}
-  .metric .m-label{font-family:var(--mono); font-size:10px; letter-spacing:.20em; text-transform:uppercase; color:var(--accent); margin-bottom:12px}
+  .metric .m-kicker{font-family:var(--mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--accent); margin-bottom:14px}
+  .metric .m-kicker::before{content:"▸ "}
+  .metric .m-label{font-family:var(--serif); font-size:20px; font-weight:600; line-height:1.15; letter-spacing:-.01em; color:#f0e4cf; margin-bottom:10px}
   .metric p{margin:0; color:var(--text); font-size:13.5px; line-height:1.55}
 </style>
 
 <!-- ── Launch your own bullpen ── -->
 <section class="section" id="launch-own">
   <div class="section-eyebrow">For founders</div>
-  <h2>Got your own product?<br><em>Launch your own bullpen.</em></h2>
+  <h2>Got your own product?<br><span class="hl">Launch your own bullpen.</span></h2>
   <p style="font-family:Georgia,serif;font-style:italic;font-size:17px;line-height:1.6;color:var(--text);max-width:60ch;margin:0 auto 36px;text-align:center;opacity:0.9">
     BullpenLM isn't just KillSesh. Any founder can spin up their own bullpen with their own product,
     their own commission structure, and their own friends doing the calling. You pick the access mode.
   </p>
   <div class="bullpen-modes">
     <div class="mode-card public">
-      <div class="mode-emoji">🌍</div>
+      <div class="mode-tag">Access mode</div>
       <h3>Public</h3>
       <p class="mode-desc">Anyone can join. No invite code, no application. Great for "come learn to sell with us" communities.</p>
     </div>
     <div class="mode-card invite-only">
-      <div class="mode-emoji">✉</div>
+      <div class="mode-tag">Access mode</div>
       <h3>Invite-only</h3>
       <p class="mode-desc">Applications go through a review queue. You generate invite codes one at a time. KillSesh runs this mode.</p>
     </div>
     <div class="mode-card paid">
-      <div class="mode-emoji">💳</div>
+      <div class="mode-tag">Access mode</div>
       <h3>Paid</h3>
       <p class="mode-desc">Membership fee gates entry. Stripe integration. Set your price; reps pay to access the bullpen + earn commission on their own deals.</p>
     </div>
@@ -1281,7 +1353,11 @@
   .mode-card.public:hover{border-color:var(--accent)}
   .mode-card.invite-only:hover{border-color:#fbbf24}
   .mode-card.paid:hover{border-color:#a78bfa}
-  .mode-card .mode-emoji{font-size:32px;line-height:1;margin-bottom:10px}
+  .mode-card .mode-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+  .mode-card .mode-tag::before{content:"▸ "}
+  .mode-card.public .mode-tag{color:var(--accent)}
+  .mode-card.invite-only .mode-tag{color:#fbbf24}
+  .mode-card.paid .mode-tag{color:#a78bfa}
   .mode-card h3{font-family:var(--serif);font-size:22px;font-weight:600;color:#fff;margin:0 0 8px;letter-spacing:-.01em}
   .mode-card.public h3{color:var(--accent-2)}
   .mode-card.invite-only h3{color:#fbbf24}
@@ -1291,14 +1367,14 @@
 
 <section class="cta-section" id="access">
   <div class="section-eyebrow">Get in</div>
-  <h2>Download. Host. <em>Recruit.</em></h2>
+  <h2>Download. Host. <span class="hl hl-mint">Recruit.</span></h2>
   <p style="font-family:Georgia,serif;font-style:italic;font-size:17px;line-height:1.6;color:var(--text);max-width:56ch;margin:0 auto 28px;text-align:center;opacity:0.92">
     One founder runs the bullpen on their own machine. Closers download the same app, paste your invite code, and they're on the floor. No cloud. No middleman. Open source, MIT.
   </p>
   <div class="cta-row" style="justify-content:center;display:flex;gap:14px;flex-wrap:wrap">
-    <a href="https://github.com/SipMyBeers/bullpenlm#quick-start-host-your-own" target="_blank" rel="noopener" class="btn-primary" style="text-decoration:none">🚀 Get the app →</a>
+    <a href="https://github.com/SipMyBeers/bullpenlm#quick-start-host-your-own" target="_blank" rel="noopener" class="btn-primary" style="text-decoration:none">Get the app →</a>
     <a href="https://github.com/SipMyBeers/bullpenlm" target="_blank" rel="noopener" class="btn-ghost" style="text-decoration:none">View source</a>
-    <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener" class="btn-ghost" style="text-decoration:none">💬 Join the Discord</a>
+    <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener" class="btn-ghost" style="text-decoration:none">Join the Discord</a>
   </div>
   <p style="margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.10em;text-align:center">
     Questions? Drop them in the Discord — fastest answer.
@@ -1309,7 +1385,7 @@
   <div class="row">
     <a class="brand" href="#" aria-label="BullpenLM"><span class="nav-bull">Bullpen</span><span class="nav-lm">LM</span></a>
     <div class="links">
-      <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener">💬 Discord</a>
+      <a href="https://discord.gg/pXV4pPA5d5" target="_blank" rel="noopener">Discord</a>
       <a href="/app/apply.html?b=killsesh">Apply</a>
       <a href="https://github.com/SipMyBeers/bullpenlm" target="_blank" rel="noopener">GitHub</a>
       <span style="color:var(--dim)">© 2026 Beers Labs LLC · MIT</span>
@@ -1667,7 +1743,7 @@ function openDossier(p) {
   const t1 = document.createElement("strong"); t1.textContent = "In the real product"; teaser.appendChild(t1);
   teaser.appendChild(document.createTextNode("Click "));
   const em1 = document.createElement("em"); em1.textContent = "Practice Call"; teaser.appendChild(em1);
-  teaser.appendChild(document.createTextNode(" to roleplay this exact prospect against a local LLM. Hit 🔴 Record on a real call — the transcript becomes new contacts under this org automatically. "));
+  teaser.appendChild(document.createTextNode(" to roleplay this exact prospect against a local LLM. Hit Record on a real call — the transcript becomes new contacts under this org automatically. "));
   const a1 = document.createElement("a"); a1.href = "#access"; a1.textContent = "Get early access"; teaser.appendChild(a1);
   teaser.appendChild(document.createTextNode(" to try it."));
   card.appendChild(teaser);

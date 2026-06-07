@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app/ink.css">
+<script src="/app/cash.js"></script>
 <style>
 :root{
   --bg-0:#1a1208; --bg-1:#2a1d10; --bg-2:#3d2c1a;
@@ -92,7 +94,12 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%, var(--bg-2) 0%, var(
 .empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:18px;letter-spacing:.08em}
 
 .streak-card{display:flex;align-items:center;gap:14px;padding:14px;background:linear-gradient(135deg, rgba(248,113,113,0.10), rgba(251,191,36,0.10));border:1px solid rgba(251,191,36,0.25);border-radius:8px;margin-bottom:14px}
-.streak-flame{font-size:32px;line-height:1}
+/* Streak marker — a CSS ember, no emoji. Gradient teardrop reads as flame. */
+.streak-flame{width:22px;height:30px;flex-shrink:0;border-radius:50% 50% 50% 50% / 64% 64% 36% 36%;
+  transform:rotate(180deg);
+  background:radial-gradient(ellipse at 50% 70%,#fde68a 0%,#fbbf24 38%,#f87171 78%,transparent 100%);
+  box-shadow:0 0 14px rgba(251,191,36,0.55);animation:streak-flicker 1.3s ease-in-out infinite}
+@keyframes streak-flicker{0%,100%{transform:rotate(180deg) scale(1);opacity:.95}50%{transform:rotate(180deg) scale(1.08);opacity:1}}
 .streak-info{display:flex;flex-direction:column}
 .streak-n{font-family:var(--display);font-size:28px;color:var(--gold);line-height:1}
 .streak-l{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:3px}
@@ -126,7 +133,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%, var(--bg-2) 0%, var(
   <nav class="crumb">
     <a href="/">Floor</a><span class="sep">/</span>
     <a id="bp-link" href="/">Bullpen</a><span class="sep">/</span>
-    <span class="here">Rep Card</span>
+    <span class="here">Rep <span class="kw kw-mint">Card</span></span>
   </nav>
 </header>
 
@@ -174,7 +181,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%, var(--bg-2) 0%, var(
 
     <div>
       <div class="streak-card" id="streak-card" style="display:none">
-        <div class="streak-flame">🔥</div>
+        <div class="streak-flame" aria-hidden="true"></div>
         <div class="streak-info">
           <div class="streak-n" id="streak-n">0</div>
           <div class="streak-l">Day streak</div>
@@ -268,7 +275,7 @@ function paintXP(xp){
 function makeAchTile(a, locked){
   const tile = el('div', 'ach ' + (a.rarity || 'common') + (locked ? ' locked' : ''));
   tile.title = (locked ? 'LOCKED — ' : '') + a.name + (a.description ? ' — ' + a.description : '');
-  tile.appendChild(el('div', 'icon', a.icon || '★'));
+  tile.appendChild(el('div', 'icon', a.icon || '◆'));
   tile.appendChild(el('div', 'nm', a.name));
   return tile;
 }
@@ -352,7 +359,7 @@ function paintTrophies(trophies){
   for (const t of trophies){
     const tile = el('div', 'ach ' + (t.rarity || 'common'));
     tile.title = t.name + ' — ' + (t.sub || '');
-    tile.appendChild(el('div', 'icon', t.icon || '🏆'));
+    tile.appendChild(el('div', 'icon', t.icon || '◆'));
     tile.appendChild(el('div', 'nm', t.name));
     grid.appendChild(tile);
   }
@@ -364,7 +371,7 @@ function renderClassPicker(member, xp, classes){
   if ((xp.level || 1) < 5 || member.class) return;
 
   const card = el('div', 'class-picker');
-  card.appendChild(el('h2', null, '⚔ Pick your class'));
+  card.appendChild(el('h2', null, 'Pick your class'));
   card.appendChild(el('p',  null, 'You hit Level 5. Pick the path that matches how you play.'));
   const opts = el('div', 'cls-options');
   for (const c of classes){
@@ -420,20 +427,20 @@ setInterval(load, 45000);
      Character Sheet tail — two-ledger XP, deals, marketing, cadences
      ═══════════════════════════════════════════════════════════════════ -->
 <section style="max-width:980px;margin:30px auto 60px;padding:0 24px;font-family:'Switzer',-apple-system,sans-serif">
-  <h2 style="font-family:'Tanker',serif;font-size:28px;letter-spacing:-.01em;text-transform:uppercase;color:#f5e8d8;margin:0 0 18px">📒 Character Sheet</h2>
+  <h2 style="font-family:'Tanker',serif;font-size:28px;letter-spacing:-.01em;text-transform:uppercase;color:#f5e8d8;margin:0 0 18px">Character <span class="kw">Sheet</span></h2>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px" id="cs-ledgers"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px" id="cs-mid">
     <div style="background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:12px;padding:18px 20px">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin-bottom:10px">💼 Deals owned</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin-bottom:10px">Deals owned</div>
       <div id="cs-deals"></div>
     </div>
     <div style="background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:12px;padding:18px 20px">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin-bottom:10px">📢 Marketing posts</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin-bottom:10px">Marketing posts</div>
       <div id="cs-marketing"></div>
     </div>
   </div>
   <div style="background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:12px;padding:18px 20px;margin-bottom:14px">
-    <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin-bottom:10px">⏰ Cadences</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87;margin-bottom:10px">Cadences</div>
     <div id="cs-cadences"></div>
   </div>
 </section>
@@ -452,8 +459,8 @@ setInterval(load, 45000);
       const d = await r.json();
       const ledgerWrap = document.getElementById('cs-ledgers'); clear(ledgerWrap);
       for(const c of [
-        {label:'💰 MONEY-XP', value: d.money_xp || 0, sub:'closed deals + cert drills + attribution', color:'#34d399'},
-        {label:'⚡ CLOUT-XP', value: d.clout_xp || 0, sub:'study + social + cadence discipline', color:'#fbbf24'},
+        {label:'MONEY-XP', value: d.money_xp || 0, sub:'closed deals + cert drills + attribution', color:'#34d399'},
+        {label:'CLOUT-XP', value: d.clout_xp || 0, sub:'study + social + cadence discipline', color:'#fbbf24'},
       ]){
         const card = el('div', {style:`background:rgba(26,18,8,0.55);border:1px solid ${c.color}40;border-radius:12px;padding:18px 20px`});
         card.appendChild(el('div', {style:'font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#a89a87', text:c.label}));
@@ -467,7 +474,11 @@ setInterval(load, 45000);
       for(const x of deals.slice(0,8)){
         const row = el('div', {style:'display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(245,232,216,0.05);font-family:"JetBrains Mono",monospace;font-size:11.5px'});
         row.appendChild(el('span', {style:'color:#f5e8d8', text: x.prospect_slug || '?'}));
-        row.appendChild(el('span', {style:'color:#a89a87', text: `${x.stage} · $${(x.amount||0).toLocaleString()}`}));
+        const right = el('span', {style:'color:#a89a87'});
+        right.appendChild(document.createTextNode(`${x.stage} · `));
+        if(window.bpMoney && window.bpMoney.cashChip){ right.appendChild(window.bpMoney.cashChip(x.amount||0)); }
+        else { right.appendChild(document.createTextNode('$' + (x.amount||0).toLocaleString())); }
+        row.appendChild(right);
         dealsWrap.appendChild(row);
       }
       const mkWrap = document.getElementById('cs-marketing'); clear(mkWrap);

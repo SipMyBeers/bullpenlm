@@ -80,7 +80,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 <main class="wrap">
 
   <section class="section">
-    <h2>⚔ Sprints</h2>
+    <h2>Sprints</h2>
     <p class="sub">A short window. Whoever logs the most wins. Everyone in the bullpen is in by default.</p>
 
     <div class="create-form">
@@ -111,7 +111,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
   </section>
 
   <section class="section">
-    <h2>🥊 Duels</h2>
+    <h2>Duels</h2>
     <p class="sub">Pick a teammate. Pick a metric. Whoever's ahead in a week wins.</p>
 
     <div class="create-form">
@@ -195,7 +195,7 @@ async function renderSprint(sp, container){
   } else {
     rows.forEach((r, i) => {
       const row = el('div', 'lb-row' + (i===0 ? ' first' : ''));
-      row.appendChild(el('div', 'rank', i===0 ? '🏆' : String(i+1)));
+      row.appendChild(el('div', 'rank', String(i+1)));
       row.appendChild(el('div', 'name', r.rep));
       row.appendChild(el('div', 'score', fmtScore(sp.score_kind, r.score)));
       lb.appendChild(row);

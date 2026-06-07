@@ -228,24 +228,38 @@ _WORD = re.compile(r"[a-z0-9]+")
 
 
 def auto_grade(tcs: dict, response: str) -> tuple[str, int, str]:
-    """Returns (GO|NO_GO, score, feedback)."""
+    """Returns (GO|NO_GO, score, feedback).
+
+    Score = % of ALL target beats covered (not just the pass threshold) so a
+    bare pass and a great answer don't both read 100 — there's a real ceiling
+    to chase. Feedback COACHES without naming the target phrases (no
+    answer-key leak; the keywords never reach the client)."""
     text = (response or "").lower()
+    keywords = tcs.get("auto_grade_keywords") or []
     hits = set()
-    for kw in (tcs.get("auto_grade_keywords") or []):
+    for kw in keywords:
         terms = [t for t in _WORD.findall(kw.lower()) if len(t) > 2]
         if not terms: continue
         if all(t in text for t in terms):
             hits.add(kw)
     threshold = int(tcs.get("auto_grade_min_hits") or 2)
-    score = min(100, int(round(100 * len(hits) / max(1, threshold))))
+    # Score relative to the pass bar, not the full keyword list: a bare pass
+    # (threshold hits) = ~50, hitting 2x the bar = 100. This avoids unfair
+    # ceilings on plays whose keyword list holds mutually-exclusive
+    # alternatives (e.g. "thursday" OR "tomorrow", "20 seconds" OR "30
+    # seconds") that no single good answer could ever all contain.
+    score = min(100, int(round(100 * len(hits) / max(1, 2 * threshold))))
     if len(hits) >= threshold:
-        return ("GO", score,
-                f"Hit {len(hits)}/{len(tcs.get('auto_grade_keywords') or [])} "
-                f"key phrases — passed (needed {threshold}).")
-    missing = [kw for kw in (tcs.get("auto_grade_keywords") or []) if kw not in hits]
+        if score >= 85:
+            tail = "Sharp — you hit nearly every beat."
+        elif score >= 60:
+            tail = "Solid pass. Tighten it and you're in elite territory."
+        else:
+            tail = "Passed, but thin — work in more of the buyer's real pain next rep."
+        return ("GO", score, f"GO · {score}/100. {tail}")
     return ("NO_GO", score,
-            f"Hit {len(hits)}/{threshold} required key phrases. "
-            f"Try working in: {', '.join(missing[:3])}")
+            f"NO-GO · {score}/100. Name the buyer's specific pain in their own "
+            f"words and make one crisp ask — then run it back.")
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────

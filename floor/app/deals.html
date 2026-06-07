@@ -58,6 +58,16 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%, var(--bg-2) 0%, var(
 .deal.terminal-won{border-left:3px solid var(--accent)}
 .deal.terminal-lost{border-left:3px solid var(--danger);opacity:.6}
 
+/* Stale-deal heat (non-terminal stages only) */
+.deal.heat-fresh{border-left:3px solid var(--accent)}
+.deal.heat-warm{border-left:3px solid var(--gold)}
+.deal.heat-cold{border-left:3px solid var(--danger)}
+.deal .age-chip{font-family:var(--mono);font-size:9px;letter-spacing:.10em;text-transform:uppercase;padding:1px 6px;border-radius:7px;line-height:1.5;white-space:nowrap}
+.deal .age-chip.heat-fresh{background:rgba(52,211,153,0.12);color:var(--accent-2)}
+.deal .age-chip.heat-warm{background:rgba(251,191,36,0.14);color:var(--gold)}
+.deal .age-chip.heat-cold{background:rgba(248,113,113,0.14);color:var(--danger)}
+.deal .stuck-label{display:block;margin-top:6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--danger);font-weight:600}
+
 .new-deal-btn{margin-top:10px;padding:9px;background:transparent;color:var(--muted);border:1px dashed rgba(245,232,216,0.20);border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;transition:color .12s,border-color .12s,background .12s}
 .new-deal-btn:hover{color:var(--accent);border-color:var(--accent-dim);background:rgba(52,211,153,0.05)}
 
@@ -248,15 +258,71 @@ function buildDealCard(deal, stage) {
   });
   card.style.cursor = stage.terminal ? "pointer" : "grab";
 
+  // Stale-deal heat: only for non-terminal stages. Pure client computation.
+  let heat = null;          // "fresh" | "warm" | "cold"
+  let stageDays = null;     // days in current stage
+  if (!stage.terminal) {
+    // When did the deal enter its current stage? Prefer last stage_history entry,
+    // else fall back to opened_at.
+    const lastEntry = enteredCurrentStageAt(deal);
+    const enteredAt = lastEntry || deal.opened_at;
+    stageDays = daysSince(enteredAt);
+    if (stageDays != null) {
+      if (stageDays < 3) heat = "fresh";
+      else if (stageDays <= 14) heat = "warm";   // amber band (7-14d emphasis)
+      else heat = "cold";
+      card.classList.add("heat-" + heat);
+    }
+  }
+
   const pr = document.createElement("div"); pr.className = "prospect"; pr.textContent = deal.prospect_slug;
   const am = document.createElement("div"); am.className = "amount"; am.textContent = "$" + (deal.amount || 0).toLocaleString();
   const meta = document.createElement("div"); meta.className = "meta";
   const owner = document.createElement("span"); owner.className = "owner"; owner.textContent = deal.owner_rep;
-  const age = document.createElement("span");
-  age.textContent = relAge(deal.opened_at);
-  meta.append(owner, age);
+  if (heat) {
+    const chip = document.createElement("span");
+    chip.className = "age-chip heat-" + heat;
+    chip.textContent = (stageDays === 0 ? "<1d" : stageDays + "d") + " in stage";
+    chip.title = "Days in current stage · opened " + relAge(deal.opened_at) + " ago";
+    meta.append(owner, chip);
+  } else {
+    const age = document.createElement("span");
+    age.textContent = relAge(deal.opened_at);
+    meta.append(owner, age);
+  }
   card.append(pr, am, meta);
+
+  // Loud "stuck" label on cold (>14d) deals.
+  if (heat === "cold") {
+    const stuck = document.createElement("span");
+    stuck.className = "stuck-label";
+    stuck.textContent = "STUCK " + stageDays + "d";
+    card.append(stuck);
+  }
   return card;
+}
+
+// Returns the ISO timestamp the deal entered its current stage, or null.
+function enteredCurrentStageAt(deal) {
+  const hist = Array.isArray(deal.stage_history) ? deal.stage_history : null;
+  if (!hist || !hist.length) return null;
+  // Prefer the most recent history entry that matches the current stage; else the last entry overall.
+  for (let i = hist.length - 1; i >= 0; i--) {
+    const e = hist[i];
+    if (e && (e.stage === deal.stage || e.to === deal.stage || e.stage_id === deal.stage)) {
+      return e.at || e.ts || e.timestamp || null;
+    }
+  }
+  const last = hist[hist.length - 1];
+  return last ? (last.at || last.ts || last.timestamp || null) : null;
+}
+
+// Whole days elapsed since an ISO timestamp (floor), or null if invalid.
+function daysSince(iso) {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return null;
+  return Math.max(0, Math.floor((Date.now() - t) / 86400000));
 }
 
 function relAge(iso) {

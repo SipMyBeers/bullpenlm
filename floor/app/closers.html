@@ -168,7 +168,7 @@ async function loadRoster(){
     row.appendChild(repCell);
 
     const gateCell = el('td');
-    gateCell.appendChild(el('span', {class:'pill ' + (c.gate_ok ? 'ok' : 'gated'), text: c.gate_ok ? '✓ READY' : '⛔ GATED'}));
+    gateCell.appendChild(el('span', {class:'pill ' + (c.gate_ok ? 'ok' : 'gated'), text: c.gate_ok ? '✓ READY' : '× GATED'}));
     row.appendChild(gateCell);
 
     const missCell = el('td', {class:'missing-list'});

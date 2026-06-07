@@ -271,11 +271,11 @@ async function showPlay(tcsId){
 
     // Actions
     const actions = el('div', 'actions');
-    const self = el('button', 'self-drill', '⚔ Self-drill (auto-graded)');
+    const self = el('button', 'self-drill', 'Self-drill (auto-graded)');
     self.onclick = () => openFireModal(t, REP);
     actions.appendChild(self);
 
-    const team = el('button', 'check-teammate', '🎯 Spot-check a teammate');
+    const team = el('button', 'check-teammate', 'Spot-check a teammate');
     team.onclick = () => openFireModal(t, null);
     actions.appendChild(team);
     card.appendChild(actions);
@@ -304,7 +304,7 @@ async function showPlay(tcsId){
 // ── Fire modal ──
 function openFireModal(tcs, fixedTarget){
   const c = $('modal-card'); clear(c);
-  c.appendChild(el('h2', null, fixedTarget ? '⚔ Self-drill' : '🎯 Spot check'));
+  c.appendChild(el('h2', null, fixedTarget ? 'Self-drill' : 'Spot check'));
   c.appendChild(el('div', 'modal-prompt',
     fixedTarget
       ? 'Demonstrate the play. Auto-graded by the keyword check above. Pass = GO, your Top Pack updates, +50–200 XP.'

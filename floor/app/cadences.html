@@ -101,14 +101,14 @@ h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transfor
   <p class="lede">Stage-triggered follow-up sequences. When a deal moves into a pipeline stage, the matching cadence auto-starts and schedules every touch. Step done = clout-XP. All steps done = cadence_completed bonus. The deal closing is what credits money-XP — cadence is the discipline that gets you there.</p>
 
   <div class="tabs">
-    <div class="tab active" data-tab="due" onclick="switchTab('due')">⏰ Due now</div>
+    <div class="tab active" data-tab="due" onclick="switchTab('due')">Due now</div>
     <div class="tab" data-tab="active" onclick="switchTab('active')">▶ Active</div>
     <div class="tab" data-tab="completed" onclick="switchTab('completed')">✓ Completed</div>
-    <div class="tab" data-tab="templates" onclick="switchTab('templates')">📋 Templates</div>
+    <div class="tab" data-tab="templates" onclick="switchTab('templates')">Templates</div>
   </div>
 
   <div class="panel" id="pane-due">
-    <h2>⏰ DUE WITHIN 72 HOURS <span class="badge" id="due-count">0</span></h2>
+    <h2>DUE WITHIN 72 HOURS <span class="badge" id="due-count">0</span></h2>
     <div id="due-list"></div>
   </div>
 
@@ -123,7 +123,7 @@ h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transfor
   </div>
 
   <div class="panel" id="pane-templates" style="display:none">
-    <h2>📋 CADENCE TEMPLATES</h2>
+    <h2>CADENCE TEMPLATES</h2>
     <p style="color:var(--muted);font-family:var(--serif);font-size:13px;margin-bottom:14px">
       These auto-start when a deal moves into the trigger stage. Drop custom JSON into <code style="background:rgba(0,0,0,0.30);padding:1px 6px;border-radius:3px;color:var(--accent-2)">bullpens/&lt;slug&gt;/cadence-templates/</code> to override or add your own.
     </p>
@@ -188,9 +188,9 @@ async function loadDue(){
     row.appendChild(info);
     row.appendChild(el('div', {class:'due-badge ' + lbl.cls, text: lbl.text}));
     const acts = el('div', {class:'actions'});
-    // ✉ Compose appears only on email steps
+    // Compose appears only on email steps
     if((item.step.channel || '').toLowerCase() === 'email'){
-      acts.appendChild(el('button', {class:'btn-mini', style:'background:var(--gold);color:#0a1a14', text:'✉ Compose', onClick: () => openComposer(item)}));
+      acts.appendChild(el('button', {class:'btn-mini', style:'background:var(--gold);color:#0a1a14', text:'Compose', onClick: () => openComposer(item)}));
     }
     acts.appendChild(el('button', {class:'btn-mini done', text:'✓ Done', onClick: async () => {
       await api('POST', `/api/b/${BULLPEN}/cadences/${item.cadence_id}/steps/${item.step.idx}/done`, {rep:REP});
@@ -252,7 +252,7 @@ async function loadTemplates(){
     if(t.trigger_stage){
       card.appendChild(el('div', {class:'trigger', text: `▶ AUTO-START on stage=${t.trigger_stage}`}));
     } else {
-      card.appendChild(el('div', {class:'trigger', style:'color:var(--muted)', text: '✋ MANUAL TRIGGER ONLY'}));
+      card.appendChild(el('div', {class:'trigger', style:'color:var(--muted)', text: 'MANUAL TRIGGER ONLY'}));
     }
     wrap.appendChild(card);
   }
@@ -271,7 +271,7 @@ setInterval(load, 30000);
 function openComposer(item){
   const overlay = el('div', {id:'composer-overlay', style:'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto'});
   const modal = el('div', {style:'max-width:680px;width:100%;background:linear-gradient(180deg,rgba(42,29,16,0.97),rgba(26,18,8,0.97));border:1px solid rgba(251,191,36,0.30);border-radius:14px;padding:24px 28px;box-shadow:0 14px 50px rgba(0,0,0,0.6)'});
-  modal.appendChild(el('div', {style:'font-family:var(--display);font-size:24px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 4px', text:'✉ Compose follow-up'}));
+  modal.appendChild(el('div', {style:'font-family:var(--display);font-size:24px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 4px', text:'Compose follow-up'}));
   modal.appendChild(el('div', {style:'font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:16px', text: `${item.rep} · ${item.template} · day ${item.step.day}`}));
 
   const body = el('div', {style:'font-family:var(--serif);font-size:14px;color:var(--muted);text-align:center;padding:36px', text:'Generating RAG-grounded draft…'});
@@ -315,7 +315,7 @@ function openComposer(item){
     body.appendChild(fld('SUBJECT', 'compose-subject', d.subject || '', false));
     body.appendChild(fld('BODY (markdown)', 'compose-body', d.body || '', true));
     if(d.grounded === false){
-      body.appendChild(el('div', {style:'font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.06em;margin-top:6px', text:'⚠ no RAG sources — draft is template-only. Drop sources to the buyer\'s dossier for a sharper draft.'}));
+      body.appendChild(el('div', {style:'font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.06em;margin-top:6px', text:'Warning: no RAG sources — draft is template-only. Drop sources to the buyer\'s dossier for a sharper draft.'}));
     }
     // Send button
     const sendWrap = document.getElementById('composer-send-wrap');

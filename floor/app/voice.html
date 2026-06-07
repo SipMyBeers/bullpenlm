@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0703'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23fbbf24' font-family='monospace' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
 <meta charset="utf-8">
 <title>Voice mode · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -26,6 +27,14 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 .wrap{max-width:760px;margin:0 auto;padding:30px 22px 80px}
 h1{font-family:var(--display);font-size:38px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 4px}
 .lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:0 0 24px}
+.drill-strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:12px 16px;margin-bottom:18px;background:linear-gradient(135deg,rgba(251,191,36,0.08),rgba(42,29,16,0.55));border:1px solid rgba(251,191,36,0.30);border-radius:10px}
+.drill-strip .ds-streak{font-family:var(--display);font-size:22px;color:var(--gold);line-height:1;letter-spacing:-.01em;display:flex;align-items:baseline;gap:7px}
+.drill-strip .ds-streak .num{font-size:30px}
+.drill-strip .ds-streak .mult{font-family:var(--mono);font-size:10px;letter-spacing:.10em;color:var(--accent-2);text-transform:uppercase}
+.drill-strip .ds-nudge{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted);flex:1 1 220px;line-height:1.4}
+.drill-strip .ds-reps{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:6px 12px;border:1px solid rgba(245,232,216,0.12);border-radius:999px}
+.drill-strip .ds-reps b{color:var(--accent);font-family:var(--display);font-size:14px;letter-spacing:0}
+.drill-strip .ds-reps.met b{color:var(--gold)}
 .picker{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
 .picker .chip{padding:8px 16px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:20px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;color:var(--muted)}
 .picker .chip.active{background:rgba(52,211,153,0.10);border-color:var(--accent);color:var(--accent-2)}
@@ -81,6 +90,8 @@ h1{font-family:var(--display);font-size:38px;letter-spacing:-.02em;text-transfor
   <h1>Voice drill</h1>
   <p class="lede">Press to talk. Release to send. The AI buyer answers in voice using a persona-matched voice. RAG-grounded if there's a dossier.</p>
 
+  <div class="drill-strip" id="drill-strip" style="display:none"></div>
+
   <div class="picker" id="picker"></div>
 
   <div class="phone-stage" id="stage">
@@ -89,7 +100,7 @@ h1{font-family:var(--display);font-size:38px;letter-spacing:-.02em;text-transfor
       <div class="role" id="p-role">pick a buyer above</div>
       <div class="voice" id="p-voice"></div>
     </div>
-    <button class="dial-button" id="dial-btn" disabled>📞 Pick up</button>
+    <button class="dial-button" id="dial-btn" disabled>Pick up</button>
     <div class="dial-status" id="dial-status">choose a buyer first</div>
   </div>
 
@@ -154,7 +165,7 @@ function selectBuyer(slug, card){
   document.getElementById('p-role').textContent = card.role || '';
   const voiceMap = {'accenture-mainframe':'Tom','allstate':'Paulina','cigna':'Samantha'};
   const voice = voiceMap[slug] || (persona.name && /^(sarah|kelly|samantha|sofia|jennifer|lisa|mary|emily|olivia|ava|emma)/i.test(persona.name) ? 'Samantha' : 'Tom');
-  document.getElementById('p-voice').textContent = '🎤 voice: ' + voice;
+  document.getElementById('p-voice').textContent = 'voice: ' + voice;
   document.getElementById('dial-btn').disabled = false;
   document.getElementById('dial-status').textContent = 'tap to pick up the phone';
   clearTranscript();
@@ -184,12 +195,12 @@ function setState(newState){
   const btn = document.getElementById('dial-btn');
   const status = document.getElementById('dial-status');
   btn.classList.remove('recording','thinking','playing');
-  if (newState === 'idle')          { btn.disabled = !CURRENT_BUYER; btn.textContent = '📞 Pick up'; status.textContent = 'tap to call'; }
-  else if (newState === 'opening')  { btn.disabled = true; btn.classList.add('thinking'); btn.textContent = '☎ ringing'; status.textContent = "they're picking up…"; }
-  else if (newState === 'press_talk'){ btn.disabled = false; btn.textContent = '🎤 Press to talk'; clear(status); status.appendChild(el('span',{class:'dot'})); status.appendChild(document.createTextNode('line is open')); }
-  else if (newState === 'recording'){ btn.disabled = false; btn.classList.add('recording'); btn.textContent = '⏹ Release'; status.textContent = 'recording — release to send'; }
-  else if (newState === 'thinking') { btn.disabled = true; btn.classList.add('thinking'); btn.textContent = '⏳ thinking'; status.textContent = "they're responding…"; }
-  else if (newState === 'playing')  { btn.disabled = true; btn.classList.add('playing'); btn.textContent = '🔊 listening'; status.textContent = "they're talking…"; }
+  if (newState === 'idle')          { btn.disabled = !CURRENT_BUYER; btn.textContent = 'Pick up'; status.textContent = 'tap to call'; }
+  else if (newState === 'opening')  { btn.disabled = true; btn.classList.add('thinking'); btn.textContent = 'Ringing'; status.textContent = "they're picking up…"; }
+  else if (newState === 'press_talk'){ btn.disabled = false; btn.textContent = 'Press to talk'; clear(status); status.appendChild(el('span',{class:'dot'})); status.appendChild(document.createTextNode('line is open')); }
+  else if (newState === 'recording'){ btn.disabled = false; btn.classList.add('recording'); btn.textContent = 'Release'; status.textContent = 'recording — release to send'; }
+  else if (newState === 'thinking') { btn.disabled = true; btn.classList.add('thinking'); btn.textContent = 'Thinking'; status.textContent = "they're responding…"; }
+  else if (newState === 'playing')  { btn.disabled = true; btn.classList.add('playing'); btn.textContent = 'Listening'; status.textContent = "they're talking…"; }
 }
 
 function getBuyerLabel(){
@@ -416,6 +427,40 @@ window.addEventListener('beforeunload', () => {
 
 setState('idle');
 loadBuyers();
+
+// ── Daily drill quota + streak strip ────────────────────────────────
+// Read-only. GET /streaks/<rep> gives the current day streak + XP tier.
+// voice.html doesn't load a per-day attempt list, so we show the streak
+// plus a generic "keep it alive" nudge and the 0/3 daily target.
+(async function loadDrillStrip(){
+  if(!BULLPEN) return;
+  const strip = document.getElementById('drill-strip');
+  if(!strip) return;
+  try {
+    const s = await (await fetch(`/api/b/${encodeURIComponent(BULLPEN)}/streaks/${encodeURIComponent(REP)}`)).json();
+    const n = (s && s.streak) || 0;
+    const mult = (s && s.tier && s.tier.label) || '';
+    while(strip.firstChild) strip.removeChild(strip.firstChild);
+
+    const st = el('div', {class:'ds-streak'});
+    st.appendChild(el('span', {class:'num', text: String(n)}));
+    st.appendChild(el('span', {text: n === 1 ? 'day streak' : 'day streak'}));
+    if(mult) st.appendChild(el('span', {class:'mult', text: '(' + mult + ')'}));
+    strip.appendChild(st);
+
+    const nudge = el('div', {class:'ds-nudge',
+      text: n > 0 ? 'One more drill keeps it alive.'
+                  : 'Run one voice drill today to start a streak.'});
+    strip.appendChild(nudge);
+
+    const reps = el('div', {class:'ds-reps'});
+    reps.appendChild(document.createTextNode('Reps today '));
+    const b = el('b', {text:'·/3'}); reps.appendChild(b);
+    strip.appendChild(reps);
+
+    strip.style.display = 'flex';
+  } catch(e){ /* silent — strip stays hidden */ }
+})();
 </script>
 </body>
 </html>

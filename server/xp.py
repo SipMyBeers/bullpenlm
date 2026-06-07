@@ -151,6 +151,13 @@ RULES: list[dict] = [
     # pilot contract with a real customer = revenue event (MONEY).
     {"kind": "doc_signed", "bucket": "clout", "xp": 50,
      "reason": "Legal doc signed"},
+    # Gate steps used to emit audit events with NO matching rule = 0 XP on
+    # the highest-friction part of onboarding. Reward them so clearing the
+    # gate feels like leveling up, not filling out a form.
+    {"kind": "closer_disclosure_accepted", "bucket": "clout", "xp": 25,
+     "reason": "Disclosure reviewed"},
+    {"kind": "w9_submitted", "bucket": "clout", "xp": 50,
+     "reason": "W-9 on file — cleared to earn"},
     {"kind": "pilot_signed", "bucket": "money", "xp": 500,
      "reason": "PILOT CONTRACT SIGNED"},
 

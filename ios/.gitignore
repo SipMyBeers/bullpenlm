@@ -1,0 +1,7 @@
+# xcodegen generates the project — project.yml is the source of truth
+BullpenLM.xcodeproj/
+DerivedData/
+build/
+*.ipa
+*.xcarchive
+.DS_Store

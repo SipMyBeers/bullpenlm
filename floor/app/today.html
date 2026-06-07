@@ -16,6 +16,8 @@
 <noscript><meta http-equiv="refresh" content="0; url=/app/spawn.html"></noscript>
 <link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app/ink.css">
+<script src="/app/cash.js"></script>
 <style>
 :root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
   --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
@@ -119,7 +121,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
   <a href="/" class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span></a>
   <nav class="crumb">
     <a href="/">Floor</a><span class="sep">/</span>
-    <span class="here">Today</span>
+    <span class="here"><span class="kw kw-mint">Today</span></span>
   </nav>
 </header>
 
@@ -200,7 +202,8 @@ async function fetchJSON(url, opts){
   return r.json();
 }
 function $(id){ return document.getElementById(id); }
-function fmtMoney(n){ return '$' + Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0}); }
+function fmtMoney(n){ return (window.bpMoney ? window.bpMoney.fmt(n) : ('$' + Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0}))); }
+function cash(n){ return (window.bpMoney && window.bpMoney.cashChip) ? window.bpMoney.cashChip(n) : document.createTextNode(fmtMoney(n)); }
 function relDue(iso){
   if(!iso) return '';
   const ms = new Date(iso) - new Date();
@@ -338,7 +341,7 @@ async function load(){
         const row = el('a', 'row');
         row.href = '/app/spotcheck.html?b=' + encodeURIComponent(BULLPEN) + '&rep=' + encodeURIComponent(REP);
         const left = el('div');
-        left.appendChild(el('div', 't', '🎯 ' + sc.checker + ' fired: ' + sc.tcs_name));
+        left.appendChild(el('div', 't', sc.checker + ' fired: ' + sc.tcs_name));
         left.appendChild(el('div', 'meta', 'P' + (sc.phase_tier || '?') + ' · ' + sc.seconds
           + 's · fired ' + (sc.fired_at||'').slice(11,16)));
         row.appendChild(left);
@@ -372,7 +375,7 @@ async function load(){
         left.appendChild(el('div', 'ps', s.prospect || s.id));
         left.appendChild(el('div', 'meta', s.stage + ' · last touched ' + (s.last_touch||'?').slice(0,10)));
         a.appendChild(left);
-        a.appendChild(el('div', 'amt', fmtMoney(s.amount)));
+        const amtEl = el('div', 'amt'); amtEl.appendChild(cash(s.amount)); a.appendChild(amtEl);
         a.appendChild(el('div', 'days', (s.days_stalled||'?') + 'd stale'));
         sl.appendChild(a);
       }
@@ -387,7 +390,7 @@ async function load(){
       const a = el('a', 'row');
       a.href = `/app/duo.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&id=${encodeURIComponent(duel.id)}`;
       const left = el('div');
-      left.appendChild(el('div', 't', '⚔ ' + duel.challenger + ' challenged you to a duo'));
+      left.appendChild(el('div', 't', duel.challenger + ' challenged you to a duo'));
       left.appendChild(el('div', 'meta', 'prospect: ' + duel.prospect + ' · ' + duel.duration_minutes + ' min'));
       a.appendChild(left);
       a.appendChild(el('div', 'badge gold', 'Accept'));
@@ -398,7 +401,7 @@ async function load(){
       const a = el('a', 'row');
       a.href = `/app/arena.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`;
       const left = el('div');
-      left.appendChild(el('div', 't', '🐉 ' + raid.name + ' — ready to claim'));
+      left.appendChild(el('div', 't', raid.name + ' — ready to claim'));
       left.appendChild(el('div', 'meta', '+' + raid.xp_share + ' XP share'));
       a.appendChild(left);
       a.appendChild(el('div', 'badge purple', 'Claim'));
@@ -416,10 +419,10 @@ async function load(){
         const a = el('a', 'row');
         a.href = `/app/deal.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&id=${encodeURIComponent(cc.deal_id)}`;
         const left = el('div');
-        left.appendChild(el('div', 't', '🔔 ' + cc.actor + ' closed ' + (cc.prospect || cc.deal_id)));
+        left.appendChild(el('div', 't', cc.actor + ' closed ' + (cc.prospect || cc.deal_id)));
         left.appendChild(el('div', 'meta', (cc.ts||'').replace('T',' ').slice(0,16)));
         a.appendChild(left);
-        a.appendChild(el('div', 'badge accent', fmtMoney(cc.amount)));
+        const badgeEl = el('div', 'badge accent'); badgeEl.appendChild(cash(cc.amount)); a.appendChild(badgeEl);
         cl.appendChild(a);
       }
     }
@@ -467,7 +470,7 @@ setInterval(load, 30000);
     const remain = (ob.steps_required||[]).filter(s => !(ob.steps_done||[]).includes(s));
     const nextLabel = ({identity:'set your display name', briefing:'read the briefing',
                        agreement:'sign the commission agreement'})[remain[0]] || remain[0];
-    $('setup-msg').textContent = '⚠ Finish setup — ' + done + ' of ' + total + ' steps done · next: ' + nextLabel;
+    $('setup-msg').textContent = 'Finish setup — ' + done + ' of ' + total + ' steps done · next: ' + nextLabel;
     $('setup-cta').href = '/app/welcome.html?b=' + encodeURIComponent(BULLPEN) + '&rep=' + encodeURIComponent(REP);
     $('setup-banner').classList.add('show');
   } catch(_){}

@@ -91,7 +91,7 @@ html,body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,v
 @keyframes bellFade{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0}}
 .bell .card{padding:60px 100px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border-radius:24px;border:6px solid #0a1a14;box-shadow:0 24px 100px rgba(0,0,0,0.7);text-align:center;animation:bellSlam .4s cubic-bezier(.34,1.56,.64,1)}
 @keyframes bellSlam{0%{transform:scale(.2) rotate(-15deg)}100%{transform:scale(1) rotate(0)}}
-.bell .card .emoji{font-size:96px;line-height:1;margin-bottom:8px}
+.bell .card .emoji{font-family:var(--display);font-size:64px;line-height:1;margin-bottom:8px;color:#0a1a14;text-transform:uppercase;letter-spacing:.04em}
 .bell .card .who{font-family:var(--display);font-size:88px;color:#0a1a14;text-transform:uppercase;letter-spacing:-.02em;line-height:1}
 .bell .card .what{font-family:var(--display);font-size:56px;color:#0a1a14;margin-top:8px;letter-spacing:-.01em;text-transform:uppercase}
 .bell .card .amt{font-family:var(--display);font-size:128px;color:#0a1a14;margin-top:16px;letter-spacing:-.03em;line-height:1}
@@ -135,7 +135,7 @@ html,body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,v
       </div>
 
       <div class="sprint" id="sprint">
-        <h2>⚔ Active sprint <span id="sp-left"></span></h2>
+        <h2>Active sprint <span id="sp-left"></span></h2>
         <div class="name" id="sp-name">—</div>
         <div class="meta" id="sp-meta">—</div>
         <div class="sp-rows" id="sp-rows"></div>
@@ -153,7 +153,7 @@ html,body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,v
 
 <div class="bell" id="bell">
   <div class="card">
-    <div class="emoji">🔔</div>
+    <div class="emoji">Ring the bell</div>
     <div class="who" id="bell-who">—</div>
     <div class="what">CLOSED</div>
     <div class="amt" id="bell-amt">$0</div>
@@ -219,7 +219,7 @@ function ringBell(actor, amount, prospect){
 }
 
 // ── Render ──
-const RANK_LABELS = ['🏆','🥈','🥉','#4','#5','#6','#7','#8','#9'];
+const RANK_LABELS = ['#1','#2','#3','#4','#5','#6','#7','#8','#9'];
 function render(d){
   // Leaderboard
   const lb = $('lb'); clear(lb);
@@ -311,7 +311,7 @@ function render(d){
   } else {
     for(const c of d.recent_closes){
       const item = el('div', 'item');
-      item.appendChild(document.createTextNode('🔔 '));
+      item.appendChild(el('span', 'what', 'CLOSED · '));
       item.appendChild(el('span', 'who', c.rep));
       item.appendChild(document.createTextNode(' closed '));
       item.appendChild(el('span', 'what', (c.prospect||'') + ' for ' + fmtMoney(c.amount)));

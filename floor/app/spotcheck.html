@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0703'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23fbbf24' font-family='monospace' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
 <meta charset="utf-8">
 <title>Pop Drills · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,6 +28,25 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 .tabs button.active{background:rgba(167,139,250,0.10);color:#c4b5fd;border-color:rgba(167,139,250,0.30)}
 .tabs button .ct{margin-left:6px;color:var(--gold);font-family:var(--display);font-size:14px;line-height:1}
 
+.drill-strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:12px 16px;margin-bottom:16px;background:linear-gradient(135deg,rgba(251,191,36,0.08),rgba(42,29,16,0.55));border:1px solid rgba(251,191,36,0.30);border-radius:10px}
+.drill-strip .ds-streak{font-family:var(--display);font-size:22px;color:var(--gold);line-height:1;letter-spacing:-.01em;display:flex;align-items:baseline;gap:7px}
+.drill-strip .ds-streak .num{font-size:30px}
+.drill-strip .ds-streak .mult{font-family:var(--mono);font-size:10px;letter-spacing:.10em;color:var(--accent-2);text-transform:uppercase}
+.drill-strip .ds-nudge{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted);flex:1 1 220px;line-height:1.4}
+.drill-strip .ds-reps{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:6px 12px;border:1px solid rgba(245,232,216,0.12);border-radius:999px}
+.drill-strip .ds-reps b{color:var(--accent);font-family:var(--display);font-size:14px;letter-spacing:0}
+.drill-strip .ds-reps.met b{color:var(--gold)}
+
+/* TCS-launch self-drill panel (shown when ?tcs=<id> is in the URL) */
+.tcs-launch{padding:22px 24px;margin-bottom:16px;background:linear-gradient(135deg,rgba(52,211,153,0.10),rgba(167,139,250,0.05));border:1px solid rgba(52,211,153,0.35);border-radius:12px}
+.tcs-launch .ll{font-family:var(--mono);font-size:10.5px;letter-spacing:.20em;text-transform:uppercase;color:var(--accent-2);margin-bottom:6px}
+.tcs-launch h2{font-family:var(--display);font-size:26px;color:var(--text);margin:0 0 8px;text-transform:uppercase;letter-spacing:-.01em;line-height:1.1}
+.tcs-launch .tl-prompt{font-family:var(--serif);font-style:italic;font-size:14.5px;color:#e5d8c4;background:rgba(0,0,0,0.20);padding:12px 14px;border-radius:8px;border-left:3px solid var(--gold);line-height:1.55;margin-bottom:14px}
+.tcs-launch textarea{width:100%;padding:11px 13px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;color:var(--text);font-family:var(--serif);font-size:14.5px;line-height:1.5;min-height:140px;resize:vertical}
+.tcs-launch .tl-row{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.tcs-launch .tl-fire{padding:11px 20px;background:var(--accent);color:#0a1a14;border:none;border-radius:5px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.tcs-launch .tl-link{font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid rgba(245,232,216,0.15);padding:11px 16px;border-radius:5px}
+.tcs-launch .tl-link:hover{color:var(--text);border-color:var(--text)}
 .sc-card{padding:20px 24px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:12px;margin-bottom:14px}
 .sc-card.open{border-color:rgba(251,191,36,0.40);background:linear-gradient(135deg,rgba(251,191,36,0.08),rgba(42,29,16,0.55))}
 .sc-card.responded{border-color:rgba(167,139,250,0.40);background:rgba(167,139,250,0.06)}
@@ -72,7 +92,25 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 </style>
 <script src="/app/embed-mode.js"></script>
 <script src="/app/challenge-notif.js" defer></script>
-<script src="/app/tutorial.js" defer></script>
+<!-- tutorial.js intentionally NOT loaded here: this is the "first drill"
+     landing page (linked from the tutorial's "Skip to drilling" CTA). The
+     office-style WELCOME overlay must not re-fire on top of the drill. -->
+<script>
+  // Belt-and-suspenders guard: if any earlier-cached include or another
+  // page already injected the tutorial overlay, strip it ON THIS PAGE only.
+  // Do NOT mark the tour complete globally — that would suppress the real
+  // first-run tour on office/studio/arena for a brand-new rep.
+  (function(){
+    function killTutorial(){
+      document.querySelectorAll('.bp-tut-overlay').forEach(function(n){ n.remove(); });
+    }
+    killTutorial();
+    if (document.readyState === 'loading')
+      document.addEventListener('DOMContentLoaded', killTutorial);
+    // Catch the deferred setTimeout(show,200) path too.
+    setTimeout(killTutorial, 260);
+  })();
+</script>
 </head>
 <body>
 
@@ -86,6 +124,8 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 </header>
 
 <main class="wrap">
+  <div class="drill-strip" id="drill-strip" style="display:none"></div>
+  <div class="tcs-launch" id="tcs-launch" style="display:none"></div>
   <div class="tabs">
     <button data-view="incoming" class="active">Incoming <span class="ct" id="ct-incoming">0</span></button>
     <button data-view="sent">Sent <span class="ct" id="ct-sent">0</span></button>
@@ -150,14 +190,14 @@ function renderCard(sc){
   if(sc.target === REP && sc.status === 'open'){
     const cw = el('div', 'compose');
     const ta = document.createElement('textarea');
-    ta.placeholder = 'Type your response — every word you would say. Or hit ⏺ Record to speak it. Auto-graded by keyword check.';
+    ta.placeholder = 'Type your response — every word you would say. Or hit Record to speak it. Auto-graded by keyword check.';
     cw.appendChild(ta);
     const row = el('div', 'row');
     const t = el('div', 'timer', '');
     row.appendChild(t);
 
     // Audio recording button — captures opus, transcribes via whisper, fills textarea
-    const recBtn = el('button', 'submit', '⏺ Record');
+    const recBtn = el('button', 'submit', 'Record');
     recBtn.style.background = '#f87171';
     recBtn.style.color = '#0a1a14';
     let rec = null, recStream = null, recChunks = [];
@@ -178,7 +218,7 @@ function renderCard(sc){
       rec.ondataavailable = e => { if(e.data && e.data.size>0) recChunks.push(e.data); };
       rec.onstop = async () => {
         recStream.getTracks().forEach(t => t.stop());
-        recBtn.textContent = '⏺ Record';
+        recBtn.textContent = 'Record';
         recBtn.disabled = true;
         toast('Transcribing…');
         const blob = new Blob(recChunks, {type: rec.mimeType || 'audio/webm'});
@@ -191,7 +231,7 @@ function renderCard(sc){
           const d = await r.json();
           if (r.ok && d.text) {
             ta.value = (ta.value ? ta.value + ' ' : '') + d.text;
-            toast('✓ Transcribed — review + submit');
+            toast('Transcribed — review + submit');
           } else {
             toast('Transcription failed: ' + (d.error || ('HTTP '+r.status)), true);
           }
@@ -199,7 +239,7 @@ function renderCard(sc){
         recBtn.disabled = false;
       };
       rec.start();
-      recBtn.textContent = '⏹ Stop';
+      recBtn.textContent = 'Stop';
       toast('Recording — hit Stop when done');
     };
     row.appendChild(recBtn);
@@ -251,7 +291,7 @@ function renderCard(sc){
   // Grade actions (if I'm the checker + status is responded)
   if(sc.checker === REP && sc.status === 'responded' && !sc.self_drill){
     const actions = el('div', 'grade-actions');
-    const auto = el('button', 'auto', '⚙ Auto-grade');
+    const auto = el('button', 'auto', 'Auto-grade');
     auto.onclick = () => gradeIt(sc, null, null);
     actions.appendChild(auto);
     const go = el('button', 'go', '✓ GO');
@@ -348,6 +388,7 @@ function connectSSE(){
         if(['spotcheck_fired','spotcheck_responded'].includes(e.kind)){
           loadCounts();
           loadView();
+          loadDrillStrip();
         }
       } catch(_){}
     };
@@ -355,8 +396,118 @@ function connectSSE(){
   } catch(_){ setTimeout(connectSSE, 3000); }
 }
 
-loadView(); loadCounts(); connectSSE();
+// ── Daily drill quota + streak strip ────────────────────────────────
+// Read-only. GET /streaks/<rep> gives day streak + XP tier. Reps today =
+// scored drills the rep completed today, counted from the spotchecks the
+// page already loads (graded checks where this rep was the target).
+const DAILY_QUOTA = 3;
+async function loadDrillStrip(){
+  const strip = $('drill-strip');
+  if(!strip) return;
+  let s = {}, repsToday = 0;
+  const today = new Date().toISOString().slice(0,10);
+  try {
+    const [streak, all] = await Promise.all([
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/streaks/${encodeURIComponent(REP)}`).catch(()=>({})),
+      fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/spotchecks?rep=${encodeURIComponent(REP)}`).catch(()=>({spotchecks:[]})),
+    ]);
+    s = streak || {};
+    repsToday = (all.spotchecks || []).filter(x =>
+      x.target === REP && x.status === 'graded' &&
+      ((x.graded_at || x.responded_at || x.fired_at || '').slice(0,10) === today)
+    ).length;
+  } catch(_){}
+  const n = (s && s.streak) || 0;
+  const mult = (s && s.tier && s.tier.label) || '';
+  clear(strip);
+
+  const st = el('div', 'ds-streak');
+  st.appendChild(el('span', 'num', String(n)));
+  st.appendChild(el('span', null, 'day streak'));
+  if(mult) st.appendChild(el('span', 'mult', '(' + mult + ')'));
+  strip.appendChild(st);
+
+  const met = repsToday >= DAILY_QUOTA;
+  const nudge = el('div', 'ds-nudge',
+    met ? 'Quota cleared — every extra drill banks more XP.'
+        : n > 0 ? 'One more drill keeps it alive.'
+                : 'Knock out a drill today to start a streak.');
+  strip.appendChild(nudge);
+
+  const reps = el('div', 'ds-reps' + (met ? ' met' : ''));
+  reps.appendChild(document.createTextNode('Reps today '));
+  reps.appendChild(el('b', null, repsToday + '/' + DAILY_QUOTA));
+  strip.appendChild(reps);
+
+  strip.style.display = 'flex';
+}
+
+// ── FIX (b): TCS-launch self-drill ──────────────────────────────────
+// A brand-new closer is sent here via /spotcheck.html?...&tcs=<id>. Without
+// this, they'd see an empty "No drills waiting" inbox with no way to start.
+// We surface a startable self-drill for that TCS: fetch the play, show its
+// spot-check prompt + a response box, then create+grade a self-drill using
+// the exact same endpoints training.html / tcs.html use:
+//   POST /spotchecks {rep,target:rep,tcs_id}  →  POST /spotchecks/<id>/respond
+const TCS_PARAM = params.get('tcs');
+async function showTcsLaunch(tcsId){
+  const panel = $('tcs-launch');
+  if(!panel) return;
+  clear(panel);
+  let tcs = null;
+  try { tcs = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/tcs/${encodeURIComponent(tcsId)}`); }
+  catch(_){}
+
+  panel.appendChild(el('div', 'll', 'Your first drill'));
+  panel.appendChild(el('h2', null, tcs ? (tcs.name || tcsId) : tcsId));
+  panel.appendChild(el('div', 'tl-prompt',
+    (tcs && tcs.spot_check_prompt) ? tcs.spot_check_prompt
+                                   : 'Demonstrate the play — every word you would say.'));
+  const ta = document.createElement('textarea');
+  ta.placeholder = 'Type your response — every word you\'d say. Auto-graded by keyword check. Pass = GO, +XP, Top Pack updates.';
+  panel.appendChild(ta);
+
+  const row = el('div', 'tl-row');
+  const fire = el('button', 'tl-fire', '▶ Start self-drill + auto-grade');
+  fire.onclick = async () => {
+    const response = ta.value.trim();
+    if(!response){ toast('Type a response first', true); ta.focus(); return; }
+    fire.disabled = true;
+    try {
+      const sc = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/spotchecks`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({rep: REP, target: REP, tcs_id: tcsId})
+      });
+      const graded = await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/spotchecks/${encodeURIComponent(sc.id)}/respond`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({rep: REP, response})
+      });
+      if(graded.result === 'GO'){ toast('✓ GO — added to your Top Pack'); }
+      else if(graded.result === 'NO_GO'){ toast('NO-GO — ' + (graded.feedback || 'run it back'), true); }
+      else { toast('Submitted — awaiting grade'); }
+      // Refresh the inbox/history + strip; keep the panel for another rep.
+      ta.value = '';
+      loadView(); loadCounts(); loadDrillStrip();
+    } catch(e){ toast(e.message, true); }
+    fire.disabled = false;
+  };
+  row.appendChild(fire);
+
+  // Fallback path: open the full play in the Studio/Plays view.
+  const link = el('a', 'tl-link', 'Open full play →');
+  link.href = '/app/tcs.html?b=' + encodeURIComponent(BULLPEN) + '&rep=' + encodeURIComponent(REP) + '#' + encodeURIComponent(tcsId);
+  row.appendChild(link);
+
+  panel.appendChild(row);
+  panel.style.display = 'block';
+  setTimeout(() => ta.focus(), 80);
+}
+
+if(TCS_PARAM){ showTcsLaunch(TCS_PARAM); }
+
+loadView(); loadCounts(); loadDrillStrip(); connectSSE();
 setInterval(loadCounts, 15000);
+setInterval(loadDrillStrip, 30000);
 </script>
 
 </body>

@@ -75,3 +75,15 @@ desktop/src-tauri/binaries/build/
 desktop/src-tauri/binaries/dist/
 desktop/src-tauri/binaries/bullpenlm-server-*
 .venv-build/
+
+# ── Vendored whisper binaries (large; fetched at build, not source) ──
+desktop/src-tauri/binaries/whisper-cli-*
+desktop/src-tauri/binaries/whisper-deps/
+
+# ── Host identity / per-instance secrets (NOT *.key — ends in -key) ──
+.closer-profiles-host-key
+closer-profiles/
+
+# ── iOS generated project + build output (project.yml is the source) ──
+ios/BullpenLM.xcodeproj/
+ios/DerivedData/

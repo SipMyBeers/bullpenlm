@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Team · BullpenLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0703">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0703'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23fbbf24' font-family='monospace' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app/ink.css">
+<script src="/app/cash.js"></script>
+<style>
+:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--text:#f5e8d8;--muted:#a89a87;--dim:#6b5a42;
+  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--danger:#f87171;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(ellipse at 50% -10%,var(--bg-2),var(--bg-1) 55%,var(--bg-0));
+  color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.5;min-height:100vh;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);}
+.wrap{max-width:560px;margin:0 auto;padding:14px 14px 40px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:6px 2px 14px}
+.top .brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.02em}
+.top .brand .b{color:var(--gold)}.top .brand .lm{color:var(--accent)}
+.top .pen{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.top .pen b{color:var(--accent-2)}
+/* roster */
+.rep{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:13px 14px;margin-bottom:9px;
+  background:rgba(26,18,8,0.6);border:1px solid rgba(245,232,216,0.09);border-radius:13px;cursor:pointer;
+  transition:transform .1s,border-color .12s}
+.rep:active{transform:scale(.99)}
+.rep:hover{border-color:rgba(251,191,36,0.3)}
+.rep .nm{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.rep .dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex-shrink:0}
+.rep .dot.on{background:var(--accent);box-shadow:0 0 7px var(--accent)}
+.rep .sub{grid-column:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--muted);margin-top:3px}
+.rep .rk{grid-row:1/3;grid-column:2;text-align:right;align-self:center}
+.rep .rk .rank{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--gold);font-weight:700}
+.rep .rk .tier{font-family:var(--serif);font-style:italic;font-size:12px;color:var(--muted);margin-top:2px}
+.rep .stuck{grid-column:1/3;margin-top:8px;font-family:var(--mono);font-size:10px;letter-spacing:.03em;color:var(--danger)}
+/* scorecard */
+.sc-back{display:inline-flex;align-items:center;gap:7px;background:none;border:none;color:var(--muted);
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;padding:6px 0 14px}
+.sc-back:hover{color:var(--text)}
+.sc-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:6px}
+.sc-name{font-family:var(--display);font-size:34px;text-transform:uppercase;letter-spacing:-.02em;line-height:1}
+.sc-rank{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--gold);font-weight:700;text-align:right}
+.sc-rank .tier{display:block;font-family:var(--serif);font-style:italic;color:var(--muted);letter-spacing:0;font-size:12.5px;margin-top:3px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:16px 0}
+.cell{background:rgba(26,18,8,0.6);border:1px solid rgba(245,232,216,0.09);border-radius:11px;padding:13px 14px}
+.cell .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.cell .v{font-family:var(--display);font-size:26px;letter-spacing:-.01em;margin-top:5px}
+.cell .v small{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted)}
+.sect{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:22px 0 9px}
+.bar{height:7px;border-radius:4px;background:rgba(245,232,216,0.1);overflow:hidden;margin:8px 0 2px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.gate-item{display:flex;align-items:center;gap:9px;padding:9px 12px;background:rgba(0,0,0,0.22);border-radius:8px;margin-bottom:6px;font-size:13.5px}
+.gate-item .s{font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:2px 7px;border-radius:4px}
+.gate-item.ok .s{background:rgba(52,211,153,0.14);color:var(--accent-2)}
+.gate-item.no .s{background:rgba(248,113,113,0.14);color:var(--danger)}
+.feed div{padding:9px 0;border-bottom:1px solid rgba(245,232,216,0.07);font-size:13.5px;display:flex;justify-content:space-between;gap:10px}
+.feed .t{font-family:var(--mono);font-size:10.5px;color:var(--dim);white-space:nowrap}
+.act{display:flex;gap:9px;margin:18px 0 6px}
+.btn{flex:1;text-align:center;padding:13px;border-radius:10px;border:none;cursor:pointer;font-family:var(--mono);
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;transition:transform .1s}
+.btn:active{transform:scale(.98)}
+.btn.gold{background:var(--gold);color:#0a1a14}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.18)}
+.empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:34px 0;letter-spacing:.06em}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,80px);
+  background:rgba(52,211,153,0.96);color:#0a1a14;padding:12px 18px;border-radius:9px;font-family:var(--mono);
+  font-size:11px;letter-spacing:.05em;opacity:0;transition:all .25s;z-index:50;max-width:90vw}
+.toast.show{transform:translate(-50%,0);opacity:1}
+.toast.err{background:rgba(248,113,113,0.96)}
+.hide{display:none}
+.refresh{background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.1em;cursor:pointer}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <span class="brand"><span class="b">BULLPEN</span><span class="lm">LM</span> · TEAM</span>
+    <span class="pen" id="penmeta">…</span>
+  </div>
+
+  <!-- ROSTER -->
+  <div id="roster"><div class="empty">Loading the floor…</div></div>
+
+  <!-- SCORECARD -->
+  <div id="scorecard" class="hide"></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const P = new URLSearchParams(location.search);
+const BP = P.get('b') || 'default';
+const OP = P.get('rep') || P.get('op') || 'self';   // the operator viewing
+const API = '/api/b/' + encodeURIComponent(BP);
+const RANKS = [['LEGEND',10000],['ALL-STAR',5000],['CLOSER',2500],['STARTER',1000],['WALK-ON',250],['ROOKIE',0]];
+function rankFor(xp){ for(const [n,t] of RANKS){ if((xp||0)>=t) return n; } return 'ROOKIE'; }
+function fmtXp(n){ return (n||0).toLocaleString('en-US'); }
+function rel(ts){ if(!ts) return ''; const d=(Date.parse(ts.replace(' ','T'))||0); if(!d) return '';
+  const s=Math.max(1,Math.round((Date.now()-d)/1000));
+  if(s<60) return s+'s'; if(s<3600) return Math.round(s/60)+'m'; if(s<86400) return Math.round(s/3600)+'h'; return Math.round(s/86400)+'d'; }
+function money(n){ return (window.bpMoney? window.bpMoney.fmt(n) : '$'+Math.round(n||0)); }
+async function J(path, opts){ const r=await fetch(API+path, opts); if(!r.ok) throw new Error(r.status); return r.json(); }
+function toast(m,err){ const t=document.getElementById('toast'); t.textContent=m; t.classList.toggle('err',!!err); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
+function el(tag,cls,txt){ const e=document.createElement(tag); if(cls)e.className=cls; if(txt!=null)e.textContent=txt; return e; }
+
+let AUDIT=[];           // recent events (for activity + counts + last-active)
+const DRILL_KINDS=new Set(['drill_passed','drill_attempt','spotcheck_responded']);
+const CALL_KINDS=new Set(['call','followup_done','activity_meeting','debrief_extracted']);
+const WIN_KINDS=new Set(['deal_closed_won']);
+
+function within7d(ts){ const d=Date.parse((ts||'').replace(' ','T'))||0; return d && (Date.now()-d) < 7*86400*1000; }
+
+// ── ROSTER ────────────────────────────────────────────────────────────
+async function loadRoster(){
+  const root=document.getElementById('roster');
+  let lb, pres;
+  try { [lb,pres,AUDIT] = await Promise.all([ J('/leaderboard'), J('/presence').catch(()=>({online:[]})), J('/audit?n=400').then(d=>d.events||[]).catch(()=>[]) ]); }
+  catch(e){ root.innerHTML=''; root.appendChild(el('div','empty','Could not reach the floor.')); return; }
+  const reps=(lb.reps||[]).slice().sort((a,b)=>(b.total_xp||0)-(a.total_xp||0));
+  const online=new Set((pres.online||[]).map(o=>typeof o==='string'?o:o.rep));
+  // last activity + 7d drill count per rep from the audit tail
+  const last={}, drills7={};
+  for(const ev of AUDIT){ const r=ev.actor; if(!r) continue;
+    if(!last[r]) last[r]=ev.ts;
+    if(DRILL_KINDS.has(ev.kind) && within7d(ev.ts)) drills7[r]=(drills7[r]||0)+1; }
+  document.getElementById('penmeta').innerHTML = BP.toUpperCase()+' · <b>'+online.size+'</b> ACTIVE';
+  root.innerHTML='';
+  if(!reps.length){ root.appendChild(el('div','empty','No reps on this floor yet.')); return; }
+  for(const rp of reps){
+    const card=el('div','rep'); card.onclick=()=>openRep(rp.rep);
+    const nm=el('div','nm'); const dot=el('span','dot'+(online.has(rp.rep)?' on':'')); nm.appendChild(dot); nm.appendChild(document.createTextNode(rp.rep));
+    card.appendChild(nm);
+    const sub=el('div','sub'); const la=last[rp.rep]?('· active '+rel(last[rp.rep])+' ago'):'· no activity';
+    sub.textContent=(drills7[rp.rep]||0)+' drills / 7d · '+(rp.closer_wins||0)+' closes '+la; card.appendChild(sub);
+    const rk=el('div','rk'); rk.appendChild(el('div','rank',rankFor(rp.total_xp)));
+    rk.appendChild(el('div','tier',fmtXp(rp.total_xp)+' xp')); card.appendChild(rk);
+    root.appendChild(card);
+  }
+}
+
+// ── SCORECARD ─────────────────────────────────────────────────────────
+async function openRep(rep){
+  const sc=document.getElementById('scorecard');
+  document.getElementById('roster').classList.add('hide'); sc.classList.remove('hide'); window.scrollTo(0,0);
+  sc.innerHTML=''; const back=el('button','sc-back','‹ Back to team'); back.onclick=closeRep; sc.appendChild(back);
+  sc.appendChild(el('div','empty','Loading '+rep+'…'));
+  let xp,tp,gate,streak;
+  try { [xp,tp,gate,streak] = await Promise.all([
+    J('/xp/'+encodeURIComponent(rep)).catch(()=>({})),
+    J('/toppack/'+encodeURIComponent(rep)).catch(()=>({})),
+    J('/gate/'+encodeURIComponent(rep)).catch(()=>({})),
+    J('/streaks/'+encodeURIComponent(rep)).catch(()=>({})) ]); }
+  catch(e){}
+  const totalXp=(xp.clout_xp||0)+(xp.money_xp||0);
+  const evs=AUDIT.filter(e=>e.actor===rep);
+  const drills7=evs.filter(e=>DRILL_KINDS.has(e.kind)&&within7d(e.ts)).length;
+  const calls7=evs.filter(e=>CALL_KINDS.has(e.kind)&&within7d(e.ts)).length;
+  const tiersCleared=new Set((tp.cleared||[]).map(c=>c.phase_tier)).size;
+  const stuck=(tp.not_cleared||[]);
+
+  sc.innerHTML='';
+  const b2=el('button','sc-back','‹ Back to team'); b2.onclick=closeRep; sc.appendChild(b2);
+  const head=el('div','sc-head');
+  head.appendChild(el('div','sc-name',rep));
+  const rk=el('div','sc-rank',rankFor(totalXp)); const ti=el('span','tier','Lvl '+(xp.level||1)+(streak.streak?(' · '+streak.streak+'-day streak'):'')); rk.appendChild(ti); head.appendChild(rk);
+  sc.appendChild(head);
+
+  // money line (cash)
+  if(xp.money_xp){ const m=el('div'); m.style.cssText='font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);margin-top:2px';
+    m.innerHTML='money '; const c=window.bpMoney?window.bpMoney.cashChip(xp.money_xp):el('span',null,'$'+xp.money_xp); m.appendChild(c); sc.appendChild(m); }
+
+  const grid=el('div','grid');
+  const cells=[['Gauntlet',(tiersCleared)+'<small>/7 tiers</small>'],['Certs',(tp.cleared_count||0)+'<small> cleared</small>'],
+    ['Drills · 7d',String(drills7)],['Calls · 7d',String(calls7)]];
+  for(const [k,v] of cells){ const c=el('div','cell'); c.appendChild(el('div','k',k)); const vv=el('div','v'); vv.innerHTML=v; c.appendChild(vv); grid.appendChild(c); }
+  sc.appendChild(grid);
+
+  // gauntlet bar
+  sc.appendChild(el('div','sect','Gauntlet progress'));
+  const bar=el('div','bar'); const fill=el('i'); fill.style.width=Math.round((tp.pct_cleared||0))+'%'; bar.appendChild(fill); sc.appendChild(bar);
+  sc.appendChild(el('div',null,(tp.cleared_count||0)+' of '+(tp.total||0)+' plays cleared')).style.cssText='font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em';
+
+  // gate
+  sc.appendChild(el('div','sect','Gate to real prospects'));
+  const ITEMS={closer_disclosure_not_accepted:'Disclosure',closer_agreement_not_signed:'Closer agreement',w9_not_on_file:'W-9',drill_certification_not_cleared:'Tier-3 drill cert',dnc_scrub_failed:'DNC scrub',jurisdiction_check_failed:'Jurisdiction',operator_entity_not_set_up:'Operator entity'};
+  const missing=new Set(gate.missing||[]);
+  if(gate.ok){ const g=el('div','gate-item ok'); g.appendChild(el('span',null,'Cleared — can dial real prospects')); const s=el('span','s','GO'); g.appendChild(s); sc.appendChild(g); }
+  else { for(const [k,label] of Object.entries(ITEMS)){ if(!missing.has(k)) continue; const g=el('div','gate-item no'); g.appendChild(el('span',null,label)); const s=el('span','s','MISSING'); g.appendChild(s); sc.appendChild(g); } }
+
+  // stuck on
+  if(stuck.length){ sc.appendChild(el('div','sect','Not cleared / stuck on'));
+    for(const p of stuck.slice(0,5)){ const d=el('div'); d.style.cssText='font-size:13.5px;padding:7px 0;color:var(--text)';
+      d.innerHTML='<span style="font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:.1em">T'+(p.phase_tier||'?')+'</span> &nbsp;'+(p.name||p.id); sc.appendChild(d); } }
+
+  // recent activity
+  sc.appendChild(el('div','sect','Recent activity'));
+  const feed=el('div','feed');
+  const seen=evs.slice(0,12);
+  if(!seen.length) feed.appendChild(el('div',null,'—'));
+  for(const e of seen){ const row=el('div'); row.appendChild(el('span',null,labelEvent(e))); row.appendChild(el('span','t',rel(e.ts))); feed.appendChild(row); }
+  sc.appendChild(feed);
+
+  // actions
+  const act=el('div','act');
+  const assign=el('button','btn gold','Assign a drill'); assign.onclick=()=>assignDrill(rep,stuck); act.appendChild(assign);
+  sc.appendChild(act);
+}
+function labelEvent(e){
+  const m={drill_passed:'Passed a drill',drill_attempt:'Drilled',spotcheck_responded:'Answered a spot-check',deal_closed_won:'Closed a deal',deal_stage_moved:'Advanced a deal',deal_created:'Created a deal',call:'Logged a call',source_ingested:'Added a source',quest_completed:'Claimed a quest',voice_turn:'Live role-play',achievement_unlocked:'Unlocked an achievement',drill_passed_cert:'Certified a drill',w9_submitted:'Submitted W-9',closer_disclosure_accepted:'Read disclosure',doc_signed:'Signed a doc'};
+  return m[e.kind] || (e.kind||'event').replace(/_/g,' ');
+}
+function closeRep(){ document.getElementById('scorecard').classList.add('hide'); document.getElementById('roster').classList.remove('hide'); }
+
+async function assignDrill(rep, stuck){
+  // assign = fire a spot-check at the rep on their top not-cleared play (or a default)
+  const tcs = (stuck && stuck[0] && stuck[0].id) ? stuck[0].id : 'cold-open-bfsi';
+  try {
+    await J('/spotchecks', {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({rep:OP, target:rep, tcs_id:tcs})});
+    toast('Assigned "'+tcs+'" to '+rep);
+  } catch(e){ toast('Could not assign drill ('+e.message+')', true); }
+}
+
+// pull-to-refresh-ish: tap the pen meta to reload
+document.getElementById('penmeta').addEventListener('click', loadRoster);
+loadRoster();
+setInterval(()=>{ if(document.getElementById('roster').classList.contains('hide')) return; loadRoster(); }, 30000);
+</script>
+</body>
+</html>

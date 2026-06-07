@@ -176,7 +176,7 @@ async function load(){
       const missingTxt = c.gate_ok ? 'Fully gated — can claim live prospects' :
                                        (c.missing||[]).slice(0,3).join(', ') || 'unknown';
       row.appendChild(el('div', {class:'missing', text:missingTxt}));
-      row.appendChild(el('div', {class:'pill ' + (c.gate_ok ? 'ok' : 'gated'), text:c.gate_ok ? '✓ READY' : '⛔ GATED'}));
+      row.appendChild(el('div', {class:'pill ' + (c.gate_ok ? 'ok' : 'gated'), text:c.gate_ok ? '✓ READY' : 'GATED'}));
       closersWrap.appendChild(row);
     }
   }
@@ -197,7 +197,7 @@ async function loadPhase(){
     const summary = el('div', {style:'padding:14px 18px;border-radius:8px;margin-bottom:12px;font-family:var(--mono);font-size:13px;letter-spacing:.04em;background:' + (d.ready ? 'rgba(52,211,153,0.10)' : 'rgba(248,113,113,0.08)') + ';border:1px solid ' + (d.ready ? 'rgba(52,211,153,0.40)' : 'rgba(248,113,113,0.30)') + ';color:' + (d.ready ? 'var(--accent-2)' : 'var(--danger)')});
     summary.textContent = d.ready
       ? '✓ PHASE 1 READY — platform + this bullpen pass all checks.'
-      : '⛔ NOT READY — blockers below must clear before Phase 1.';
+      : 'NOT READY — blockers below must clear before Phase 1.';
     wrap.appendChild(summary);
     const allChecks = {};
     Object.entries(d.checks || {}).forEach(([k,v]) => { allChecks['bullpen:' + k] = v; });

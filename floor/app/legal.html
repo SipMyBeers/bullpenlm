@@ -92,7 +92,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 
 <div class="modal" id="modal">
   <div class="modal-card">
-    <h2>✒ Sign document</h2>
+    <h2>Sign document</h2>
     <p id="modal-doc-title">…</p>
     <input id="modal-name" type="text" placeholder="Type your full legal name" autocomplete="off">
     <div class="legal-line">
@@ -146,7 +146,7 @@ function renderSidebar(){
     card.appendChild(el('div', 'meta', d.id + ' · ' + d.sha256.slice(0,10)));
     const status = el('span', 'status ' + st.state,
       st.state==='signed' ? '✓ Signed' :
-      st.state==='stale'  ? '⚠ Out of date' :
+      st.state==='stale'  ? 'Out of date' :
                             'Unsigned');
     card.appendChild(status);
     card.onclick = () => openDoc(d.id);
@@ -249,7 +249,7 @@ async function openDoc(id){
 
     const btn = el('button', 'sign-btn ' + (st.state==='stale'?'stale':''),
       st.state==='signed' ? '✓ Signed' :
-      st.state==='stale'  ? '⚠ Re-sign — version changed' :
+      st.state==='stale'  ? 'Re-sign — version changed' :
                             'Sign this document');
     if(st.state==='signed') btn.disabled = true;
     btn.onclick = () => openSignModal(doc);
@@ -258,7 +258,7 @@ async function openDoc(id){
 
     if(st.state === 'stale'){
       const b = el('div', 'banner warn',
-        '⚠ Your signed version is no longer current. The doc was modified after you last signed. Please re-sign to keep your authority valid.');
+        'Your signed version is no longer current. The doc was modified after you last signed. Please re-sign to keep your authority valid.');
       reader.appendChild(b);
     } else if(st.state === 'signed'){
       const b = el('div', 'banner ok',

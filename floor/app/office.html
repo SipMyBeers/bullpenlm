@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0703'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23fbbf24' font-family='monospace' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
 <meta charset="utf-8">
 <title>The Bullpen · Office</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,6 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="/app/challenge-notif.js" defer></script>
 <script src="/app/gate-banner.js" defer></script>
+<link rel="stylesheet" href="/app/ink.css">
+<script src="/app/sfx.js"></script>
+<script src="/app/cash.js"></script>
 <style>
 :root{
   --bg-0:#0a0703; --bg-1:#1a1208; --bg-2:#2a1d10; --bg-3:#3d2c1a;
@@ -38,7 +42,7 @@ header .meta .hud-btn{cursor:pointer;font-family:var(--mono);font-size:10.5px;le
 header .meta .hud-btn:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-1px)}
 
 /* ── Mode tabs (top center): ARENA · FLOOR · OUTREACH ────── */
-.mode-tabs{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:31;display:flex;gap:2px;padding:4px;background:rgba(10,7,3,0.75);border:1px solid rgba(245,232,216,0.14);border-radius:11px;backdrop-filter:blur(10px)}
+.mode-tabs{flex:0 0 auto;display:flex;gap:2px;padding:4px;background:rgba(10,7,3,0.75);border:1px solid rgba(245,232,216,0.14);border-radius:11px;backdrop-filter:blur(10px)}
 .mode-tabs button{padding:6px 14px;background:none;border:none;border-radius:7px;color:var(--muted);font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:background .12s,color .12s}
 .mode-tabs button:hover{color:var(--text)}
 .mode-tabs button.active{background:var(--gold);color:#0a1a14}
@@ -130,7 +134,9 @@ body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }
 .welcome-box .wb-lede{font-family:var(--serif);font-style:italic;color:var(--text);font-size:17px;line-height:1.55;margin:0 0 22px}
 .welcome-box .wb-rows{display:flex;flex-direction:column;gap:11px;margin-bottom:24px}
 .welcome-box .wb-row{display:flex;gap:14px;align-items:flex-start;padding:12px 14px;background:rgba(245,232,216,0.04);border:1px solid rgba(245,232,216,0.08);border-radius:9px}
-.welcome-box .wb-row .wb-icon{font-size:22px;line-height:1;width:30px;text-align:center;flex-shrink:0}
+.welcome-box .wb-row .wb-icon{width:26px;height:26px;flex-shrink:0;display:grid;place-items:center;
+  font-family:var(--mono);font-size:12px;font-weight:700;color:var(--gold);
+  background:rgba(251,191,36,0.10);border:1px solid rgba(251,191,36,0.35);border-radius:7px;line-height:1}
 .welcome-box .wb-row .wb-txt{flex:1}
 .welcome-box .wb-row .wb-t{font-family:var(--display);font-size:15px;letter-spacing:-.005em;text-transform:uppercase;color:var(--text);margin-bottom:3px}
 .welcome-box .wb-row .wb-d{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:13.5px;line-height:1.45}
@@ -329,28 +335,137 @@ body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }
 .empty-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;
   font-family:var(--serif);font-style:italic;color:var(--muted);font-size:18px;line-height:1.6;pointer-events:none}
 .empty-overlay strong{color:var(--text);font-style:normal;font-family:var(--display);font-size:24px;letter-spacing:-.01em;text-transform:uppercase;display:block;margin-bottom:6px}
+
+/* +XP toast — mint (clout) variant. Money keeps the default gold. */
+.xp-toast.mint{border-color:var(--accent-2);color:var(--accent-2);box-shadow:0 8px 24px rgba(110,231,183,0.35)}
+
+/* ── Trophy / achievement banner — rarity-tinted celebration ───── */
+.trophy-banner{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.6);opacity:0;z-index:88;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 38px;border-radius:16px;
+  background:rgba(10,7,3,0.94);border:2px solid var(--gold);box-shadow:0 18px 60px rgba(0,0,0,0.7), inset 0 1px 0 rgba(245,232,216,0.08);
+  animation:trophy-pop 2.8s cubic-bezier(0.22,1,0.36,1) forwards}
+.trophy-banner .tb-icon{font-size:64px;line-height:1;filter:drop-shadow(0 0 18px currentColor)}
+.trophy-banner .tb-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;font-weight:700}
+.trophy-banner .tb-name{font-family:var(--display);font-size:34px;letter-spacing:-.01em;text-transform:uppercase;color:var(--text);line-height:.98;text-align:center}
+.trophy-banner .tb-rarity{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase}
+.trophy-banner.r-common{border-color:#9ab1d9;color:#9ab1d9}
+.trophy-banner.r-rare{border-color:#60a5fa;color:#60a5fa}
+.trophy-banner.r-epic{border-color:var(--purple);color:var(--purple)}
+.trophy-banner.r-legendary{border-color:var(--gold);color:var(--gold);box-shadow:0 18px 70px rgba(251,191,36,0.5), inset 0 1px 0 rgba(245,232,216,0.10)}
+.trophy-banner.legendary-scale{transform:translate(-50%,-50%) scale(0.6)}
+.trophy-banner.legendary-scale .tb-icon{font-size:88px}
+.trophy-banner.legendary-scale .tb-name{font-size:46px}
+@keyframes trophy-pop {
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(0.6); }
+  12%  { opacity:1; transform:translate(-50%,-50%) scale(1.06); }
+  20%  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  85%  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  100% { opacity:0; transform:translate(-50%,-58%) scale(1); }
+}
+/* Lighter toast variant (common rarity) — reuses the trophy banner box at a smaller size */
+.trophy-banner.tb-toast{top:auto;bottom:90px;transform:translate(-50%,40px) scale(0.9);padding:14px 22px;flex-direction:row;gap:12px;animation:trophy-toast 2.6s ease-out forwards}
+.trophy-banner.tb-toast .tb-icon{font-size:30px}
+.trophy-banner.tb-toast .tb-name{font-size:18px;text-align:left}
+.trophy-banner.tb-toast .tb-txt{display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+@keyframes trophy-toast {
+  0%   { opacity:0; transform:translate(-50%,40px) scale(0.9); }
+  12%  { opacity:1; transform:translate(-50%,0) scale(1); }
+  85%  { opacity:1; transform:translate(-50%,0) scale(1); }
+  100% { opacity:0; transform:translate(-50%,-30px) scale(1); }
+}
+
+/* Trophy chip inside the close-won fanfare card */
+.ff-trophy{display:inline-flex;align-items:center;gap:10px;margin-top:16px;padding:10px 16px;border-radius:10px;
+  background:rgba(10,7,3,0.78);border:1.5px solid var(--gold);box-shadow:0 0 22px rgba(251,191,36,0.45)}
+.ff-trophy .fft-icon{font-size:30px;line-height:1;filter:drop-shadow(0 0 10px currentColor)}
+.ff-trophy .fft-txt{display:flex;flex-direction:column;align-items:flex-start;gap:1px}
+.ff-trophy .fft-name{font-family:var(--display);font-size:17px;letter-spacing:-.005em;text-transform:uppercase;color:var(--text);line-height:1}
+.ff-trophy .fft-rarity{font-family:var(--mono);font-size:9px;letter-spacing:.22em;text-transform:uppercase}
+.ff-trophy.r-common{border-color:#9ab1d9;color:#9ab1d9}
+.ff-trophy.r-rare{border-color:#60a5fa;color:#60a5fa}
+.ff-trophy.r-epic{border-color:var(--purple);color:var(--purple)}
+.ff-trophy.r-legendary{border-color:var(--gold);color:var(--gold)}
+
+/* Quest-ready pop — top-center toast w/ a CLAIM button */
+.quest-ready{position:fixed;left:50%;top:96px;transform:translate(-50%,-20px);opacity:0;z-index:36;
+  display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;
+  background:rgba(10,7,3,0.95);border:1.5px solid var(--gold);box-shadow:0 10px 28px rgba(251,191,36,0.4);
+  transition:opacity .25s,transform .25s}
+.quest-ready.show{opacity:1;transform:translate(-50%,0)}
+.quest-ready .qr-txt{display:flex;flex-direction:column;gap:1px}
+.quest-ready .qr-eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.quest-ready .qr-name{font-family:var(--serif);font-style:italic;font-size:13.5px;color:var(--text)}
+.quest-ready .qr-claim{padding:7px 14px;background:var(--gold);color:#0a1a14;border:none;border-radius:7px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.quest-ready .qr-claim:hover{transform:translateY(-1px)}
+.quest-ready .qr-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0 2px}
+.quest-ready .qr-close:hover{color:var(--text)}
+/* Quest board flash when a quest flips to claimable */
+@keyframes qb-flash {
+  0%,100% { box-shadow:0 6px 20px rgba(0,0,0,0.40); }
+  50%     { box-shadow:0 0 0 2px var(--gold), 0 6px 24px rgba(251,191,36,0.6); }
+}
+.quest-board.qb-pulse{animation:qb-flash 1.2s ease-in-out 2}
+
+/* ── Streak flame pill (near the LVL pill, above YOU pawn) ─────── */
+/* Rendered in SVG above the pawn; banner + countdown are HTML. */
+.streak-banner{position:fixed;left:50%;top:96px;transform:translate(-50%,-20px);opacity:0;z-index:34;
+  display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:10px;
+  background:rgba(10,7,3,0.95);border:1.5px solid #fb923c;box-shadow:0 10px 28px rgba(251,146,60,0.35);
+  transition:opacity .25s,transform .25s;max-width:90vw}
+.streak-banner.show{opacity:1;transform:translate(-50%,0)}
+/* Streak ember — CSS teardrop, no emoji. */
+.streak-banner .sb-flame{width:20px;height:27px;flex-shrink:0;border-radius:50% 50% 50% 50% / 64% 64% 36% 36%;
+  transform:rotate(180deg);
+  background:radial-gradient(ellipse at 50% 70%,#fde68a 0%,#fb923c 42%,#f87171 80%,transparent 100%);
+  animation:flame-flicker 1.1s ease-in-out infinite}
+@keyframes flame-flicker {
+  0%,100% { filter:drop-shadow(0 0 4px #fb923c); transform:rotate(180deg) scale(1); }
+  50%     { filter:drop-shadow(0 0 12px #f59e0b); transform:rotate(180deg) scale(1.12); }
+}
+.streak-banner .sb-txt{display:flex;flex-direction:column;gap:1px}
+.streak-banner .sb-head{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#fb923c;font-weight:700}
+.streak-banner .sb-sub{font-family:var(--serif);font-style:italic;font-size:12.5px;color:var(--muted)}
+.streak-banner .sb-sub .sb-clock{font-family:var(--mono);font-style:normal;color:var(--text)}
+.streak-banner .sb-freeze{padding:7px 12px;background:transparent;border:1px solid #38bdf8;color:#7dd3fc;border-radius:7px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;cursor:pointer;white-space:nowrap}
+.streak-banner .sb-freeze:hover{background:rgba(56,189,248,0.12)}
+.streak-banner .sb-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0 2px}
+.streak-banner .sb-close:hover{color:var(--text)}
+
+/* ── Gate-banner top offset ──────────────────────────────────────
+   The shared gate-banner (gate-banner.js) mounts as a sticky top:0 strip.
+   On this fixed-viewport layout it would render over the brand/nav, so
+   when it's present (body.has-gate-banner) we slide every top-anchored
+   element down by its measured height (--gb-h, kept in sync by script). */
+body.has-gate-banner header.hud{top:var(--gb-h,0px)}
+body.has-gate-banner #mode-panel{top:calc(48px + var(--gb-h,0px))}
+body.has-gate-banner .quest-board{top:calc(64px + var(--gb-h,0px))}
+body.has-gate-banner .shell{padding-top:calc(48px + var(--gb-h,0px))}
+body.has-gate-banner .side-toggle{top:calc(62px + var(--gb-h,0px))}
+body.has-gate-banner .zone-tip{top:calc(128px + var(--gb-h,0px))}
 </style>
 <script src="/app/tutorial.js" defer></script>
 </head>
 <body>
-<!-- Mode tabs: ARENA (training) · FLOOR (real grind) · OUTREACH (marketing) -->
-<nav class="mode-tabs" id="mode-tabs">
-  <button data-mode="arena" class="active">🛡 Arena</button>
-  <button data-mode="floor">💼 Floor</button>
-  <button data-mode="outreach">📡 Outreach</button>
-</nav>
-
 <!-- Mode panel — filled by JS for floor/outreach -->
 <div id="mode-panel"></div>
 
 <!-- Minimal in-game HUD — no page nav. The office IS the bullpen. -->
 <header class="hud">
   <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
+  <!-- Mode tabs: ARENA (training) · FLOOR (real grind) · OUTREACH (marketing) -->
+  <nav class="mode-tabs" id="mode-tabs">
+    <button data-mode="arena" class="active">Arena</button>
+    <button data-mode="floor">Floor</button>
+    <button data-mode="outreach">Outreach</button>
+  </nav>
   <div class="meta">
-    <button class="pill hud-btn" id="hud-help" title="What is this? How do I use it?">❔ Help</button>
-    <button class="pill hud-btn" id="hud-community" title="Discord, site, chat">💬 Community</button>
-    <button class="pill hud-btn" id="hud-bridge" title="Operator dashboard — roster, audit, intel cache">📊 Bridge</button>
-    <button class="pill hud-btn" id="hud-host" title="Magic-link invites for closers">📨 Invite</button>
+    <button class="pill hud-btn" id="hud-sfx" title="Sound effects on/off">SFX</button>
+    <button class="pill hud-btn" id="hud-help" title="What is this? How do I use it?">Help</button>
+    <button class="pill hud-btn" id="hud-community" title="Discord, site, chat">Community</button>
+    <button class="pill hud-btn" id="hud-bridge" title="Operator dashboard — roster, audit, intel cache">Bridge</button>
+    <button class="pill hud-btn" id="hud-host" title="Magic-link invites for closers">Invite</button>
     <span class="pill" id="presence-pill"><span class="dot"></span><span id="presence-count">0</span> online</span>
     <a href="/app/bullpen-picker.html" id="bullpen-name" class="pill hud-btn" title="Switch bullpens — pick a different floor">—</a>
   </div>
@@ -360,56 +475,57 @@ body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }
 <div class="fanfare" id="fanfare">
   <div class="ff-burst"></div>
   <div class="ff-card">
-    <div class="ff-eyebrow">🔔 CLOSED · WON</div>
+    <div class="ff-eyebrow">CLOSED · WON</div>
     <div class="ff-title" id="ff-rep">CLOSED</div>
     <div class="ff-amount" id="ff-amount">$0</div>
     <div class="ff-sub" id="ff-sub">vs. The Boss</div>
     <div class="ff-xp" id="ff-xp">+0 XP</div>
+    <div id="ff-trophy-slot"></div>
   </div>
 </div>
 
-<!-- Welcome / "What is this?" — opens on first load, summonable via ❔ Help -->
+<!-- Welcome / "What is this?" — opens on first load, summonable via Help -->
 <div class="welcome-overlay" id="welcome-overlay">
   <div class="welcome-box">
     <button class="wb-close" id="welcome-close" title="Close">×</button>
-    <div class="wb-eyebrow">🏢 BULLPENLM · WHAT IS THIS?</div>
-    <h2>This is your sales floor.</h2>
-    <p class="wb-lede">You're the gold person. The other figures are AI buyer prospects sitting at their desks. You walk over, press a key, and pitch them out loud — they push back like real prospects. That's how you train before dialing a real Fortune-500 buyer.</p>
+    <div class="wb-eyebrow">BULLPENLM · WHAT IS THIS?</div>
+    <h2>This is your <span class="hl">sales floor</span>.</h2>
+    <p class="wb-lede">You're the <span class="kw">gold</span> person. The other figures are AI buyer prospects sitting at their desks. You walk over, press a key, and pitch them out loud — they <span class="hl hl-mint">push back like real prospects</span>. That's how you train before dialing a real Fortune-500 buyer.</p>
 
     <div class="wb-rows">
       <div class="wb-row">
-        <div class="wb-icon">🟡</div>
+        <div class="wb-icon">1</div>
         <div class="wb-txt">
-          <div class="wb-t">That's you</div>
+          <div class="wb-t">That's you — the <span class="kw">gold</span> figure</div>
           <div class="wb-d">Walk around with <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>. Press <kbd>E</kbd> to interact with whatever zone you're standing in.</div>
         </div>
       </div>
       <div class="wb-row">
-        <div class="wb-icon">💼</div>
+        <div class="wb-icon">2</div>
         <div class="wb-txt">
           <div class="wb-t">Client desks → roleplay</div>
           <div class="wb-d">Walk to a buyer (Mark Adler · CISO and Dana Pruitt · HVAC owner come pre-seated). Click <strong>Roleplay (solo)</strong> on the right panel. The AI plays the buyer; you sell.</div>
         </div>
       </div>
       <div class="wb-row">
-        <div class="wb-icon">🎨</div>
+        <div class="wb-icon">3</div>
         <div class="wb-txt">
           <div class="wb-t">Studio → teach the AI who they are</div>
           <div class="wb-d">Click <strong>Open in Studio</strong> on any buyer. Drop a URL, file, transcript, or notes — Studio feeds it into a RAG dossier so the AI knows the deal, pain points, and quotes.</div>
         </div>
       </div>
       <div class="wb-row">
-        <div class="wb-icon">⚔</div>
+        <div class="wb-icon">4</div>
         <div class="wb-txt">
           <div class="wb-t">Duo ring → challenge a teammate</div>
           <div class="wb-d">Once you've invited friends, stand on the gold tiles in the middle and press <kbd>E</kbd> to challenge a closer to a live 1v1 against the same AI buyer. Loser pays.</div>
         </div>
       </div>
       <div class="wb-row">
-        <div class="wb-icon">📊</div>
+        <div class="wb-icon">5</div>
         <div class="wb-txt">
           <div class="wb-t">Bridge + Invite (top right)</div>
-          <div class="wb-d"><strong>📊 Bridge</strong> = your operator dashboard (roster, audit, intel). <strong>📨 Invite</strong> = mint a magic link so friends can join. Open the help (<strong>❔</strong>) anytime.</div>
+          <div class="wb-d"><strong>Bridge</strong> = your operator dashboard (roster, audit, intel). <strong>Invite</strong> = mint a magic link so friends can join. Open <strong>Help</strong> anytime.</div>
         </div>
       </div>
     </div>
@@ -421,7 +537,7 @@ body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }
 <!-- Quest board — top-left, collapsible. Personal vs Group tabs. -->
 <div class="quest-board" id="quest-board">
   <div class="qb-head" onclick="toggleQuestBoard()">
-    <span class="qb-title">📜 Objectives</span>
+    <span class="qb-title">Objectives</span>
     <span class="qb-count" id="qb-count"></span>
     <span class="qb-caret" id="qb-caret">▾</span>
   </div>
@@ -440,7 +556,7 @@ body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }
 <!-- Floating legend — bottom-right, collapsed by default -->
 <div class="legend-float collapsed" id="legend-float">
   <div class="lf-head" onclick="toggleLegend()">
-    <span class="lf-title">🗺 Legend</span>
+    <span class="lf-title">Legend</span>
     <span class="lf-caret" id="lf-caret">▸</span>
   </div>
   <div class="lf-body">
@@ -469,13 +585,13 @@ body.mode-floor #mode-panel, body.mode-outreach #mode-panel { display:flex }
     <svg id="office" width="1000" height="780" viewBox="-50 -30 1000 780"></svg>
   </div>
   <aside class="side">
-    <h2>📋 The bullpen</h2>
+    <h2>The bullpen</h2>
     <h3 id="side-title">Welcome.</h3>
     <p class="sub" id="side-sub">Walk with W A S D. Press E to interact with the zone you're standing in. Click any pawn to inspect.</p>
     <div id="side-detail"></div>
 
     <!-- Intake lives inside Studio — walk to an empty desk or click
-         "🎨 Open in Studio" on any buyer. -->
+         "Open in Studio" on any buyer. -->
     <div style="margin-top:18px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);line-height:1.7">
       Drop URLs · files · CSVs inside <span style="color:var(--purple)">Studio</span><br>
       Walk to an empty desk → +&nbsp;Add a buyer
@@ -495,11 +611,11 @@ try { localStorage.setItem('bullpen-rep', REP); localStorage.setItem('bullpen-sl
 document.getElementById('bullpen-name').textContent = (BULLPEN || 'NO BULLPEN').toUpperCase();
 document.getElementById('hud-bridge').addEventListener('click', () => openEmbed(
   `/app/cockpit.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`,
-  'Command bridge', '📊 OPERATOR DASHBOARD'
+  'Command bridge', 'OPERATOR DASHBOARD'
 ));
 document.getElementById('hud-host').addEventListener('click', () => openEmbed(
   `/app/host.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`,
-  'Invite a closer', '📨 MAGIC LINK'
+  'Invite a closer', 'MAGIC LINK'
 ));
 // Quest board + legend collapsible toggles
 function toggleQuestBoard() {
@@ -536,19 +652,19 @@ function setQuestTab(tab) {
 
 // Community modal — Discord + site + chat links
 function openCommunity() {
-  openWorldModal('Bullpen community', '💬 LINKS', (body) => {
+  openWorldModal('Bullpen community', 'LINKS', (body) => {
     const sub = document.createElement('p');
     sub.style.cssText = 'font-family:var(--serif);font-style:italic;color:var(--muted);font-size:14px;line-height:1.5;margin:6px 0 18px';
     sub.textContent = 'Other places to find the bullpen — for support, banter, launches, and to grab the latest install.';
     body.appendChild(sub);
     const links = [
-      { icon: '🌐', name: 'BullpenLM.com',
+      { icon: 'WEB', name: 'BullpenLM.com',
         sub: 'Marketing site, download links, release notes',
         url: 'https://bullpenlm.com' },
-      { icon: '💬', name: 'Discord — #alpha-waitlist',
+      { icon: 'CHAT', name: 'Discord — #alpha-waitlist',
         sub: 'Live chat with founder + alpha closers. Drop bugs, post wins.',
         url: 'https://discord.gg/bullpenlm' },
-      { icon: '📨', name: 'Invite a friend',
+      { icon: 'INVITE', name: 'Invite a friend',
         sub: 'Mint a magic link so a closer can join this bullpen',
         action: () => { closeWorldModal(); document.getElementById('hud-host').click(); } },
     ];
@@ -558,7 +674,7 @@ function openCommunity() {
       row.className = 'wm-row';
       row.style.cursor = 'pointer';
       const ic = document.createElement('div');
-      ic.style.cssText = 'font-size:22px;line-height:1;width:30px;text-align:center;flex-shrink:0';
+      ic.style.cssText = 'font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.10em;color:var(--gold);line-height:1;width:48px;text-align:center;flex-shrink:0;text-transform:uppercase';
       ic.textContent = lk.icon;
       const txt = document.createElement('div'); txt.style.flex = '1';
       const t = document.createElement('div'); t.className = 'wm-row-title'; t.textContent = lk.name;
@@ -686,7 +802,7 @@ const QUEST_LORE = {
     desc: 'The Gauntlet is the 7-phase certification: cold-open · gatekeeper · pain · discovery · objection · close · followup. Pass each one once this week.',
     steps: ['Open the ARENA voice drill',
             'Pick a phase to drill against the AI buyer',
-            'Score >70% to mark the phase passed',
+            'Clear the passing score to mark the phase passed',
             'Repeat for all 7 phases before Sunday'] },
   'Create 5 new deals': {
     desc: 'Five net-new deals opened this week. Each deal = one prospect you decided to actively pursue (a buyer-card + opened pipeline entry).',
@@ -746,7 +862,7 @@ function openQuestDetails(quest) {
     if (det.tips && det.tips.length) {
       const tipHead = document.createElement('h3');
       tipHead.style.cssText = 'font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px';
-      tipHead.textContent = '💡 Tips';
+      tipHead.textContent = 'Tips';
       body.appendChild(tipHead);
       for (const t of det.tips) {
         const p = document.createElement('p');
@@ -761,7 +877,7 @@ function openQuestDetails(quest) {
     footer.style.cssText = 'display:flex;align-items:center;gap:12px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(245,232,216,0.08)';
     const reward = document.createElement('div');
     reward.style.cssText = 'font-family:var(--mono);font-size:13px;letter-spacing:.14em;color:var(--gold);font-weight:700';
-    reward.textContent = `🏆 REWARD · +${quest.xp_reward || 0} XP`;
+    reward.textContent = `REWARD · +${quest.xp_reward || 0} XP`;
     footer.appendChild(reward);
     const spacer = document.createElement('div'); spacer.style.flex = '1'; footer.appendChild(spacer);
     if (quest.completed) {
@@ -838,7 +954,7 @@ for (const btn of document.querySelectorAll('#mode-tabs button')) {
 }
 
 // Welcome overlay — opens on first office load per bullpen, summonable
-// anytime via the ❔ Help HUD pill. Esc closes too.
+// anytime via the Help HUD pill. Esc closes too.
 function openWelcome() { document.getElementById('welcome-overlay').classList.add('show'); }
 function closeWelcome() {
   document.getElementById('welcome-overlay').classList.remove('show');
@@ -846,17 +962,31 @@ function closeWelcome() {
 }
 document.getElementById('hud-help').addEventListener('click', openWelcome);
 document.getElementById('hud-community').addEventListener('click', openCommunity);
+
+// ── SFX mute toggle ──────────────────────────────────────────────
+// Flips localStorage 'bp-sfx' via the bpSfx synth (sfx.js). Default ON.
+function syncSfxToggle() {
+  const btn = document.getElementById('hud-sfx');
+  if (!btn) return;
+  const on = window.bpSfx ? window.bpSfx.isOn() : true;
+  btn.textContent = on ? 'SFX' : 'SFX OFF';
+  btn.style.color = on ? 'var(--accent-2)' : 'var(--dim)';
+  btn.title = on ? 'Sound effects ON — click to mute' : 'Sound effects MUTED — click to unmute';
+}
+document.getElementById('hud-sfx').addEventListener('click', () => {
+  if (window.bpSfx) { const on = window.bpSfx.toggle(); if (on) window.bpSfx.coin(); }
+  syncSfxToggle();
+});
+syncSfxToggle();
 document.getElementById('welcome-close').addEventListener('click', closeWelcome);
 document.getElementById('welcome-go').addEventListener('click', closeWelcome);
 document.getElementById('welcome-overlay').addEventListener('click', (e) => {
   if (e.target.id === 'welcome-overlay') closeWelcome();
 });
-// First-run: show the welcome unless the user has dismissed it before
-try {
-  if (!localStorage.getItem(`welcomed-${BULLPEN}`)) {
-    setTimeout(openWelcome, 350);
-  }
-} catch(e) { setTimeout(openWelcome, 350); }
+// Onboarding now happens via the interactive spawn walkthrough (tutorial.js),
+// not an auto-popping modal. The "what is this" panel stays available on
+// demand via the ❔/Help HUD button (openWelcome) — it just no longer
+// auto-fires on first load.
 
 // ── Iso projection ──────────────────────────────────────────────
 const TILE_W = 64, TILE_H = 32;
@@ -948,6 +1078,7 @@ const state = {
   deals: [],          // [{id, name, stage, amount, rep, contact_slug, ...}]
   xp: { level: 1, xp: 0, pct_to_next: 0 },
   quests: { daily: [], weekly: [], raids: [] },
+  streak: null,       // {streak, tier:{mult,label}, freeze_tokens_remaining_this_month}
 };
 
 // Title ladder — level → in-world rank shown above the YOU pawn.
@@ -1022,10 +1153,10 @@ function currentZone() {
 }
 const ZONE_TIPS = {
   pit:    'THE PIT · Press E — open roster',
-  duo:    '⚔ DUO RING · Press E — challenge a closer',
+  duo:    'DUO RING · Press E — challenge a closer',
   buyers: 'CLIENT DESKS · Press E — talk to nearest buyer',
-  bell:   '🔔 THE BELL · Press E — open deal board',
-  kanban: '📋 PIPELINE · Press E — open kanban',
+  bell:   'THE BELL · Press E — open deal board',
+  kanban: 'PIPELINE · Press E — open kanban',
 };
 function updateZoneTip() {
   const tip = document.getElementById('zone-tip');
@@ -1164,7 +1295,7 @@ function openRosterModal() {
       const s = document.createElement('div'); s.className = 'wm-row-sub'; s.textContent = (p.status || p.page || 'on the floor');
       txt.appendChild(t); txt.appendChild(s);
       const r = document.createElement('div'); r.className = 'wm-row-r';
-      r.textContent = p.rep === REP ? '' : '⚔ CHALLENGE';
+      r.textContent = p.rep === REP ? '' : 'CHALLENGE';
       row.appendChild(txt); row.appendChild(r);
       if (p.rep !== REP) row.addEventListener('click', () => { closeWorldModal(); challenge(p.rep); });
       else row.style.cursor = 'default';
@@ -1176,7 +1307,7 @@ function openRosterModal() {
 
 // Duo — start a 1v1 drill (pick prospect + opponent)
 function openDuoModal() {
-  openWorldModal('Step into the ring', '⚔ DUO RING', (body) => {
+  openWorldModal('Step into the ring', 'DUO RING', (body) => {
     if (!state.presence.length || state.presence.length < 2) {
       const e = document.createElement('div'); e.className = 'wm-empty';
       e.textContent = 'You need at least one teammate on the floor to duo.';
@@ -1191,7 +1322,7 @@ function openDuoModal() {
         if (p.rep === REP) continue;
         const row = document.createElement('div'); row.className = 'wm-row';
         const t = document.createElement('div'); t.className = 'wm-row-title'; t.textContent = p.rep;
-        const r = document.createElement('div'); r.className = 'wm-row-r'; r.textContent = '⚔ START';
+        const r = document.createElement('div'); r.className = 'wm-row-r'; r.textContent = 'START';
         row.appendChild(t); row.appendChild(r);
         row.addEventListener('click', () => { closeWorldModal(); challenge(p.rep); });
         list.appendChild(row);
@@ -1207,7 +1338,7 @@ function openDuoModal() {
       if (!card) { closeWorldModal(); openBuyerListModal(); return; }
       openEmbed(
         `/app/voice.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
-        card.company || card.slug, '🎙 SOLO DRILL · voice'
+        card.company || card.slug, 'SOLO DRILL · voice'
       );
     });
     body.appendChild(solo);
@@ -1216,7 +1347,7 @@ function openDuoModal() {
 
 // Deals — close-won board + total
 function openDealsModal() {
-  openWorldModal('Deal board', '🔔 THE BELL · CLOSED', (body) => {
+  openWorldModal('Deal board', 'THE BELL · CLOSED', (body) => {
     const won = state.deals.filter(d => (d.stage || '') === 'won');
     const total = won.reduce((s, d) => s + (d.amount || 0), 0);
     if (total) {
@@ -1249,7 +1380,7 @@ function openDealsModal() {
 
 // Kanban — full pipeline view across all stages
 function openKanbanModal() {
-  openWorldModal('Pipeline', '📋 KANBAN · ALL DEALS', (body) => {
+  openWorldModal('Pipeline', 'KANBAN · ALL DEALS', (body) => {
     if (!state.pipeline || !state.pipeline.stages) {
       const e = document.createElement('div'); e.className = 'wm-empty';
       e.textContent = 'No pipeline configured.';
@@ -1301,13 +1432,13 @@ function openBuyerListModal() {
       grid.style.cssText = 'display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:18px';
       const STARTERS = [
         { slug: 'killsesh-cisco', company: 'CISO at a regional insurer',
-          vertical: 'enterprise security', icon: '🛡',
+          vertical: 'enterprise security', icon: 'SEC',
           persona: { name: 'Mark Adler', role: 'CISO',
                      tone: 'skeptical, time-poor, has seen 20 vendors this year',
                      decision_style: 'data-driven, wants proof of breach reduction' },
           blurb: 'KillSesh prospect — buys breach-scanning + kill-switch for legacy ACORD shops' },
         { slug: 'webdev-smb-owner', company: 'Owner of a 12-person HVAC company',
-          vertical: 'web dev / SMB owner', icon: '🌐',
+          vertical: 'web dev / SMB owner', icon: 'WEB',
           persona: { name: 'Dana Pruitt', role: 'Owner',
                      tone: 'plain-spoken, allergic to jargon, cares about leads not features',
                      decision_style: 'asks "what will this do for my Google ranking" three times' },
@@ -1318,7 +1449,7 @@ function openBuyerListModal() {
         btn.style.cssText = 'display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:rgba(167,139,250,0.06);border:1.5px solid rgba(167,139,250,0.28);border-radius:9px;color:var(--text);cursor:pointer;text-align:left;font-family:inherit;transition:border-color .12s,background .12s';
         btn.addEventListener('mouseenter', () => { btn.style.borderColor = 'var(--purple)'; btn.style.background = 'rgba(167,139,250,0.12)'; });
         btn.addEventListener('mouseleave', () => { btn.style.borderColor = 'rgba(167,139,250,0.28)'; btn.style.background = 'rgba(167,139,250,0.06)'; });
-        const ic = document.createElement('div'); ic.style.cssText = 'font-size:22px;line-height:1'; ic.textContent = sp.icon;
+        const ic = document.createElement('div'); ic.style.cssText = 'font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.10em;color:var(--purple);line-height:1;padding-top:3px;flex-shrink:0;width:34px;text-align:center'; ic.textContent = sp.icon;
         const txt = document.createElement('div'); txt.style.flex = '1';
         const t = document.createElement('div'); t.style.cssText = 'font-family:var(--display);font-size:16px;text-transform:uppercase;letter-spacing:-.005em;line-height:1.1'; t.textContent = sp.company;
         const s = document.createElement('div'); s.style.cssText = 'font-family:var(--serif);font-style:italic;color:var(--muted);font-size:12.5px;margin-top:4px;line-height:1.35'; s.textContent = sp.blurb;
@@ -1474,9 +1605,29 @@ function pawnGroup(tx, ty, opts) {
         fill: 'var(--gold)',
       }));
     }
+    // Streak flame pill — sits just under the LVL tag. Day count + tier
+    // multiplier, flame icon. Only when there is an active streak.
+    const sk = state.streak;
+    if (sk && sk.streak && sk.streak >= 1) {
+      const mult = (sk.tier && sk.tier.mult) ? sk.tier.mult : 1.0;
+      const flameTag = mult > 1.0
+        ? `${sk.streak}d STREAK · ×${mult.toFixed(2)}`
+        : `${sk.streak}d STREAK`;
+      const fW = flameTag.length * 5.2 + 12;
+      g.appendChild(el('rect', {
+        x: -fW/2, y: -53, width: fW, height: 13, rx: 2.5,
+        fill: 'rgba(10,7,3,0.92)', stroke: '#fb923c', 'stroke-width': '0.8',
+      }));
+      g.appendChild(el('text', {
+        x: 0, y: -44, 'text-anchor': 'middle',
+        'font-family': 'JetBrains Mono, monospace', 'font-size': '8',
+        'letter-spacing': '0.06em', fill: '#fb923c', 'font-weight': '700',
+        text: flameTag,
+      }));
+    }
   }
 
-  // ── Listen-in v2: pulsing 🔴 LIVE pip ───────────────────────────
+  // ── Listen-in v2: pulsing LIVE pip ───────────────────────────
   // Anchored above the pawn head; click forwards to /tunein.html with
   // the call_id pre-selected so the player auto-starts on that call.
   if (opts.isLive) {
@@ -1553,10 +1704,10 @@ function render() {
   const labelGroup = el('g', { transform: `translate(${OFFSET_X}, ${OFFSET_Y})` });
   const labels = [
     { text: 'THE PIT',       tile: { x: 4, y: 0 }, gold: false },
-    { text: '⚔ DUO RING',    tile: { x: 6.5, y: 2.5 }, gold: hasActiveDuo },
+    { text: 'DUO RING',    tile: { x: 6.5, y: 2.5 }, gold: hasActiveDuo },
     { text: 'CLIENT DESKS',  tile: { x: 12, y: 3.5 }, gold: false },
-    { text: '🔔 THE BELL',   tile: { x: 11.5, y: -0.5 }, gold: false },
-    { text: '📋 PIPELINE',   tile: { x: 6.5, y: 9.5 }, gold: false },
+    { text: 'THE BELL',   tile: { x: 11.5, y: -0.5 }, gold: false },
+    { text: 'PIPELINE',   tile: { x: 6.5, y: 9.5 }, gold: false },
   ];
   for (const l of labels) {
     const c = iso(l.tile.x, l.tile.y);
@@ -1789,8 +1940,8 @@ function showDeal(deal) {
       ['Owner', deal.rep || '—'],
     ],
     [
-      { label: '📋 Open pipeline', style: 'primary', onClick: openKanbanModal },
-      { label: '🔔 Closed-won board', onClick: openDealsModal },
+      { label: 'Open pipeline', style: 'primary', onClick: openKanbanModal },
+      { label: 'Closed-won board', onClick: openDealsModal },
     ]
   );
 }
@@ -1803,6 +1954,17 @@ function ringBell(deal) {
   // Trigger reflow so the animation can replay
   void bell.offsetWidth;
   bell.classList.add('ringing');
+  // Synthesized bell ring (sfx.js) — the marquee close-won sound
+  try { window.bpSfx && window.bpSfx.bell(); } catch(e) {}
+  // Money printer — the signature beat: a close prints cash (cash.js).
+  try {
+    if (window.bpMoney && deal && deal.amount > 0) {
+      window.bpMoney.printer(deal.amount, {
+        label: (deal.rep ? deal.rep.toUpperCase() : 'BULLPEN RESERVE'),
+        sub: 'closed won'
+      });
+    }
+  } catch(e) {}
 
   // Add fanfare text + burst rings
   const svg = document.getElementById('office');
@@ -1875,11 +2037,11 @@ function showCloser(p) {
       ['Last',   (p.ts || '').replace('T', ' ')],
     ],
     isYou ? [
-      { label: '⚔ Step into the duo ring', style: 'gold', onClick: openDuoModal },
-      { label: '🔔 Open deal board',       onClick: openDealsModal },
+      { label: 'Step into the duo ring', style: 'gold', onClick: openDuoModal },
+      { label: 'Open deal board',       onClick: openDealsModal },
     ] : [
-      { label: '⚔ Challenge to a duo', style: 'gold', onClick: () => challenge(p.rep) },
-      { label: '👥 See full roster',   onClick: openRosterModal },
+      { label: 'Challenge to a duo', style: 'gold', onClick: () => challenge(p.rep) },
+      { label: 'See full roster',   onClick: openRosterModal },
     ]
   );
 }
@@ -1896,23 +2058,23 @@ function showBuyer(card) {
       ['Approach',  persona.decision_style || '—'],
     ],
     [
-      { label: '🎙 Roleplay (solo)', style: 'primary',
+      { label: 'Roleplay (solo)', style: 'primary',
         onClick: () => openEmbed(
           // voice.html is the actual AI roleplay surface — voice in,
           // voice out, RAG-grounded persona. contact.html was a wrong
           // wire-up to a CRM contact-detail page, not chat.
           `/app/voice.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
-          card.company || card.slug, '🎙 LIVE ROLEPLAY · voice'
+          card.company || card.slug, 'LIVE ROLEPLAY · voice'
         ) },
-      { label: '🎨 Open in Studio',
+      { label: 'Open in Studio',
         onClick: () => openEmbed(
           `/app/studio.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
-          (card.company || card.slug) + ' · studio', '🎨 STUDIO · sources + dossier'
+          (card.company || card.slug) + ' · studio', 'STUDIO · sources + dossier'
         ) },
-      { label: '📄 Read briefing',
+      { label: 'Read briefing',
         onClick: () => openEmbed(
           `/app/briefing.html?b=${BULLPEN}&rep=${REP}&slug=${card.slug}`,
-          (card.company || card.slug) + ' · briefing', '📄 DOSSIER'
+          (card.company || card.slug) + ' · briefing', 'DOSSIER'
         ) },
     ]
   );
@@ -1934,7 +2096,7 @@ async function challenge(opponent) {
     if (d.id) {
       openEmbed(
         `/app/duo.html?b=${BULLPEN}&rep=${REP}&duo_id=${d.id}`,
-        `Duo vs ${opponent}`, '⚔ DUO RING · LIVE'
+        `Duo vs ${opponent}`, 'DUO RING · LIVE'
       );
     } else {
       alert('Challenge failed: ' + (d.error || 'unknown'));
@@ -2003,7 +2165,7 @@ function addBuyerFromEmptyDesk(){
   // inside the office, not as a page navigation.
   openEmbed(
     `/app/studio.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&new=1`,
-    'Studio · new buyer card', '🎬 STUDIO'
+    'Studio · new buyer card', 'STUDIO'
   );
 }
 
@@ -2063,6 +2225,11 @@ async function loadAll() {
     if (xpRes) state.xp = xpRes;
     if (qRes) state.quests = qRes;
     renderQuestBoard();
+    // Level-up + quest-ready transitions (guarded so they fire once)
+    maybeCelebrateLevelUp();
+    diffQuestsForReady();
+    // Streak banner re-evaluates against the fresh XP ledger
+    maybeShowStreakBanner();
     // First-load: if no buyers exist, seed two starter personas so the
     // client desks aren't empty and the closer can walk up + press E.
     if (!state.buyer_cards.length) {
@@ -2079,25 +2246,291 @@ async function loadAll() {
   }
 }
 
-function fireFanfare(rep, amount, prospect, xpGained) {
+function fireFanfare(rep, amount, prospect, xpGained, dealId) {
   const fan = document.getElementById('fanfare');
   if (!fan) return;
   document.getElementById('ff-rep').textContent = (rep || 'YOU').toUpperCase();
   document.getElementById('ff-amount').textContent = amount ? formatAmount(amount) : 'WON';
   document.getElementById('ff-sub').textContent = prospect ? `vs. ${prospect}` : 'vs. the boss';
   document.getElementById('ff-xp').textContent = `+${xpGained || 250} XP · LVL ${state.xp?.level || 1}`;
+  // Clear any trophy chip from a prior close
+  const slot = document.getElementById('ff-trophy-slot');
+  if (slot) while (slot.firstChild) slot.removeChild(slot.firstChild);
   fan.classList.remove('show');
   void fan.offsetWidth;  // restart animation
   fan.classList.add('show');
   setTimeout(() => fan.classList.remove('show'), 2600);
+  // Trophy-in-fanfare — the close awards a deterministic trophy; surface
+  // its icon + name + rarity inside the card with a rarity glow.
+  if (dealId && slot) {
+    fetch(`/api/b/${BULLPEN}/trophies/${encodeURIComponent(rep || REP)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d || !Array.isArray(d.trophies)) return;
+        const tro = d.trophies.find(t => t.id === `trophy-${dealId}`);
+        if (!tro) return;
+        const r = (tro.rarity || 'common').toLowerCase();
+        const chip = document.createElement('div');
+        chip.className = 'ff-trophy r-' + r;
+        const ic = document.createElement('div'); ic.className = 'fft-icon'; ic.textContent = tro.icon || '◆';
+        const txt = document.createElement('div'); txt.className = 'fft-txt';
+        const nm = document.createElement('div'); nm.className = 'fft-name'; nm.textContent = tro.name || 'Trophy';
+        const rr = document.createElement('div'); rr.className = 'fft-rarity'; rr.textContent = r + ' · trophy';
+        txt.appendChild(nm); txt.appendChild(rr);
+        chip.appendChild(ic); chip.appendChild(txt);
+        slot.appendChild(chip);
+      }).catch(() => {});
+  }
 }
 
-function fireXpToast(amount, label) {
+function fireXpToast(amount, label, bucket) {
   const t = document.createElement('div');
-  t.className = 'xp-toast';
+  // bucket 'clout' → mint, anything else (money/undefined) → default gold
+  t.className = 'xp-toast' + (bucket === 'clout' ? ' mint' : '');
   t.textContent = `+${amount} XP · ${label || 'progress'}`;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2400);
+}
+
+// kind → ledger bucket. Mirrors server/xp.py RULES (read-only reference).
+// money = gold (revenue-bearing), clout = mint (vanity/activity). Kinds not
+// listed default to clout — the safe "activity" tint.
+const XP_BUCKET = {
+  deal_stage_moved: 'money', deal_closed_won: 'money', pilot_signed: 'money',
+  quiz_completed: 'money', research_question_landed: 'money',
+  marketing_lead_signed: 'money', marketing_deal_closed: 'money',
+  drill_passed: 'money',
+  // clout / activity
+  deal_created: 'clout', quest_completed: 'clout', source_ingested: 'clout',
+  call: 'clout', followup_done: 'clout', spotcheck_responded: 'clout',
+  duo_accepted: 'clout', duel_accepted: 'clout', flashcard_passed: 'clout',
+};
+function bucketFor(kind) { return XP_BUCKET[kind] || 'clout'; }
+
+// ── Level-up celebration ──────────────────────────────────────────
+// Cache prior level per rep; on increase fire a full fanfare-style
+// celebration. Fires once per real transition (guarded by the cache).
+function maybeCelebrateLevelUp() {
+  const lvl = state.xp && Number.isFinite(state.xp.level) ? state.xp.level : 1;
+  const key = `bp-last-level-${REP}`;
+  let prev = null;
+  try { const raw = localStorage.getItem(key); if (raw != null) prev = parseInt(raw, 10); } catch(e) {}
+  // First time we ever see a level — just remember it, don't celebrate.
+  if (prev == null || !Number.isFinite(prev)) {
+    try { localStorage.setItem(key, String(lvl)); } catch(e) {}
+    return;
+  }
+  if (lvl > prev) {
+    const prevTitle = titleFor(prev);
+    const newTitle = titleFor(lvl);
+    fireLevelUp(lvl, newTitle, newTitle !== prevTitle);
+  }
+  if (lvl !== prev) { try { localStorage.setItem(key, String(lvl)); } catch(e) {} }
+}
+
+function fireLevelUp(level, title, rankChanged) {
+  const fan = document.getElementById('fanfare');
+  if (!fan) {
+    try { window.bpSfx && window.bpSfx.levelUp(); } catch(e) {}
+    return;
+  }
+  // Build a transient level-up card cloned from the .fanfare/.ff-card CSS.
+  const ov = document.createElement('div');
+  ov.className = 'fanfare show';
+  ov.style.zIndex = '92';
+  const burst = document.createElement('div'); burst.className = 'ff-burst';
+  burst.style.background = 'radial-gradient(circle,rgba(110,231,183,0.30) 0%,rgba(110,231,183,0.10) 25%,transparent 60%)';
+  const card = document.createElement('div'); card.className = 'ff-card';
+  const eb = document.createElement('div'); eb.className = 'ff-eyebrow';
+  eb.style.color = 'var(--accent-2)'; eb.style.textShadow = '0 0 12px rgba(110,231,183,0.7)';
+  eb.textContent = 'LEVEL UP';
+  const title1 = document.createElement('div'); title1.className = 'ff-title';
+  title1.style.color = 'var(--accent-2)'; title1.style.textShadow = '0 0 24px rgba(110,231,183,0.8), 0 8px 30px rgba(0,0,0,0.7)';
+  title1.textContent = `LVL ${level}`;
+  card.appendChild(eb); card.appendChild(title1);
+  if (rankChanged) {
+    const sub = document.createElement('div'); sub.className = 'ff-sub';
+    sub.textContent = `NEW RANK: ${title}`;
+    card.appendChild(sub);
+  } else {
+    const sub = document.createElement('div'); sub.className = 'ff-sub';
+    sub.textContent = title;
+    card.appendChild(sub);
+  }
+  ov.appendChild(burst); ov.appendChild(card);
+  document.body.appendChild(ov);
+  try { window.bpSfx && window.bpSfx.levelUp(); } catch(e) {}
+  setTimeout(() => ov.remove(), 2600);
+}
+
+// ── Trophy / achievement banner ───────────────────────────────────
+// Rarity-tinted celebration. Legendary gets a larger full banner; common
+// gets a lighter corner toast. Both play bpSfx.trophy(rarity).
+function fireTrophyBanner(name, icon, rarity, eyebrow) {
+  const r = (rarity || 'common').toLowerCase();
+  const heavy = (r === 'legendary' || r === 'epic');
+  const b = document.createElement('div');
+  b.className = 'trophy-banner r-' + r + (heavy ? '' : ' tb-toast') + (r === 'legendary' ? ' legendary-scale' : '');
+  const ic = document.createElement('div'); ic.className = 'tb-icon'; ic.textContent = icon || '◆';
+  b.appendChild(ic);
+  if (heavy) {
+    const eb = document.createElement('div'); eb.className = 'tb-eyebrow'; eb.textContent = eyebrow || (r.toUpperCase() + ' UNLOCKED');
+    const nm = document.createElement('div'); nm.className = 'tb-name'; nm.textContent = name || 'Trophy';
+    const rr = document.createElement('div'); rr.className = 'tb-rarity'; rr.textContent = r;
+    b.appendChild(eb); b.appendChild(nm); b.appendChild(rr);
+  } else {
+    const txt = document.createElement('div'); txt.className = 'tb-txt';
+    const eb = document.createElement('div'); eb.className = 'tb-eyebrow'; eb.textContent = eyebrow || (r.toUpperCase() + ' UNLOCKED');
+    const nm = document.createElement('div'); nm.className = 'tb-name'; nm.textContent = name || 'Trophy';
+    txt.appendChild(eb); txt.appendChild(nm);
+    b.appendChild(txt);
+  }
+  document.body.appendChild(b);
+  try { window.bpSfx && window.bpSfx.trophy(r); } catch(e) {}
+  setTimeout(() => b.remove(), heavy ? 2900 : 2700);
+}
+
+// ── Quest-ready pop ───────────────────────────────────────────────
+// When a quest flips to completed && !claimed, pulse the board and pop a
+// CLAIM toast. Diff is computed against a prior snapshot of completed-and-
+// unclaimed quest ids so we only pop on the transition.
+let _questClaimSnapshot = null;  // Set<string> of quest ids ready to claim
+function questReadyIds() {
+  const q = state.quests || {};
+  const all = [...(q.daily || []), ...(q.weekly || []), ...(q.raids || [])];
+  const ids = new Set();
+  for (const it of all) {
+    if (it.completed && !it.claimed) ids.add(it.id || it.name);
+  }
+  return ids;
+}
+function diffQuestsForReady() {
+  const now = questReadyIds();
+  if (_questClaimSnapshot == null) { _questClaimSnapshot = now; return; }
+  const q = state.quests || {};
+  const all = [...(q.daily || []), ...(q.weekly || []), ...(q.raids || [])];
+  for (const it of all) {
+    const id = it.id || it.name;
+    if (it.completed && !it.claimed && !_questClaimSnapshot.has(id)) {
+      popQuestReady(it);
+    }
+  }
+  _questClaimSnapshot = now;
+}
+function popQuestReady(quest) {
+  // Pulse the board
+  const board = document.getElementById('quest-board');
+  if (board) { board.classList.remove('qb-pulse'); void board.offsetWidth; board.classList.add('qb-pulse'); }
+  // Pop a CLAIM toast
+  const pop = document.createElement('div');
+  pop.className = 'quest-ready';
+  const txt = document.createElement('div'); txt.className = 'qr-txt';
+  const eb = document.createElement('div'); eb.className = 'qr-eyebrow';
+  eb.textContent = `QUEST READY · CLAIM +${quest.xp_reward || 0} XP`;
+  const nm = document.createElement('div'); nm.className = 'qr-name';
+  nm.textContent = quest.name || quest.id || 'Objective';
+  txt.appendChild(eb); txt.appendChild(nm);
+  const claim = document.createElement('button'); claim.className = 'qr-claim';
+  claim.textContent = 'Claim';
+  const close = document.createElement('button'); close.className = 'qr-close'; close.textContent = '×';
+  const dismiss = () => { pop.classList.remove('show'); setTimeout(() => pop.remove(), 300); };
+  close.addEventListener('click', dismiss);
+  claim.addEventListener('click', async () => {
+    claim.disabled = true; claim.textContent = '…';
+    try {
+      // Same claim handler the quest board uses
+      await fetch(`/api/b/${BULLPEN}/quests/claim`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({rep: REP}),
+      });
+      fireXpToast(quest.xp_reward || 0, quest.name, 'clout');
+      try { window.bpSfx && window.bpSfx.coin(); } catch(e) {}
+      dismiss();
+      setTimeout(loadAll, 500);
+    } catch(e) { claim.textContent = 'Retry'; claim.disabled = false; }
+  });
+  pop.appendChild(txt); pop.appendChild(claim); pop.appendChild(close);
+  document.body.appendChild(pop);
+  requestAnimationFrame(() => pop.classList.add('show'));
+  setTimeout(dismiss, 9000);
+}
+
+// ── Streak flame ──────────────────────────────────────────────────
+// GET /streaks/<rep> → {streak, tier:{mult,label}, freeze_tokens_remaining...}.
+// Renders a flame pill above the YOU pawn (in render()) and, when the rep
+// hasn't earned XP today, a pulsing "keep your streak" banner w/ countdown.
+function hasXpToday() {
+  const led = (state.xp && Array.isArray(state.xp.ledger)) ? state.xp.ledger : [];
+  const today = new Date().toISOString().slice(0, 10);
+  return led.some(e => (e.ts || '').slice(0, 10) === today && (e.xp || 0) > 0);
+}
+async function loadStreak() {
+  try {
+    const d = await fetch(`/api/b/${BULLPEN}/streaks/${encodeURIComponent(REP)}`)
+      .then(r => r.ok ? r.json() : null);
+    if (!d) return;
+    state.streak = d;
+    render(); // re-render so the flame pill appears above the YOU pawn
+    maybeShowStreakBanner();
+  } catch(e) {}
+}
+let _streakTick = null;
+function maybeShowStreakBanner() {
+  const s = state.streak;
+  // Don't nag if no streak, or if they've already earned XP today.
+  if (!s || !s.streak || s.streak < 1 || hasXpToday()) {
+    const ex = document.getElementById('streak-banner'); if (ex) ex.remove();
+    if (_streakTick) { clearInterval(_streakTick); _streakTick = null; }
+    return;
+  }
+  // Don't re-show if it's been dismissed this session
+  if (window.__streak_dismissed) return;
+  let banner = document.getElementById('streak-banner');
+  if (banner) return; // already up; the interval keeps the clock fresh
+  banner = document.createElement('div');
+  banner.id = 'streak-banner'; banner.className = 'streak-banner';
+  const flame = document.createElement('div'); flame.className = 'sb-flame'; flame.setAttribute('aria-hidden','true');
+  const txt = document.createElement('div'); txt.className = 'sb-txt';
+  const head = document.createElement('div'); head.className = 'sb-head';
+  head.textContent = `KEEP YOUR ${s.streak}-DAY STREAK`;
+  const sub = document.createElement('div'); sub.className = 'sb-sub';
+  const clk = document.createElement('span'); clk.className = 'sb-clock';
+  sub.appendChild(document.createTextNode('Earn any XP before midnight · '));
+  sub.appendChild(clk);
+  txt.appendChild(head); txt.appendChild(sub);
+  banner.appendChild(flame); banner.appendChild(txt);
+  // Freeze token — server applies freezes automatically (streaks.compute
+  // spends a token when exactly one day is missed; there is no manual
+  // freeze endpoint). So we DISPLAY the safety net rather than POST.
+  if (s.freeze_tokens_remaining_this_month && s.freeze_tokens_remaining_this_month > 0) {
+    const fz = document.createElement('div'); fz.className = 'sb-freeze';
+    fz.textContent = `${s.freeze_tokens_remaining_this_month} freeze`;
+    fz.title = 'You have a streak-freeze safety net this month — one missed day is auto-covered.';
+    fz.style.cursor = 'default';
+    banner.appendChild(fz);
+  }
+  const close = document.createElement('button'); close.className = 'sb-close'; close.textContent = '×';
+  close.addEventListener('click', () => {
+    window.__streak_dismissed = true;
+    banner.remove();
+    if (_streakTick) { clearInterval(_streakTick); _streakTick = null; }
+  });
+  banner.appendChild(close);
+  document.body.appendChild(banner);
+  requestAnimationFrame(() => banner.classList.add('show'));
+  // Midnight countdown
+  function tickClock() {
+    const now = new Date();
+    const mid = new Date(now); mid.setHours(24, 0, 0, 0);
+    let ms = mid - now; if (ms < 0) ms = 0;
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    const sec = Math.floor((ms % 60000) / 1000);
+    clk.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')} left`;
+  }
+  tickClock();
+  if (_streakTick) clearInterval(_streakTick);
+  _streakTick = setInterval(tickClock, 1000);
 }
 
 function subscribeSSE() {
@@ -2112,6 +2545,8 @@ function subscribeSSE() {
           deal.rep = event.actor;
           ringBell(deal);
           // Full-screen fanfare so wins are felt, not just logged
+          const dealId = deal.id || deal.deal_id || event.target_id ||
+                         (event.payload && (event.payload.deal_id || event.payload.id)) || null;
           const prevXp = state.xp?.xp || 0;
           fetch(`/api/b/${BULLPEN}/xp/${encodeURIComponent(REP)}`).then(r => r.json())
             .then(d => {
@@ -2119,25 +2554,61 @@ function subscribeSSE() {
               state.xp = d;
               fireFanfare(event.actor, deal.amount || event.payload?.amount,
                             deal.prospect_slug || event.payload?.prospect,
-                            gained > 0 ? gained : 250);
+                            gained > 0 ? gained : 250, dealId);
+              maybeCelebrateLevelUp();
             }).catch(() => {
-              fireFanfare(event.actor, event.payload?.amount, event.payload?.prospect, 250);
+              fireFanfare(event.actor, event.payload?.amount, event.payload?.prospect, 250, dealId);
             });
           clearTimeout(window.__office_reload);
           window.__office_reload = setTimeout(loadAll, 800);
           return;
         }
-        // Smaller XP gains (stage moves, quest progress) get a toast
-        if (['deal_stage_moved','deal_created','quest_completed',
-              'drill_passed','rag_source_ingested'].includes(event.kind)) {
+        // Achievement unlocked — rarity-tinted banner. payload {name, rarity}.
+        if (event.kind === 'achievement_unlocked') {
+          const p = event.payload || {};
+          fireTrophyBanner(p.name || 'Achievement', p.icon || '◆', p.rarity || 'common', 'ACHIEVEMENT UNLOCKED');
+          clearTimeout(window.__office_reload);
+          window.__office_reload = setTimeout(loadAll, 600);
+          return;
+        }
+        // Trophy awarded — rarity-tinted banner. payload {name, icon, rarity}.
+        if (event.kind === 'trophy_awarded') {
+          const p = event.payload || {};
+          fireTrophyBanner(p.name || 'Trophy', p.icon || '◆', p.rarity || 'common', 'TROPHY EARNED');
+          clearTimeout(window.__office_reload);
+          window.__office_reload = setTimeout(loadAll, 600);
+          return;
+        }
+        // Smaller XP gains (stage moves, quest progress, study, calls) get a
+        // ledger-colored toast + coin blip. 'rag_source_ingested' is NEVER
+        // emitted — the real kind is 'source_ingested'.
+        const POSITIVE_XP_KINDS = ['deal_stage_moved','deal_created','quest_completed',
+          'drill_passed','source_ingested','call','followup_done','spotcheck_responded',
+          'duo_accepted','duel_accepted','flashcard_passed','quiz_completed'];
+        if (POSITIVE_XP_KINDS.includes(event.kind)) {
           const prevXp = state.xp?.xp || 0;
           fetch(`/api/b/${BULLPEN}/xp/${encodeURIComponent(REP)}`).then(r => r.json())
             .then(d => {
               const gained = (d.xp || 0) - prevXp;
               state.xp = d;
-              if (gained > 0) fireXpToast(gained, event.kind.replace(/_/g, ' '));
+              if (gained > 0) {
+                fireXpToast(gained, event.kind.replace(/_/g, ' '), bucketFor(event.kind));
+                try { window.bpSfx && window.bpSfx.coin(); } catch(e) {}
+              }
+              maybeCelebrateLevelUp();
               render(); // re-render YOU label / LVL pill with new XP
             }).catch(() => {});
+        }
+        // Quest-ready check — re-fetch quest progress on activity that can
+        // complete a quest, then diff for any newly-claimable objective.
+        if (['deal_stage_moved','call','drill_passed','deal_created',
+             'quest_completed','source_ingested'].includes(event.kind)) {
+          fetch(`/api/b/${BULLPEN}/quests?rep=${encodeURIComponent(REP)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(q => { if (q) { state.quests = q; renderQuestBoard(); diffQuestsForReady(); } })
+            .catch(() => {});
+          // Streak count can change on a first-of-day event
+          loadStreak();
         }
         if (['presence_change','duo_challenged','duo_accepted','duo_ended','duo_msg',
              'deal_created','deal_stage_moved','deal_amount','deal_closed_lost'].includes(event.kind)) {
@@ -2171,11 +2642,36 @@ setSideOpen(false);
 try { setMode(localStorage.getItem(`mode-${BULLPEN}`) || 'arena'); }
 catch(e) { setMode('arena'); }
 loadAll();
+loadStreak();
 beat();
 updateZoneTip();
 setInterval(loadAll, 15000);
+setInterval(loadStreak, 60000);
 setInterval(beat, 25000);
 subscribeSSE();
+</script>
+<script>
+/* Keep --gb-h synced to the gate banner's height so the CSS offsets above
+   track it through collapse/expand/resize. No banner → no class → no offset. */
+(function(){
+  function sync(b){
+    var h = b.getBoundingClientRect().height || 0;
+    document.documentElement.style.setProperty('--gb-h', h + 'px');
+    document.body.classList.toggle('has-gate-banner', h > 0);
+  }
+  function attach(b){
+    sync(b);
+    try { new ResizeObserver(function(){ sync(b); }).observe(b); } catch(e){}
+    window.addEventListener('resize', function(){ sync(b); });
+  }
+  var existing = document.getElementById('bullpenlm-gate-banner');
+  if (existing) { attach(existing); return; }
+  var mo = new MutationObserver(function(){
+    var b = document.getElementById('bullpenlm-gate-banner');
+    if (b) { mo.disconnect(); attach(b); }
+  });
+  mo.observe(document.body, {childList:true});
+})();
 </script>
 </body>
 </html>

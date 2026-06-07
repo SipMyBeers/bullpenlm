@@ -2538,7 +2538,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if m:
             try:
                 from tcs import list_all
-                self._send_json(200, {"tcs": list_all(m.group(1))})
+                # Strip the grader answer-key — reps must never see
+                # auto_grade_keywords / min_hits (otherwise every GO is gameable).
+                _SECRET = ("auto_grade_keywords", "auto_grade_min_hits")
+                _pub = lambda t: {k: v for k, v in t.items() if k not in _SECRET}
+                self._send_json(200, {"tcs": [_pub(t) for t in list_all(m.group(1))]})
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
             return
@@ -2550,6 +2554,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 t = tcs_get(m.group(1), m.group(2))
                 if not t:
                     self._send_json(404, {"error": "tcs_not_found"}); return
+                # Never leak the grader answer-key to the client.
+                t = {k: v for k, v in t.items()
+                     if k not in ("auto_grade_keywords", "auto_grade_min_hits")}
                 self._send_json(200, t)
             except Exception as e:
                 self._send_json(500, {"error": str(e)})
@@ -3018,10 +3025,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if m:
             base = m.group(1)
             ext = m.group(2)
-            # Look up the file in either root — bundled assets live in
-            # ASSETS_DIR (PyInstaller _MEIPASS) and the seeded copy lives
-            # in DATA_DIR. In dev these are the same path.
-            roots = [r / "floor" / "app" for r in {DATA_DIR, ASSETS_DIR}]
+            # Look up the file in DATA_DIR first (the live, editable seeded
+            # copy — operator/dev edits land here), then ASSETS_DIR (the
+            # PyInstaller _MEIPASS bundle) as fallback. Must be an ORDERED
+            # list: a set's iteration order depends on the _MEIPASS path hash,
+            # which changes every restart, so a set made live edits win or
+            # lose at random across restarts. In dev both roots are the same.
+            roots = [DATA_DIR / "floor" / "app", ASSETS_DIR / "floor" / "app"]
+            if roots[0] == roots[1]:
+                roots = roots[:1]
             candidates = []
             for app_root in roots:
                 if ext:
@@ -3058,6 +3070,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
+            # The floor app updates in place (operator edits land in DATA_DIR).
+            # Tell CDN + browser to revalidate every time so edits go live
+            # immediately instead of serving a stale cached copy for hours.
+            self.send_header("Cache-Control", "no-cache, must-revalidate")
             self._cors()
             self.end_headers()
             self.wfile.write(body)
@@ -4663,6 +4679,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Push: register an iOS device token (team-tracking app) ──
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/push/register$", self.path)
+        if m:
+            try:
+                from push import register as _push_register
+                req2 = json.loads(raw) if raw else {}
+                rec = _push_register(m.group(1),
+                                     operator=(req2.get("operator") or self._current_rep() or "self").strip(),
+                                     token=(req2.get("token") or "").strip(),
+                                     platform=req2.get("platform") or "ios",
+                                     env=req2.get("env") or "prod")
+                self._send_json(200 if rec.get("ok") else 400, rec)
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Squads ──
         m = re.match(r"^/api/b/([a-z0-9\-]+)/squads$", self.path)
         if m:
@@ -5454,15 +5486,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         try: history = json.loads(sess_file.read_text())
                         except Exception: history = []
 
+                    # Text role-play path: no-mic / API clients pass ?text=<line>
+                    # and we skip STT (and TTS) entirely. The conversation engine
+                    # (persona + RAG + Ollama + history) is identical to voice.
+                    text_param = (qs.get("text") or [""])[0].strip()
+                    text_mode = bool(text_param)
                     closer_text = ""
                     if not is_opening:
-                        # Transcribe what the closer just said
-                        if not raw:
-                            self._send_json(400, {"error": "audio body required"}); return
-                        try:
-                            closer_text = transcribe_wav(raw).strip()
-                        except Exception as e:
-                            self._send_json(500, {"error": f"transcribe_failed: {e}"}); return
+                        if text_param:
+                            closer_text = text_param
+                        elif raw:
+                            try:
+                                closer_text = transcribe_wav(raw).strip()
+                            except Exception as e:
+                                self._send_json(500, {"error": f"transcribe_failed: {e}"}); return
+                        else:
+                            self._send_json(400, {"error": "audio body or text param required"}); return
                         if not closer_text:
                             self._send_json(200, {"closer_text": "", "buyer_text": "",
                                                     "audio_url": None,
@@ -5497,19 +5536,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     history.append({"role": "assistant", "content": reply})
                     sess_file.write_text(json.dumps(history, indent=2))
 
-                    # TTS the buyer's reply with a persona-mapped voice
+                    # TTS the buyer's reply with a persona-mapped voice.
+                    # Skipped in text mode — text/API clients don't need audio
+                    # and it avoids an extra synthesis pass per turn.
                     audio = None
-                    try:
-                        from voice import tts_reply
-                        p = PERSONAS.get(buyer) or _runtime_personas.get(buyer)
-                        persona_name = None
-                        if p and isinstance(p, dict):
-                            persona_name = (p.get("persona") or {}).get("name")
-                        elif p:
-                            persona_name = getattr(p, "name", None) or getattr(p, "persona_name", None)
-                        audio = tts_reply(bullpen, buyer, reply, persona_name=persona_name)
-                    except Exception:
-                        audio = None
+                    if not text_mode:
+                        try:
+                            from voice import tts_reply
+                            p = PERSONAS.get(buyer) or _runtime_personas.get(buyer)
+                            persona_name = None
+                            if p and isinstance(p, dict):
+                                persona_name = (p.get("persona") or {}).get("name")
+                            elif p:
+                                persona_name = getattr(p, "name", None) or getattr(p, "persona_name", None)
+                            audio = tts_reply(bullpen, buyer, reply, persona_name=persona_name)
+                        except Exception:
+                            audio = None
 
                     # Audit the turn
                     try:

@@ -150,7 +150,7 @@ function renderApp(a){
     ir.appendChild(document.createTextNode('Invite URL ready:'));
     const code = el('div', 'code', location.origin + '/join.html?code=' + a.invite_code);
     ir.appendChild(code);
-    const cp = el('button', null, '📋 Copy');
+    const cp = el('button', null, 'Copy');
     cp.onclick = async () => {
       const url = location.origin + '/join.html?code=' + a.invite_code;
       try { await navigator.clipboard.writeText(url); toast('Copied — DM it to ' + a.name); }

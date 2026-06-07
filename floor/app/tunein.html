@@ -60,7 +60,7 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 .player{margin-top:14px;padding:14px;background:rgba(0,0,0,0.30);border-radius:9px;border:1px solid rgba(239,68,68,0.30)}
 .player .status{font-family:var(--mono);font-size:11px;color:var(--accent-2);letter-spacing:.06em;margin-bottom:6px}
 .reactions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.reactions .rxn{font-size:18px;padding:7px 12px;background:rgba(0,0,0,0.40);border:1px solid rgba(245,232,216,0.15);border-radius:8px;cursor:pointer;transition:transform .12s,background .12s}
+.reactions .rxn{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--text);padding:8px 12px;background:rgba(0,0,0,0.40);border:1px solid rgba(245,232,216,0.15);border-radius:8px;cursor:pointer;transition:transform .12s,background .12s}
 .reactions .rxn:hover{transform:scale(1.15);background:rgba(251,191,36,0.10);border-color:var(--gold)}
 .reactions .rxn:active{transform:scale(0.95)}
 .reactions .rxn.cooldown{opacity:.4;cursor:not-allowed;pointer-events:none}
@@ -78,7 +78,7 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
   <a href="/" class="brand"><span class="b">Bullpen</span><span class="lm">LM</span></a>
   <div class="crumb">
     <a href="/app/spawn.html">Floor</a> <span> / </span>
-    <span class="here">🔴 Tune in</span>
+    <span class="here">Tune in</span>
   </div>
 </header>
 
@@ -119,7 +119,6 @@ async function render(){
     if(currentCallId){ stopListening(); }
     clear(area);
     const stage = el('div', {class:'empty-stage'});
-    stage.appendChild(el('div', {class:'emoji', text:'🤫'}));
     stage.appendChild(el('h2', {text:'Quiet floor'}));
     stage.appendChild(el('p', {text:'Nobody on a call right now. As soon as a teammate picks up the phone or starts a drill, they\'ll show up here and you can listen in.'}));
     area.appendChild(stage);
@@ -137,7 +136,7 @@ function renderCard(c){
   const card = el('div', {class:'call-card' + (c.call_id === currentCallId ? ' playing' : '')});
   const info = el('div', {class:'info'});
   const pills = el('div', {class:'pills'});
-  pills.appendChild(el('span', {class:'pill live', text:'🔴 LIVE'}));
+  pills.appendChild(el('span', {class:'pill live', text:'LIVE'}));
   pills.appendChild(el('span', {class:'pill kind-' + (c.kind || 'drill'), text: c.kind || 'drill'}));
   if(c.rep)   pills.appendChild(el('span', {class:'pill', text: c.rep}));
   info.appendChild(pills);
@@ -149,9 +148,9 @@ function renderCard(c){
   const actions = el('div', {class:'actions'});
   if(c.call_id === currentCallId){
     actions.appendChild(el('button', {class:'btn-stop', onClick: () => stopListening(), text:'■ Stop'}));
-    actions.appendChild(el('span', {style:'font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-2)', text:'🎧 Listening'}));
+    actions.appendChild(el('span', {style:'font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-2)', text:'Listening'}));
   } else {
-    actions.appendChild(el('button', {class:'btn-listen', onClick: () => startListening(c.call_id), text:'🎧 Listen in'}));
+    actions.appendChild(el('button', {class:'btn-listen', onClick: () => startListening(c.call_id), text:'Listen in'}));
   }
   card.appendChild(actions);
 
@@ -160,8 +159,8 @@ function renderCard(c){
     player.appendChild(el('div', {class:'status', id:`status-${c.call_id}`, text:'Buffering…'}));
     // Reaction strip — silent peer pressure, broadcast to closer's HUD
     const rxns = el('div', {class:'reactions'});
-    for(const emoji of ['🔥', '💯', '❗', '👀', '🥶', '🤝']){
-      const b = el('button', {class:'rxn', text: emoji, onClick: () => sendReaction(c.call_id, emoji, b)});
+    for(const tag of ['FIRE', 'NAILED IT', 'HEADS UP', 'WATCH', 'COLD', 'CLOSE IT']){
+      const b = el('button', {class:'rxn', text: tag, onClick: () => sendReaction(c.call_id, tag, b)});
       rxns.appendChild(b);
     }
     player.appendChild(rxns);
@@ -172,7 +171,7 @@ function renderCard(c){
 }
 
 const REACTION_COOLDOWN_MS = 1500;
-async function sendReaction(callId, emoji, btn){
+async function sendReaction(callId, tag, btn){
   if(btn.classList.contains('cooldown')) return;
   btn.classList.add('cooldown');
   setTimeout(() => btn.classList.remove('cooldown'), REACTION_COOLDOWN_MS);
@@ -181,7 +180,7 @@ async function sendReaction(callId, emoji, btn){
   try {
     await fetch(`/api/b/${BULLPEN}/live/${callId}/react`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({emoji, from_rep: fromRep}),
+      body: JSON.stringify({emoji: tag, from_rep: fromRep}),
     });
   } catch(e){ /* swallow — reactions are best-effort */ }
 }
@@ -251,7 +250,7 @@ function playNext(state){
     setStatus(state, `▶ Playing chunk #${seq} (${state.queue.length} buffered)`);
   }).catch(err => {
     state.playing = false;
-    setStatus(state, `playback blocked — click 🎧 again to grant audio permission (${err.message})`);
+    setStatus(state, `playback blocked — click Listen in again to grant audio permission (${err.message})`);
   });
 }
 

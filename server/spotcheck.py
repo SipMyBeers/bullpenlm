@@ -152,6 +152,23 @@ def grade(bullpen: str, sc_id: str, grader_rep: str,
                         response=rec["response"] or "",
                         score=rec["score"],
                         feedback=rec["feedback"] or "")
+
+    # record_attempt() already emits drill_passed on a GO (xp.py scores it).
+    # The genuinely-missing event is drill_attempt — the +10 clout that
+    # should fire on EVERY graded attempt (GO or NO_GO) so participation
+    # earns XP, advances the streak, and every rep shows up in activity /
+    # "reps today". Guarded so telemetry can never break grading.
+    try:
+        _tcs_def = _tcs.get(bullpen, rec["tcs_id"]) or {}
+        _tier = int(_tcs_def.get("phase_tier") or 0)
+        _src = ("self" if rec.get("self_drill")
+                else "peer" if grader_rep != "auto" else "auto")
+        audit_append(bullpen, rec["target"], "drill_attempt",
+                     target_type="tcs", target_id=rec["tcs_id"],
+                     payload={"tcs_id": rec["tcs_id"], "phase_tier": _tier,
+                              "result": result, "source": _src})
+    except Exception:
+        pass
     return rec
 
 

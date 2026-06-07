@@ -44,7 +44,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 /* Timeline (reuse styles inline) */
 .tl{display:flex;flex-direction:column;gap:10px}
 .tl .ev{display:grid;grid-template-columns:42px 1fr auto;gap:12px;padding:11px 12px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:8px}
-.tl .ev .ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:18px;background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.20)}
+.tl .ev .ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.04em;color:var(--accent-2);background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.20)}
 .tl .ev.email .ico{background:rgba(110,231,183,0.12);border-color:rgba(110,231,183,0.25)}
 .tl .ev.meeting .ico{background:rgba(251,191,36,0.12);border-color:rgba(251,191,36,0.30);color:var(--gold)}
 .tl .ev.note .ico{background:rgba(167,139,250,0.10);border-color:rgba(167,139,250,0.25);color:#c4b5fd}
@@ -137,7 +137,7 @@ async function fetchJSON(url, opts){
 }
 function $(id){ return document.getElementById(id); }
 function initials(s){ return (s||'?').slice(0,2).toUpperCase(); }
-function ICON(kind){ return {call:'📞', email:'✉', meeting:'📅', note:'📝', sms:'💬'}[kind] || '•'; }
+function ICON(kind){ return {call:'CALL', email:'MAIL', meeting:'MEET', note:'NOTE', sms:'SMS'}[kind] || '•'; }
 
 let CONTACT = null;
 
@@ -170,13 +170,13 @@ function paintCard(){
   if(CONTACT.bio) c.appendChild(el('div', 'bio', CONTACT.bio));
 
   const actions = el('div', 'actions');
-  const logCall = el('button', null, '📞 Log call');
+  const logCall = el('button', null, 'Log call');
   logCall.onclick = () => openLogModal('call');
   actions.appendChild(logCall);
-  const logEmail = el('button', null, '✉ Log email');
+  const logEmail = el('button', null, 'Log email');
   logEmail.onclick = () => openLogModal('email');
   actions.appendChild(logEmail);
-  const logMeet = el('button', 'gold', '📅 Log meeting');
+  const logMeet = el('button', 'gold', 'Log meeting');
   logMeet.onclick = () => openLogModal('meeting');
   actions.appendChild(logMeet);
   c.appendChild(actions);
@@ -235,10 +235,10 @@ function paintFollowups(fus){
 function openLogModal(kind){
   const c = $('modal-card'); clear(c);
   c.appendChild(el('h2', null,
-    kind === 'call' ? '📞 Log call' :
-    kind === 'email' ? '✉ Log email' :
-    kind === 'meeting' ? '📅 Log meeting' :
-    '📝 Add note'));
+    kind === 'call' ? 'Log call' :
+    kind === 'email' ? 'Log email' :
+    kind === 'meeting' ? 'Log meeting' :
+    'Add note'));
   c.appendChild(el('label', null, 'Summary'));
   const sum = document.createElement('input'); sum.id='log-summary'; c.appendChild(sum);
   c.appendChild(el('label', null, 'Notes'));

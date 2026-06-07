@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title>Closer onboarding · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/app/sfx.js" defer></script>
 <link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -222,6 +223,37 @@ function showStep(n){
   if(typeof n === 'number') state.step = n;
   renderStepper();
   window.scrollTo({top:0,behavior:'smooth'});
+  if(n === 'done') celebrateGateClear();
+}
+
+// Gate-cleared celebration — the payoff for the highest-friction part of
+// onboarding. Fires once when the rep reaches the done step. Self-contained
+// (injects its own styles), reuses /app/sfx.js if present (optional).
+let _gateCelebrated = false;
+function celebrateGateClear(){
+  if(_gateCelebrated) return; _gateCelebrated = true;
+  const st = document.createElement('style');
+  st.textContent = `
+  #gate-cele{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  #gate-cele .burst{position:absolute;width:160vmax;height:160vmax;border-radius:50%;background:radial-gradient(circle,rgba(52,211,153,0.30),rgba(251,191,36,0.12) 30%,transparent 60%);transform:scale(0);animation:gc-burst 1.1s ease-out forwards}
+  #gate-cele .card{position:relative;text-align:center;transform:scale(.7);opacity:0;animation:gc-pop .5s cubic-bezier(.2,1.3,.4,1) .1s forwards;padding:0 24px}
+  #gate-cele .eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.30em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  #gate-cele h1{font-family:'Tanker',serif;font-size:64px;letter-spacing:-.02em;text-transform:uppercase;color:var(--accent-2);margin:0;text-shadow:0 0 24px rgba(52,211,153,.6),0 6px 30px rgba(0,0,0,.6)}
+  #gate-cele p{font-family:'Bespoke Serif',Georgia,serif;font-style:italic;font-size:18px;color:#f5e8d8;margin:14px auto 0;max-width:46ch;line-height:1.5}
+  @keyframes gc-burst{to{transform:scale(1);opacity:0}}
+  @keyframes gc-pop{to{transform:scale(1);opacity:1}}`;
+  document.head.appendChild(st);
+  const o = document.createElement('div'); o.id = 'gate-cele';
+  o.innerHTML = '<div class="burst"></div><div class="card">'
+    + '<div class="eyebrow">✓ Gauntlet cleared</div>'
+    + '<h1>You’re Cleared</h1>'
+    + '<p>Disclosure, agreement, W-9, DNC, and drill cert — all signed. You can dial real prospects now.</p>'
+    + '</div>';
+  document.body.appendChild(o);
+  try { window.bpSfx && window.bpSfx.levelUp && window.bpSfx.levelUp();
+        setTimeout(function(){ window.bpSfx && window.bpSfx.bell && window.bpSfx.bell(); }, 320); } catch(e){}
+  setTimeout(function(){ o.style.transition='opacity .6s'; o.style.opacity='0';
+                         setTimeout(function(){ o.remove(); }, 600); }, 3400);
 }
 
 function renderStepper(){

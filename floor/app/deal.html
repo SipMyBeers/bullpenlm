@@ -37,6 +37,8 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 .actions button.gold:hover{background:rgba(251,191,36,0.20)}
 .actions button.purple{background:rgba(167,139,250,0.10);color:#c4b5fd;border-color:rgba(167,139,250,0.30)}
 .actions button.purple:hover{background:rgba(167,139,250,0.20)}
+.actions button.danger{background:rgba(248,113,113,0.10);color:var(--danger);border-color:rgba(248,113,113,0.30)}
+.actions button.danger:hover{background:rgba(248,113,113,0.20)}
 
 .section{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.08);border-radius:12px;padding:22px;margin-bottom:18px}
 .section h2{font-family:var(--mono);font-size:11px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid rgba(245,232,216,0.08)}
@@ -44,7 +46,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 /* Timeline */
 .tl{display:flex;flex-direction:column;gap:10px}
 .tl .ev{display:grid;grid-template-columns:42px 1fr auto;gap:12px;padding:11px 12px;background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.06);border-radius:8px}
-.tl .ev .ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:18px;background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.20)}
+.tl .ev .ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.04em;color:var(--accent-2);background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.20)}
 .tl .ev.email .ico{background:rgba(110,231,183,0.12);border-color:rgba(110,231,183,0.25)}
 .tl .ev.meeting .ico{background:rgba(251,191,36,0.12);border-color:rgba(251,191,36,0.30);color:var(--gold)}
 .tl .ev.note .ico{background:rgba(167,139,250,0.10);border-color:rgba(167,139,250,0.25);color:#c4b5fd}
@@ -105,6 +107,8 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 <script src="/app/dnc-check.js" defer></script>
 <script src="/app/embed-mode.js"></script>
 <script src="/app/challenge-notif.js" defer></script>
+<script src="/app/sfx.js" defer></script>
+<script src="/app/loss-modal.js" defer></script>
 </head>
 <body>
 
@@ -176,7 +180,7 @@ let DEAL = null;
 let CONTACTS = [];
 
 function ICON(kind){
-  return {call:'📞', email:'✉', meeting:'📅', note:'📝', sms:'💬'}[kind] || '•';
+  return {call:'CALL', email:'MAIL', meeting:'MEET', note:'NOTE', sms:'SMS'}[kind] || '•';
 }
 
 function paintHeader(){
@@ -200,23 +204,75 @@ function paintHeader(){
   h.appendChild(row);
 
   const actions = el('div', 'actions');
-  const logCall = el('button', null, '📞 Log call');
+  const logCall = el('button', null, 'Log call');
   logCall.onclick = () => openLogModal('call');
   actions.appendChild(logCall);
 
-  const logEmail = el('button', null, '✉ Log email');
+  const logEmail = el('button', null, 'Log email');
   logEmail.onclick = () => openLogModal('email');
   actions.appendChild(logEmail);
 
-  const logMeet = el('button', 'gold', '📅 Log meeting');
+  const logMeet = el('button', 'gold', 'Log meeting');
   logMeet.onclick = () => openLogModal('meeting');
   actions.appendChild(logMeet);
 
-  const note = el('button', 'purple', '📝 Add note');
+  const note = el('button', 'purple', 'Add note');
   note.onclick = () => openLogModal('note');
   actions.appendChild(note);
 
+  // Close actions — only show while the deal isn't already in a terminal stage
+  const terminal = (DEAL.stage === 'won' || DEAL.stage === 'lost');
+  if(!terminal){
+    const closeWon = el('button', 'gold', 'Close WON');
+    closeWon.onclick = () => closeDealWon();
+    actions.appendChild(closeWon);
+
+    const markLost = el('button', 'danger', '✕ Mark lost');
+    markLost.onclick = () => openLossModal();
+    actions.appendChild(markLost);
+  }
+
   h.appendChild(actions);
+}
+
+// ── Close WON ──
+async function closeDealWon(){
+  try {
+    await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/deals/${encodeURIComponent(DEAL.id)}/stage`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({stage:'won', rep: REP}),
+    });
+    try{ window.bpSfx && window.bpSfx.bell && window.bpSfx.bell(); }catch(_){}
+    toast('Closed WON — ' + fmtMoney(DEAL.amount));
+    setTimeout(() => location.reload(), 600);
+  } catch(e){ toast(e.message, true); }
+}
+
+// ── Mark lost (reason picker → note → stage) ──
+function openLossModal(){
+  if(!window.bpLossModal){ toast('Loss modal not loaded', true); return; }
+  window.bpLossModal.open(async ({reason, note}) => {
+    try {
+      const summary = 'Lost: ' + reason + (note ? ' — ' + note : '');
+      await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/activity`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          rep: REP, kind: 'note',
+          target_type: 'deal', target_id: DEAL.id,
+          summary,
+          notes: note || '',
+          deal_id: DEAL.id,
+          org_slug: DEAL.prospect_slug,
+        }),
+      });
+      await fetchJSON(`/api/b/${encodeURIComponent(BULLPEN)}/deals/${encodeURIComponent(DEAL.id)}/stage`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({stage:'lost', rep: REP}),
+      });
+      toast('Marked lost — ' + reason);
+      setTimeout(() => location.reload(), 600);
+    } catch(e){ toast(e.message, true); }
+  });
 }
 
 function paintTimeline(events){
@@ -307,10 +363,10 @@ function paintFollowups(fus){
 function openLogModal(kind){
   const c = $('modal-card'); clear(c);
   c.appendChild(el('h2', null,
-    kind === 'call' ? '📞 Log call' :
-    kind === 'email' ? '✉ Log email' :
-    kind === 'meeting' ? '📅 Log meeting' :
-    '📝 Add note'));
+    kind === 'call' ? 'Log call' :
+    kind === 'email' ? 'Log email' :
+    kind === 'meeting' ? 'Log meeting' :
+    'Add note'));
 
   c.appendChild(el('label', null, 'Summary (one line)'));
   const sum = document.createElement('input'); sum.id='log-summary';

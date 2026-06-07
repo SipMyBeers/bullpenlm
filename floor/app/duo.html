@@ -45,9 +45,9 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 .card-panel h3.red{color:var(--danger)}
 .card-panel ul{padding-left:18px;margin:0;font-size:13px;line-height:1.55;font-family:var(--serif)}
 .card-panel ul li{margin-bottom:4px;color:#e5d8c4}
-.card-panel ul.hot li::marker{content:"⚡ "}
-.card-panel ul.red li::marker{content:"⚠ "}
-.card-panel ul.obj li::marker{content:"❝ "}
+.card-panel ul.hot li::marker{content:"• "}
+.card-panel ul.red li::marker{content:"• "}
+.card-panel ul.obj li::marker{content:"• "}
 
 .card-panel.seller .obj,.card-panel.seller .hot,.card-panel.seller .red,
 .card-panel.seller h3.hide-seller{display:none}
@@ -136,7 +136,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 const params  = new URLSearchParams(location.search);
 const BULLPEN = params.get('b')   || 'killsesh';
 const REP     = params.get('rep') || localStorage.getItem('bullpen-rep') || 'beers';
-const DUO_ID  = params.get('id')  || '';
+const DUO_ID  = params.get('id')  || params.get('duo_id') || '';
 
 document.getElementById('lobby-back').href = '/app/lobby.html?b=' + encodeURIComponent(BULLPEN);
 
@@ -314,7 +314,7 @@ function paintTranscript(){
   if(DUO.status === 'ended' && DUO.scorecard){
     const s = DUO.scorecard;
     const sc = el('div', 'scorecard');
-    sc.appendChild(el('h3', null, '⚔ Scorecard'));
+    sc.appendChild(el('h3', null, 'Scorecard'));
     const grid = el('div', 'sc-grid');
     const stat = (label, val, kls) => {
       const w = el('div', 'sc-stat'); w.appendChild(el('div','l',label));
@@ -327,7 +327,7 @@ function paintTranscript(){
     grid.appendChild(stat('Asked next step', s.asked_for_next_step ? 'Yes' : 'No', s.asked_for_next_step ? 'good' : 'bad'));
     sc.appendChild(grid);
     const ag = el('div', 'sub'); ag.style.fontFamily='var(--mono)'; ag.style.fontSize='11px'; ag.style.color='var(--muted)';
-    ag.textContent = (s.seller_score >= 80 ? '🔥 That was a clinic.' :
+    ag.textContent = (s.seller_score >= 80 ? 'That was a clinic.' :
                        s.seller_score >= 60 ? '✓ Solid. Could push harder on the next-step ask.' :
                        s.seller_score >= 40 ? 'Mid. Land more hot buttons and ask for the meeting clearly.' :
                                               'Run it back. Watch for the buyer\'s hot buttons and use their words.');

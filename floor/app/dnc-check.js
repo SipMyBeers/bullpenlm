@@ -11,7 +11,7 @@
  *
  * After mount, the span gets a sibling badge:
  *   <span class="dnc-badge dnc-ok">✓ CLEAR</span>   (or)
- *   <span class="dnc-badge dnc-bad">⛔ DNC: national list</span>
+ *   <span class="dnc-badge dnc-bad">DNC: national list</span>
  */
 (function(){
   const url = new URL(window.location.href);
@@ -41,7 +41,7 @@
     }
     const pending = document.createElement('span');
     pending.className = 'dnc-badge dnc-pending';
-    pending.textContent = '⏳ CHECKING';
+    pending.textContent = 'CHECKING';
     node.after(pending);
     try {
       const r = await fetch(`/api/b/${encodeURIComponent(BULLPEN)}/dnc/check?phone=${encodeURIComponent(phone)}&state=${encodeURIComponent(state)}`);
@@ -52,7 +52,7 @@
         badge.textContent = '✓ CLEAR';
       } else {
         const reason = (d.dnc && !d.dnc.ok && d.dnc.reason) || (d.hours && !d.hours.ok && d.hours.reason) || 'blocked';
-        badge.textContent = '⛔ ' + reason.toUpperCase().slice(0, 40);
+        badge.textContent = 'DNC: ' + reason.toUpperCase().slice(0, 40);
       }
       pending.replaceWith(badge);
     } catch(e) {

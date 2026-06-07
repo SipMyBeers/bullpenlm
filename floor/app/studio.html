@@ -174,7 +174,7 @@ h1{font-family:var(--display);font-size:44px;letter-spacing:-.02em;text-transfor
 
   <div class="shell">
     <div class="col">
-      <h2>📚 Sources <span class="count" id="src-count">0</span></h2>
+      <h2>Sources <span class="count" id="src-count">0</span></h2>
       <div class="drop-zone" id="drop-zone">
         <strong>Drop a file</strong>
         PDF · audio · markdown · text
@@ -196,7 +196,7 @@ h1{font-family:var(--display);font-size:44px;letter-spacing:-.02em;text-transfor
       <div id="source-list" style="margin-top:14px"></div>
       <!-- Bulk CSV — a different shape of intake (rows of prospects) but
            lives here in Studio so all source/intake paths are one place. -->
-      <a href="#" id="studio-bulk-csv" style="display:block;margin-top:14px;padding:10px;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px dashed rgba(245,232,216,0.18);border-radius:7px">📦 Bulk CSV import — many prospects at once</a>
+      <a href="#" id="studio-bulk-csv" style="display:block;margin-top:14px;padding:10px;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px dashed rgba(245,232,216,0.18);border-radius:7px">Bulk CSV import — many prospects at once</a>
       <script>
         document.getElementById('studio-bulk-csv').addEventListener('click', (ev) => {
           ev.preventDefault();
@@ -215,7 +215,7 @@ h1{font-family:var(--display);font-size:44px;letter-spacing:-.02em;text-transfor
     </div>
 
     <div class="col">
-      <h2>💬 Pre-call research <span id="chat-buyer-pill" class="count">—</span></h2>
+      <h2>Pre-call research <span id="chat-buyer-pill" class="count">—</span></h2>
       <div class="buyer-selector" id="buyer-selector"></div>
       <div class="chat-shell">
         <div class="chat-msgs" id="chat-msgs">
@@ -238,7 +238,7 @@ h1{font-family:var(--display);font-size:44px;letter-spacing:-.02em;text-transfor
     </div>
 
     <div class="col">
-      <h2>🎬 Generated assets</h2>
+      <h2>Generated assets</h2>
       <div class="asset-grid" id="asset-grid">
         <div style="grid-column:1/-1;padding:24px;text-align:center;color:var(--muted);font-family:var(--serif);font-style:italic;font-size:13px">
           Pick a buyer first.<br>
@@ -271,13 +271,13 @@ if (!REP) REP = 'operator';
 let currentBuyer = URLP.searchParams.get('buyer') || null;
 let currentKind = null;
 const ASSETS = [
-  {kind:'briefing',       icon:'📄', name:'Briefing',       desc:'300-word pre-call doc'},
-  {kind:'briefing_audio', icon:'🎧', name:'Audio Brief',    desc:'TTS for the car'},
-  {kind:'one_sheeter',    icon:'📋', name:'One-Sheeter',    desc:'Pin-to-the-wall cheat sheet'},
-  {kind:'flashcards',     icon:'🃏', name:'Flashcards',     desc:'Drill cards'},
-  {kind:'quiz',           icon:'🎯', name:'Pop Quiz',       desc:'5-Q knowledge gate'},
-  {kind:'account_map',    icon:'🗺️', name:'Account Map',    desc:'Org chart + relationships'},
-  {kind:'data_table',     icon:'📊', name:'Data Table',     desc:'CRM-ready fields'},
+  {kind:'briefing',       name:'Briefing',       desc:'300-word pre-call doc'},
+  {kind:'briefing_audio', name:'Audio Brief',    desc:'TTS for the car'},
+  {kind:'one_sheeter',    name:'One-Sheeter',    desc:'Pin-to-the-wall cheat sheet'},
+  {kind:'flashcards',     name:'Flashcards',     desc:'Drill cards'},
+  {kind:'quiz',           name:'Pop Quiz',       desc:'5-Q knowledge gate'},
+  {kind:'account_map',    name:'Account Map',    desc:'Org chart + relationships'},
+  {kind:'data_table',     name:'Data Table',     desc:'CRM-ready fields'},
 ];
 
 function el(t, p, ...c){const n=document.createElement(t);if(p){for(const k in p){if(k==='class')n.className=p[k];else if(k==='onClick')n.addEventListener('click',p[k]);else if(k==='text')n.textContent=p[k];else if(k==='style')n.setAttribute('style',p[k]);else n.setAttribute(k,p[k])}}for(const x of c){if(x==null)continue;n.appendChild(typeof x==='string'?document.createTextNode(x):x)}return n}
@@ -496,7 +496,6 @@ async function loadManifest(){
     if(existing && existing.fresh){
       card.appendChild(el('span', {class:'fresh-dot', title:'fresh against current sources'}));
     }
-    card.appendChild(el('div', {class:'icon', text:a.icon}));
     card.appendChild(el('div', {class:'label', text:a.desc}));
     card.appendChild(el('div', {class:'name', text:a.name}));
     card.appendChild(el('div', {class:'summary', text: existing && existing.summary ? existing.summary : 'generate'}));
@@ -578,7 +577,7 @@ function renderFlashcards(cards, body){
     statusRow.appendChild(el('span', {text: flipped ? 'Click to flip back' : 'Click to flip'}));
     clear(ratings);
     if(flipped){
-      for(const [label, advance] of [['😬 Again', false],['👍 Good', true],['⚡ Easy', true]]){
+      for(const [label, advance] of [['Again', false],['Good', true],['Easy', true]]){
         ratings.appendChild(el('button', {class:'btn ghost', text:label, onClick: ()=>{
           if(advance){ idx = (idx+1) % cards.length; }
           flipped = false; draw();

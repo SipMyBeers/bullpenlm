@@ -136,7 +136,7 @@
 
     const acceptBtn = document.createElement('a');
     acceptBtn.className = 'bp-btn accept';
-    const acceptUrl = `/app/duo.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&duo_id=${encodeURIComponent(duo.id)}`;
+    const acceptUrl = `/app/duo.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&id=${encodeURIComponent(duo.id)}`;
     acceptBtn.href = acceptUrl;
     acceptBtn.textContent = 'ACCEPT';
     actions.appendChild(acceptBtn);

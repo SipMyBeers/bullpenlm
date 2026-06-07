@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app/ink.css">
+<script src="/app/cash.js"></script>
 <style>
 :root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
   --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;
@@ -53,6 +55,25 @@ table.dl td.pros{font-family:var(--serif);font-size:14px}
 table.dl td .stage-chip{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9.5px;letter-spacing:.10em;text-transform:uppercase;background:rgba(245,232,216,0.06);color:var(--muted)}
 
 .empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:30px;letter-spacing:.08em}
+
+/* Editable goal on the Won card */
+.tot-card .goal-row{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim);margin-top:10px}
+.tot-card .goal-row .goal-label{text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+.tot-card .goal-row input{width:90px;padding:3px 6px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:4px;color:var(--gold);font-family:var(--mono);font-size:11px;font-weight:600}
+.tot-card .goal-row input:focus{outline:none;border-color:var(--gold)}
+.tot-card .goal-bar{height:8px;background:rgba(0,0,0,0.30);border-radius:5px;overflow:hidden;margin-top:10px}
+.tot-card .goal-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .5s ease-out}
+.tot-card .goal-bar-fill.hit{background:linear-gradient(90deg,var(--gold),#fde68a)}
+.tot-card .goal-verdict{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;margin-top:8px}
+.tot-card .goal-verdict.onpace{color:var(--accent-2)}
+.tot-card .goal-verdict.behind{color:var(--danger)}
+.tot-card .goal-verdict.hit{color:var(--gold)}
+
+/* Stale-deal age badge in top-deals table */
+.age-badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9.5px;letter-spacing:.08em;font-family:var(--mono);font-weight:600}
+.age-badge.fresh{background:rgba(52,211,153,0.14);color:var(--accent-2)}
+.age-badge.warm{background:rgba(251,191,36,0.14);color:var(--gold)}
+.age-badge.stale{background:rgba(248,113,113,0.16);color:#fda4a4}
 </style>
 </head>
 <body>
@@ -82,7 +103,53 @@ let SCOPE = 'me';
 function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
 function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); }
 async function fetchJSON(url){ const r=await fetch(url); if(!r.ok)throw new Error(r.statusText); return r.json(); }
-function fmtMoney(n){ return '$' + Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0}); }
+function fmtMoney(n){ return (window.bpMoney ? window.bpMoney.fmt(n) : ('$' + Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0}))); }
+// Cash chip — green currency span; falls back to a text node if cash.js missing.
+function cash(n){ return (window.bpMoney && window.bpMoney.cashChip) ? window.bpMoney.cashChip(n) : document.createTextNode(fmtMoney(n)); }
+
+// ---- Monthly goal (localStorage) ----
+function goalKey(){ return SCOPE==='all' ? `goal-${BULLPEN}-all` : `goal-${BULLPEN}-${REP}`; }
+function getGoal(){ const v = Number(localStorage.getItem(goalKey())||0); return v>0 ? v : 0; }
+function setGoal(v){ try{ localStorage.setItem(goalKey(), String(Math.max(0, Math.round(Number(v)||0)))); }catch(e){} }
+
+// Pace verdict from day-of-month. Expected = goal * (daysElapsed / daysInMonth).
+function paceVerdict(won, goal){
+  if(!goal || goal<=0) return null;
+  if(won >= goal) return {kind:'hit', label:'Goal hit'};
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const dayOfMonth = now.getDate();
+  const expected = goal * (dayOfMonth / daysInMonth);
+  if(won >= expected) return {kind:'onpace', label:'On pace'};
+  return {kind:'behind', label:'Behind by ' + fmtMoney(expected - won)};
+}
+
+// Days the deal has sat in its current stage, from stage_history ({stage,by,at}).
+function dealAgeDays(d){
+  const hist = d.stage_history || [];
+  let stamp = null;
+  // Latest entry matching the current stage; fall back to most-recent entry.
+  for(let i=hist.length-1; i>=0; i--){
+    if(hist[i].stage === d.stage){ stamp = hist[i].at; break; }
+  }
+  if(!stamp && hist.length) stamp = hist[hist.length-1].at;
+  if(!stamp) stamp = d.created_at || d.updated_at;
+  if(!stamp) return null;
+  const t = new Date(stamp).getTime();
+  if(isNaN(t)) return null;
+  return Math.floor((Date.now() - t) / 86400000);
+}
+// green <3d / amber 7-14 / red >14 (non-terminal stages)
+function ageBadge(days){
+  if(days==null) return null;
+  let cls = 'warm';
+  if(days < 3) cls = 'fresh';
+  else if(days > 14) cls = 'stale';
+  else if(days >= 7 && days <= 14) cls = 'warm';
+  else cls = 'warm'; // 3-6d: neutral amber-leaning
+  const span = el('span', 'age-badge ' + cls, days + 'd');
+  return span;
+}
 
 async function render(){
   const root = document.getElementById('content'); clear(root);
@@ -120,22 +187,52 @@ async function render(){
     const card = (label, value, sub, kls) => {
       const c = el('div', 'tot-card ' + (kls||''));
       c.appendChild(el('div', 'label', label));
-      c.appendChild(el('div', 'v', value));
+      const v = el('div', 'v');
+      if(value && value.nodeType){ v.appendChild(value); } else { v.textContent = value; }
+      c.appendChild(v);
       if(sub) c.appendChild(el('div', 'sub', sub));
       return c;
     };
-    totals.appendChild(card('Pipeline (gross)', fmtMoney(pipelineGross),
+    totals.appendChild(card('Pipeline (gross)', cash(pipelineGross),
       allDeals.filter(d => d.stage !== 'won' && d.stage !== 'lost').length + ' open deals', ''));
-    totals.appendChild(card('Weighted forecast', fmtMoney(pipelineWeighted),
+    totals.appendChild(card('Weighted forecast', cash(pipelineWeighted),
       'Stage-probability weighted', 'gold'));
-    totals.appendChild(card('Won this period', fmtMoney(wonAmount),
-      byStage.won?.deals.length + ' closed-won', ''));
-    totals.appendChild(card('Lost / disqualified', fmtMoney(lostAmount), '', 'dim'));
+    const wonCard = card('Won this period', cash(wonAmount),
+      byStage.won?.deals.length + ' closed-won', '');
+    // --- Editable monthly goal + progress bar + pace verdict ---
+    const goal = getGoal();
+    const goalRow = el('div', 'goal-row');
+    goalRow.appendChild(el('span', 'goal-label', 'Goal'));
+    const gInput = el('input');
+    gInput.type = 'number'; gInput.min = '0'; gInput.step = '1000';
+    gInput.placeholder = 'set goal';
+    if(goal > 0) gInput.value = goal;
+    gInput.onchange = () => { setGoal(gInput.value); render(); };
+    gInput.onkeydown = (ev) => { if(ev.key === 'Enter') gInput.blur(); };
+    goalRow.appendChild(gInput);
+    wonCard.appendChild(goalRow);
+    if(goal > 0){
+      const pct = Math.max(0, Math.min(100, (wonAmount / goal) * 100));
+      const gbar = el('div', 'goal-bar');
+      const gfill = el('div', 'goal-bar-fill' + (wonAmount >= goal ? ' hit' : ''));
+      gfill.style.width = pct + '%';
+      gbar.appendChild(gfill);
+      wonCard.appendChild(gbar);
+      const v = paceVerdict(wonAmount, goal);
+      if(v){
+        const vEl = el('div', 'goal-verdict ' + v.kind,
+          Math.round(pct) + '% of ' + fmtMoney(goal) + ' · ' + v.label);
+        wonCard.appendChild(vEl);
+      }
+    }
+    totals.appendChild(wonCard);
+    totals.appendChild(card('Lost / disqualified', cash(lostAmount), '', 'dim'));
     root.appendChild(totals);
 
     // Stage rows
     const sec = el('div', 'section');
-    sec.appendChild(el('h3', null, 'Pipeline by stage'));
+    const secH = el('h3'); secH.innerHTML = 'Pipeline by <span class="kw">stage</span>';
+    sec.appendChild(secH);
     const list = el('div', 'stage-rows');
     const maxWeighted = Math.max(1, ...stages.map(s => byStage[s.id].weighted));
     for(const s of stages){
@@ -156,8 +253,10 @@ async function render(){
       bar.appendChild(fill);
       row.appendChild(bar);
 
-      row.appendChild(el('span', 'gross', fmtMoney(byStage[s.id].gross)));
-      row.appendChild(el('span', 'weighted', fmtMoney(byStage[s.id].weighted)));
+      const grossSpan = el('span', 'gross'); grossSpan.appendChild(cash(byStage[s.id].gross));
+      row.appendChild(grossSpan);
+      const wtSpan = el('span', 'weighted'); wtSpan.appendChild(cash(byStage[s.id].weighted));
+      row.appendChild(wtSpan);
       list.appendChild(row);
     }
     sec.appendChild(list);
@@ -174,14 +273,15 @@ async function render(){
       .slice(0, 15);
 
     const top_sec = el('div', 'section');
-    top_sec.appendChild(el('h3', null, 'Top open deals (by weighted value)'));
+    const topH = el('h3'); topH.innerHTML = 'Top open <span class="kw kw-mint">deals</span> (by weighted value)';
+    top_sec.appendChild(topH);
     if(!top.length){
       top_sec.appendChild(el('div', 'empty', 'No open deals. Build the pipeline.'));
     } else {
       const tbl = el('table', 'dl');
       const thead = document.createElement('thead');
       const trh = document.createElement('tr');
-      for(const h of (SCOPE==='all' ? ['Prospect','Owner','Stage','Gross','Weighted'] : ['Prospect','Stage','Gross','Weighted'])){
+      for(const h of (SCOPE==='all' ? ['Prospect','Owner','Stage','Age','Gross','Weighted'] : ['Prospect','Stage','Age','Gross','Weighted'])){
         trh.appendChild(el('th', null, h));
       }
       thead.appendChild(trh); tbl.appendChild(thead);
@@ -193,8 +293,14 @@ async function render(){
         const sc = el('td');
         sc.appendChild(el('span', 'stage-chip', d._stage_name || d.stage));
         tr.appendChild(sc);
-        tr.appendChild(el('td', 'amt', fmtMoney(d.amount)));
-        tr.appendChild(el('td', 'wt', fmtMoney(d._w)));
+        // Stale-deal age badge (non-terminal stages only — these are all open)
+        const ageTd = el('td');
+        const days = dealAgeDays(d);
+        const badge = ageBadge(days);
+        if(badge) ageTd.appendChild(badge); else ageTd.textContent = '—';
+        tr.appendChild(ageTd);
+        const amtTd = el('td', 'amt'); amtTd.appendChild(cash(d.amount)); tr.appendChild(amtTd);
+        const wtTd = el('td', 'wt'); wtTd.appendChild(cash(d._w)); tr.appendChild(wtTd);
         tb.appendChild(tr);
       }
       tbl.appendChild(tb);

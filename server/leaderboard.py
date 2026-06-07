@@ -81,9 +81,22 @@ def compute(bullpen: str) -> Dict[str, Any]:
                        "outbound_email_sent"):
             stats["marketer"] += 1
 
-        elif kind in ("rag_source_ingested", "dossier_enriched",
+        elif kind in ("source_ingested", "dossier_enriched",
                        "studio_asset_generated"):
+            # was "rag_source_ingested" — a kind nothing emits, so the
+            # researcher lane was permanently dead. Real kind: source_ingested.
             stats["researcher"] += 1
+
+        elif kind == "drill_passed":
+            # During the drilling-phase alpha there are no deals yet, so the
+            # cold_open / discovery lanes (otherwise fed only by deal-stage
+            # moves) were always empty. Feed passed drills into the matching
+            # skill lane by play tier so friends compete from session one.
+            tier = int(payload.get("phase_tier") or 0)
+            if tier <= 2:
+                stats["cold_open"] += 1
+            elif tier == 3:
+                stats["discovery"] += 1
 
     # XP roll-up (read from xp module so the curve stays canonical)
     try:

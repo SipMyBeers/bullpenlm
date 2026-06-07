@@ -1,14 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0703'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23fbbf24' font-family='monospace' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
 <meta charset="utf-8">
 <title>Spawn · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app/ink.css">
+<script src="/app/cash.js"></script>
+<script src="/app/sfx.js"></script>
+<script src="/app/gauntlet.js"></script>
 <script src="/app/gate-banner.js" defer></script>
 <script src="/app/embed-mode.js"></script>
 <script src="/app/challenge-notif.js" defer></script>
+<script src="/app/tutorial.js" defer></script>
 <style>
 :root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
   --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
@@ -107,6 +113,32 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 .quest.gate .footer .cta{color:var(--danger);background:rgba(248,113,113,0.08);border-color:rgba(248,113,113,0.40)}
 .quest.gate:hover .footer .cta{background:var(--danger);color:#0a1a14}
 
+/* ── First-session questline card ── */
+.fs-card{background:linear-gradient(180deg,rgba(42,29,16,0.85),rgba(26,18,8,0.55));border:1px solid rgba(251,191,36,0.34);border-radius:14px;padding:18px 20px;margin-bottom:20px;position:relative;overflow:hidden;animation:fade-in .5s ease-out}
+.fs-card::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 12% 0%,rgba(251,191,36,0.10),transparent 62%);pointer-events:none}
+.fs-card .fs-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px}
+.fs-card .fs-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+.fs-card h3{font-family:var(--display);font-size:22px;letter-spacing:-.01em;text-transform:uppercase;color:var(--text);margin:2px 0 2px}
+.fs-card .fs-sub{font-family:var(--serif);font-style:italic;font-size:13.5px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+.fs-card .fs-dismiss{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);background:transparent;border:1px solid rgba(245,232,216,0.14);border-radius:6px;padding:5px 9px;cursor:pointer;flex-shrink:0;transition:all .12s}
+.fs-card .fs-dismiss:hover{color:var(--text);border-color:rgba(245,232,216,0.3)}
+.fs-card .fs-progress{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.fs-card .fs-track{flex:1;height:6px;background:rgba(0,0,0,0.4);border-radius:5px;overflow:hidden;border:1px solid rgba(245,232,216,0.08)}
+.fs-card .fs-track .fs-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width .6s cubic-bezier(.4,0,.2,1);width:0%}
+.fs-card .fs-count{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--accent-2);font-weight:600;flex-shrink:0}
+.fs-list{display:flex;flex-direction:column;gap:8px}
+.fs-item{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:10px;background:rgba(26,18,8,0.5);border:1px solid rgba(245,232,216,0.10);text-decoration:none;color:inherit;transition:all .14s}
+.fs-item:hover{border-color:var(--accent);background:rgba(52,211,153,0.05);transform:translateX(2px)}
+.fs-item.done{background:rgba(52,211,153,0.05);border-color:rgba(52,211,153,0.28)}
+.fs-item .fs-check{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(245,232,216,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:var(--dim);font-weight:700}
+.fs-item.done .fs-check{border-color:var(--accent);background:var(--accent);color:#0a1a14}
+.fs-item .fs-text{flex:1;min-width:0}
+.fs-item .fs-title{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--text)}
+.fs-item.done .fs-title{color:var(--accent-2)}
+.fs-item .fs-blurb{font-family:var(--serif);font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.fs-item .fs-go{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--accent-2);flex-shrink:0}
+.fs-item.done .fs-go{color:var(--accent);opacity:.7}
+
 /* ── Empty / first-run / no-bullpen states ── */
 .empty-stage{text-align:center;padding:60px 20px;background:rgba(0,0,0,0.20);border:1px dashed rgba(245,232,216,0.15);border-radius:14px}
 .empty-stage .emoji{font-size:42px;margin-bottom:10px}
@@ -117,9 +149,100 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 .empty-stage .btn.gold{background:var(--gold);color:#0a1a14}
 .empty-stage .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
 
+/* ── Rank overlay (in character card) ───────────────────────────── */
+.rank-row{display:flex;align-items:center;gap:12px;margin-top:2px}
+.rank-badge{display:flex;align-items:center;gap:9px;padding:6px 12px 6px 8px;border-radius:9px;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(52,211,153,0.06));border:1px solid rgba(251,191,36,0.32);position:relative;overflow:hidden}
+.rank-badge .chevrons{display:flex;gap:1px;align-items:center}
+.rank-badge .chevrons svg{display:block}
+.rank-badge .rank-text{display:flex;flex-direction:column;line-height:1.05}
+.rank-badge .rank-name{font-family:var(--display);font-size:16px;letter-spacing:.01em;text-transform:uppercase;color:var(--gold)}
+.rank-badge .rank-tag{font-family:var(--mono);font-size:8.5px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin-top:1px}
+.rank-prog{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.rank-prog .rank-prog-top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.rank-prog .rank-prog-top .next{color:var(--accent-2);font-weight:600}
+.rank-prog .rank-track{height:5px;background:rgba(0,0,0,0.45);border-radius:4px;overflow:hidden;border:1px solid rgba(245,232,216,0.08)}
+.rank-prog .rank-track .rank-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width .8s cubic-bezier(.4,0,.2,1);width:2%}
+.rank-prog .rank-floor{font-family:var(--mono);font-size:9px;letter-spacing:.10em;text-transform:uppercase;color:var(--dim)}
+.rank-prog .rank-floor b{color:var(--accent-2);font-weight:700}
+.rank-badge.max .rank-name{color:var(--accent-2)}
+.rank-badge.max{border-color:rgba(52,211,153,0.4)}
+
+/* ── Gauntlet ladder (the hero) ─────────────────────────────────── */
+.gauntlet{position:relative;margin:8px 0 34px}
+.gauntlet .goal-banner{display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:12px;background:linear-gradient(110deg,rgba(42,29,16,0.9),rgba(26,18,8,0.5));border:1px solid rgba(251,191,36,0.30);margin-bottom:18px;position:relative;overflow:hidden;font-family:var(--serif);font-size:15px;color:var(--text);line-height:1.45}
+.gauntlet .goal-banner::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 0% 0%,rgba(251,191,36,0.10),transparent 55%);pointer-events:none}
+.gauntlet .goal-banner .goal-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);flex-shrink:0;border-right:1px solid rgba(251,191,36,0.25);padding-right:12px;align-self:stretch;display:flex;align-items:center}
+
+/* Vertical ladder: rungs connected by a glowing spine */
+.ladder{position:relative;display:flex;flex-direction:column;gap:0;padding-left:38px}
+.ladder::before{content:"";position:absolute;left:18px;top:24px;bottom:24px;width:3px;background:linear-gradient(180deg,rgba(52,211,153,0.55),rgba(251,191,36,0.45),rgba(128,106,79,0.25));border-radius:2px}
+.rung{position:relative;display:block;text-decoration:none;color:inherit;padding:15px 18px;margin-bottom:11px;border-radius:13px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);transition:all .16s;animation:quest-in .4s ease-out backwards}
+.rung:nth-child(1){animation-delay:.04s}.rung:nth-child(2){animation-delay:.09s}.rung:nth-child(3){animation-delay:.14s}.rung:nth-child(4){animation-delay:.19s}.rung:nth-child(5){animation-delay:.24s}.rung:nth-child(6){animation-delay:.29s}.rung:nth-child(7){animation-delay:.34s}
+/* Node on the spine */
+.rung .node{position:absolute;left:-32px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg-1);border:2px solid rgba(245,232,216,0.20);z-index:2}
+.rung .node .node-num{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted)}
+.rung .rung-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.rung .tier-tag{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.rung .boss{font-family:var(--display);font-size:21px;letter-spacing:-.01em;text-transform:uppercase;line-height:1;color:var(--text)}
+.rung .state-flag{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:5px}
+.rung .taunt{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted);margin-top:7px;line-height:1.5}
+.rung .taunt::before{content:"\201C";color:var(--dim)}
+.rung .taunt::after{content:"\201D";color:var(--dim)}
+.rung .goal-line{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--accent-2);margin-top:6px;text-transform:uppercase;opacity:.85}
+.rung .plays{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.rung .play-chip{font-family:var(--mono);font-size:10px;letter-spacing:.02em;color:var(--muted);padding:3px 9px;border-radius:11px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.12)}
+.rung .play-chip.cleared-chip{color:var(--accent-2);border-color:rgba(52,211,153,0.35);background:rgba(52,211,153,0.06)}
+.rung .rung-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid rgba(245,232,216,0.06)}
+.rung .progress-tag{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted)}
+.rung .enter-flag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:6px 12px;border-radius:6px}
+
+/* CURRENT — glowing gold, "you are here" */
+.rung.current{border-color:var(--gold);background:linear-gradient(180deg,rgba(251,191,36,0.07),rgba(26,18,8,0.5));box-shadow:0 0 0 1px rgba(251,191,36,0.18),0 6px 26px -10px rgba(251,191,36,0.5)}
+.rung.current .node{border-color:var(--gold);background:var(--gold);box-shadow:0 0 14px rgba(251,191,36,0.7);animation:pulse 1.8s ease-in-out infinite}
+.rung.current .node .node-num{color:#0a1a14}
+.rung.current .boss{color:var(--gold)}
+.rung.current .state-flag{color:#0a1a14;background:var(--gold)}
+.rung.current .enter-flag{color:#0a1a14;background:var(--gold)}
+.rung.current:hover{transform:translateX(3px);box-shadow:0 0 0 1px rgba(251,191,36,0.3),0 8px 30px -10px rgba(251,191,36,0.6)}
+
+/* CLEARED — struck, mint, beaten */
+.rung.cleared{border-color:rgba(52,211,153,0.30);background:rgba(52,211,153,0.04)}
+.rung.cleared .node{border-color:var(--accent);background:var(--accent-dim)}
+.rung.cleared .node .node-num{color:var(--accent-2)}
+.rung.cleared .node .check{stroke:var(--accent-2)}
+.rung.cleared .boss{color:var(--muted);position:relative}
+.rung.cleared .boss::after{content:"";position:absolute;left:-2%;right:-2%;top:54%;height:2px;background:var(--accent);opacity:.6;transform:rotate(-1.5deg);border-radius:2px}
+.rung.cleared .state-flag{color:var(--accent-2);background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3)}
+.rung.cleared .enter-flag{color:var(--accent-2);background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.3)}
+.rung.cleared:hover{border-color:var(--accent);transform:translateX(2px)}
+
+/* LOCKED — dim, non-clickable, drawn padlock */
+.rung.locked{opacity:.62;cursor:not-allowed;border-style:dashed;border-color:rgba(245,232,216,0.10)}
+.rung.locked .node{border-color:rgba(245,232,216,0.18);background:rgba(0,0,0,0.4)}
+.rung.locked .node .lock{stroke:var(--dim)}
+.rung.locked .boss{color:var(--dim)}
+.rung.locked .taunt{color:var(--dim);opacity:.7}
+.rung.locked .state-flag{color:var(--dim);background:rgba(0,0,0,0.3);border:1px solid rgba(245,232,216,0.10)}
+.rung.locked .plays,.rung.locked .goal-line{display:none}
+.rung.locked .enter-flag{color:var(--dim)}
+
+/* ── Boss-clear celebration banner ──────────────────────────────── */
+.boss-clear{position:fixed;left:50%;top:18%;transform:translate(-50%,-12px) scale(.96);z-index:120;background:linear-gradient(135deg,rgba(42,29,16,0.97),rgba(10,7,3,0.97));border:1px solid var(--gold);border-radius:14px;padding:20px 30px;text-align:center;box-shadow:0 20px 60px -12px rgba(251,191,36,0.5),0 0 0 1px rgba(251,191,36,0.2);opacity:0;pointer-events:none;transition:opacity .4s ease,transform .4s cubic-bezier(.2,1.3,.4,1)}
+.boss-clear.show{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
+.boss-clear .bc-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.30em;text-transform:uppercase;color:var(--accent-2);margin-bottom:5px}
+.boss-clear .bc-tier{font-family:var(--display);font-size:34px;letter-spacing:-.01em;text-transform:uppercase;color:var(--gold);line-height:1}
+.boss-clear .bc-boss{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--text);margin-top:7px}
+.boss-clear .bc-boss b{color:var(--accent-2);font-style:normal;font-weight:700}
+
 @media(max-width:540px){
-  header{padding:10px 14px;flex-wrap:wrap;gap:8px}
-  .nav{margin-left:0;width:100%;order:3}
+  .rung .boss{font-size:18px}
+  .gauntlet .goal-banner{font-size:13.5px;flex-direction:column;align-items:flex-start;gap:7px}
+  .gauntlet .goal-banner .goal-eyebrow{border-right:none;border-bottom:1px solid rgba(251,191,36,0.25);padding-right:0;padding-bottom:7px;width:100%}
+  .boss-clear{padding:16px 20px}
+  .boss-clear .bc-tier{font-size:26px}
+}
+@media(max-width:540px){
+  header{padding:10px 14px;flex-wrap:wrap;gap:8px}  .nav{margin-left:0;width:100%;order:3}
   .brand{font-size:18px}
   .wrap{padding:16px 14px 60px}
   .character h1{font-size:26px}
@@ -142,9 +265,9 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
     <a href="/app/studio.html">Studio</a>
     <a href="/app/arena.html">Arena</a>
     <a href="/app/voice.html">Voice</a>
-    <a href="/app/tunein.html">🔴 Tune in</a>
+    <a href="/app/tunein.html">Tune in</a>
     <a href="/app/deals.html">Deals</a>
-    <a href="/app/identity/">🪪 Identity</a>
+    <a href="/app/identity/">Identity</a>
   </div>
 </header>
 
@@ -158,7 +281,7 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
          duo ring, kanban lanes — just compacted. Whole panel is
          clickable; takes the operator into the full office view. -->
     <div class="terrain" id="terrain" onclick="enterOffice()">
-      <div class="terrain-label">⛰ The bullpen</div>
+      <div class="terrain-label">The bullpen</div>
       <svg id="terrain-svg" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
       <div class="you-marker"><span class="dot"></span><span id="you-here">you spawn here · click to open the office</span></div>
       <a class="enter-cta" id="enter-cta" href="#" onclick="event.stopPropagation()">Open the office →</a>
@@ -166,7 +289,7 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 
     <!-- Character card -->
     <div class="character">
-      <div class="you-spawned">⚔ You spawned in</div>
+      <div class="you-spawned">You spawned in</div>
       <div class="name-row">
         <h1 id="rep-name">…</h1>
         <span class="in-world">of <span class="world-id" id="world-id">…</span></span>
@@ -182,25 +305,65 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
         </div>
         <div class="xp-track"><div class="bar" id="xp-bar" style="width:1%"></div></div>
         <div class="ledger-row">
-          <span class="money">💰 <strong id="money-xp">0</strong> money-xp</span>
-          <span class="clout">⚡ <strong id="clout-xp">0</strong> clout-xp</span>
+          <span class="money"><strong id="money-xp">0</strong> money-xp</span>
+          <span class="clout"><strong id="clout-xp">0</strong> clout-xp</span>
+        </div>
+        <div class="rank-row" id="rank-row" style="display:none">
+          <div class="rank-badge" id="rank-badge">
+            <span class="chevrons" id="rank-chevrons"></span>
+            <span class="rank-text">
+              <span class="rank-name" id="rank-name">ROOKIE</span>
+              <span class="rank-tag">your rank</span>
+            </span>
+          </div>
+          <div class="rank-prog">
+            <div class="rank-prog-top">
+              <span>to next</span>
+              <span class="next" id="rank-next">WALK-ON</span>
+            </div>
+            <div class="rank-track"><div class="rank-bar" id="rank-bar"></div></div>
+            <div class="rank-floor" id="rank-floor"></div>
+          </div>
         </div>
       </div>
     </div>
 
   </div>
 
+  <!-- ── THE GAUNTLET — the game's spine ── -->
+  <div class="section-h">
+    <h2>The <span class="hl">Gauntlet</span></h2>
+    <div class="meta" id="gauntlet-meta">seven bosses · one floor</div>
+  </div>
+  <div class="gauntlet" id="gauntlet">
+    <div class="goal-banner" id="goal-banner">
+      <span class="goal-eyebrow">Your goal</span>
+      <span id="goal-text">Clear <span class="kw">Tier 1</span> to start your climb.</span>
+    </div>
+    <div class="ladder" id="ladder"></div>
+  </div>
+
   <!-- ── Online reps strip ── -->
   <div id="online-strip-wrap"></div>
 
+  <!-- ── First-session questline (injected client-side) ── -->
+  <div id="first-session-wrap"></div>
+
   <!-- ── Open work / gap quests ── -->
   <div class="section-h">
-    <h2>🪓 Open work — pick one</h2>
+    <h2>Open work — <span class="kw">pick one</span></h2>
     <div class="meta" id="quest-count-meta"></div>
   </div>
   <div class="quest-grid" id="quest-grid"></div>
   <div id="empty-stage-wrap"></div>
 
+</div>
+
+<!-- Boss-clear celebration -->
+<div class="boss-clear" id="boss-clear" role="status" aria-live="polite">
+  <div class="bc-eyebrow">Tier cleared</div>
+  <div class="bc-tier" id="bc-tier">TIER 1</div>
+  <div class="bc-boss" id="bc-boss"></div>
 </div>
 
 <script>
@@ -450,12 +613,12 @@ function renderQuests(quests){
 
   if(!quests.length){
     const stage = el('div', {class:'empty-stage'});
-    stage.appendChild(el('div', {class:'emoji', text:'✨'}));
+    stage.appendChild(el('div', {class:'emoji', style:'font-family:var(--display);color:var(--accent-2);font-size:34px;letter-spacing:.04em', text:'All clear'}));
     stage.appendChild(el('h2', {text:'Everything\'s claimed for now'}));
     stage.appendChild(el('p', {text:'Either someone\'s on top of every loose end, or the world is genuinely quiet. Drill against an AI buyer, duel a teammate, or open the office to see who\'s online.'}));
     const actions = el('div', {class:'actions'});
-    actions.appendChild(el('a', {class:'btn gold', href:`/app/voice.html?b=${BULLPEN}&rep=${REP}`, text:'🎤 Voice drill'}));
-    actions.appendChild(el('a', {class:'btn ghost', href:`/app/office.html?b=${BULLPEN}&rep=${REP}`, text:'🏢 Open office'}));
+    actions.appendChild(el('a', {class:'btn gold', href:`/app/voice.html?b=${BULLPEN}&rep=${REP}`, text:'Voice drill'}));
+    actions.appendChild(el('a', {class:'btn ghost', href:`/app/office.html?b=${BULLPEN}&rep=${REP}`, text:'Open office'}));
     stage.appendChild(actions);
     emptyWrap.appendChild(stage);
     return;
@@ -493,7 +656,7 @@ function renderOnline(s){
   const online = s.online_reps || [];
   if(online.length){
     const strip = el('div', {class:'online-strip'});
-    strip.appendChild(el('span', {style:'font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);align-self:center', text:'🟢 on the floor:'}));
+    strip.appendChild(el('span', {style:'font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-2);align-self:center', text:'on the floor:'}));
     for(const r of online){
       strip.appendChild(el('span', {class:'online-chip', text: r}));
     }
@@ -501,12 +664,455 @@ function renderOnline(s){
   }
 }
 
+// ── First-session questline ────────────────────────────────────────
+// A fixed 4-item checklist that gets a brand-new closer through the loop:
+// finish the tour → drop a source → pass a drill → open the legal gate.
+// Done-state is computed client-side from localStorage + the profile and
+// gate endpoints. Collapses + persists once all four are satisfied.
+// Operator-reserved names skip it (they already know the system).
+const FS_OPERATOR_NAMES = new Set(['self','operator','founder','host','beers']);
+const FS_COLLAPSE_KEY = `bp-first-session-done-${REP}`;
+const FS_Q = `?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}`;
+
+async function renderFirstSession(){
+  const wrap = document.getElementById('first-session-wrap');
+  if(!wrap) return;
+  // Skip for operators or if the rep manually dismissed / completed it.
+  if(FS_OPERATOR_NAMES.has((REP || '').toLowerCase())){ clear(wrap); return; }
+  let dismissed = false, completedPersisted = false;
+  try { dismissed = localStorage.getItem(FS_COLLAPSE_KEY) === 'dismissed'; } catch(e){}
+  try { completedPersisted = localStorage.getItem(FS_COLLAPSE_KEY) === '1'; } catch(e){}
+  if(dismissed){ clear(wrap); return; }
+
+  // ── Compute the four done-states ──
+  // (1) Tour — tutorial.js writes bp-tutorial-done-<rep>='1' on finish.
+  let tourDone = false;
+  try { tourDone = localStorage.getItem(`bp-tutorial-done-${REP}`) === '1'; } catch(e){}
+
+  // (2)/(3) Source dropped + first drill passed — best-effort from profile.
+  let sourceDone = false, drillDone = false;
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/profile/${encodeURIComponent(REP)}`);
+    if(r.ok){
+      const p = await r.json();
+      // Source count: tolerate a few shapes the profile aggregate may expose.
+      const srcCount = p.sources_dropped ?? p.source_count ?? p.sources_count
+        ?? (Array.isArray(p.sources) ? p.sources.length : 0) ?? 0;
+      sourceDone = (Number(srcCount) || 0) > 0;
+      // Drill count: any passed drill satisfies the "first drill" step.
+      const drillCount = p.drills_passed ?? p.drill_passes ?? p.drills_count
+        ?? (Array.isArray(p.drills) ? p.drills.filter(d => d && (d.passed || d.pass)).length : 0) ?? 0;
+      drillDone = (Number(drillCount) || 0) > 0;
+    }
+  } catch(e){}
+
+  // (4) Legal gate — satisfied once the legal paperwork items clear from
+  // the gate's missing[]. We treat the gate as "opened/cleared" when none
+  // of the legal-doc codes remain outstanding.
+  let gateDone = false;
+  const LEGAL_CODES = new Set([
+    'closer_disclosure_not_accepted',
+    'closer_agreement_not_signed',
+    'closer_agreement_out_of_date',
+    'w9_not_on_file',
+  ]);
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/gate/${encodeURIComponent(REP)}`, {credentials:'same-origin'});
+    if(r.ok){
+      const g = await r.json();
+      if(g.ok){
+        gateDone = true;
+      } else {
+        const missing = Array.isArray(g.missing) ? g.missing : [];
+        // Done when the rep has cleared every legal-doc step (the parts
+        // that are theirs to action), even if operator-side items remain.
+        gateDone = !missing.some(m => LEGAL_CODES.has(m));
+      }
+    }
+  } catch(e){}
+
+  const items = [
+    {key:'tour',   done: tourDone,   icon:'1', title:'Finish the tour',
+     blurb:'See how the floor fits together — office, studio, drill, gate.',
+     href:`/app/office.html${FS_Q}&tour=1`, cta:'Replay'},
+    {key:'source', done: sourceDone, icon:'2', title:'Drop one source in Studio',
+     blurb:'Feed the AI buyer a dossier so your drills hit real objections.',
+     href:`/app/studio.html${FS_Q}`, cta:'Open Studio'},
+    {key:'drill',  done: drillDone,  icon:'3', title:'Pass your first drill',
+     blurb:'Hold a scored call against an AI buyer in the Arena.',
+     href:`/app/arena.html${FS_Q}`, cta:'Enter Arena'},
+    {key:'gate',   done: gateDone,   icon:'4', title:'Open the legal gate',
+     blurb:'The quick step that unlocks real prospects + commissions.',
+     href:`/app/onboard/${FS_Q}`, cta:'Open gate'},
+  ];
+  const doneCount = items.filter(i => i.done).length;
+  const allDone = doneCount === items.length;
+
+  // If everything's done, persist + collapse so we never nag again.
+  if(allDone && !completedPersisted){
+    try { localStorage.setItem(FS_COLLAPSE_KEY, '1'); } catch(e){}
+    completedPersisted = true;
+  }
+  if(allDone && completedPersisted){ clear(wrap); return; }
+
+  // ── Build the card ──
+  clear(wrap);
+  const card = el('div', {class:'fs-card'});
+  const head = el('div', {class:'fs-head'});
+  const heading = el('div', {});
+  heading.appendChild(el('div', {class:'fs-eyebrow', text:'Your first session'}));
+  heading.appendChild(el('h3', {text:'Run the loop'}));
+  head.appendChild(heading);
+  const dismissBtn = el('button', {class:'fs-dismiss', text:'Dismiss'});
+  dismissBtn.addEventListener('click', () => {
+    try { localStorage.setItem(FS_COLLAPSE_KEY, 'dismissed'); } catch(e){}
+    clear(wrap);
+  });
+  head.appendChild(dismissBtn);
+  card.appendChild(head);
+  card.appendChild(el('div', {class:'fs-sub', text:'Four steps and you\'re a real closer on this floor.'}));
+
+  const prog = el('div', {class:'fs-progress'});
+  const track = el('div', {class:'fs-track'});
+  const bar = el('div', {class:'fs-bar'});
+  bar.style.width = Math.round(doneCount / items.length * 100) + '%';
+  track.appendChild(bar);
+  prog.appendChild(track);
+  prog.appendChild(el('div', {class:'fs-count', text:`${doneCount} / ${items.length}`}));
+  card.appendChild(prog);
+
+  const list = el('div', {class:'fs-list'});
+  for(const it of items){
+    const row = el('a', {class:`fs-item${it.done ? ' done' : ''}`, href: it.href});
+    row.appendChild(el('div', {class:'fs-check', text: it.done ? '✓' : it.icon}));
+    const txt = el('div', {class:'fs-text'});
+    txt.appendChild(el('div', {class:'fs-title', text: it.title}));
+    txt.appendChild(el('div', {class:'fs-blurb', text: it.blurb}));
+    row.appendChild(txt);
+    row.appendChild(el('div', {class:'fs-go', text: it.done ? 'Done ✓' : (it.cta + ' →')}));
+    list.appendChild(row);
+  }
+  card.appendChild(list);
+  wrap.appendChild(card);
+}
+
+// ── RANK OVERLAY ───────────────────────────────────────────────────
+// Six ranks matching the landing, computed client-side from the rep's
+// XP aggregate (level + total clout/money XP). Thresholds are level-based
+// so they track the same curve the character card already shows.
+const RANKS = [
+  {name:'ROOKIE',   minLvl:1},
+  {name:'WALK-ON',  minLvl:3},
+  {name:'STARTER',  minLvl:6},
+  {name:'CLOSER',   minLvl:10},
+  {name:'ALL-STAR', minLvl:16},
+  {name:'LEGEND',   minLvl:24},
+];
+
+function chevronSVG(n, color){
+  // n stacked chevrons = rank index+1, drawn not emoji'd.
+  let parts = '';
+  for(let i=0;i<n;i++){
+    parts += `<svg width="9" height="11" viewBox="0 0 9 11" fill="none"><path d="M1 7L4.5 3.5L8 7" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+  return parts;
+}
+
+async function renderRank(){
+  const row = document.getElementById('rank-row');
+  if(!row) return;
+  let level = 1, xp = 0;
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/xp/${encodeURIComponent(REP)}`);
+    if(r.ok){
+      const x = await r.json();
+      level = x.level || 1;
+      xp = x.xp || ((x.money_xp||0)+(x.clout_xp||0));
+    }
+  } catch(e){}
+
+  // Pick current rank: highest tier whose minLvl <= level.
+  let idx = 0;
+  for(let i=0;i<RANKS.length;i++){ if(level >= RANKS[i].minLvl) idx = i; }
+  const cur = RANKS[idx];
+  const nxt = RANKS[idx+1] || null;
+
+  row.style.display = 'flex';
+  const badge = document.getElementById('rank-badge');
+  document.getElementById('rank-name').textContent = cur.name;
+  const gold = '#fbbf24', mint = '#6ee7b7';
+  document.getElementById('rank-chevrons').innerHTML =
+    chevronSVG(idx+1, nxt ? gold : mint);
+
+  if(nxt){
+    badge.classList.remove('max');
+    document.getElementById('rank-next').textContent = nxt.name;
+    // Progress across the level span between this rank and the next.
+    const span = nxt.minLvl - cur.minLvl;
+    const into = Math.max(0, level - cur.minLvl);
+    const pct = Math.max(2, Math.min(100, Math.round(into / span * 100)));
+    document.getElementById('rank-bar').style.width = pct + '%';
+  } else {
+    badge.classList.add('max');
+    document.getElementById('rank-next').textContent = 'MAXED';
+    document.getElementById('rank-bar').style.width = '100%';
+  }
+
+  // Floor placement from the overall leaderboard.
+  try {
+    const lr = await fetch(`/api/b/${BULLPEN}/leaderboard`);
+    if(lr.ok){
+      const lb = await lr.json();
+      const overall = (lb.lanes && lb.lanes.overall) || lb.reps || [];
+      const norm = s => String(s||'').toLowerCase();
+      let pos = -1;
+      for(let i=0;i<overall.length;i++){
+        const id = norm(overall[i].rep ?? overall[i].name ?? overall[i].id ?? overall[i]);
+        if(id === norm(REP)){ pos = i+1; break; }
+      }
+      const floorEl = document.getElementById('rank-floor');
+      if(pos > 0){
+        floorEl.innerHTML = `<b>#${pos}</b> on the floor`;
+      } else if(overall.length){
+        floorEl.innerHTML = `unranked &middot; <b>${overall.length}</b> on the board`;
+      } else {
+        floorEl.innerHTML = 'first one on the board';
+      }
+    }
+  } catch(e){}
+}
+
+// ── THE GAUNTLET LADDER ─────────────────────────────────────────────
+let GAUNTLET = null;
+let TCS_BY_TIER = null;     // {tier: [{id,name}]}
+const CLEARED_SNAP_KEY = `bp-gauntlet-cleared-${BULLPEN}-${REP}`;
+
+async function loadGauntletConfig(){
+  if(GAUNTLET) return GAUNTLET;
+  // Primary: the global set by /app/gauntlet.js (served as .js — the floor
+  // static handler serves .html/.js/.css). Fallback: raw gauntlet.json.
+  if(window.BP_GAUNTLET && Array.isArray(window.BP_GAUNTLET.tiers)){
+    GAUNTLET = window.BP_GAUNTLET;
+    return GAUNTLET;
+  }
+  try {
+    const r = await fetch('/app/gauntlet.json');
+    if(r.ok){ GAUNTLET = await r.json(); }
+  } catch(e){}
+  if(!GAUNTLET) GAUNTLET = {tiers:[]};
+  return GAUNTLET;
+}
+
+async function loadTcs(){
+  if(TCS_BY_TIER) return TCS_BY_TIER;
+  const byTier = {};
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/tcs`);
+    if(r.ok){
+      const d = await r.json();
+      for(const t of (d.tcs || [])){
+        const tier = t.phase_tier || 1;
+        (byTier[tier] = byTier[tier] || []).push({id:t.id, name:t.name});
+      }
+    }
+  } catch(e){}
+  TCS_BY_TIER = byTier;
+  return byTier;
+}
+
+async function loadCleared(){
+  // Set of cleared/qualified play IDs for this rep.
+  const set = new Set();
+  try {
+    const r = await fetch(`/api/b/${BULLPEN}/toppack/${encodeURIComponent(REP)}`);
+    if(r.ok){
+      const d = await r.json();
+      const arr = Array.isArray(d.cleared) ? d.cleared : [];
+      for(const c of arr){ set.add(typeof c === 'string' ? c : (c.id || c.play_id)); }
+      // Also honor a qualified flag in not_cleared (belt + suspenders).
+      for(const c of (d.not_cleared || [])){
+        if(c && c.qualified && c.id) set.add(c.id);
+      }
+    }
+  } catch(e){}
+  return set;
+}
+
+function lockSVG(){
+  return `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect class="lock" x="3" y="7" width="10" height="7" rx="1.4" stroke="currentColor" stroke-width="1.6"/><path class="lock" d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.6"/></svg>`;
+}
+function checkSVG(){
+  return `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path class="check" d="M3.5 8.5l3 3 6-6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+async function renderGauntlet(opts){
+  opts = opts || {};
+  const ladder = document.getElementById('ladder');
+  if(!ladder) return;
+  const [cfg, byTier, cleared] = await Promise.all([
+    loadGauntletConfig(), loadTcs(), loadCleared()
+  ]);
+  const tiers = (cfg.tiers || []).slice().sort((a,b)=>a.tier-b.tier);
+  if(!tiers.length){ return; }
+
+  // A tier is CLEARED if every play in it has a GO; UNLOCKED if it's T1
+  // or the previous tier is cleared; else LOCKED.
+  const tierCleared = {};
+  for(const t of tiers){
+    const plays = byTier[t.tier] || [];
+    tierCleared[t.tier] = plays.length > 0 && plays.every(p => cleared.has(p.id));
+  }
+
+  // Celebration: diff against the last snapshot of cleared tiers.
+  const newlyCleared = [];
+  const clearedTierNums = tiers.filter(t => tierCleared[t.tier]).map(t => t.tier);
+  if(!opts.skipCelebrate){
+    let prevSnap = [];
+    try { prevSnap = JSON.parse(localStorage.getItem(CLEARED_SNAP_KEY) || '[]'); } catch(e){}
+    const prevSet = new Set(prevSnap);
+    for(const n of clearedTierNums){ if(!prevSet.has(n)) newlyCleared.push(n); }
+    // Don't fire on the very first load with no prior snapshot (avoids a
+    // burst of banners when a returning rep loads the page fresh).
+    const firstEverLoad = (localStorage.getItem(CLEARED_SNAP_KEY) === null);
+    try { localStorage.setItem(CLEARED_SNAP_KEY, JSON.stringify(clearedTierNums)); } catch(e){}
+    if(!firstEverLoad && newlyCleared.length){
+      const top = Math.max(...newlyCleared);
+      const tcfg = tiers.find(t => t.tier === top);
+      if(tcfg) celebrateClear(top, tcfg.boss);
+    }
+  } else {
+    try { localStorage.setItem(CLEARED_SNAP_KEY, JSON.stringify(clearedTierNums)); } catch(e){}
+  }
+
+  // Find the current tier = first non-cleared whose predecessor is cleared.
+  let currentTier = null;
+  for(const t of tiers){
+    const prevCleared = (t.tier === tiers[0].tier) || tierCleared[t.tier-1];
+    if(!tierCleared[t.tier] && prevCleared){ currentTier = t.tier; break; }
+  }
+
+  clear(ladder);
+  for(const t of tiers){
+    const plays = byTier[t.tier] || [];
+    const isCleared = tierCleared[t.tier];
+    const prevCleared = (t.tier === tiers[0].tier) || tierCleared[t.tier-1];
+    const isCurrent = (t.tier === currentTier);
+    const isLocked = !isCleared && !prevCleared;
+    const clearedInTier = plays.filter(p => cleared.has(p.id)).length;
+
+    let stateClass = isCleared ? 'cleared' : (isCurrent ? 'current' : (isLocked ? 'locked' : ''));
+    // Unlocked-but-not-current (rare: e.g. a future tier that became
+    // reachable) still reads as actionable.
+    const actionable = !isLocked;
+
+    const firstPlayId = plays[0] ? plays[0].id : null;
+    const href = (actionable && firstPlayId)
+      ? `/app/spotcheck.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(REP)}&tcs=${encodeURIComponent(firstPlayId)}`
+      : null;
+
+    const rung = el(actionable ? 'a' : 'div', {class:`rung ${stateClass}`});
+    if(href) rung.setAttribute('href', href);
+
+    // Node on the spine
+    const node = el('div', {class:'node'});
+    if(isCleared){ node.innerHTML = checkSVG(); }
+    else if(isLocked){ node.innerHTML = lockSVG(); }
+    else { node.appendChild(el('span', {class:'node-num', text:String(t.tier)})); }
+    rung.appendChild(node);
+
+    // Head: tier tag + boss + state flag
+    const head = el('div', {class:'rung-head'});
+    head.appendChild(el('span', {class:'tier-tag', text:`Tier ${t.tier}`}));
+    head.appendChild(el('span', {class:'boss', text: t.boss}));
+    const flag = el('span', {class:'state-flag'});
+    flag.textContent = isCleared ? 'Beaten' : (isCurrent ? 'You are here' : (isLocked ? 'Locked' : 'Open'));
+    head.appendChild(flag);
+    rung.appendChild(head);
+
+    // Taunt
+    if(isLocked){
+      rung.appendChild(el('div', {class:'taunt', text:`Beat Tier ${t.tier-1} to face ${t.boss}.`}));
+    } else {
+      rung.appendChild(el('div', {class:'taunt', text: t.taunt}));
+      if(t.goal) rung.appendChild(el('div', {class:'goal-line', text: t.goal}));
+    }
+
+    // Plays (hidden when locked via CSS)
+    if(!isLocked && plays.length){
+      const pl = el('div', {class:'plays'});
+      for(const p of plays){
+        const done = cleared.has(p.id);
+        pl.appendChild(el('span', {class:`play-chip${done ? ' cleared-chip' : ''}`, text: p.name}));
+      }
+      rung.appendChild(pl);
+    }
+
+    // Foot: progress + enter flag
+    const foot = el('div', {class:'rung-foot'});
+    const prog = el('div', {class:'progress-tag'});
+    if(isLocked){
+      prog.textContent = '';
+    } else {
+      prog.textContent = `${clearedInTier} / ${plays.length} plays cleared`;
+    }
+    foot.appendChild(prog);
+    const ent = el('div', {class:'enter-flag'});
+    ent.textContent = isCleared ? 'Run it again →' : (isLocked ? 'Locked' : 'Start the drill →');
+    foot.appendChild(ent);
+    rung.appendChild(foot);
+
+    ladder.appendChild(rung);
+  }
+
+  // Goal banner: point at the current objective.
+  const goalText = document.getElementById('goal-text');
+  if(goalText){
+    if(currentTier){
+      const tcfg = tiers.find(t=>t.tier===currentTier);
+      if(currentTier >= 3){
+        goalText.innerHTML = `Reach <span class="hl">Tier 3</span> to dial real prospects — you're at <span class="kw">Tier ${currentTier}</span>: ${tcfg.boss}.`;
+      } else {
+        goalText.innerHTML = `Beat <span class="kw">Tier ${currentTier}: ${tcfg.boss}</span> — then push toward <span class="hl">Tier 3</span> to dial real prospects.`;
+      }
+    } else {
+      goalText.innerHTML = `Every boss <span class="hl hl-mint">beaten</span>. You own this floor — run any tier again to keep your edge.`;
+    }
+  }
+  const meta = document.getElementById('gauntlet-meta');
+  if(meta){
+    const done = clearedTierNums.length;
+    meta.textContent = `${done} of ${tiers.length} tiers cleared`;
+  }
+}
+
+let _bcTimer = null;
+function celebrateClear(tier, boss){
+  const banner = document.getElementById('boss-clear');
+  if(!banner) return;
+  document.getElementById('bc-tier').textContent = `TIER ${tier} CLEARED`;
+  document.getElementById('bc-boss').innerHTML = `<b>${boss}</b> beaten.`;
+  banner.classList.add('show');
+  try { if(window.bpSfx){ window.bpSfx.trophy('rare'); setTimeout(()=>window.bpSfx.levelUp(), 220); } } catch(e){}
+  if(_bcTimer) clearTimeout(_bcTimer);
+  _bcTimer = setTimeout(()=>banner.classList.remove('show'), 4200);
+}
+
 // Boot: render character + terrain immediately for snap-fast paint,
 // then fetch spawn data + repaint when it arrives.
 renderCharacter();
+renderRank();
 renderTerrain({});
+renderFirstSession();
+renderGauntlet({skipCelebrate:true});
 load();
 setInterval(load, 30000);
+setInterval(renderRank, 30000);
+// Re-poll the ladder so a freshly-earned GO lights up + celebrates
+// without a manual reload.
+setInterval(()=>renderGauntlet(), 30000);
+// Re-check the questline on the regular spawn refresh so it self-updates
+// as the rep completes steps without a manual reload.
+setInterval(renderFirstSession, 30000);
 </script>
 </body>
 </html>

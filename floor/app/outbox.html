@@ -173,7 +173,7 @@ function renderDraft(d){
   const isAuthor = d.author_rep === REP;
 
   // Copy text (always available — helpful for the founder)
-  const cp = el('button', 'copy', '📋 Copy to clipboard');
+  const cp = el('button', 'copy', 'Copy to clipboard');
   cp.onclick = async () => {
     const text = 'To: ' + d.to + '\nSubject: ' + d.subject + '\n\n' + d.body;
     try { await navigator.clipboard.writeText(text); toast('Copied — paste into your inbox'); }

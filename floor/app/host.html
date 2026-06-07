@@ -86,7 +86,6 @@ h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spa
 
   <!-- Back-to-bullpen primary action — always available at top -->
   <a href="/app/office.html" id="back-to-office" class="back-to-office">
-    <span class="bto-icon">🏢</span>
     <span class="bto-text">
       <span class="bto-title">← Back to the bullpen</span>
       <span class="bto-sub">Drill, walk the floor, talk to buyers, run calls.</span>
@@ -374,6 +373,20 @@ async function checkInviteReady(){
   try {
     const r = await fetch(`/api/b/${BP}/invite-ready`);
     const d = await r.json();
+    // The server-side "Public URL" check only recognizes the in-app Quick
+    // Tunnel. If this page is served over a real public https origin (e.g. a
+    // named Cloudflare tunnel like app.bullpenlm.com), the floor is provably
+    // reachable — you're viewing it over that URL — so count Public URL as met
+    // and recompute readiness. No false positive: it only triggers when the
+    // page itself loaded over a non-localhost https host.
+    const _publicOrigin = location.protocol === 'https:' &&
+      !/^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(location.hostname);
+    if (_publicOrigin && d.checks && d.checks.tunnel && !d.checks.tunnel.ok) {
+      d.checks.tunnel.ok = true;
+      d.checks.tunnel.detail = (d.checks.tunnel.detail || '') + ` (reachable via ${location.host})`;
+      if (Array.isArray(d.missing)) d.missing = d.missing.filter(m => m !== 'tunnel');
+      d.ready = Object.values(d.checks).every(c => c.ok);
+    }
     const statusEl = document.getElementById('invite-ready-status');
     const detailEl = document.getElementById('invite-ready-detail');
     const formEl = document.getElementById('magic-link-form');

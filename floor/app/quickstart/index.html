@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0703'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23fbbf24' font-family='monospace' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
 <meta charset="utf-8">
 <title>Welcome · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -48,6 +49,14 @@ h1{font-family:var(--display);font-size:62px;letter-spacing:-.025em;text-transfo
 
 .err{margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--danger);letter-spacing:.04em}
 
+/* ── Motivation chips (first-time reps) ── */
+.motiv{margin-bottom:22px;text-align:left}
+.motiv .motiv-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.motiv .motiv-row{display:flex;gap:8px;flex-wrap:wrap}
+.motiv .chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--muted);background:rgba(26,18,8,0.6);border:1px solid rgba(245,232,216,0.15);border-radius:16px;padding:8px 13px;cursor:pointer;transition:all .12s}
+.motiv .chip:hover{color:var(--text);border-color:rgba(245,232,216,0.32)}
+.motiv .chip.sel{color:#0a1a14;background:var(--gold);border-color:var(--gold)}
+
 @media(max-width:540px){
   h1{font-size:48px}
   .sub{font-size:15px}
@@ -76,6 +85,14 @@ h1{font-family:var(--display);font-size:62px;letter-spacing:-.025em;text-transfo
         <input id="email" type="email" autocomplete="email" inputmode="email"
                placeholder="you@example.com" maxlength="100">
       </div>
+      <div class="motiv" id="motiv" style="display:none">
+        <div class="motiv-label">What do you want to crush first?</div>
+        <div class="motiv-row" id="motiv-row">
+          <button type="button" class="chip" data-goal="drill">🎯 A live drill</button>
+          <button type="button" class="chip" data-goal="study">📂 Build a dossier</button>
+          <button type="button" class="chip" data-goal="watch">👀 Watch the floor</button>
+        </div>
+      </div>
       <div id="carry-notice" style="display:none;margin-bottom:18px;padding:12px 14px;border-radius:9px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.30);font-family:var(--mono);font-size:11.5px;letter-spacing:.03em;color:var(--accent-2);line-height:1.5"></div>
       <button type="submit" class="go" id="go-btn">Hit the floor →</button>
       <div id="err" class="err"></div>
@@ -100,6 +117,43 @@ const CODE = URLP.get('code') || '';
 document.getElementById('bullpen-name').textContent = BULLPEN.toUpperCase();
 if (REP_FROM_URL) {
   document.getElementById('display-name').value = REP_FROM_URL.replace(/-/g, ' ');
+}
+
+// ── First-time detection + motivation chips ─────────────────────────
+// A rep is "returning" if this device already has a saved rep slug for a
+// prior session. First-timers get value-before-paperwork: a motivation
+// chip and a route that lands them on a scored drill, not a legal form.
+let priorRep = '';
+try { priorRep = localStorage.getItem('bullpen-rep') || ''; } catch(e){}
+const IS_FIRST_TIME = !priorRep;
+let selectedGoal = '';  // '', 'drill', 'study', 'watch'
+
+if (IS_FIRST_TIME) {
+  const motiv = document.getElementById('motiv');
+  if (motiv) {
+    motiv.style.display = '';
+    motiv.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const wasSel = chip.classList.contains('sel');
+        motiv.querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
+        if (!wasSel) { chip.classList.add('sel'); selectedGoal = chip.dataset.goal; }
+        else { selectedGoal = ''; }
+      });
+    });
+  }
+}
+
+// Compute where a freshly-spawned rep lands. First-timers go toward a
+// scored ARENA drill (value first); the legal gate only appears when they
+// later try to claim real prospects. Returning reps land on their spawn.
+function destinationFor(slug){
+  const q = `?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(slug)}`;
+  if (!IS_FIRST_TIME) return `/app/spawn.html${q}`;
+  if (selectedGoal === 'drill') return `/app/arena.html${q}`;
+  if (selectedGoal === 'study') return `/app/studio.html${q}`;
+  // Default first-time route: spawn, where the first-session questline
+  // prompts the first drill front-and-center.
+  return `/app/spawn.html${q}&first=1`;
 }
 
 async function redeemIfNeeded(){
@@ -172,7 +226,7 @@ async function enterFloor(){
       });
     } catch(e){ /* non-fatal */ }
   }
-  window.location.href = `/app/spawn.html?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(slug)}`;
+  window.location.href = destinationFor(slug);
 }
 
 function showErr(msg){
