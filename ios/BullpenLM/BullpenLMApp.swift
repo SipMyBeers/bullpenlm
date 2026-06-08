@@ -17,6 +17,10 @@ struct BullpenLMApp: App {
 enum Config {
     private static let d = UserDefaults.standard
     static let baseKey = "bp_base", bullpenKey = "bp_bullpen", opKey = "bp_operator"
+    static let seenWelcomeKey = "bp_seen_welcome"
+
+    static var seenWelcome: Bool { d.bool(forKey: seenWelcomeKey) }
+    static func markWelcomeSeen() { d.set(true, forKey: seenWelcomeKey) }
 
     static let demoBullpen = "demo"
 

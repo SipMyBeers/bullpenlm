@@ -4,6 +4,9 @@ struct RootView: View {
     @State private var configured = Config.isConfigured
     @State private var isDemo = Config.isDemo
     @State private var showSettings = false
+    // First launch (no real bullpen yet) gets an orientation screen so the
+    // operator isn't dropped cold into a wall of sample reps.
+    @State private var showWelcome = !Config.seenWelcome && Config.isDemo
     /// Called once the operator has a bullpen set, to request push.
     var onConfigured: () -> Void = {}
 
@@ -17,6 +20,12 @@ struct RootView: View {
             if isDemo { demoBar }
         }
         .onAppear { if configured { onConfigured() } }
+        .fullScreenCover(isPresented: $showWelcome) {
+            WelcomeView(
+                onConnect: { Config.markWelcomeSeen(); showWelcome = false
+                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showSettings = true } },
+                onExplore: { Config.markWelcomeSeen(); showWelcome = false })
+        }
         .sheet(isPresented: $showSettings) {
             SetupView {
                 showSettings = false

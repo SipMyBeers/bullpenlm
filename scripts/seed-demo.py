@@ -32,18 +32,14 @@ BULLPENS = HOME / "bullpens"
 DEMO = BULLPENS / "demo"
 DEFAULT = BULLPENS / "default"
 
-# (rep, tiers_to_clear, closes_this_month, extra_recent_drills) -> a nice ladder
+# (rep, tiers_to_clear, closes_this_month, extra_recent_drills) -> one per ladder
+# rung so the sample shows the full range without a wall of fake reps.
 PROFILES = [
-    ("priya-nair",     7, 22, 8),   # Legend
-    ("marcus-cole",    6, 11, 14),  # All-Star
-    ("dana-kim",       6, 10, 4),   # All-Star
-    ("tyler-bryce",    5, 6,  6),   # Closer
-    ("omar-haddad",    5, 5,  5),   # Closer
-    ("bella-fontaine", 4, 4,  4),   # Starter
-    ("jake-rollins",   3, 3,  3),   # Starter
-    ("mia-santos",     2, 2,  2),   # Walk-On
-    ("sofia-marin",    2, 1,  2),   # Walk-On
-    ("chris-webb",     1, 0,  1),   # Rookie
+    ("priya-nair",   7, 22, 8),   # Legend
+    ("marcus-cole",  6, 11, 12),  # All-Star
+    ("tyler-bryce",  5, 6,  6),   # Closer
+    ("jake-rollins", 3, 3,  3),   # Starter
+    ("mia-santos",   2, 2,  2),   # Walk-On
 ]
 
 
