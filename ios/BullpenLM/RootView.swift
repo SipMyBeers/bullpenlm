@@ -58,7 +58,8 @@ struct RootView: View {
 /// First-launch (and settings) form: which bullpen, and who you are.
 struct SetupView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var bullpen = Config.realBullpen
+    // Pre-fill the canonical floor so the operator isn't guessing a slug.
+    @State private var bullpen = Config.realBullpen.isEmpty ? "default" : Config.realBullpen
     @State private var op = UserDefaults.standard.string(forKey: Config.opKey) ?? ""
     @State private var base = Config.base
     @State private var showAdvanced = false
