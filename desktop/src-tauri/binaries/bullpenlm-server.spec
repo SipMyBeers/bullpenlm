@@ -30,14 +30,23 @@
 
 block_cipher = None
 
+# ChromaDB 1.5.x moved to a Rust-backed API (chromadb.api.rust) plus a wide,
+# dynamically-imported submodule tree + native libs. Hand-listing hiddenimports
+# misses pieces (e.g. api.rust) and breaks RAG at runtime, so collect it whole.
+from PyInstaller.utils.hooks import collect_submodules, collect_dynamic_libs, collect_data_files
+_chromadb_hidden = collect_submodules('chromadb')
+_chromadb_bins = collect_dynamic_libs('chromadb')
+_chromadb_datas = collect_data_files('chromadb')
+
 a = Analysis(
     ['../../../server/server.py'],
     pathex=[
         '../../../server',
         '../../../personas',
     ],
-    binaries=[],
+    binaries=_chromadb_bins,
     datas=[
+        *_chromadb_datas,
         # Ship the static assets so a fresh install can wizard + serve
         # the floor immediately. paths.py seeds these from _MEIPASS into
         # the user-data dir on first run so REPO-style paths keep working.
@@ -67,11 +76,9 @@ a = Analysis(
         'world_gaps', 'xp',
         # Third-party
         'yaml', 'certifi',
-        # ChromaDB has heavy dynamic-import surface — pull in the bits
-        # PyInstaller's static analysis misses
-        'chromadb', 'chromadb.api', 'chromadb.config',
-        'chromadb.db.impl.sqlite', 'chromadb.segment.impl.manager.local',
-        'chromadb.telemetry.product.posthog',
+        # ChromaDB — full submodule tree (incl. chromadb.api.rust) collected
+        # dynamically above; native libs + data folded into binaries/datas.
+        *_chromadb_hidden,
         'onnxruntime', 'tokenizers',
     ],
     hookspath=[],
