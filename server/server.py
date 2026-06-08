@@ -1763,12 +1763,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 else:
                     target = "/app/setup/start/?b=default"
             else:
-                # Remote visitor (closer over tunnel). If they have a
-                # session cookie we can route to spawn directly; else
-                # the quickstart entry.
+                # Remote visitor (closer over tunnel). The solo notebook is the
+                # default front door — returning reps land on their notebook;
+                # new visitors go through quickstart (which also lands on it).
                 rep = self._current_rep()
                 if rep:
-                    target = f"/app/spawn.html?rep={_q(rep)}"
+                    target = f"/app/notebook.html?rep={_q(rep)}"
                 else:
                     target = "/app/quickstart/"
             self.send_response(302)

@@ -148,12 +148,11 @@ if (IS_FIRST_TIME) {
 // later try to claim real prospects. Returning reps land on their spawn.
 function destinationFor(slug){
   const q = `?b=${encodeURIComponent(BULLPEN)}&rep=${encodeURIComponent(slug)}`;
-  if (!IS_FIRST_TIME) return `/app/spawn.html${q}`;
+  // The solo notebook is the default front door — drop sales material, study +
+  // ask it, drill it, then "add your team" to upgrade. Explicit "drill" still
+  // jumps to the live arena; everything else lands on the notebook.
   if (selectedGoal === 'drill') return `/app/arena.html${q}`;
-  if (selectedGoal === 'study') return `/app/studio.html${q}`;
-  // Default first-time route: spawn, where the first-session questline
-  // prompts the first drill front-and-center.
-  return `/app/spawn.html${q}&first=1`;
+  return `/app/notebook.html${q}`;
 }
 
 async function redeemIfNeeded(){
