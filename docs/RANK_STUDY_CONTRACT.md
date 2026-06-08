@@ -107,3 +107,15 @@ interface PromotionSource {
 - A **mock** adapter returning this exact shape is the build/test target for any
   consumer before a spine home is chosen.
 - When the spine home is decided, only a new adapter is written; no consumer changes.
+
+## 7. Defining a ladder without code (operator path)
+
+An org defines its own ladder by dropping a `ranks.json` at
+`bullpens/<slug>/ranks.json` — an array of `rank` rows (§1). No code, no rebuild;
+`GET /api/b/<slug>/ranks` serves it immediately and `/promotion/<agent>` evaluates
+against it. Absent the file, the BullpenLM default ladder (Rookie→Legend) is used.
+
+Reference example: `docs/examples/ranks.kumquat.json` — Kumquat's Agent → Producer
+→ Senior Producer → Field Trainer → Agency Director ladder with contract-% comp
+labels. Every `gate_rule` is production-gated on personal sales (Koscot firewall);
+notebook study fills `knowledge` via Kumquat's adapter.

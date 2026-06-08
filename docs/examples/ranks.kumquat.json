@@ -1,0 +1,37 @@
+[
+  {
+    "id": "agent", "name": "Agent", "order": 0, "comp_label": "80% contract",
+    "gate_rule": {
+      "knowledge": { "source_kind": "notebook", "sources_total": 0, "quiz_required": false },
+      "production": { "metric": "sales", "threshold": 0, "window": "month" }
+    }
+  },
+  {
+    "id": "producer", "name": "Producer", "order": 1, "comp_label": "80% contract",
+    "gate_rule": {
+      "knowledge": { "source_kind": "notebook", "sources_total": 3, "quiz_required": false },
+      "production": { "metric": "sales", "threshold": 1, "window": "month" }
+    }
+  },
+  {
+    "id": "senior-producer", "name": "Senior Producer", "order": 2, "comp_label": "90% contract",
+    "gate_rule": {
+      "knowledge": { "source_kind": "notebook", "sources_total": 5, "quiz_required": true },
+      "production": { "metric": "sales", "threshold": 10, "window": "month" }
+    }
+  },
+  {
+    "id": "field-trainer", "name": "Field Trainer", "order": 3, "comp_label": "100% contract",
+    "gate_rule": {
+      "knowledge": { "source_kind": "notebook", "sources_total": 6, "quiz_required": true },
+      "production": { "metric": "sales", "threshold": 20, "window": "month" }
+    }
+  },
+  {
+    "id": "agency-director", "name": "Agency Director", "order": 4, "comp_label": "110% override",
+    "gate_rule": {
+      "knowledge": { "source_kind": "notebook", "sources_total": 8, "quiz_required": true },
+      "production": { "metric": "sales", "threshold": 30, "window": "month" }
+    }
+  }
+]
