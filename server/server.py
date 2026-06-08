@@ -2586,6 +2586,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # Batched gate-based rank for the whole roster (so the roster chip
+        # matches the scorecard's contract rank, not an XP heuristic).
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/ranks/roster$", self.path)
+        if m:
+            try:
+                from ranks import roster as _roster
+                import leaderboard as _lb
+                reps = [r.get("rep") for r in _lb.compute(m.group(1)).get("reps", []) if r.get("rep")]
+                self._send_json(200, _roster(m.group(1), reps))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── promotion_check / ladder (the canonical contract payload) ──
         #    GET .../promotion/<agent>          -> ladder + current + next gate
         #    GET .../promotion/<agent>?rank=<id> -> one rank's promotion_check

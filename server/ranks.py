@@ -125,6 +125,44 @@ def current_order(bullpen: str, agent: str) -> int:
     return cur
 
 
+def roster(bullpen: str, reps):
+    """Batched current-rank for many reps — one audit pass for monthly sales,
+    then per-rep knowledge/cert. So the roster shows the SAME gate-based rank as
+    each scorecard (one model, not the XP chip). Returns {ladder rows, per-rep order}."""
+    rows = ranks(bullpen)
+    sales = {}
+    try:
+        from audit import iter_all
+        ym = datetime.datetime.now().strftime("%Y-%m")
+        for e in iter_all(bullpen):
+            if e.get("kind") == "deal_closed_won" and str(e.get("ts", "")).startswith(ym):
+                a = e.get("actor")
+                if a:
+                    sales[a] = sales.get(a, 0) + 1
+    except Exception:
+        pass
+    out = {}
+    for rep in reps:
+        tiers = _tiers_cleared(bullpen, rep)
+        cert = _cert_passed(bullpen, rep)
+        s = sales.get(rep, 0)
+        cur = 0
+        for r in rows:
+            kn = r.get("gate_rule", {}).get("knowledge", {})
+            pr = r.get("gate_rule", {}).get("production", {})
+            total = int(kn.get("sources_total", 0))
+            studied = tiers if kn.get("source_kind") == "gauntlet" else 0
+            quiz = (not kn.get("quiz_required")) or cert
+            if studied >= total and quiz and s >= int(pr.get("threshold", 0)):
+                cur = max(cur, r["order"])
+        out[rep] = cur
+    return {
+        "ranks": [{"id": r["id"], "name": r["name"], "order": r["order"],
+                   "comp_label": r["comp_label"]} for r in rows],
+        "reps": out,
+    }
+
+
 def ladder(bullpen: str, agent: str):
     """The full read a scorecard needs: ladder rows + current rank + next gate."""
     rows = ranks(bullpen)

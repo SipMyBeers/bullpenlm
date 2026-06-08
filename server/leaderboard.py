@@ -35,7 +35,12 @@ def _empty_stats() -> dict:
         "marketer": 0,
         "researcher": 0,
         "total_xp": 0,
+        "drills_7d": 0,       # recent activity for the roster (full scan, not the capped /audit tail)
+        "last_active": "",
     }
+
+
+_DRILL_KINDS = {"drill_passed", "drill_attempt", "spotcheck_responded"}
 
 
 def compute(bullpen: str) -> Dict[str, Any]:
@@ -45,6 +50,9 @@ def compute(bullpen: str) -> Dict[str, Any]:
     except Exception:
         return {"reps": [], "lanes": {}}
 
+    import datetime
+    cutoff = (datetime.datetime.now() - datetime.timedelta(days=7)).isoformat()
+
     per_rep: Dict[str, dict] = defaultdict(_empty_stats)
     seen_prospects_per_rep: Dict[str, set] = defaultdict(set)
 
@@ -53,6 +61,11 @@ def compute(bullpen: str) -> Dict[str, Any]:
         stats = per_rep[rep]
         kind = ev.get("kind") or ""
         payload = ev.get("payload") or {}
+        ts = ev.get("ts") or ""
+        if ts > stats["last_active"]:
+            stats["last_active"] = ts
+        if kind in _DRILL_KINDS and ts >= cutoff:
+            stats["drills_7d"] += 1
 
         if kind == "deal_stage_moved":
             to_stage = payload.get("to")

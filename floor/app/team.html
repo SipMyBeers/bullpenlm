@@ -140,6 +140,8 @@ function renderPromotion(sc, prom){
   sc.appendChild(gateRow('Production — sales this month (personal)', pOk, (p.sales_this_month||0)+'/'+(p.threshold||0)));
 }
 function fmtXp(n){ return (n||0).toLocaleString('en-US'); }
+function plural(n, word){ n=n||0; return n+' '+word+(n===1?'':'s'); }
+let ROSTER_ORDER={};   // rep -> gate-based current rank order (from /ranks/roster)
 function rel(ts){ if(!ts) return ''; const d=(Date.parse(ts.replace(' ','T'))||0); if(!d) return '';
   const s=Math.max(1,Math.round((Date.now()-d)/1000));
   if(s<60) return s+'s'; if(s<3600) return Math.round(s/60)+'m'; if(s<86400) return Math.round(s/3600)+'h'; return Math.round(s/86400)+'d'; }
@@ -158,16 +160,14 @@ function within7d(ts){ const d=Date.parse((ts||'').replace(' ','T'))||0; return 
 // ── ROSTER ────────────────────────────────────────────────────────────
 async function loadRoster(){
   const root=document.getElementById('roster');
-  let lb, pres;
-  try { [lb,pres,AUDIT] = await Promise.all([ J('/leaderboard'), J('/presence').catch(()=>({online:[]})), J('/audit?n=400').then(d=>d.events||[]).catch(()=>[]), loadLadder() ]); }
+  let lb, pres, rr;
+  try { [lb,pres,AUDIT,rr] = await Promise.all([ J('/leaderboard'), J('/presence').catch(()=>({online:[]})), J('/audit?n=400').then(d=>d.events||[]).catch(()=>[]), J('/ranks/roster').catch(()=>({ranks:[],reps:{}})) ]); }
   catch(e){ root.innerHTML=''; root.appendChild(el('div','empty','Could not reach the floor.')); return; }
+  LADDER = rr.ranks || []; ROSTER_ORDER = rr.reps || {};
   const reps=(lb.reps||[]).slice().sort((a,b)=>(b.total_xp||0)-(a.total_xp||0));
   const online=new Set((pres.online||[]).map(o=>typeof o==='string'?o:o.rep));
-  // last activity + 7d drill count per rep from the audit tail
-  const last={}, drills7={};
-  for(const ev of AUDIT){ const r=ev.actor; if(!r) continue;
-    if(!last[r]) last[r]=ev.ts;
-    if(DRILL_KINDS.has(ev.kind) && within7d(ev.ts)) drills7[r]=(drills7[r]||0)+1; }
+  // drills_7d + last_active come from the leaderboard's full-audit scan, not
+  // the capped /audit tail (which drops earlier reps on a busy floor).
   document.getElementById('penmeta').innerHTML = BP.toUpperCase()+' · <b>'+online.size+'</b> ACTIVE';
   root.innerHTML='';
   if(!reps.length){ root.appendChild(el('div','empty','No reps on this floor yet.')); return; }
@@ -175,9 +175,10 @@ async function loadRoster(){
     const card=el('div','rep'); card.onclick=()=>openRep(rp.rep);
     const nm=el('div','nm'); const dot=el('span','dot'+(online.has(rp.rep)?' on':'')); nm.appendChild(dot); nm.appendChild(document.createTextNode(rp.rep));
     card.appendChild(nm);
-    const sub=el('div','sub'); const la=last[rp.rep]?('· active '+rel(last[rp.rep])+' ago'):'· no activity';
-    sub.textContent=(drills7[rp.rep]||0)+' drills / 7d · '+(rp.closer_wins||0)+' closes '+la; card.appendChild(sub);
-    const rk=el('div','rk'); rk.appendChild(el('div','rank',rankForXp(rp.total_xp)));
+    const sub=el('div','sub'); const la=rp.last_active?('· active '+rel(rp.last_active)+' ago'):'· no activity';
+    sub.textContent=plural(rp.drills_7d||0,'drill')+' / 7d · '+plural(rp.closer_wins||0,'close')+' '+la; card.appendChild(sub);
+    const ord=(rp.rep in ROSTER_ORDER)?ROSTER_ORDER[rp.rep]:null;
+    const rk=el('div','rk'); rk.appendChild(el('div','rank', ord!=null ? (rankName(ord)||'Rookie').toUpperCase() : rankForXp(rp.total_xp)));
     rk.appendChild(el('div','tier',fmtXp(rp.total_xp)+' xp')); card.appendChild(rk);
     root.appendChild(card);
   }
