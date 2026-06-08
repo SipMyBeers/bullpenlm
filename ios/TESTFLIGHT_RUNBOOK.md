@@ -11,17 +11,16 @@ home, pull-to-refresh, a settings sheet (which bullpen / who you are),
 and the mic entitlement for future voice drills.
 
 - **Bundle id:** `com.beerslabs.bullpenlm`
-- **Team:** `FS29CS8T5Q` (same Apple team gormers-ios ships on — the iOS
-  signing cert already in your Keychain). If you'd rather ship on
-  **Beers Labs LLC (`6APT8W6L8F`)**, change `DEVELOPMENT_TEAM` and the
-  `bundleIdPrefix` in `project.yml`, re-run `xcodegen generate`, and use
-  that team's distribution cert. (Decision still open — see chat.)
+- **Team:** `6APT8W6L8F` (**Beers Labs LLC** — the business entity, same as
+  LootLens). Requires the LLC enrollment to be active and your Apple ID to have
+  access to it. Xcode creates the iOS distribution cert + provisioning at first
+  archive via automatic signing — no manual cert step.
 
 ---
 
 ## Pre-flight checklist (do once, ever)
 
-- [ ] **Apple Developer Program membership active** for team `FS29CS8T5Q`
+- [ ] **Apple Developer Program membership active** for team `6APT8W6L8F` (Beers Labs LLC)
   — https://developer.apple.com/account
 - [ ] **App Store Connect record exists** for `com.beerslabs.bullpenlm`
   — create at https://appstoreconnect.apple.com/apps (New App → iOS →
