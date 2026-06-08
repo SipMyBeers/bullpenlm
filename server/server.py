@@ -2575,6 +2575,35 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # ── Rank ladder (config rows) — shared rank/study contract ──
+        #    docs/RANK_STUDY_CONTRACT.md. Ranks are config, not hardcoded.
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/ranks$", self.path)
+        if m:
+            try:
+                from ranks import ranks as _ranks
+                self._send_json(200, {"ranks": _ranks(m.group(1))})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # ── promotion_check / ladder (the canonical contract payload) ──
+        #    GET .../promotion/<agent>          -> ladder + current + next gate
+        #    GET .../promotion/<agent>?rank=<id> -> one rank's promotion_check
+        m = re.match(r"^/api/b/([a-z0-9\-]+)/promotion/([a-zA-Z0-9_\-\.]+)(?:\?.*)?$", self.path)
+        if m:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                from ranks import promotion_check, ladder as _ladder
+                rank_id = (parse_qs(urlparse(self.path).query).get("rank") or [None])[0]
+                if rank_id:
+                    r = promotion_check(m.group(1), m.group(2), rank_id)
+                    self._send_json(200 if r else 404, r or {"error": "rank_not_found"})
+                else:
+                    self._send_json(200, _ladder(m.group(1), m.group(2)))
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # ── Spot checks ──
         m = re.match(r"^/api/b/([a-z0-9\-]+)/spotchecks(?:$|\?)", self.path)
         if m:

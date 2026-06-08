@@ -8,22 +8,38 @@ struct TeamWebScreen: View {
     let url: URL
     var onSettings: () -> Void
     @State private var reloadToken = 0
+    // Defaults false in normal use; a debug hook can auto-open the ladder.
+    @State private var showLadder = UserDefaults.standard.bool(forKey: "demo_open_ladder")
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
             WebView(url: url, reloadToken: reloadToken)
                 .ignoresSafeArea(edges: .bottom)
-            Button(action: onSettings) {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.bpMuted)
-                    .padding(10)
-                    .background(Color.bpPanel.opacity(0.85))
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.bpText.opacity(0.12)))
+            HStack(spacing: 10) {
+                circleButton("chart.bar.fill") { showLadder = true }
+                circleButton("gearshape.fill", action: onSettings)
             }
             .padding(.top, 6)
             .padding(.trailing, 14)
+        }
+        // The native rank ladder, rendered from the shared contract via a MOCK
+        // adapter (Kumquat's Agent->Director) — proves org-agnostic rendering
+        // independent of any backend. Swap MockPromotionSource() for
+        // HTTPPromotionSource() to read this org's live ladder.
+        .sheet(isPresented: $showLadder) {
+            RankLadderView(source: MockPromotionSource(), agent: Config.op)
+        }
+    }
+
+    @ViewBuilder private func circleButton(_ icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.bpMuted)
+                .padding(10)
+                .background(Color.bpPanel.opacity(0.85))
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Color.bpText.opacity(0.12)))
         }
     }
 }

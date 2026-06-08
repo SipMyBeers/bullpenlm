@@ -47,6 +47,15 @@ body{margin:0;background:radial-gradient(ellipse at 50% -10%,var(--bg-2),var(--b
 .sc-name{font-family:var(--display);font-size:34px;text-transform:uppercase;letter-spacing:-.02em;line-height:1}
 .sc-rank{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--gold);font-weight:700;text-align:right}
 .sc-rank .tier{display:block;font-family:var(--serif);font-style:italic;color:var(--muted);letter-spacing:0;font-size:12.5px;margin-top:3px}
+.pl-strip{display:flex;gap:7px;overflow-x:auto;padding:2px 0 4px;-webkit-overflow-scrolling:touch}
+.pl-chip{flex:none;border:1px solid var(--line-2);border-radius:10px;padding:8px 11px;min-width:80px}
+.pl-chip .pn{font-family:var(--display);font-size:13px;text-transform:uppercase;letter-spacing:-.01em}
+.pl-chip .pc{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:2px}
+.pl-chip.done{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.08)} .pl-chip.done .pn{color:var(--accent-2)}
+.pl-chip.cur{border-color:var(--gold);background:rgba(251,191,36,.1)} .pl-chip.cur .pn{color:var(--gold)}
+.pl-chip.lock{opacity:.45}
+.elig{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;padding:3px 9px;border-radius:20px;margin-left:8px}
+.elig.yes{background:rgba(52,211,153,.16);color:var(--accent-2)} .elig.no{background:rgba(245,184,30,.14);color:var(--gold)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:16px 0}
 .cell{background:rgba(26,18,8,0.6);border:1px solid rgba(245,232,216,0.09);border-radius:11px;padding:13px 14px}
 .cell .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
@@ -97,8 +106,39 @@ const P = new URLSearchParams(location.search);
 const BP = P.get('b') || 'default';
 const OP = P.get('rep') || P.get('op') || 'self';   // the operator viewing
 const API = '/api/b/' + encodeURIComponent(BP);
-const RANKS = [['LEGEND',10000],['ALL-STAR',5000],['CLOSER',2500],['STARTER',1000],['WALK-ON',250],['ROOKIE',0]];
-function rankFor(xp){ for(const [n,t] of RANKS){ if((xp||0)>=t) return n; } return 'ROOKIE'; }
+// Ranks are CONFIG ROWS from the org's ladder (/ranks) — not hardcoded — so this
+// renders ANY org's ladder (Rookie->Legend or Kumquat's Agent->Director). xp_hint
+// is a display-only chip; the authoritative gate is the contract (/promotion/<rep>).
+let LADDER = [];
+async function loadLadder(){ try { LADDER = (await J('/ranks')).ranks || []; } catch(e){ LADDER = []; } }
+function rankForXp(xp){
+  const rows = LADDER.filter(r=>r.xp_hint!=null).sort((a,b)=>(b.xp_hint||0)-(a.xp_hint||0));
+  for(const r of rows){ if((xp||0) >= r.xp_hint) return (r.name||'').toUpperCase(); }
+  return ((LADDER[0]||{}).name || 'Rookie').toUpperCase();
+}
+function rankName(order){ const r = LADDER.find(x=>x.order===order); return r ? r.name : ''; }
+// Render the rank ladder + next-rank double gate straight from the contract.
+function gateRow(label, ok, val){
+  const r=el('div','gate-item '+(ok?'ok':'no')); r.appendChild(el('span',null,label));
+  r.appendChild(el('span','s', ok?'DONE':val)); return r;
+}
+function renderPromotion(sc, prom){
+  const ranks=prom.ranks||[], cur=prom.current_order||0;
+  sc.appendChild(el('div','sect','Rank ladder'));
+  const strip=el('div','pl-strip');
+  ranks.forEach(r=>{ const cls=r.order<cur?'done':(r.order===cur?'cur':'lock');
+    const c=el('div','pl-chip '+cls); c.appendChild(el('div','pn',r.name)); c.appendChild(el('div','pc',r.comp_label||'')); strip.appendChild(c); });
+  sc.appendChild(strip);
+  const nx=prom.next_check;
+  if(!nx){ const d=el('div','pc'); d.style.marginTop='8px'; d.textContent='Top of the ladder.'; sc.appendChild(d); return; }
+  const h=el('div','sect'); h.textContent='Promote to '+nx.rank.name+(nx.rank.comp_label?' · '+nx.rank.comp_label:'');
+  h.appendChild(el('span','elig '+(nx.eligible?'yes':'no'), nx.eligible?'ELIGIBLE':'IN PROGRESS')); sc.appendChild(h);
+  const k=nx.knowledge||{}, p=nx.production||{};
+  const kOk=(k.sources_studied||0)>=(k.sources_total||0) && !!k.quiz_passed;
+  sc.appendChild(gateRow('Knowledge — studied '+(k.sources_studied||0)+'/'+(k.sources_total||0)+(k.quiz_passed?' · quiz passed':' · quiz pending'), kOk, (k.sources_studied||0)+'/'+(k.sources_total||0)));
+  const pOk=(p.sales_this_month||0)>=(p.threshold||0);
+  sc.appendChild(gateRow('Production — sales this month (personal)', pOk, (p.sales_this_month||0)+'/'+(p.threshold||0)));
+}
 function fmtXp(n){ return (n||0).toLocaleString('en-US'); }
 function rel(ts){ if(!ts) return ''; const d=(Date.parse(ts.replace(' ','T'))||0); if(!d) return '';
   const s=Math.max(1,Math.round((Date.now()-d)/1000));
@@ -119,7 +159,7 @@ function within7d(ts){ const d=Date.parse((ts||'').replace(' ','T'))||0; return 
 async function loadRoster(){
   const root=document.getElementById('roster');
   let lb, pres;
-  try { [lb,pres,AUDIT] = await Promise.all([ J('/leaderboard'), J('/presence').catch(()=>({online:[]})), J('/audit?n=400').then(d=>d.events||[]).catch(()=>[]) ]); }
+  try { [lb,pres,AUDIT] = await Promise.all([ J('/leaderboard'), J('/presence').catch(()=>({online:[]})), J('/audit?n=400').then(d=>d.events||[]).catch(()=>[]), loadLadder() ]); }
   catch(e){ root.innerHTML=''; root.appendChild(el('div','empty','Could not reach the floor.')); return; }
   const reps=(lb.reps||[]).slice().sort((a,b)=>(b.total_xp||0)-(a.total_xp||0));
   const online=new Set((pres.online||[]).map(o=>typeof o==='string'?o:o.rep));
@@ -137,7 +177,7 @@ async function loadRoster(){
     card.appendChild(nm);
     const sub=el('div','sub'); const la=last[rp.rep]?('· active '+rel(last[rp.rep])+' ago'):'· no activity';
     sub.textContent=(drills7[rp.rep]||0)+' drills / 7d · '+(rp.closer_wins||0)+' closes '+la; card.appendChild(sub);
-    const rk=el('div','rk'); rk.appendChild(el('div','rank',rankFor(rp.total_xp)));
+    const rk=el('div','rk'); rk.appendChild(el('div','rank',rankForXp(rp.total_xp)));
     rk.appendChild(el('div','tier',fmtXp(rp.total_xp)+' xp')); card.appendChild(rk);
     root.appendChild(card);
   }
@@ -149,13 +189,15 @@ async function openRep(rep){
   document.getElementById('roster').classList.add('hide'); sc.classList.remove('hide'); window.scrollTo(0,0);
   sc.innerHTML=''; const back=el('button','sc-back','‹ Back to team'); back.onclick=closeRep; sc.appendChild(back);
   sc.appendChild(el('div','empty','Loading '+rep+'…'));
-  let xp,tp,gate,streak;
-  try { [xp,tp,gate,streak] = await Promise.all([
+  let xp,tp,gate,streak,prom;
+  try { [xp,tp,gate,streak,prom] = await Promise.all([
     J('/xp/'+encodeURIComponent(rep)).catch(()=>({})),
     J('/toppack/'+encodeURIComponent(rep)).catch(()=>({})),
     J('/gate/'+encodeURIComponent(rep)).catch(()=>({})),
-    J('/streaks/'+encodeURIComponent(rep)).catch(()=>({})) ]); }
+    J('/streaks/'+encodeURIComponent(rep)).catch(()=>({})),
+    J('/promotion/'+encodeURIComponent(rep)).catch(()=>null) ]); }
   catch(e){}
+  if(LADDER.length===0 && prom && prom.ranks) LADDER = prom.ranks;
   const totalXp=(xp.clout_xp||0)+(xp.money_xp||0);
   const evs=AUDIT.filter(e=>e.actor===rep);
   const drills7=evs.filter(e=>DRILL_KINDS.has(e.kind)&&within7d(e.ts)).length;
@@ -167,8 +209,13 @@ async function openRep(rep){
   const b2=el('button','sc-back','‹ Back to team'); b2.onclick=closeRep; sc.appendChild(b2);
   const head=el('div','sc-head');
   head.appendChild(el('div','sc-name',rep));
-  const rk=el('div','sc-rank',rankFor(totalXp)); const ti=el('span','tier','Lvl '+(xp.level||1)+(streak.streak?(' · '+streak.streak+'-day streak'):'')); rk.appendChild(ti); head.appendChild(rk);
+  const curName = (prom && rankName(prom.current_order)) ? rankName(prom.current_order).toUpperCase() : rankForXp(totalXp);
+  const curComp = prom ? ((prom.ranks||[]).find(r=>r.order===prom.current_order)||{}).comp_label : '';
+  const rk=el('div','sc-rank',curName); const ti=el('span','tier',(curComp? curComp+' · ':'')+'Lvl '+(xp.level||1)+(streak.streak?(' · '+streak.streak+'-day streak'):'')); rk.appendChild(ti); head.appendChild(rk);
   sc.appendChild(head);
+
+  // ── Promotion ladder + next gate (the shared rank/study contract) ──
+  if(prom && prom.ranks){ renderPromotion(sc, prom); }
 
   // money line (cash)
   if(xp.money_xp){ const m=el('div'); m.style.cssText='font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);margin-top:2px';
