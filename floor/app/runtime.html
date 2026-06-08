@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <title>Runtime check · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=sentient@400,500,700&f%5B%5D=switzer@400,500,600,700&f%5B%5D=bespoke-serif@400,500,600,700&display=swap" rel="stylesheet">
 <style>
-:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
-  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
-  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;
-  --gold:#fbbf24;--gold-dim:#92400e;
-  --danger:#f87171;--purple:#a78bfa;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+:root{--bg-0:#100f0d;--bg-1:#1b1916;--bg-2:#262219;--bg-3:#3a352b;
+  --text:#efe9dd;--muted:#a59c8c;--dim:#6b6357;
+  --accent:#6fb38a;--accent-2:#8fcfae;--accent-dim:#234a3a;
+  --gold:#d8a13a;--gold-dim:#7a5712;
+  --danger:#e06a5a;--purple:#a78bfa;
+  --mono:"Switzer",-apple-system,sans-serif;
   --sans:"Switzer",-apple-system,sans-serif;
   --serif:"Bespoke Serif",Georgia,serif;
-  --display:"Tanker",serif}
+  --display:"Sentient",serif}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
-header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(16,15,13,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(239,233,221,0.08)}
 .brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
 .brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
 .crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
@@ -29,29 +28,29 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 .hero h1{font-family:var(--display);font-size:48px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 8px;line-height:1}
 .hero .sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;max-width:780px;margin:0}
 
-.check-row{display:grid;grid-template-columns:36px 1fr auto;gap:14px;align-items:center;padding:16px 18px;background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:10px;margin-bottom:10px}
-.check-row.ok{border-color:rgba(52,211,153,0.40);background:rgba(52,211,153,0.04)}
-.check-row.missing{border-color:rgba(248,113,113,0.40);background:rgba(248,113,113,0.04)}
+.check-row{display:grid;grid-template-columns:36px 1fr auto;gap:14px;align-items:center;padding:16px 18px;background:rgba(27,25,22,0.55);border:1px solid rgba(239,233,221,0.10);border-radius:10px;margin-bottom:10px}
+.check-row.ok{border-color:rgba(111,179,138,0.40);background:rgba(111,179,138,0.04)}
+.check-row.missing{border-color:rgba(224,106,90,0.40);background:rgba(224,106,90,0.04)}
 .check-row .icon{font-size:22px}
 .check-row .body{display:flex;flex-direction:column;gap:3px;min-width:0}
 .check-row .lbl{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.005em}
 .check-row .meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
 .check-row .meta code{background:rgba(0,0,0,0.30);padding:1px 6px;border-radius:3px;color:var(--accent-2);font-size:11px}
 .check-row .actions{display:flex;gap:6px;flex-shrink:0}
-.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:8px 14px;border-radius:6px;cursor:pointer;border:1px solid var(--accent);background:rgba(52,211,153,0.10);color:var(--accent-2);transition:all .12s}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:8px 14px;border-radius:6px;cursor:pointer;border:1px solid var(--accent);background:rgba(111,179,138,0.10);color:var(--accent-2);transition:all .12s}
 .btn:hover{background:var(--accent);color:#0a1a14}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.btn.gold{border-color:var(--gold);color:var(--gold);background:rgba(251,191,36,0.06)}
+.btn.gold{border-color:var(--gold);color:var(--gold);background:rgba(216,161,58,0.06)}
 .btn.gold:hover{background:var(--gold);color:#0a1a14}
 
-.install-hint{margin-top:8px;padding:12px;background:rgba(0,0,0,0.35);border-radius:7px;border:1px dashed rgba(245,232,216,0.15)}
+.install-hint{margin-top:8px;padding:12px;background:rgba(0,0,0,0.35);border-radius:7px;border:1px dashed rgba(239,233,221,0.15)}
 .install-hint pre{margin:0;font-family:var(--mono);font-size:12px;color:var(--text);white-space:pre-wrap;line-height:1.5}
 
 .progress-track{margin-top:8px;height:10px;background:rgba(0,0,0,0.45);border-radius:6px;overflow:hidden;position:relative}
 .progress-track .bar{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .35s}
 .progress-msg{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:4px;letter-spacing:.04em}
 
-.ready-banner{margin:30px 0 0;padding:28px;border-radius:12px;background:linear-gradient(135deg,rgba(52,211,153,0.10),rgba(110,231,183,0.05));border:1px solid var(--accent);text-align:center}
+.ready-banner{margin:30px 0 0;padding:28px;border-radius:12px;background:linear-gradient(135deg,rgba(111,179,138,0.10),rgba(143,207,174,0.05));border:1px solid var(--accent);text-align:center}
 .ready-banner.hidden{display:none}
 .ready-banner h2{font-family:var(--display);font-size:32px;text-transform:uppercase;letter-spacing:-.01em;margin:0 0 8px;color:var(--accent-2)}
 .ready-banner p{font-family:var(--serif);font-style:italic;color:var(--text);margin:0 0 16px}

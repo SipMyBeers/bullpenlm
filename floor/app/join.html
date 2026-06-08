@@ -4,20 +4,19 @@
 <meta charset="utf-8">
 <title>Join the Bullpen · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=sentient@400,500,700&f%5B%5D=switzer@400,500,600,700&f%5B%5D=bespoke-serif@400,500,600,700&display=swap" rel="stylesheet">
 <style>
-:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
-  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
-  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+:root{--bg-0:#100f0d;--bg-1:#1b1916;--bg-2:#262219;--text:#efe9dd;--muted:#a59c8c;--dim:#6b6357;
+  --accent:#6fb38a;--accent-2:#8fcfae;--accent-dim:#2e5440;--gold:#d8a13a;--danger:#e06a5a;
+  --mono:"Switzer",-apple-system,sans-serif;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Sentient",serif;}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);
   color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh;
   display:flex;align-items:center;justify-content:center;padding:36px 20px}
 
-.card{max-width:520px;width:100%;background:rgba(42,29,16,0.65);
-  border:1px solid rgba(245,232,216,0.10);border-radius:12px;
+.card{max-width:520px;width:100%;background:rgba(38,34,25,0.65);
+  border:1px solid rgba(239,233,221,0.10);border-radius:12px;
   padding:44px 40px;backdrop-filter:blur(8px);
   box-shadow:0 30px 80px -10px rgba(0,0,0,0.6)}
 
@@ -38,7 +37,7 @@ label{display:block;font-family:var(--mono);font-size:10.5px;
   letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 
 input[type=text]{display:block;width:100%;padding:16px 18px;
-  background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);
+  background:rgba(0,0,0,0.30);border:1px solid rgba(239,233,221,0.15);
   border-radius:8px;color:var(--text);font-family:var(--mono);
   font-size:18px;letter-spacing:.10em;outline:none;text-transform:uppercase}
 input[type=text]:focus{border-color:var(--accent)}
@@ -49,20 +48,20 @@ input[type=text]:focus{border-color:var(--accent)}
   text-transform:uppercase;font-weight:700;cursor:pointer;
   transition:transform .12s;margin-top:8px}
 .btn:hover{transform:translateY(-1px)}
-.btn:disabled{background:rgba(168,154,135,0.20);color:var(--muted);cursor:not-allowed;transform:none}
+.btn:disabled{background:rgba(165,156,140,0.20);color:var(--muted);cursor:not-allowed;transform:none}
 
 .msg{margin-top:18px;padding:14px 16px;border-radius:8px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;line-height:1.55}
-.msg.ok{background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);color:var(--accent-2)}
-.msg.err{background:rgba(248,113,113,0.10);border:1px solid rgba(248,113,113,0.30);color:var(--danger)}
-.msg.info{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);color:var(--gold)}
+.msg.ok{background:rgba(111,179,138,0.10);border:1px solid rgba(111,179,138,0.30);color:var(--accent-2)}
+.msg.err{background:rgba(224,106,90,0.10);border:1px solid rgba(224,106,90,0.30);color:var(--danger)}
+.msg.info{background:rgba(216,161,58,0.08);border:1px solid rgba(216,161,58,0.25);color:var(--gold)}
 .msg.hidden{display:none}
 
-.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(52,211,153,0.3);
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(111,179,138,0.3);
   border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;
   margin-right:8px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.tip{margin-top:22px;padding-top:18px;border-top:1px solid rgba(245,232,216,0.08);
+.tip{margin-top:22px;padding-top:18px;border-top:1px solid rgba(239,233,221,0.08);
   font-family:var(--serif);font-size:13.5px;color:var(--muted);font-style:italic;line-height:1.6}
 .tip strong{color:var(--text);font-style:normal}
 </style>

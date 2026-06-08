@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <title>Host control · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#100f0d">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=sentient@400,500,700&f%5B%5D=switzer@400,500,600,700&f%5B%5D=bespoke-serif@400,500,600,700&display=swap" rel="stylesheet">
 <style>
-:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
-  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
-  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+:root{--bg-0:#1b1916;--bg-1:#262219;--bg-2:#33301f;--text:#efe9dd;--muted:#a59c8c;--dim:#6b6357;
+  --accent:#6fb38a;--accent-2:#8fcfae;--accent-dim:#2f5a45;--gold:#d8a13a;--danger:#e06a5a;--purple:#d8a13a;
+  --mono:"Switzer",-apple-system,sans-serif;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Sentient",Georgia,serif;}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh}
 
@@ -22,7 +22,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spacing:-.02em;margin:0 0 6px;line-height:1.05}
 .sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15.5px;margin:0 0 32px}
 
-.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:26px 28px;margin-bottom:22px}
+.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(239,233,221,0.10);border-radius:14px;padding:26px 28px;margin-bottom:22px}
 .panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 16px}
 .panel h2 .live{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:8px;vertical-align:middle;box-shadow:0 0 8px var(--accent)}
 .panel h2 .off{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dim);margin-right:8px;vertical-align:middle}
@@ -30,52 +30,52 @@ h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spa
 .status-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .status-text{font-family:var(--serif);font-size:18px;color:var(--text)}
 .status-text.dim{color:var(--muted);font-style:italic}
-.url-box{flex:1;min-width:260px;display:inline-flex;align-items:center;gap:10px;padding:11px 14px;background:rgba(0,0,0,0.35);border:1px solid rgba(52,211,153,0.30);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--accent-2);word-break:break-all}
-.url-box .copy{background:var(--accent);color:#0a1a14;border:none;padding:6px 11px;border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer;white-space:nowrap}
+.url-box{flex:1;min-width:260px;display:inline-flex;align-items:center;gap:10px;padding:11px 14px;background:rgba(0,0,0,0.35);border:1px solid rgba(111,179,138,0.30);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--accent-2);word-break:break-all}
+.url-box .copy{background:var(--accent);color:#100f0d;border:none;padding:6px 11px;border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer;white-space:nowrap}
 
 .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:7px;font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:transform .12s;border:none;text-decoration:none}
 .btn:hover{transform:translateY(-1px)}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn.primary{background:var(--accent);color:#0a1a14}
-.btn.gold{background:var(--gold);color:#0a1a14}
-.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.btn.primary{background:var(--accent);color:#100f0d}
+.btn.gold{background:var(--gold);color:#100f0d}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(239,233,221,0.15)}
 .btn.ghost:hover{color:var(--text);border-color:var(--text)}
-.btn.danger{background:transparent;color:var(--danger);border:1px solid rgba(248,113,113,0.40)}
-.btn.danger:hover{background:rgba(248,113,113,0.10)}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid rgba(224,106,90,0.40)}
+.btn.danger:hover{background:rgba(224,106,90,0.10)}
 
 .field{margin-bottom:14px}
 .field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
-.field input{width:100%;padding:11px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:16px;outline:none;transition:border-color .12s}
+.field input{width:100%;padding:11px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(239,233,221,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:16px;outline:none;transition:border-color .12s}
 .field input:focus{border-color:var(--accent)}
 
 .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 @media(max-width:640px){.row{grid-template-columns:1fr}}
 
 .invites-list{display:grid;gap:10px}
-.invite-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.08);border-radius:9px}
+.invite-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:rgba(0,0,0,0.25);border:1px solid rgba(239,233,221,0.08);border-radius:9px}
 .invite-row .code{font-family:var(--mono);font-size:13px;color:var(--accent-2);letter-spacing:.08em}
 .invite-row .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em}
 .invite-row .meta .rep{color:var(--text)}
-.invite-row .price-tag{display:inline-block;padding:2px 8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.35);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.08em;margin-left:6px}
+.invite-row .price-tag{display:inline-block;padding:2px 8px;background:rgba(216,161,58,0.12);border:1px solid rgba(216,161,58,0.35);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.08em;margin-left:6px}
 .invite-row .used-tag{display:inline-block;padding:2px 8px;background:rgba(168,154,135,0.10);border:1px solid rgba(168,154,135,0.25);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;margin-left:6px}
 .invite-row .actions{display:flex;gap:6px}
 
 .empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:24px;letter-spacing:.06em}
 
-.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(111,179,138,0.95);color:#100f0d;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
 .toast.show{transform:translateY(0);opacity:1}
-.toast.error{background:rgba(248,113,113,0.95)}
+.toast.error{background:rgba(224,106,90,0.95)}
 
 .helper{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:10px;letter-spacing:.04em;line-height:1.7}
 .helper code{background:rgba(0,0,0,0.30);padding:1px 6px;border-radius:3px;color:var(--accent-2);font-size:10.5px}
 
 /* ── Back-to-the-bullpen primary CTA ─────────────────────────── */
-.back-to-office{display:flex;align-items:center;gap:14px;margin:24px 0 0;padding:14px 20px;background:#fbbf24;border:2px solid #92400e;border-radius:11px;color:#0a1a14;text-decoration:none;transition:all .14s;box-shadow:0 6px 18px rgba(251,191,36,0.30),inset 0 -3px 0 rgba(0,0,0,0.15);max-width:520px}
-.back-to-office:hover{transform:translateY(-2px);background:#fde68a;box-shadow:0 10px 24px rgba(251,191,36,0.40),inset 0 -3px 0 rgba(0,0,0,0.15)}
+.back-to-office{display:flex;align-items:center;gap:14px;margin:24px 0 0;padding:14px 20px;background:#d8a13a;border:2px solid #8a6a28;border-radius:11px;color:#100f0d;text-decoration:none;transition:all .14s;box-shadow:0 6px 18px rgba(216,161,58,0.30),inset 0 -3px 0 rgba(0,0,0,0.15);max-width:520px}
+.back-to-office:hover{transform:translateY(-2px);background:#e9c885;box-shadow:0 10px 24px rgba(216,161,58,0.40),inset 0 -3px 0 rgba(0,0,0,0.15)}
 .bto-icon{font-size:26px;line-height:1}
 .bto-text{display:flex;flex-direction:column;gap:2px}
 .bto-title{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.005em;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,0.30)}
-.bto-sub{font-family:var(--serif);font-style:italic;font-size:12.5px;color:#3d2c1a;line-height:1.3}
+.bto-sub{font-family:var(--serif);font-style:italic;font-size:12.5px;color:#33301f;line-height:1.3}
 </style>
 <script src="/app/embed-mode.js"></script>
 </head>
@@ -96,14 +96,14 @@ h1{font-family:var(--display);font-size:48px;text-transform:uppercase;letter-spa
   <p class="sub">Mint a one-click magic link — they paste it, type a name, hit your floor.</p>
 
   <!-- INVITE-READY DIAGNOSTIC + MAGIC LINK — the only reason this page exists -->
-  <section class="panel" style="margin-bottom:18px;border-color:rgba(52,211,153,0.30)">
+  <section class="panel" style="margin-bottom:18px;border-color:rgba(111,179,138,0.30)">
     <div id="invite-ready-status" style="margin-bottom:14px">Checking…</div>
-    <div id="invite-ready-detail" style="margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#a89a87;line-height:1.8;display:none"></div>
+    <div id="invite-ready-detail" style="margin-bottom:14px;font-family:'Switzer',-apple-system,sans-serif;font-size:11.5px;color:#a59c8c;line-height:1.8;display:none"></div>
     <div id="magic-link-form" style="display:none">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <div class="field" style="display:inline-flex;flex-direction:column;margin-right:8px">
-          <label style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#a89a87;margin-bottom:5px">Friend's rep name</label>
-          <input id="ml-rep" placeholder="jordan-ramirez" style="padding:9px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;color:#f5e8d8;font-family:'Bespoke Serif',Georgia,serif;font-size:15px;min-width:220px">
+          <label style="font-family:'Switzer',-apple-system,sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#a59c8c;margin-bottom:5px">Friend's rep name</label>
+          <input id="ml-rep" placeholder="jordan-ramirez" style="padding:9px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(239,233,221,0.15);border-radius:6px;color:#efe9dd;font-family:'Bespoke Serif',Georgia,serif;font-size:15px;min-width:220px">
         </div>
         <button class="btn gold" onclick="genMagicLink()">Generate magic link →</button>
       </div>
@@ -393,7 +393,7 @@ async function checkInviteReady(){
     clearEl(statusEl);
     if(d.ready){
       statusEl.appendChild(safeEl('div', {
-        style: 'padding:11px 16px;background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.40);border-radius:7px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#6ee7b7;letter-spacing:.06em',
+        style: 'padding:11px 16px;background:rgba(111,179,138,0.10);border:1px solid rgba(111,179,138,0.40);border-radius:7px;font-family:"Switzer",-apple-system,sans-serif;font-size:12px;color:#8fcfae;letter-spacing:.06em',
         text: '✓ READY — you can DM a magic link to a friend right now.'
       }));
       detailEl.style.display = 'none';
@@ -412,13 +412,13 @@ async function checkInviteReady(){
         audit_chain:    {label: 'Audit chain',              blurb: 'Hash-chained event log — every signature traceable.'},
       };
       statusEl.appendChild(safeEl('div', {
-        style: 'font-family:"Tanker",serif;font-size:22px;letter-spacing:-.01em;text-transform:uppercase;color:#fbbf24;margin-bottom:4px',
+        style: 'font-family:"Sentient",Georgia,serif;font-size:22px;letter-spacing:-.01em;text-transform:uppercase;color:#d8a13a;margin-bottom:4px',
         text: 'Finish setup'
       }));
       const progressN = Object.values(d.checks).filter(c => c.ok).length;
       const progressT = Object.keys(d.checks).length;
       statusEl.appendChild(safeEl('div', {
-        style: 'font-family:"Bespoke Serif",Georgia,serif;font-style:italic;color:#a89a87;font-size:14px;line-height:1.5;margin-bottom:14px',
+        style: 'font-family:"Bespoke Serif",Georgia,serif;font-style:italic;color:#a59c8c;font-size:14px;line-height:1.5;margin-bottom:14px',
         text: `${d.missing.length} of ${progressT} items still to clear before you can invite a friend.`
       }));
 
@@ -432,23 +432,23 @@ async function checkInviteReady(){
         if(!c) continue;
         const meta = STEP_META[name] || {label: name, blurb: ''};
         const cardStyle = c.ok
-          ? 'display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;padding:12px 14px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.25);border-radius:9px'
-          : 'display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;padding:14px 16px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.30);border-radius:9px';
+          ? 'display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;padding:12px 14px;background:rgba(111,179,138,0.04);border:1px solid rgba(111,179,138,0.25);border-radius:9px'
+          : 'display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;padding:14px 16px;background:rgba(216,161,58,0.05);border:1px solid rgba(216,161,58,0.30);border-radius:9px';
         const row = safeEl('div', {style: cardStyle});
-        row.appendChild(safeEl('span', {style:'font-size:18px;color:' + (c.ok ? '#6ee7b7' : '#fbbf24'), text: c.ok ? '✓' : '○'}));
+        row.appendChild(safeEl('span', {style:'font-size:18px;color:' + (c.ok ? '#8fcfae' : '#d8a13a'), text: c.ok ? '✓' : '○'}));
         const body = safeEl('div', {style:'display:flex;flex-direction:column;gap:2px;min-width:0'});
-        body.appendChild(safeEl('div', {style:'font-family:"Tanker",serif;font-size:15px;text-transform:uppercase;letter-spacing:-.005em;color:' + (c.ok ? '#f5e8d8' : '#fbbf24'), text: meta.label}));
-        body.appendChild(safeEl('div', {style:'font-family:"Bespoke Serif",Georgia,serif;font-style:italic;color:#a89a87;font-size:13px;line-height:1.4', text: meta.blurb}));
+        body.appendChild(safeEl('div', {style:'font-family:"Sentient",Georgia,serif;font-size:15px;text-transform:uppercase;letter-spacing:-.005em;color:' + (c.ok ? '#efe9dd' : '#d8a13a'), text: meta.label}));
+        body.appendChild(safeEl('div', {style:'font-family:"Bespoke Serif",Georgia,serif;font-style:italic;color:#a59c8c;font-size:13px;line-height:1.4', text: meta.blurb}));
         row.appendChild(body);
         if(!c.ok && meta.href){
-          const cta = safeEl('a', {style:'background:#fbbf24;color:#0a1a14;padding:8px 14px;border-radius:6px;text-decoration:none;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;white-space:nowrap'});
+          const cta = safeEl('a', {style:'background:#d8a13a;color:#100f0d;padding:8px 14px;border-radius:6px;text-decoration:none;font-family:"Switzer",-apple-system,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;white-space:nowrap'});
           cta.setAttribute('href', meta.href);
           cta.appendChild(document.createTextNode('Open →'));
           row.appendChild(cta);
         } else if(c.ok){
-          row.appendChild(safeEl('span', {style:'font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6ee7b7;font-weight:700', text: 'done'}));
+          row.appendChild(safeEl('span', {style:'font-family:"Switzer",-apple-system,sans-serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8fcfae;font-weight:700', text: 'done'}));
         } else {
-          row.appendChild(safeEl('span', {style:'font-family:"JetBrains Mono",monospace;font-size:10px;color:#a89a87', text: 'auto'}));
+          row.appendChild(safeEl('span', {style:'font-family:"Switzer",-apple-system,sans-serif;font-size:10px;color:#a59c8c', text: 'auto'}));
         }
         detailEl.appendChild(row);
       }
@@ -469,9 +469,9 @@ async function genMagicLink(){
     const d = await r.json();
     if(!d.magic_link){ throw new Error(d.error || 'no magic_link in response'); }
     out.style.display = '';
-    const box = safeEl('div', {style:'padding:12px 16px;background:rgba(0,0,0,0.35);border:1px solid rgba(251,191,36,0.40);border-radius:8px;font-family:"JetBrains Mono",monospace;font-size:12px;color:#fbbf24;word-break:break-all;display:flex;gap:10px;align-items:center'});
+    const box = safeEl('div', {style:'padding:12px 16px;background:rgba(0,0,0,0.35);border:1px solid rgba(216,161,58,0.40);border-radius:8px;font-family:"Switzer",-apple-system,sans-serif;font-size:12px;color:#d8a13a;word-break:break-all;display:flex;gap:10px;align-items:center'});
     box.appendChild(safeEl('span', {style:'flex:1', text:d.magic_link}));
-    const copyBtn = safeEl('button', {style:'background:#fbbf24;color:#0a1a14;border:none;padding:6px 12px;border-radius:5px;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer', text:'COPY'});
+    const copyBtn = safeEl('button', {style:'background:#d8a13a;color:#100f0d;border:none;padding:6px 12px;border-radius:5px;font-family:"Switzer",-apple-system,sans-serif;font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer', text:'COPY'});
     copyBtn.addEventListener('click', () => {
       navigator.clipboard.writeText(d.magic_link).then(()=>{
         copyBtn.textContent = 'COPIED ✓';
@@ -481,9 +481,9 @@ async function genMagicLink(){
     box.appendChild(copyBtn);
     out.appendChild(box);
     const dmText = `yo — i built a sales-training thing and we're starting a practice bullpen. none of us know how to sell yet so we drill against AI buyers + duel each other first. real cold calls unlock once you pass a tier-3 drill.\n\none click + 5 min to join:\n\n${d.magic_link}\n\nreads a short disclosure, signs the IC agreement (we're papering everything now so it's ready when we go live), drops a W-9, then you're at the drill floor with us.`;
-    const dmBox = safeEl('div', {style:'margin-top:10px;padding:12px 16px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.30);border-radius:8px;font-family:"Bespoke Serif",Georgia,serif;font-size:13.5px;color:#a89a87;line-height:1.5;white-space:pre-wrap'});
+    const dmBox = safeEl('div', {style:'margin-top:10px;padding:12px 16px;background:rgba(216,161,58,0.06);border:1px solid rgba(216,161,58,0.30);border-radius:8px;font-family:"Bespoke Serif",Georgia,serif;font-size:13.5px;color:#a59c8c;line-height:1.5;white-space:pre-wrap'});
     dmBox.textContent = dmText;
-    out.appendChild(safeEl('div', {style:'font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#a89a87;margin:14px 0 6px', text:'SUGGESTED DM:'}));
+    out.appendChild(safeEl('div', {style:'font-family:"Switzer",-apple-system,sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#a59c8c;margin:14px 0 6px', text:'SUGGESTED DM:'}));
     out.appendChild(dmBox);
     const dmCopy = safeEl('button', {class:'btn ghost', style:'margin-top:8px', text:'Copy DM text'});
     dmCopy.addEventListener('click', () => {
@@ -497,7 +497,7 @@ async function genMagicLink(){
     setTimeout(renderInvites, 400);
   } catch(e){
     out.style.display = '';
-    out.appendChild(safeEl('div', {style:'padding:10px 14px;background:rgba(248,113,113,0.10);border:1px solid rgba(248,113,113,0.30);border-radius:6px;color:#fda4a4;font-family:"JetBrains Mono",monospace;font-size:11px', text:'× ' + e.message}));
+    out.appendChild(safeEl('div', {style:'padding:10px 14px;background:rgba(224,106,90,0.10);border:1px solid rgba(224,106,90,0.30);border-radius:6px;color:#ec9488;font-family:"Switzer",-apple-system,sans-serif;font-size:11px', text:'× ' + e.message}));
   }
 }
 

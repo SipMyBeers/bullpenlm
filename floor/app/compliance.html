@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <title>Compliance dashboard · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#100f0d">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=sentient@400,500,700&f%5B%5D=switzer@400,500,600,700&f%5B%5D=bespoke-serif@400,500,600,700&display=swap" rel="stylesheet">
 <style>
-:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
-  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
-  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif}
+:root{--bg-0:#1b1916;--bg-1:#262219;--bg-2:#322c20;--text:#efe9dd;--muted:#a59c8c;--dim:#6b6357;
+  --accent:#6fb38a;--accent-2:#8fcfae;--gold:#d8a13a;--danger:#e06a5a;--purple:#d8a13a;
+  --mono:"Switzer",-apple-system,sans-serif;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Sentient",Georgia,serif}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh}
 .wrap{max-width:1100px;margin:0 auto;padding:36px 28px 100px}
@@ -20,7 +20,7 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
 .lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;margin:0 0 28px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
 @media(max-width:720px){.grid{grid-template-columns:1fr}}
-.card{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:22px 24px}
+.card{background:rgba(27,25,22,0.55);border:1px solid rgba(239,233,221,0.10);border-radius:14px;padding:22px 24px}
 .card h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;display:flex;align-items:center;gap:8px}
 .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
 .card.ok h2 .dot{background:var(--accent);box-shadow:0 0 8px var(--accent)}
@@ -30,15 +30,15 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
 .card .meta{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
 .card .actions{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none}
-.btn.primary{background:var(--accent);color:#0a1a14}
-.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
-.btn.gold{background:var(--gold);color:#0a1a14}
-.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:22px 24px;margin-bottom:18px}
+.btn.primary{background:var(--accent);color:#16201b}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(239,233,221,0.15)}
+.btn.gold{background:var(--gold);color:#16201b}
+.panel{background:rgba(27,25,22,0.55);border:1px solid rgba(239,233,221,0.10);border-radius:14px;padding:22px 24px;margin-bottom:18px}
 .panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
-.closer-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:12px 14px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.08);border-radius:8px;margin-bottom:8px}
+.closer-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:12px 14px;background:rgba(0,0,0,0.25);border:1px solid rgba(239,233,221,0.08);border-radius:8px;margin-bottom:8px}
 .closer-row .pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;padding:4px 10px;border-radius:5px;text-transform:uppercase}
-.closer-row .pill.ok{background:rgba(52,211,153,0.12);color:var(--accent-2);border:1px solid rgba(52,211,153,0.40)}
-.closer-row .pill.gated{background:rgba(248,113,113,0.08);color:var(--danger);border:1px solid rgba(248,113,113,0.40)}
+.closer-row .pill.ok{background:rgba(111,179,138,0.12);color:var(--accent-2);border:1px solid rgba(111,179,138,0.40)}
+.closer-row .pill.gated{background:rgba(224,106,90,0.08);color:var(--danger);border:1px solid rgba(224,106,90,0.40)}
 .closer-row .rep{font-family:var(--mono);font-size:13px;color:var(--text);letter-spacing:.04em}
 .closer-row .missing{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
 .empty{font-family:var(--serif);font-style:italic;color:var(--muted);padding:14px;text-align:center}
@@ -67,7 +67,7 @@ h1{font-family:var(--display);font-size:42px;text-transform:uppercase;letter-spa
     <h2>YEAR-END 1099-NEC PREP</h2>
     <p style="color:var(--muted);margin:0 0 12px">Download a CSV of commissions paid per closer for a given tax year. Hand it to your CPA — the platform does NOT file IRS forms.</p>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <input id="csv-year" type="number" value="" placeholder="Year (e.g. 2026)" style="width:140px;padding:8px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;color:var(--text);font-family:var(--mono)">
+      <input id="csv-year" type="number" value="" placeholder="Year (e.g. 2026)" style="width:140px;padding:8px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(239,233,221,0.15);border-radius:6px;color:var(--text);font-family:var(--mono)">
       <button class="btn primary" onclick="downloadCsv()">Download 1099-NEC prep CSV →</button>
     </div>
   </div>
@@ -194,7 +194,7 @@ async function loadPhase(){
   try {
     const r = await fetch(`/api/b/${BULLPEN}/phase`);
     const d = await r.json();
-    const summary = el('div', {style:'padding:14px 18px;border-radius:8px;margin-bottom:12px;font-family:var(--mono);font-size:13px;letter-spacing:.04em;background:' + (d.ready ? 'rgba(52,211,153,0.10)' : 'rgba(248,113,113,0.08)') + ';border:1px solid ' + (d.ready ? 'rgba(52,211,153,0.40)' : 'rgba(248,113,113,0.30)') + ';color:' + (d.ready ? 'var(--accent-2)' : 'var(--danger)')});
+    const summary = el('div', {style:'padding:14px 18px;border-radius:8px;margin-bottom:12px;font-family:var(--mono);font-size:13px;letter-spacing:.04em;background:' + (d.ready ? 'rgba(111,179,138,0.10)' : 'rgba(224,106,90,0.08)') + ';border:1px solid ' + (d.ready ? 'rgba(111,179,138,0.40)' : 'rgba(224,106,90,0.30)') + ';color:' + (d.ready ? 'var(--accent-2)' : 'var(--danger)')});
     summary.textContent = d.ready
       ? '✓ PHASE 1 READY — platform + this bullpen pass all checks.'
       : 'NOT READY — blockers below must clear before Phase 1.';
@@ -208,7 +208,7 @@ async function loadPhase(){
       }
     }
     for(const [name, c] of Object.entries(allChecks)){
-      const row = el('div', {style:'display:flex;align-items:center;gap:12px;padding:7px 0;font-family:var(--mono);font-size:12.5px;border-bottom:1px solid rgba(245,232,216,0.06)'});
+      const row = el('div', {style:'display:flex;align-items:center;gap:12px;padding:7px 0;font-family:var(--mono);font-size:12.5px;border-bottom:1px solid rgba(239,233,221,0.06)'});
       row.appendChild(el('span', {style:'width:18px;color:' + (c.ok ? 'var(--accent-2)' : c.ok === null ? 'var(--muted)' : 'var(--danger)'), text: c.ok ? '✓' : c.ok === null ? '?' : '✗'}));
       row.appendChild(el('span', {style:'color:var(--text);min-width:240px', text:name.replace(/_/g, ' ')}));
       row.appendChild(el('span', {style:'color:var(--muted);font-size:11px', text:c.detail || ''}));

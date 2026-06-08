@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <title>Welcome · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#100f0d">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=sentient@400,500,700&f%5B%5D=switzer@400,500,600,700&f%5B%5D=bespoke-serif@400,500,600,700&display=swap" rel="stylesheet">
 <style>
-:root{--bg-0:#1a1208;--bg-1:#2a1d10;--bg-2:#3d2c1a;--text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
-  --accent:#34d399;--accent-2:#6ee7b7;--accent-dim:#064e3b;--gold:#fbbf24;--danger:#f87171;--purple:#a78bfa;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
-  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+:root{--bg-0:#1b1916;--bg-1:#262219;--bg-2:#262219;--text:#efe9dd;--muted:#a59c8c;--dim:#6b6357;
+  --accent:#6fb38a;--accent-2:#8fcfae;--accent-dim:#2d4a3a;--gold:#d8a13a;--danger:#e06a5a;--purple:#a78bfa;
+  --mono:"Switzer",-apple-system,sans-serif;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Sentient",serif;}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--bg-1) 50%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh}
 
@@ -44,27 +44,27 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 @media(max-width:560px){.avatar-grid{grid-template-columns:repeat(6, 1fr)}}
 .av-tile{aspect-ratio:1;display:grid;place-items:center;font-family:var(--display);font-size:22px;text-transform:uppercase;color:var(--text);background:rgba(42,29,16,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:8px;cursor:pointer;transition:border-color .12s,transform .12s,background .12s}
 .av-tile:hover{border-color:var(--accent-dim);transform:translateY(-1px)}
-.av-tile.active{background:rgba(52,211,153,0.18);border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 18px rgba(52,211,153,0.20)}
+.av-tile.active{background:rgba(111,179,138,0.18);border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 18px rgba(111,179,138,0.20)}
 
 /* Preview card */
-.preview{margin-top:20px;padding:18px;background:linear-gradient(135deg,rgba(52,211,153,0.06),rgba(42,29,16,0.55));border:1px solid rgba(245,232,216,0.10);border-radius:10px;display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center}
+.preview{margin-top:20px;padding:18px;background:linear-gradient(135deg,rgba(111,179,138,0.06),rgba(42,29,16,0.55));border:1px solid rgba(245,232,216,0.10);border-radius:10px;display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center}
 .preview .pv-av{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--accent-2),var(--accent-dim));display:grid;place-items:center;font-family:var(--display);font-size:30px;text-transform:uppercase;color:#0a1a14}
 .preview .pv-name{font-family:var(--display);font-size:24px;color:var(--text);text-transform:uppercase;letter-spacing:-.01em;line-height:1.05}
 .preview .pv-title{font-family:var(--mono);font-size:11px;color:var(--accent-2);letter-spacing:.04em;margin-top:4px}
 .preview .pv-rep{font-family:var(--mono);font-size:9.5px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:6px}
 
 /* Briefing snippet */
-.b-hero{padding:22px 24px;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(52,211,153,0.05));border:1px solid rgba(251,191,36,0.30);border-radius:10px;margin-bottom:18px}
+.b-hero{padding:22px 24px;background:linear-gradient(135deg,rgba(216,161,58,0.12),rgba(111,179,138,0.05));border:1px solid rgba(216,161,58,0.30);border-radius:10px;margin-bottom:18px}
 .b-hero .product{font-family:var(--display);font-size:32px;color:var(--gold);text-transform:uppercase;letter-spacing:-.02em;line-height:1}
 .b-hero .why{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);margin-top:6px}
 
-.opener{padding:20px 22px;background:rgba(0,0,0,0.30);border:1px solid rgba(52,211,153,0.30);border-radius:10px;font-family:var(--serif);font-size:15px;line-height:1.75;color:var(--text);white-space:pre-wrap;position:relative;margin-bottom:20px}
+.opener{padding:20px 22px;background:rgba(0,0,0,0.30);border:1px solid rgba(111,179,138,0.30);border-radius:10px;font-family:var(--serif);font-size:15px;line-height:1.75;color:var(--text);white-space:pre-wrap;position:relative;margin-bottom:20px}
 .opener::before{content:"OPENER";position:absolute;top:-10px;left:18px;padding:3px 10px;background:var(--accent);color:#0a1a14;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;font-weight:700;border-radius:4px}
 
 /* Rates — make them BIG */
 .rates-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;margin:18px 0}
 @media(max-width:560px){.rates-grid{grid-template-columns:1fr}}
-.rate-card{padding:18px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.30);border-radius:10px;text-align:center}
+.rate-card{padding:18px;background:rgba(216,161,58,0.06);border:1px solid rgba(216,161,58,0.30);border-radius:10px;text-align:center}
 .rate-card .pct{font-family:var(--display);font-size:54px;color:var(--gold);line-height:1;letter-spacing:-.02em}
 .rate-card .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:6px}
 .rate-card .sub{font-family:var(--serif);font-style:italic;font-size:12px;color:var(--accent-2);margin-top:4px}
@@ -73,7 +73,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 .window-card strong{color:#fff}
 
 .verticals-row{display:flex;flex-wrap:wrap;gap:6px}
-.vert-chip{padding:5px 11px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);border-radius:999px;font-family:var(--mono);font-size:11px;color:var(--accent-2)}
+.vert-chip{padding:5px 11px;background:rgba(111,179,138,0.08);border:1px solid rgba(111,179,138,0.25);border-radius:999px;font-family:var(--mono);font-size:11px;color:var(--accent-2)}
 
 /* Sign step */
 .sig-form{margin-top:20px}
@@ -83,7 +83,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 .collapsible{margin-top:14px;padding:14px 16px;background:rgba(0,0,0,0.20);border:1px solid rgba(245,232,216,0.10);border-radius:8px}
 .collapsible summary{cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.10em;color:var(--accent-2);text-transform:uppercase;list-style:none}
 .collapsible summary::-webkit-details-marker{display:none}
-.collapsible .body{margin-top:14px;font-family:var(--serif);font-size:14px;line-height:1.7;color:#e5d8c4;white-space:pre-wrap;max-height:380px;overflow-y:auto}
+.collapsible .body{margin-top:14px;font-family:var(--serif);font-size:14px;line-height:1.7;color:#efe9dd;white-space:pre-wrap;max-height:380px;overflow-y:auto}
 
 /* Footer / actions */
 .actions{display:flex;justify-content:space-between;align-items:center;margin-top:30px;padding-top:24px;border-top:1px solid rgba(245,232,216,0.08)}
@@ -103,9 +103,9 @@ body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-2) 0%,var(--
 
 .empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:30px;letter-spacing:.06em}
 
-.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(52,211,153,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 18px;background:rgba(111,179,138,0.95);color:#0a1a14;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;box-shadow:0 4px 20px rgba(0,0,0,0.40);transform:translateY(100px);opacity:0;transition:all .25s;z-index:200}
 .toast.show{transform:translateY(0);opacity:1}
-.toast.error{background:rgba(248,113,113,0.95)}
+.toast.error{background:rgba(224,106,90,0.95)}
 </style>
 </head>
 <body>
@@ -319,9 +319,9 @@ function paintBriefing(){
 
   if((BRIEFING?.house_accounts || []).length){
     const w = el('div', 'window-card');
-    w.style.background = 'rgba(248,113,113,0.06)';
-    w.style.borderColor = 'rgba(248,113,113,0.30)';
-    w.style.color = '#fda4a4';
+    w.style.background = 'rgba(224,106,90,0.06)';
+    w.style.borderColor = 'rgba(224,106,90,0.30)';
+    w.style.color = '#f0a89d';
     w.appendChild(document.createTextNode('OFF-LIMITS — '));
     const strong = document.createElement('strong');
     strong.textContent = BRIEFING.house_accounts.length + ' house accounts';

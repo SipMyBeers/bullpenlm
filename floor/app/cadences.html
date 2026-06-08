@@ -4,22 +4,22 @@
 <meta charset="utf-8">
 <title>Cadences · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#100f0d">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=sentient@400,500,700&f%5B%5D=switzer@400,500,600,700&f%5B%5D=bespoke-serif@400,500,600,700&display=swap" rel="stylesheet">
 <script src="/app/embed-mode.js"></script>
 <script src="/app/gate-banner.js" defer></script>
 <style>
-:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--bg-3:#3d2c1a;
-  --text:#f5e8d8;--muted:#a89a87;--dim:#806a4f;
-  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--gold-dim:#92400e;
-  --danger:#f87171;--purple:#a78bfa;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+:root{--bg-0:#100f0d;--bg-1:#1b1916;--bg-2:#262219;--bg-3:#322c20;
+  --text:#efe9dd;--muted:#a59c8c;--dim:#6b6357;
+  --accent:#6fb38a;--accent-2:#8fcfae;--gold:#d8a13a;--gold-dim:#7a5a28;
+  --danger:#e06a5a;--purple:#d8a13a;
+  --mono:"Switzer",-apple-system,sans-serif;
   --sans:"Switzer",-apple-system,sans-serif;
   --serif:"Bespoke Serif",Georgia,serif;
-  --display:"Tanker",serif}
+  --display:"Sentient",Georgia,serif}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--bg-3) 0%,var(--bg-2) 35%,var(--bg-1) 70%,var(--bg-0) 100%);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
-header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(10,7,3,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(245,232,216,0.08)}
+header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-items:center;gap:18px;background:rgba(16,15,13,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(239,233,221,0.08)}
 .brand{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-transform:uppercase;text-decoration:none;color:var(--text)}
 .brand .b{color:var(--gold)}.brand .lm{color:var(--accent)}
 .crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
@@ -32,48 +32,48 @@ header{position:sticky;top:0;z-index:30;padding:14px 22px;display:flex;align-ite
 h1{font-family:var(--display);font-size:42px;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 6px;line-height:1}
 .lede{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;margin:0 0 24px;max-width:740px}
 
-.panel{background:rgba(26,18,8,0.55);border:1px solid rgba(245,232,216,0.10);border-radius:14px;padding:24px 28px;margin-bottom:20px}
+.panel{background:rgba(27,25,22,0.55);border:1px solid rgba(239,233,221,0.10);border-radius:14px;padding:24px 28px;margin-bottom:20px}
 .panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 16px;display:flex;align-items:center;gap:8px}
-.panel h2 .badge{background:rgba(251,191,36,0.10);color:var(--gold);border:1px solid rgba(251,191,36,0.40);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:.06em}
+.panel h2 .badge{background:rgba(216,161,58,0.10);color:var(--gold);border:1px solid rgba(216,161,58,0.40);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:.06em}
 
 .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
-.tab{padding:8px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.10);border-radius:18px;font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);cursor:pointer}
-.tab.active{background:rgba(52,211,153,0.10);border-color:var(--accent);color:var(--accent-2)}
+.tab{padding:8px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(239,233,221,0.10);border-radius:18px;font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.tab.active{background:rgba(111,179,138,0.10);border-color:var(--accent);color:var(--accent-2)}
 
-.due-step{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:14px 16px;background:rgba(0,0,0,0.28);border:1px solid rgba(245,232,216,0.08);border-radius:9px;margin-bottom:8px}
-.due-step.overdue{border-color:rgba(248,113,113,0.35);background:rgba(248,113,113,0.04)}
-.due-step.today{border-color:rgba(251,191,36,0.40);background:rgba(251,191,36,0.04)}
-.due-step .channel{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;padding:4px 8px;border-radius:4px;font-weight:700;background:rgba(0,0,0,0.30);color:var(--muted);border:1px solid rgba(245,232,216,0.10);min-width:80px;text-align:center}
-.due-step .channel.email{color:#60a5fa;border-color:rgba(96,165,250,0.40)}
-.due-step .channel.call{color:var(--accent-2);border-color:rgba(52,211,153,0.40)}
-.due-step .channel.linkedin{color:#60a5fa;border-color:rgba(96,165,250,0.40)}
-.due-step .channel.meeting{color:var(--purple);border-color:rgba(167,139,250,0.40)}
+.due-step{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:14px 16px;background:rgba(0,0,0,0.28);border:1px solid rgba(239,233,221,0.08);border-radius:9px;margin-bottom:8px}
+.due-step.overdue{border-color:rgba(224,106,90,0.35);background:rgba(224,106,90,0.04)}
+.due-step.today{border-color:rgba(216,161,58,0.40);background:rgba(216,161,58,0.04)}
+.due-step .channel{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;padding:4px 8px;border-radius:4px;font-weight:700;background:rgba(0,0,0,0.30);color:var(--muted);border:1px solid rgba(239,233,221,0.10);min-width:80px;text-align:center}
+.due-step .channel.email{color:#d8a13a;border-color:rgba(216,161,58,0.40)}
+.due-step .channel.call{color:var(--accent-2);border-color:rgba(111,179,138,0.40)}
+.due-step .channel.linkedin{color:#d8a13a;border-color:rgba(216,161,58,0.40)}
+.due-step .channel.meeting{color:var(--purple);border-color:rgba(216,161,58,0.40)}
 .due-step .step-info{min-width:0}
 .due-step .step-title{font-family:var(--serif);font-size:14px;color:var(--text);line-height:1.4}
 .due-step .step-meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.04em}
-.due-step .due-badge{font-family:var(--mono);font-size:10px;color:var(--gold);padding:3px 7px;border:1px solid rgba(251,191,36,0.40);border-radius:4px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
-.due-step .due-badge.overdue{color:var(--danger);border-color:rgba(248,113,113,0.40)}
+.due-step .due-badge{font-family:var(--mono);font-size:10px;color:var(--gold);padding:3px 7px;border:1px solid rgba(216,161,58,0.40);border-radius:4px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.due-step .due-badge.overdue{color:var(--danger);border-color:rgba(224,106,90,0.40)}
 .due-step .actions{display:flex;gap:5px}
 .btn-mini{padding:6px 10px;border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;cursor:pointer;border:none;text-decoration:none}
-.btn-mini.done{background:var(--accent);color:#0a1a14}
-.btn-mini.skip{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.15)}
+.btn-mini.done{background:var(--accent);color:#16201b}
+.btn-mini.skip{background:transparent;color:var(--muted);border:1px solid rgba(239,233,221,0.15)}
 
-.cadence-row{padding:16px 18px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.08);border-radius:10px;margin-bottom:10px}
+.cadence-row{padding:16px 18px;background:rgba(0,0,0,0.25);border:1px solid rgba(239,233,221,0.08);border-radius:10px;margin-bottom:10px}
 .cadence-row .head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:10px}
 .cadence-row .title{font-family:var(--display);font-size:16px;letter-spacing:-.01em;text-transform:uppercase;color:var(--text)}
 .cadence-row .meta{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted)}
 .cadence-row .progress{display:flex;gap:3px;margin-top:8px}
-.cadence-row .pip{flex:1;height:6px;background:rgba(245,232,216,0.10);border-radius:2px}
+.cadence-row .pip{flex:1;height:6px;background:rgba(239,233,221,0.10);border-radius:2px}
 .cadence-row .pip.done{background:var(--accent)}
 .cadence-row .pip.skipped{background:var(--muted)}
 .cadence-row .pip.overdue{background:var(--danger)}
 .cadence-row .status-pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:10px;font-weight:700}
-.cadence-row .status-pill.active{background:rgba(52,211,153,0.12);color:var(--accent-2);border:1px solid rgba(52,211,153,0.40)}
-.cadence-row .status-pill.completed{background:rgba(251,191,36,0.12);color:var(--gold);border:1px solid rgba(251,191,36,0.40)}
-.cadence-row .status-pill.abandoned{background:rgba(168,154,135,0.10);color:var(--muted);border:1px solid rgba(168,154,135,0.30)}
+.cadence-row .status-pill.active{background:rgba(111,179,138,0.12);color:var(--accent-2);border:1px solid rgba(111,179,138,0.40)}
+.cadence-row .status-pill.completed{background:rgba(216,161,58,0.12);color:var(--gold);border:1px solid rgba(216,161,58,0.40)}
+.cadence-row .status-pill.abandoned{background:rgba(165,156,140,0.10);color:var(--muted);border:1px solid rgba(165,156,140,0.30)}
 
 .empty{font-family:var(--serif);font-style:italic;color:var(--muted);text-align:center;padding:30px}
-.template-card{padding:14px 16px;background:rgba(0,0,0,0.25);border:1px solid rgba(245,232,216,0.08);border-radius:9px;margin-bottom:8px}
+.template-card{padding:14px 16px;background:rgba(0,0,0,0.25);border:1px solid rgba(239,233,221,0.08);border-radius:9px;margin-bottom:8px}
 .template-card .name{font-family:var(--display);font-size:14px;letter-spacing:-.01em;text-transform:uppercase;color:var(--text)}
 .template-card .desc{font-family:var(--serif);color:var(--muted);font-size:13px;margin:3px 0 6px}
 .template-card .steps{font-family:var(--mono);font-size:10px;color:var(--accent-2);letter-spacing:.05em}
@@ -190,7 +190,7 @@ async function loadDue(){
     const acts = el('div', {class:'actions'});
     // Compose appears only on email steps
     if((item.step.channel || '').toLowerCase() === 'email'){
-      acts.appendChild(el('button', {class:'btn-mini', style:'background:var(--gold);color:#0a1a14', text:'Compose', onClick: () => openComposer(item)}));
+      acts.appendChild(el('button', {class:'btn-mini', style:'background:var(--gold);color:#16201b', text:'Compose', onClick: () => openComposer(item)}));
     }
     acts.appendChild(el('button', {class:'btn-mini done', text:'✓ Done', onClick: async () => {
       await api('POST', `/api/b/${BULLPEN}/cadences/${item.cadence_id}/steps/${item.step.idx}/done`, {rep:REP});
@@ -270,14 +270,14 @@ setInterval(load, 30000);
 // ── Email composer modal ─────────────────────────────────────────
 function openComposer(item){
   const overlay = el('div', {id:'composer-overlay', style:'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto'});
-  const modal = el('div', {style:'max-width:680px;width:100%;background:linear-gradient(180deg,rgba(42,29,16,0.97),rgba(26,18,8,0.97));border:1px solid rgba(251,191,36,0.30);border-radius:14px;padding:24px 28px;box-shadow:0 14px 50px rgba(0,0,0,0.6)'});
+  const modal = el('div', {style:'max-width:680px;width:100%;background:linear-gradient(180deg,rgba(38,34,25,0.97),rgba(27,25,22,0.97));border:1px solid rgba(216,161,58,0.30);border-radius:14px;padding:24px 28px;box-shadow:0 14px 50px rgba(0,0,0,0.6)'});
   modal.appendChild(el('div', {style:'font-family:var(--display);font-size:24px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 4px', text:'Compose follow-up'}));
   modal.appendChild(el('div', {style:'font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:16px', text: `${item.rep} · ${item.template} · day ${item.step.day}`}));
 
   const body = el('div', {style:'font-family:var(--serif);font-size:14px;color:var(--muted);text-align:center;padding:36px', text:'Generating RAG-grounded draft…'});
   modal.appendChild(body);
 
-  const foot = el('div', {style:'display:flex;justify-content:space-between;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid rgba(245,232,216,0.10)'});
+  const foot = el('div', {style:'display:flex;justify-content:space-between;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid rgba(239,233,221,0.10)'});
   foot.appendChild(el('button', {class:'btn-mini skip', text:'Close', onClick:()=>overlay.remove()}));
   foot.appendChild(el('div', {id:'composer-send-wrap'}));
   modal.appendChild(foot);
@@ -306,7 +306,7 @@ function openComposer(item){
     const fld = (label, id, value, multiline) => {
       const w = el('div', {style:'margin-bottom:10px'});
       w.appendChild(el('label', {style:'display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px', text: label}));
-      const input = multiline ? el('textarea', {id, style:'width:100%;min-height:200px;padding:11px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:14px;outline:none;resize:vertical;line-height:1.55'}) : el('input', {id, style:'width:100%;padding:9px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(245,232,216,0.15);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none'});
+      const input = multiline ? el('textarea', {id, style:'width:100%;min-height:200px;padding:11px 14px;background:rgba(0,0,0,0.30);border:1px solid rgba(239,233,221,0.15);border-radius:7px;color:var(--text);font-family:var(--serif);font-size:14px;outline:none;resize:vertical;line-height:1.55'}) : el('input', {id, style:'width:100%;padding:9px 12px;background:rgba(0,0,0,0.30);border:1px solid rgba(239,233,221,0.15);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none'});
       input.value = value || '';
       w.appendChild(input);
       return w;
