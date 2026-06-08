@@ -217,10 +217,36 @@ def progress(bullpen: str, rep: str) -> dict:
             "expires_at": quest.get("expires_at"),
         }
 
+    # Drill-phase reps (haven't cleared the gate to real prospects) can't make
+    # real calls or move/close deals — hide quests they literally can't progress
+    # so the objective list isn't a dead end. Drill / practice / study quests
+    # always show. Once gated-in, the full set returns.
+    gated_in = True
+    try:
+        from gates import can_claim_live_prospect
+        gated_in = bool(can_claim_live_prospect(bullpen, rep).ok)
+    except Exception:
+        gated_in = True
+
+    def _needs_live(pred: dict) -> bool:
+        k = pred.get("kind")
+        if k in ("deal_stage_moved", "deal_created", "deal_closed_won", "claim"):
+            return True
+        if k == "call" and (pred.get("match") or {}).get("call_kind") == "real":
+            return True
+        return False
+
     out = {"daily": [], "weekly": [], "raids": []}
-    for q in active["daily"]:  out["daily"].append(_quest_progress(q))
-    for q in active["weekly"]: out["weekly"].append(_quest_progress(q))
-    for q in active["raids"]:  out["raids"].append(_quest_progress(q))
+    for q in active["daily"]:
+        if not gated_in and _needs_live(q.get("predicate") or {}):
+            continue
+        out["daily"].append(_quest_progress(q))
+    for q in active["weekly"]:
+        if not gated_in and _needs_live(q.get("predicate") or {}):
+            continue
+        out["weekly"].append(_quest_progress(q))
+    for q in active["raids"]:
+        out["raids"].append(_quest_progress(q))
     return out
 
 

@@ -252,10 +252,18 @@ async function openRep(rep){
   if(gate.ok){ const g=el('div','gate-item ok'); g.appendChild(el('span',null,'Cleared — can dial real prospects')); const s=el('span','s','GO'); g.appendChild(s); sc.appendChild(g); }
   else { for(const [k,label] of Object.entries(ITEMS)){ if(!missing.has(k)) continue; const g=el('div','gate-item no'); g.appendChild(el('span',null,label)); const s=el('span','s','MISSING'); g.appendChild(s); sc.appendChild(g); } }
 
-  // stuck on
-  if(stuck.length){ sc.appendChild(el('div','sect','Not cleared / stuck on'));
-    for(const p of stuck.slice(0,5)){ const d=el('div'); d.style.cssText='font-size:13.5px;padding:7px 0;color:var(--text)';
-      d.innerHTML='<span style="font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:.1em">T'+(p.phase_tier||'?')+'</span> &nbsp;'+(p.name||p.id); sc.appendChild(d); } }
+  // stuck on — each play is tappable to assign that exact drill
+  if(stuck.length){ sc.appendChild(el('div','sect','Not cleared · tap to assign'));
+    for(const p of stuck.slice(0,6)){
+      const d=el('button'); d.style.cssText='display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:rgba(0,0,0,0.22);border:1px solid rgba(245,232,216,0.08);border-radius:9px;padding:10px 12px;margin-bottom:6px;color:var(--text);font-size:13.5px;cursor:pointer;font-family:inherit';
+      const tag=el('span',null,'T'+(p.phase_tier||'?')); tag.style.cssText='font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:.1em';
+      const nm=el('span',null,p.name||p.id); nm.style.flex='1';
+      const go=el('span',null,'ASSIGN →'); go.style.cssText='font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em';
+      d.appendChild(tag); d.appendChild(nm); d.appendChild(go);
+      d.onclick=()=>assignDrill(rep, p.id, p.name);
+      sc.appendChild(d);
+    }
+  }
 
   // recent activity
   sc.appendChild(el('div','sect','Recent activity'));
@@ -267,7 +275,7 @@ async function openRep(rep){
 
   // actions
   const act=el('div','act');
-  const assign=el('button','btn gold','Assign a drill'); assign.onclick=()=>assignDrill(rep,stuck); act.appendChild(assign);
+  const top=stuck[0]||{}; const assign=el('button','btn gold','Assign their next drill'); assign.onclick=()=>assignDrill(rep, top.id, top.name); act.appendChild(assign);
   sc.appendChild(act);
 }
 function labelEvent(e){
@@ -276,14 +284,14 @@ function labelEvent(e){
 }
 function closeRep(){ document.getElementById('scorecard').classList.add('hide'); document.getElementById('roster').classList.remove('hide'); }
 
-async function assignDrill(rep, stuck){
-  // assign = fire a spot-check at the rep on their top not-cleared play (or a default)
-  const tcs = (stuck && stuck[0] && stuck[0].id) ? stuck[0].id : 'cold-open-bfsi';
+async function assignDrill(rep, tcsId, name){
+  // fire a spot-check at the rep on a specific play (tapped) or their top stuck one
+  const tcs = tcsId || 'cold-open-bfsi';
   try {
     await J('/spotchecks', {method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({rep:OP, target:rep, tcs_id:tcs})});
-    toast('Assigned "'+tcs+'" to '+rep);
-  } catch(e){ toast('Could not assign drill ('+e.message+')', true); }
+    toast('Assigned “'+(name||tcs)+'” to '+pretty(rep));
+  } catch(e){ toast('Could not assign ('+e.message+')', true); }
 }
 
 // pull-to-refresh-ish: tap the pen meta to reload
