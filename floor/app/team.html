@@ -20,7 +20,8 @@ body{margin:0;background:radial-gradient(ellipse at 50% -10%,var(--bg-2),var(--b
   color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.5;min-height:100vh;
   padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);}
 .wrap{max-width:560px;margin:0 auto;padding:14px 14px 40px}
-.top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:6px 2px 14px}
+/* stacked header so the right side stays clear of the native shell's top-right buttons */
+.top{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:6px 2px 14px;max-width:calc(100% - 110px)}
 .top .brand{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:-.02em}
 .top .brand .b{color:var(--gold)}.top .brand .lm{color:var(--accent)}
 .top .pen{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
