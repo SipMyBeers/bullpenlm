@@ -18,10 +18,17 @@ enum Config {
     private static let d = UserDefaults.standard
     static let baseKey = "bp_base", bullpenKey = "bp_bullpen", opKey = "bp_operator"
 
+    static let demoBullpen = "demo"
+
     static var base: String { d.string(forKey: baseKey) ?? "https://app.bullpenlm.com" }
-    static var bullpen: String { d.string(forKey: bullpenKey) ?? "" }
+    /// The operator's own bullpen, if they've connected one.
+    static var realBullpen: String { d.string(forKey: bullpenKey) ?? "" }
+    /// What the app actually shows — the real bullpen, or the demo floor so a
+    /// cold open ALWAYS lands on a working app (App Store Guideline 4.2).
+    static var bullpen: String { realBullpen.isEmpty ? demoBullpen : realBullpen }
     static var op: String { let v = d.string(forKey: opKey) ?? ""; return v.isEmpty ? "self" : v }
-    static var isConfigured: Bool { !bullpen.isEmpty }
+    static var isDemo: Bool { realBullpen.isEmpty }
+    static var isConfigured: Bool { !realBullpen.isEmpty }   // gates push, not the floor
 
     static func save(bullpen: String, op: String, base: String) {
         d.set(bullpen.trimmingCharacters(in: .whitespaces).lowercased(), forKey: bullpenKey)
@@ -30,8 +37,9 @@ enum Config {
         d.set(b.isEmpty ? "https://app.bullpenlm.com" : b, forKey: baseKey)
     }
 
+    /// Always resolvable now — falls back to the demo floor.
     static var teamURL: URL? {
-        guard !bullpen.isEmpty, var c = URLComponents(string: base + "/app/team.html") else { return nil }
+        guard var c = URLComponents(string: base + "/app/team.html") else { return nil }
         c.queryItems = [URLQueryItem(name: "b", value: bullpen),
                         URLQueryItem(name: "rep", value: op)]
         return c.url

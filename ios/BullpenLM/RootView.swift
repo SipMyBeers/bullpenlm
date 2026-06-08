@@ -2,34 +2,54 @@ import SwiftUI
 
 struct RootView: View {
     @State private var configured = Config.isConfigured
+    @State private var isDemo = Config.isDemo
     @State private var showSettings = false
     /// Called once the operator has a bullpen set, to request push.
     var onConfigured: () -> Void = {}
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Color.bpBg.ignoresSafeArea()
-            if configured, let url = Config.teamURL {
+            // Always a working floor on cold open — real bullpen or the demo.
+            if let url = Config.teamURL {
                 TeamWebScreen(url: url) { showSettings = true }
-            } else {
-                SetupView { configured = Config.isConfigured; if configured { onConfigured() } }
             }
+            if isDemo { demoBar }
         }
         .onAppear { if configured { onConfigured() } }
         .sheet(isPresented: $showSettings) {
             SetupView {
                 showSettings = false
                 configured = Config.isConfigured
+                isDemo = Config.isDemo
                 if configured { onConfigured() }
             }
         }
+    }
+
+    // Slim bottom bar shown over the demo floor — never blocks the gear.
+    private var demoBar: some View {
+        Button { showSettings = true } label: {
+            HStack(spacing: 10) {
+                Text("DEMO DATA").font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .tracking(1.5).foregroundColor(.bpGold)
+                Text("Sample team — tap to connect your bullpen")
+                    .font(.system(size: 12.5)).foregroundColor(.bpText)
+                Spacer()
+                Image(systemName: "arrow.right").font(.system(size: 11, weight: .bold)).foregroundColor(.bpMuted)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 11)
+            .background(.ultraThinMaterial)
+            .overlay(Rectangle().frame(height: 1).foregroundColor(.bpGold.opacity(0.3)), alignment: .top)
+        }
+        .buttonStyle(.plain)
     }
 }
 
 /// First-launch (and settings) form: which bullpen, and who you are.
 struct SetupView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var bullpen = Config.bullpen
+    @State private var bullpen = Config.realBullpen
     @State private var op = UserDefaults.standard.string(forKey: Config.opKey) ?? ""
     @State private var base = Config.base
     @State private var showAdvanced = false
@@ -43,7 +63,7 @@ struct SetupView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("BULLPEN").font(.system(size: 30, weight: .heavy)).foregroundColor(.bpGold)
                             + Text("LM").font(.system(size: 30, weight: .heavy)).foregroundColor(.bpMint)
-                        Text("Track your team").font(.system(.title3, design: .serif)).italic().foregroundColor(.bpMuted)
+                        Text("Connect your bullpen").font(.system(.title3, design: .serif)).italic().foregroundColor(.bpMuted)
                     }.padding(.top, 28)
 
                     field("BULLPEN", "your bullpen slug (e.g. default)", text: $bullpen)
@@ -58,14 +78,20 @@ struct SetupView: View {
                     }.tint(.bpMuted)
 
                     Button(action: saveAndGo) {
-                        Text("OPEN THE FLOOR")
+                        Text("CONNECT")
                             .font(.system(size: 13, weight: .bold, design: .monospaced)).tracking(2)
                             .foregroundColor(.bpBg).frame(maxWidth: .infinity).padding(.vertical, 15)
                             .background(canSave ? Color.bpGold : Color.bpMuted.opacity(0.4))
                             .cornerRadius(11)
                     }.disabled(!canSave)
 
-                    Text("Points at the team scorecards for your bullpen. Change it anytime from the gear.")
+                    Button { dismiss() } label: {
+                        Text("Explore the demo instead")
+                            .font(.system(size: 12.5, weight: .semibold, design: .monospaced))
+                            .foregroundColor(.bpMuted).frame(maxWidth: .infinity)
+                    }
+
+                    Text("Points at the team scorecards for your bullpen. Until you connect one, the app shows a sample demo team. Change it anytime from the gear.")
                         .font(.system(size: 12, design: .serif)).foregroundColor(.bpMuted).lineSpacing(3)
                 }
                 .padding(22)
