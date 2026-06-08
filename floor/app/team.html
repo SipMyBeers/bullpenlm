@@ -175,8 +175,8 @@ async function loadRoster(){
   if(!reps.length){
     const inv = location.origin + '/app/quickstart/?b=' + encodeURIComponent(BP);
     const box = el('div'); box.style.cssText='text-align:center;padding:46px 22px';
-    const h = el('div'); h.style.cssText='font-family:var(--display);font-size:26px;color:var(--text);margin-bottom:8px'; h.textContent='No reps yet.';
-    const s = el('div'); s.style.cssText='font-size:14px;color:var(--muted);line-height:1.5;max-width:300px;margin:0 auto 22px'; s.textContent='Invite your first closer — they pick a name and they’re on your board. Their drills, closes, and rank show up here.';
+    const h = el('div'); h.style.cssText='font-family:var(--display);font-size:25px;color:var(--text);margin-bottom:8px'; h.textContent='No reps on “'+BP+'” yet';
+    const s = el('div'); s.style.cssText='font-size:14px;color:var(--muted);line-height:1.5;max-width:320px;margin:0 auto 22px'; s.textContent='If you just connected this bullpen, invite your first closer — they pick a name and they’re on your board. If that name looks wrong, change it from the gear.';
     const btn = el('button','btn gold'); btn.style.cssText='display:inline-block;padding:13px 22px;border-radius:11px'; btn.textContent='Copy invite link';
     btn.onclick=()=>{ try{ navigator.clipboard.writeText(inv); toast('Invite link copied'); }catch(e){ toast('Could not copy', true); } };
     const u = el('div'); u.style.cssText='font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:14px;word-break:break-all'; u.textContent=inv;

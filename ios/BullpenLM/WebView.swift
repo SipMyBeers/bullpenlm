@@ -22,12 +22,10 @@ struct TeamWebScreen: View {
             .padding(.top, 6)
             .padding(.trailing, 14)
         }
-        // The native rank ladder, rendered from the shared contract via a MOCK
-        // adapter (Kumquat's Agent->Director) — proves org-agnostic rendering
-        // independent of any backend. Swap MockPromotionSource() for
-        // HTTPPromotionSource() to read this org's live ladder.
+        // The native rank ladder, rendered from the shared contract — reads the
+        // CONNECTED bullpen's live ladder (/promotion/<agent>), not a mock.
         .sheet(isPresented: $showLadder) {
-            RankLadderView(source: MockPromotionSource(), agent: Config.op)
+            RankLadderView(source: HTTPPromotionSource(), agent: Config.op)
         }
     }
 
