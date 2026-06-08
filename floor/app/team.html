@@ -4,17 +4,17 @@
 <meta charset="utf-8">
 <title>Team · BullpenLM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a0703">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0703'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23fbbf24' font-family='monospace' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
-<link href="https://api.fontshare.com/v2/css?f%5B%5D=tanker@400&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#100f0d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23100f0d'/%3E%3Cg stroke='%23d8a13a' stroke-width='3' stroke-linecap='round'%3E%3Cline x1='9' y1='24' x2='23' y2='24'/%3E%3Cline x1='11' y1='18' x2='21' y2='18'/%3E%3Cline x1='13' y1='12' x2='19' y2='12'/%3E%3C/g%3E%3C/svg%3E">
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=sentient@400,500,700&f%5B%5D=bespoke-serif@400,500,600,700&f%5B%5D=switzer@400,500,600,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/app/ink.css">
 <script src="/app/cash.js"></script>
 <style>
-:root{--bg-0:#0a0703;--bg-1:#1a1208;--bg-2:#2a1d10;--text:#f5e8d8;--muted:#a89a87;--dim:#6b5a42;
-  --accent:#34d399;--accent-2:#6ee7b7;--gold:#fbbf24;--danger:#f87171;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--sans:"Switzer",-apple-system,sans-serif;
-  --serif:"Bespoke Serif",Georgia,serif;--display:"Tanker",serif;}
+/* Clubhouse scheme: near-black + warm cream + one gold, serif display, no mono. */
+:root{--bg-0:#100f0d;--bg-1:#1b1916;--bg-2:#262219;--text:#efe9dd;--muted:#a59c8c;--dim:#6b6357;
+  --accent:#d8a13a;--accent-2:#e9c885;--gold:#d8a13a;--green:#6fb38a;--danger:#e06a5a;
+  --mono:"Switzer",-apple-system,sans-serif;--sans:"Switzer",-apple-system,sans-serif;
+  --serif:"Bespoke Serif",Georgia,serif;--display:"Sentient",Georgia,serif;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:radial-gradient(ellipse at 50% -10%,var(--bg-2),var(--bg-1) 55%,var(--bg-0));
   color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.5;min-height:100vh;
@@ -32,7 +32,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% -10%,var(--bg-2),var(--b
   transition:transform .1s,border-color .12s}
 .rep:active{transform:scale(.99)}
 .rep:hover{border-color:rgba(251,191,36,0.3)}
-.rep .nm{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.rep .nm{font-family:var(--display);font-size:19px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
 .rep .dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex-shrink:0}
 .rep .dot.on{background:var(--accent);box-shadow:0 0 7px var(--accent)}
 .rep .sub{grid-column:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--muted);margin-top:3px}
@@ -45,18 +45,18 @@ body{margin:0;background:radial-gradient(ellipse at 50% -10%,var(--bg-2),var(--b
   font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;padding:6px 0 14px}
 .sc-back:hover{color:var(--text)}
 .sc-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:6px}
-.sc-name{font-family:var(--display);font-size:34px;text-transform:uppercase;letter-spacing:-.02em;line-height:1}
+.sc-name{font-family:var(--display);font-size:36px;letter-spacing:-.02em;line-height:1}
 .sc-rank{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--gold);font-weight:700;text-align:right}
 .sc-rank .tier{display:block;font-family:var(--serif);font-style:italic;color:var(--muted);letter-spacing:0;font-size:12.5px;margin-top:3px}
 .pl-strip{display:flex;gap:7px;overflow-x:auto;padding:2px 0 4px;-webkit-overflow-scrolling:touch}
 .pl-chip{flex:none;border:1px solid var(--line-2);border-radius:10px;padding:8px 11px;min-width:80px}
 .pl-chip .pn{font-family:var(--display);font-size:13px;text-transform:uppercase;letter-spacing:-.01em}
 .pl-chip .pc{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:2px}
-.pl-chip.done{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.08)} .pl-chip.done .pn{color:var(--accent-2)}
+.pl-chip.done{border-color:rgba(111,179,138,.5);background:rgba(111,179,138,.08)} .pl-chip.done .pn{color:var(--accent-2)}
 .pl-chip.cur{border-color:var(--gold);background:rgba(251,191,36,.1)} .pl-chip.cur .pn{color:var(--gold)}
 .pl-chip.lock{opacity:.45}
 .elig{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;padding:3px 9px;border-radius:20px;margin-left:8px}
-.elig.yes{background:rgba(52,211,153,.16);color:var(--accent-2)} .elig.no{background:rgba(245,184,30,.14);color:var(--gold)}
+.elig.yes{background:rgba(111,179,138,.16);color:var(--accent-2)} .elig.no{background:rgba(245,184,30,.14);color:var(--gold)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:16px 0}
 .cell{background:rgba(26,18,8,0.6);border:1px solid rgba(245,232,216,0.09);border-radius:11px;padding:13px 14px}
 .cell .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
@@ -67,7 +67,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% -10%,var(--bg-2),var(--b
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
 .gate-item{display:flex;align-items:center;gap:9px;padding:9px 12px;background:rgba(0,0,0,0.22);border-radius:8px;margin-bottom:6px;font-size:13.5px}
 .gate-item .s{font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:2px 7px;border-radius:4px}
-.gate-item.ok .s{background:rgba(52,211,153,0.14);color:var(--accent-2)}
+.gate-item.ok .s{background:rgba(111,179,138,0.14);color:var(--accent-2)}
 .gate-item.no .s{background:rgba(248,113,113,0.14);color:var(--danger)}
 .feed div{padding:9px 0;border-bottom:1px solid rgba(245,232,216,0.07);font-size:13.5px;display:flex;justify-content:space-between;gap:10px}
 .feed .t{font-family:var(--mono);font-size:10.5px;color:var(--dim);white-space:nowrap}
@@ -79,7 +79,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% -10%,var(--bg-2),var(--b
 .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(245,232,216,0.18)}
 .empty{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;padding:34px 0;letter-spacing:.06em}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,80px);
-  background:rgba(52,211,153,0.96);color:#0a1a14;padding:12px 18px;border-radius:9px;font-family:var(--mono);
+  background:rgba(111,179,138,0.96);color:#0a1a14;padding:12px 18px;border-radius:9px;font-family:var(--mono);
   font-size:11px;letter-spacing:.05em;opacity:0;transition:all .25s;z-index:50;max-width:90vw}
 .toast.show{transform:translate(-50%,0);opacity:1}
 .toast.err{background:rgba(248,113,113,0.96)}
@@ -142,6 +142,7 @@ function renderPromotion(sc, prom){
 }
 function fmtXp(n){ return (n||0).toLocaleString('en-US'); }
 function plural(n, word){ n=n||0; return n+' '+word+(n===1?'':'s'); }
+function pretty(slug){ return (slug||'').split(/[-_]/).map(w=>w?w[0].toUpperCase()+w.slice(1):'').join(' '); }
 let ROSTER_ORDER={};   // rep -> gate-based current rank order (from /ranks/roster)
 function rel(ts){ if(!ts) return ''; const d=(Date.parse(ts.replace(' ','T'))||0); if(!d) return '';
   const s=Math.max(1,Math.round((Date.now()-d)/1000));
@@ -174,7 +175,7 @@ async function loadRoster(){
   if(!reps.length){ root.appendChild(el('div','empty','No reps on this floor yet.')); return; }
   for(const rp of reps){
     const card=el('div','rep'); card.onclick=()=>openRep(rp.rep);
-    const nm=el('div','nm'); const dot=el('span','dot'+(online.has(rp.rep)?' on':'')); nm.appendChild(dot); nm.appendChild(document.createTextNode(rp.rep));
+    const nm=el('div','nm'); const dot=el('span','dot'+(online.has(rp.rep)?' on':'')); nm.appendChild(dot); nm.appendChild(document.createTextNode(pretty(rp.rep)));
     card.appendChild(nm);
     const sub=el('div','sub'); const la=rp.last_active?('· active '+rel(rp.last_active)+' ago'):'· no activity';
     sub.textContent=plural(rp.drills_7d||0,'drill')+' / 7d · '+plural(rp.closer_wins||0,'close')+' '+la; card.appendChild(sub);
@@ -210,7 +211,7 @@ async function openRep(rep){
   sc.innerHTML='';
   const b2=el('button','sc-back','‹ Back to team'); b2.onclick=closeRep; sc.appendChild(b2);
   const head=el('div','sc-head');
-  head.appendChild(el('div','sc-name',rep));
+  head.appendChild(el('div','sc-name',pretty(rep)));
   const curName = (prom && rankName(prom.current_order)) ? rankName(prom.current_order).toUpperCase() : rankForXp(totalXp);
   const curComp = prom ? ((prom.ranks||[]).find(r=>r.order===prom.current_order)||{}).comp_label : '';
   const rk=el('div','sc-rank',curName); const ti=el('span','tier',(curComp? curComp+' · ':'')+'Lvl '+(xp.level||1)+(streak.streak?(' · '+streak.streak+'-day streak'):'')); rk.appendChild(ti); head.appendChild(rk);

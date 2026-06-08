@@ -46,12 +46,13 @@ enum Config {
     }
 }
 
-// Brand palette (matches the floor: dark + gold + mint).
+// Brand palette — Clubhouse scheme: near-black + warm cream + one gold,
+// refined sage green for "done/online" semantics.
 extension Color {
-    static let bpBg    = Color(red: 0.039, green: 0.027, blue: 0.012)
-    static let bpPanel = Color(red: 0.102, green: 0.071, blue: 0.031)
-    static let bpGold  = Color(red: 0.984, green: 0.749, blue: 0.141)
-    static let bpMint  = Color(red: 0.204, green: 0.827, blue: 0.600)
-    static let bpText  = Color(red: 0.961, green: 0.910, blue: 0.847)
-    static let bpMuted = Color(red: 0.659, green: 0.604, blue: 0.529)
+    static let bpBg    = Color(red: 0.063, green: 0.059, blue: 0.051)  // #100f0d
+    static let bpPanel = Color(red: 0.106, green: 0.098, blue: 0.086)  // #1b1916
+    static let bpGold  = Color(red: 0.847, green: 0.631, blue: 0.227)  // #d8a13a
+    static let bpMint  = Color(red: 0.435, green: 0.702, blue: 0.541)  // sage #6fb38a
+    static let bpText  = Color(red: 0.937, green: 0.914, blue: 0.867)  // #efe9dd
+    static let bpMuted = Color(red: 0.647, green: 0.612, blue: 0.549)  // #a59c8c
 }
