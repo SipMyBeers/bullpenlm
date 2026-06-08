@@ -2,56 +2,29 @@ import SwiftUI
 
 struct RootView: View {
     @State private var configured = Config.isConfigured
-    @State private var isDemo = Config.isDemo
     @State private var showSettings = false
-    // First launch (no real bullpen yet) gets an orientation screen so the
-    // operator isn't dropped cold into a wall of sample reps.
-    @State private var showWelcome = !Config.seenWelcome && Config.isDemo
     /// Called once the operator has a bullpen set, to request push.
     var onConfigured: () -> Void = {}
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             Color.bpBg.ignoresSafeArea()
-            // Always a working floor on cold open — real bullpen or the demo.
             if let url = Config.teamURL {
                 TeamWebScreen(url: url) { showSettings = true }
+            } else {
+                // No bullpen connected yet — onboarding (explain + question),
+                // no demo/example floor.
+                OnboardView(onConnect: { showSettings = true })
             }
-            if isDemo { demoBar }
         }
         .onAppear { if configured { onConfigured() } }
-        .fullScreenCover(isPresented: $showWelcome) {
-            WelcomeView(
-                onConnect: { Config.markWelcomeSeen(); showWelcome = false
-                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showSettings = true } },
-                onExplore: { Config.markWelcomeSeen(); showWelcome = false })
-        }
         .sheet(isPresented: $showSettings) {
             SetupView {
                 showSettings = false
                 configured = Config.isConfigured
-                isDemo = Config.isDemo
                 if configured { onConfigured() }
             }
         }
-    }
-
-    // Slim bottom bar shown over the demo floor — never blocks the gear.
-    private var demoBar: some View {
-        Button { showSettings = true } label: {
-            HStack(spacing: 10) {
-                Text("DEMO DATA").font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .tracking(1.5).foregroundColor(.bpGold)
-                Text("Sample team — tap to connect your bullpen")
-                    .font(.system(size: 12.5)).foregroundColor(.bpText)
-                Spacer()
-                Image(systemName: "arrow.right").font(.system(size: 11, weight: .bold)).foregroundColor(.bpMuted)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 11)
-            .background(.ultraThinMaterial)
-            .overlay(Rectangle().frame(height: 1).foregroundColor(.bpGold.opacity(0.3)), alignment: .top)
-        }
-        .buttonStyle(.plain)
     }
 }
 
@@ -59,7 +32,7 @@ struct RootView: View {
 struct SetupView: View {
     @Environment(\.dismiss) private var dismiss
     // Pre-fill the canonical floor so the operator isn't guessing a slug.
-    @State private var bullpen = Config.realBullpen.isEmpty ? "default" : Config.realBullpen
+    @State private var bullpen = Config.bullpen.isEmpty ? "default" : Config.bullpen
     @State private var op = UserDefaults.standard.string(forKey: Config.opKey) ?? ""
     @State private var base = Config.base
     @State private var showAdvanced = false
