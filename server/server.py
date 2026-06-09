@@ -5449,6 +5449,26 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
+        # /api/waitlist — landing-page email capture (early-access hedge).
+        # Appends to DATA_DIR/waitlist.jsonl. CORS-open so the static landing
+        # (bullpenlm.com, separate origin) can POST to it.
+        if self.path == "/api/waitlist":
+            try:
+                import datetime as _dt
+                req2 = json.loads(raw) if raw else {}
+                email = (req2.get("email") or "").strip().lower()
+                if "@" not in email or len(email) > 200:
+                    self._send_json(400, {"error": "invalid_email"}); return
+                from paths import DATA_DIR as _DD
+                rec = {"email": email, "source": (req2.get("source") or "landing")[:80],
+                       "ts": _dt.datetime.now().isoformat(timespec="seconds")}
+                with (Path(_DD) / "waitlist.jsonl").open("a") as f:
+                    f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                self._send_json(200, {"ok": True})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
         # /api/ingest — universal "drop anything" endpoint. Accepts:
         #   * Raw file bytes (with ?filename=<name> + Content-Type header) for
         #     CSV/PDF/EML/JSON/TXT/MD uploads from the drop-zone UI.

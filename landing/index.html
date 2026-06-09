@@ -560,8 +560,35 @@
       </a>
       <a href="#access" class="playnow-secondary">Host your own bullpen</a>
     </div>
+    <form class="wl" id="wl" onsubmit="return wlSubmit(event)">
+      <input type="email" id="wl-email" placeholder="Your email — get early access" required autocomplete="email">
+      <button type="submit">Get early access</button>
+      <span class="wl-msg" id="wl-msg"></span>
+    </form>
   </div>
 </section>
+<style>
+  .wl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px;max-width:480px}
+  .wl input{flex:1;min-width:220px;background:rgba(0,0,0,0.32);border:1px solid rgba(245,232,216,0.18);border-radius:10px;padding:12px 14px;color:#efe9dd;font:inherit;font-size:14px;outline:none}
+  .wl input:focus{border-color:#d8a13a}
+  .wl button{background:transparent;border:1px solid rgba(216,161,58,0.55);color:#d8a13a;border-radius:10px;padding:12px 16px;font-weight:700;font-size:13px;letter-spacing:.04em;cursor:pointer}
+  .wl button:hover{background:rgba(216,161,58,0.12)}
+  .wl-msg{font-size:13px;color:#6fb38a;flex-basis:100%}
+</style>
+<script>
+  async function wlSubmit(e){
+    e.preventDefault();
+    const i=document.getElementById('wl-email'), msg=document.getElementById('wl-msg');
+    const email=(i.value||'').trim(); if(!email) return false;
+    msg.textContent='…';
+    try{
+      const r=await fetch('https://app.bullpenlm.com/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,source:'landing'})});
+      if(r.ok){ document.getElementById('wl').innerHTML='<span class="wl-msg" style="flex-basis:100%">You’re on the list — we’ll be in touch.</span>'; }
+      else { msg.textContent='Hmm, try again in a sec.'; msg.style.color='#e06a5a'; }
+    }catch(err){ msg.textContent='Network hiccup — try again.'; msg.style.color='#e06a5a'; }
+    return false;
+  }
+</script>
 
 <style>
   .playnow{position:relative; z-index:3; max-width:1200px; margin:0 auto;
