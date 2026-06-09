@@ -104,6 +104,36 @@ def _write_cached(bullpen: str, buyer: str, kind: str, data: dict) -> dict:
 
 # ── LLM call (re-using existing ollama_chat from server.py) ──────────────
 
+# Appended to every generator's system prompt: keeps generated artifacts on
+# brand — no emojis, no placeholder brackets (the AI-slop we strip elsewhere).
+_STYLE = ("\n\nSTYLE (strict): Plain text only — no emojis or decorative symbols. "
+          "Never use placeholder brackets like [Name], [Company], [Your Name], or "
+          "[Product]; use the actual name/company from the dossier, or rephrase to "
+          "avoid a placeholder entirely.")
+
+
+def _prettify(slug: str) -> str:
+    return " ".join(w[:1].upper() + w[1:] for w in (slug or "").replace("_", "-").split("-") if w)
+
+
+def _strip_placeholders(md: str, you: str = "") -> str:
+    """The LLM won't reliably obey 'no brackets', so kill placeholder brackets
+    deterministically — substitute natural words, then drop any leftover [..]."""
+    import re as _re
+    you = you or "me"
+    subs = [
+        (r"\[your[\s_]*name\]", you),
+        (r"\[(?:rep|seller|closer|agent)[\s_]*name\]", you),
+        (r"\[(?:buyer|prospect|client|customer|contact|first|their)[\s_]*name\]", "there"),
+        (r"\[(?:company|account|org|organization)[\s_]*(?:name)?\]", "your company"),
+        (r"\[product[\s_]*(?:name)?\]", "the product"),
+    ]
+    for pat, rep in subs:
+        md = _re.sub(pat, rep, md, flags=_re.I)
+    md = _re.sub(r"\[([^\]\n]{1,40})\]", r"\1", md)   # any leftover: drop brackets, keep text
+    return md
+
+
 def _llm_json(prompt_system: str, prompt_user: str, *, temperature: float = 0.4) -> dict:
     """Call Gemma, expect JSON back. Retries once with a tighter framing.
 
@@ -116,7 +146,7 @@ def _llm_json(prompt_system: str, prompt_user: str, *, temperature: float = 0.4)
 
     def _call(sys_p: str, user_p: str) -> str:
         return ollama_chat(
-            [{"role": "system", "content": sys_p},
+            [{"role": "system", "content": sys_p + _STYLE},
              {"role": "user",   "content": user_p}],
             temperature=temperature,
         )
@@ -308,7 +338,7 @@ def gen_briefing(bullpen: str, buyer: str) -> dict:
     try:
         from server import ollama_chat  # type: ignore
         md = ollama_chat(
-            [{"role": "system", "content": BRIEFING_SYSTEM},
+            [{"role": "system", "content": BRIEFING_SYSTEM + _STYLE},
              {"role": "user", "content": user_prompt}],
             temperature=0.5,
         )
@@ -317,6 +347,7 @@ def gen_briefing(bullpen: str, buyer: str) -> dict:
 
     md = re.sub(r"^```(?:markdown)?\s*", "", md.strip(), flags=re.M)
     md = re.sub(r"```\s*$", "", md.strip())
+    md = _strip_placeholders(md, _prettify(buyer))
     out = {"markdown": md, "word_count": len(md.split())}
     return _write_cached(bullpen, buyer, "briefing", out)
 
@@ -342,12 +373,12 @@ def gen_one_sheeter(bullpen: str, buyer: str) -> dict:
 
     user_prompt = (
         "Write a one-page cheat sheet in markdown. Sections:\n"
-        "## 🎯 The Open\n_(your literal first 8 seconds — exact words)_\n\n"
-        "## 🧠 Their World\n_(3 bullets: company facts that matter)_\n\n"
-        "## 💰 Hot Buttons\n_(3 bullets: what gets them leaning forward)_\n\n"
-        "## ⚠️ Red Flags\n_(2 bullets: phrases to avoid)_\n\n"
-        "## 🛡️ Top 3 Objections + Counters\n_(numbered: objection → your move)_\n\n"
-        "## ✅ Asks\n_(your 3 escalating asks: 15-min next call → exec briefing → pilot)_\n\n"
+        "## The Open\n_(your literal first 8 seconds — exact words)_\n\n"
+        "## Their World\n_(3 bullets: company facts that matter)_\n\n"
+        "## Hot Buttons\n_(3 bullets: what gets them leaning forward)_\n\n"
+        "## Red Flags\n_(2 bullets: phrases to avoid)_\n\n"
+        "## Top 3 Objections + Counters\n_(numbered: objection then your move)_\n\n"
+        "## Asks\n_(your 3 escalating asks: 15-min next call, exec briefing, pilot)_\n\n"
         "Dossier:\n"
         f"{ctx}\n\n"
         "Markdown only. Short. Pin-to-the-wall energy. No closing sign-off."
@@ -356,7 +387,7 @@ def gen_one_sheeter(bullpen: str, buyer: str) -> dict:
     try:
         from server import ollama_chat  # type: ignore
         md = ollama_chat(
-            [{"role": "system", "content": ONE_SHEETER_SYSTEM},
+            [{"role": "system", "content": ONE_SHEETER_SYSTEM + _STYLE},
              {"role": "user", "content": user_prompt}],
             temperature=0.5,
         )
@@ -365,6 +396,7 @@ def gen_one_sheeter(bullpen: str, buyer: str) -> dict:
 
     md = re.sub(r"^```(?:markdown)?\s*", "", md.strip(), flags=re.M)
     md = re.sub(r"```\s*$", "", md.strip())
+    md = _strip_placeholders(md, _prettify(buyer))
     out = {"markdown": md}
     return _write_cached(bullpen, buyer, "one_sheeter", out)
 
